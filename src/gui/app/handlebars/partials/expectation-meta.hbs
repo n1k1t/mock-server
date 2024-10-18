@@ -1,0 +1,43 @@
+module.exports = `
+  {{#compare format 'neq' 'short'}}
+    <button class="activity">
+      {{#if isEnabled}}
+        <i class="fas fa-plug"></i>
+      {{else}}
+        <i class="fas fa-power-off"></i>
+      {{/if}}
+    </button>
+
+    <span class="calls-count {{#compare meta.executionsCount 'gt' 0}}active{{/compare}}">
+      <i class="fas fa-undo-alt"></i>{{meta.executionsCount}}
+    </span>
+  {{/compare}}
+
+  <span class="name">{{name}}</span>
+
+  {{#each meta.additional.requestMethods}}
+    <span class="method">{{this}}</span>
+  {{/each}}
+
+  {{#each meta.additional.requestPaths}}
+    <span class="path">{{this}}</span>
+  {{/each}}
+
+  {{#compare format 'neq' 'short'}}
+    {{#each meta.additional.responseStatuses}}
+      <span class="status
+        {{#compare this 'lt' 400}}green{{/compare}}
+        {{#compare this 'gte' 400}}red{{/compare}}
+      ">{{this}}</span>
+    {{/each}}
+  {{/compare}}
+
+  {{#if forward}}
+    <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+    <span class="forward">{{forward.host}}:{{forward.port}}</span>
+  {{/if}}
+
+  {{#if destroy}}
+    <span class="error">{{destroy}}</span>
+  {{/if}}
+`

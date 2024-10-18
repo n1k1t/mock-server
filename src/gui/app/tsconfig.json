@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "CommonJS",
+
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+
+    "strict": true,
+    "strictNullChecks": true,
+
+    "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types", "../../../types/**/*.global.ts"]
+  },
+  "include": ["./**/*.ts", "../../../types/**/*.global.ts"]
+}

@@ -1,0 +1,39 @@
+module.exports = `
+  <div class="row history">
+    <div class="meta">
+      <div class="segment">
+        {{#compare meta.state 'eq' 'pending'}}
+          <span class="pending"><i class="fas fa-hourglass-start"></i></span>
+        {{/compare}}
+
+        <span class="time">{{#toLocaleTime meta.requestedAt}}{{/toLocaleTime}}</span>
+
+        {{#if error}}
+          <span class="error">
+            {{#compare error.code.length 'lte' 24}}{{error.code}}{{/compare}}
+            {{#compare error.code.length 'gt' 24}}Error{{/compare}}
+          </span>
+        {{/if}}
+
+        {{#if response}}
+          <span class="status
+            {{#compare response.statusCode 'lt' 400}}green{{/compare}}
+            {{#compare response.statusCode 'gte' 400}}red{{/compare}}
+          ">{{response.statusCode}}</span>
+        {{/if}}
+
+        <span class="method">{{{request.method}}}</span>
+        <span class="path">{{{request.path}}}</span>
+      </div>
+
+      <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+
+      {{#if expectation}}
+        <div class="segment">{{>expectationMeta expectation format='short'}}</div>
+      {{else}}
+        <span class="handled-with red">Nowhere</span>
+      {{/if}}
+    </div>
+    <pre class="hidden"></pre>
+  </div>
+`

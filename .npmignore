@@ -1,0 +1,9 @@
+.editorconfig
+.gitignore
+
+task-processor.ts
+tsconfig.json
+
+src/
+test/
+coverage/
