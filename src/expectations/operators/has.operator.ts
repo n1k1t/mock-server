@@ -2,7 +2,7 @@ import minimatch from 'minimatch';
 import _ from 'lodash';
 
 import { buildExpectationOperatorHandler, extractContextPayloadSegment } from './utils';
-import { extractByJsonPathSafe } from '../../../utils';
+import { extractByJsonPathSafe } from '../../utils';
 
 export default buildExpectationOperatorHandler<'$has'>((mode, schema, context) => {
   if (!schema.$location) {

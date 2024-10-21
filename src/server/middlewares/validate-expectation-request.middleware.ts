@@ -1,23 +1,23 @@
 import _ from 'lodash';
-import { Middleware } from './model';
+import { Middleware } from '../models';
 
 export default Middleware
   .build(__filename)
   .assignHandler((context, next) => {
     const plainContext = context.toPlain();
-    const expectation = context.expectationsStorage.findByContext('request', plainContext);
+    const expectation = context.storage.expectations.findByContext('request', plainContext);
 
     if (!expectation) {
-      const historyRecord = context.historyStorage
+      const historyRecord = context.storage.history
         .register(plainContext)
         .changeState('finished');
 
-      context.webSocketExchange.publish('history:added', historyRecord);
+      context.exchange.ws.publish('history:added', historyRecord);
       return context.reply.notFound();
     }
 
     expectation.increaseExecutionsCounter();
-    context.webSocketExchange.publish('expectation:updated', expectation);
+    context.exchange.ws.publish('expectation:updated', expectation);
 
     return next({ expectation });
   });

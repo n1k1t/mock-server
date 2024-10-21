@@ -3,8 +3,8 @@ import { TRequestMethod, TRequestPayloadType } from '../../../types';
 export type TRequestFlow = 'http' | 'ws';
 
 export interface IHttpRequestIncommingContext {
-  body?: object;
-  query?: object;
+  body?: object | void;
+  query?: object | void;
   headers?: Record<string, string>;
 }
 

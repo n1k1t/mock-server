@@ -1,5 +1,5 @@
-import type { IHttpRequestIncommingContext, RequestContext } from '../models/request-context';
-import type { IBaseRouteResponse } from '../models/reply-service';
+import type { IHttpRequestIncommingContext, RequestContext } from './request-context';
+import type { IBaseRouteResponse } from './reply-service';
 import type { TRequestMethod } from '../../types';
 
 export class Endpoint<T = unknown, U extends IHttpRequestIncommingContext = IHttpRequestIncommingContext> {

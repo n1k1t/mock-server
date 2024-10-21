@@ -1,5 +1,5 @@
-import type { Expectation } from '../expectations';
-import { Endpoint } from './model';
+import { Expectation } from '../../expectations';
+import { Endpoint } from '../models';
 
 type TBody =
   & Pick<Expectation, 'delay' | 'destroy' | 'forward' | 'request' | 'response'>
@@ -8,12 +8,7 @@ type TBody =
 export default Endpoint
   .build<{ id: string }, { body: TBody }>()
   .bindToHttp(<const>{ method: 'POST', path: '/_mock/expectations' })
-  .assignHandler(({ reply, body, expectationsStorage, webSocketExchange }) => {
-    const result = expectationsStorage.register(body);
-    if (result.status === 'ERROR') {
-      return reply.validationError(result.reasons);
-    }
-
-    webSocketExchange?.publish('expectation:added', result.expectation);
-    reply.ok({ id: result.expectation.id });
+  .assignHandler(async ({ reply, body, client }) => {
+    const result = await client.createExpectation(body);
+    reply.ok({ id: result.id });
   });

@@ -1,5 +1,5 @@
-import { cast } from '../../../utils';
-import type { IRequestPlainContext, IResponsePlainContext } from '../../models';
+import { cast } from '../../utils';
+import type { IRequestPlainContext, IResponsePlainContext } from '../../server/models';
 import {
   TExpectationOperatorLocation,
   TExpectationOperatorHandler,

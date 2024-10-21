@@ -1,7 +1,6 @@
-export { default as createExpectation } from './expectations.create.endpoint';
 export { default as getExpectationsList } from './expectations.get-list.endpoint';
+export { default as createExpectation } from './expectations.create.endpoint';
 export { default as deleteExpectation } from './expectations.delete.endpoint';
-export { default as deleteAllExpectations } from './expectations.delete-all.endpoint';
 export { default as updateExpectation } from './expectations.update.endpoint';
 
 export { default as getHistoryRecordsList } from './history-records.get-list.endpoint';

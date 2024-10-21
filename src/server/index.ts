@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import _ from 'lodash';
 
 import { RequestContext, ServerContext } from './models';
-import { IStartHttpServerOptions } from './types';
+import { IMockServerStartOptions } from './types';
 import { internalEndpointsMap } from './router';
 
 import * as middlewares from './middlewares';
@@ -23,14 +23,14 @@ const middlewaresToUse = [
 ];
 
 const handleHttpRequestWithMiddlewares = (
-  context: SetRequiredKeys<RequestContext, 'http' | 'webSocketExchange'> & { shared: any },
+  context: SetRequiredKeys<RequestContext, 'http'> & { shared: any },
   position: number = 0
 ): unknown => middlewaresToUse[position]?.compile(context).exec(
   context,
   (result?: object) => handleHttpRequestWithMiddlewares(context.extendShared(result ?? {}), ++position)
 );
 
-const httpRequestListener = (serverContext: SetRequiredKeys<ServerContext, 'webSocketExchange'>) =>
+const httpRequestListener = (serverContext: ServerContext) =>
   async (request: IncomingMessage, response: ServerResponse) => {
     const requestContext = await RequestContext
       .build()
@@ -41,37 +41,46 @@ const httpRequestListener = (serverContext: SetRequiredKeys<ServerContext, 'webS
     return handleHttpRequestWithMiddlewares(requestContext);
   }
 
-export const startMockServer = async ({ port, host }: IStartHttpServerOptions) => {
-  const serverContext = ServerContext
-    .build()
-    .buildWebSocketExchange(new Server());
+export class MockServer {
+  public authority = `http://${this.options.host}:${this.options.port}`;
+  public context = ServerContext.build();
 
-  const httpServer = createServer(httpRequestListener(serverContext));
-  const webSocketServer = new Server(httpServer);
+  constructor(public options: IMockServerStartOptions) {}
 
-  webSocketServer.on('connection', (socket) =>
-    Object.values(internalEndpointsMap.ws).forEach((route) =>
-      socket.on(route.webSocket.path, (...args) =>
-        route.handler?.(
-          RequestContext
-            .build()
-            .extendWithServerContext(serverContext)
-            .assignFlow('ws', { callback: _.last(args) })
-            .assign({ body: _.first(args) })
-      ))
-    )
-  );
+  get client() {
+    return this.context.client;
+  }
 
-  serverContext.buildWebSocketExchange(webSocketServer);
+  static async start(options: IMockServerStartOptions) {
+    const server = new MockServer(options);
 
-  return new Promise<void>((resolve) =>
-    httpServer.listen(port, host, () => {
-      const authority = `http://${host}:${port}`;
+    const http = createServer(httpRequestListener(server.context));
+    const webSocket = new Server(http);
 
-      console.log(`Server has started on [${authority}]`);
-      console.log(`GUI is available on [${authority}/_mock/gui]`);
+    webSocket.on('connection', (socket) =>
+      Object.values(internalEndpointsMap.ws).forEach((route) =>
+        socket.on(route.webSocket.path, (...args) =>
+          route.handler?.(
+            RequestContext
+              .build()
+              .extendWithServerContext(server.context)
+              .assignFlow('ws', { callback: _.last(args) })
+              .assign({ body: _.first(args) })
+        ))
+      )
+    );
 
-      resolve();
-    })
-  );
+    server.context.assignWebSocketExchange(webSocket);
+
+    await new Promise<void>((resolve) =>
+      http.listen(options.port, options.host, () => {
+        console.log(`Server has started on [${server.authority}]`);
+        console.log(`GUI is available on [${server.authority}/_mock/gui]`);
+
+        resolve();
+      })
+    );
+
+    return server;
+  }
 }

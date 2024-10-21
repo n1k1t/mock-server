@@ -1,4 +1,4 @@
-import { Endpoint } from './model';
+import { Endpoint } from '../models';
 
 export default Endpoint
   .build<'pong'>()

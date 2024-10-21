@@ -1,14 +1,14 @@
 import _ from 'lodash';
-import { Middleware } from './model';
+import { Middleware } from '../models';
 
 export default Middleware
   .build(__filename)
   .requires(['expectation'])
   .assignHandler((context, next) => {
-    const historyRecord = context.historyStorage
+    const historyRecord = context.storage.history
       .register(context.toPlain())
       .assign({ expectation: context.shared.expectation });
 
-    context.webSocketExchange.publish('history:added', historyRecord);
+    context.exchange.ws.publish('history:added', historyRecord);
     next({ historyRecord });
   });

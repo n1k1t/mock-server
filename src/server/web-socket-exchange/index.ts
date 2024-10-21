@@ -1,8 +1,8 @@
 import type { Server } from 'socket.io';
-import { IWebSocketExchange } from './types';
+import type { IWebSocketExchange } from './types';
 
 export * from './types';
 
-export const buildWebSocketExchange = (io: Server): IWebSocketExchange => ({
+export const buildWebSocketExchange = (io: Pick<Server, 'emit'>): IWebSocketExchange => ({
   publish: (eventName: string, ...payload: unknown[]) => io.emit(eventName, ...payload),
 });

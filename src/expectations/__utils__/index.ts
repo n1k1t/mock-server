@@ -1,4 +1,4 @@
-import { IRequestPlainContext, IResponsePlainContext } from '../../models';
+import { IRequestPlainContext, IResponsePlainContext } from '../../server/models';
 
 export const buildExpectationContext = (): IRequestPlainContext & IResponsePlainContext => ({
   path: '/foo/bar/baz',

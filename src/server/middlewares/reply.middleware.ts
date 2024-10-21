@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Middleware } from './model';
+import { Middleware } from '../models';
 
 export default Middleware
   .build(__dirname)
@@ -43,5 +43,5 @@ export default Middleware
       .assign({ response: responseContext })
       .changeState('finished');
 
-    context.webSocketExchange.publish('history:updated', context.shared.historyRecord);
+    context.exchange.ws.publish('history:updated', context.shared.historyRecord);
   });

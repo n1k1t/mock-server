@@ -2,9 +2,9 @@ import axios, { AxiosError } from 'axios';
 import HttpsProxyAgent from 'https-proxy-agent';
 import _ from 'lodash';
 
-import { parseJsonSafe } from '../../utils';
 import { IResponsePlainContext } from '../models';
-import { Middleware } from './model';
+import { parseJsonSafe } from '../../utils';
+import { Middleware } from '../models';
 
 export default Middleware
   .build(__filename)
@@ -34,7 +34,7 @@ export default Middleware
     });
 
     const historyRecord = context.shared.historyRecord.assign({ forwaded: { request: manipulatedContext } });
-    context.webSocketExchange.publish('history:updated', historyRecord);
+    context.exchange.ws.publish('history:updated', historyRecord);
 
     const response = await axios({
       timeout: timeout ?? 1000 * 30,
@@ -59,7 +59,7 @@ export default Middleware
           .assign({ error: _.pick(error, ['message', 'code']) })
           .changeState('finished');
 
-        context.webSocketExchange.publish('history:updated', historyRecord);
+        context.exchange.ws.publish('history:updated', historyRecord);
         context.reply.internalError(error.message);
 
         throw error;
@@ -93,7 +93,7 @@ export default Middleware
       curl: _.get(response.config, 'curlCommand'),
     });
 
-    context.webSocketExchange.publish('history:updated', historyRecord);
+    context.exchange.ws.publish('history:updated', historyRecord);
 
     return next({
       forwarded: {

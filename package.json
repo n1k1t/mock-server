@@ -1,10 +1,10 @@
 {
   "name": "@n1k1t/mock-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "main": "lib/src/index.js",
   "types": "lib/types/lib.d.ts",
-  "bin": "lib/src/cli.js",
+  "bin": "lib/bin/index.js",
   "scripts": {
     "test": "NODE_ENV=test jest",
     "start": "node lib/src/index",
@@ -54,7 +54,7 @@
     "ts-jest": "29.1.1",
     "ts-node": "10.9.2",
     "tsify": "5.0.4",
-    "typescript": "5.2.2"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@n1k1t/typebox": "0.31.6",

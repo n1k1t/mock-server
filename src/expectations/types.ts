@@ -1,4 +1,5 @@
-import type { IRequestPlainContext, IResponsePlainContext } from '../models';
+import type _ from 'lodash';
+import type { IRequestPlainContext, IResponsePlainContext } from '../server/models';
 
 export type TExpectationType = ConvertTupleToUnion<typeof LExpectationType>;
 export const LExpectationType = <const>['HTTP'];
@@ -92,7 +93,7 @@ export interface IExpectationTargetionalSchema<
 
 export interface IExpectationSchemaConfiguration {
   operator: TExpectationOperator;
-  useOperatorsOverride: Partial<Record<TExpectationOperator, unknown>>;
+  context: TExpectationContext;
 
   targetionalValidationOperator: TExpectationTargetionalValidationOperator;
   targetionalManipulationOperator: TExpectationTargetionalManipulationOperator;
@@ -133,9 +134,7 @@ export interface IExpectationSchema<
   $and?: Pick<IExpectationSchema<T>, T['operator']>[];
   $or?: Pick<IExpectationSchema<T>, T['operator']>[];
 
-  $exec?: CheckKeyIsRequired<T['useOperatorsOverride'], '$exec'> extends true
-    ? T['useOperatorsOverride']['$exec']
-    : string;
+  $exec?: string | TFunction<unknown, [{ _: typeof _, context: T['context'] }]>;
 };
 
 export type BuildExpectaionSchema<

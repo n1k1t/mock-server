@@ -1,6 +1,7 @@
-import { HistoryRecord } from './model';
-import { serverConfig } from '../../config';
 import { IRequestPlainContext } from '../models';
+import { HistoryRecord } from './model';
+
+import config from '../../config';
 
 export class HistoryStorage extends Map<string, HistoryRecord> {
   private idsStack: string[] = [];
@@ -10,7 +11,7 @@ export class HistoryStorage extends Map<string, HistoryRecord> {
 
     this.set(historyRecord.id, historyRecord);
 
-    if (this.idsStack.push(historyRecord.id) > serverConfig.historyRecordsLimit) {
+    if (this.idsStack.push(historyRecord.id) > config.server.historyRecordsLimit) {
       this.delete(this.idsStack.shift()!);
     }
 

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import type { RequestContext } from '../models';
 
 export type TMiddlewareHandler<K extends ExtractPartialKeys<RequestContext['shared']>> = TFunction<unknown, [
-  SetRequiredKeys<RequestContext, 'http' | 'webSocketExchange'> & {
+  SetRequiredKeys<RequestContext, 'http'> & {
     shared: SetRequiredKeys<RequestContext['shared'], K>
   },
   (result?: Partial<RequestContext['shared']>) => unknown

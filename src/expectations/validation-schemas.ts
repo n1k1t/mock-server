@@ -1,12 +1,13 @@
 import { TSchema, Type } from '@n1k1t/typebox';
 
-import { cast } from '../../utils';
+import { cast } from '../utils';
 import {
   LExpectationOperatorLocation,
   TExpectationConditionalOperator,
   TExpectationTargetionalOperator,
   TExpectationOperator,
 } from './types';
+import { TObject } from '@n1k1t/task-processor/lib/src/typings';
 
 type TExpectationValidationSchema = { [K in TExpectationOperator]: TSchema }
 type TExpectationTargetionalValidationSchema = { [K in TExpectationTargetionalOperator]: TSchema }
@@ -33,13 +34,13 @@ export const ExpectationTargetionalValidationSchema = Type.Partial(
   { $id: 'ExpectationTargetionalSchema' }
 );
 
-export const ExpectationValidationSchema = Type.Recursive((This) => Type.Partial(
+export const ExpectationValidationSchema = Type.Recursive((This) => Type.Partial<TSchema>(
   Type.Object(cast<TExpectationValidationSchema>({
     $and: Type.Array(This),
     $or: Type.Array(This),
 
     $not: This,
-    $if: Type.Partial(
+    $if: Type.Partial<TSchema>(
       Type.Object(cast<TExpectationConditionalValidationSchema>({
         $then: This,
         $else: This,
@@ -58,7 +59,7 @@ export const ExpectationValidationSchema = Type.Recursive((This) => Type.Partial
     $merge: Type.Ref(ExpectationTargetionalValidationSchema),
     $remove: Type.Ref(ExpectationTargetionalValidationSchema),
 
-    $exec: Type.String(),
+    $exec: Type.Union([Type.String(), Type.Function([Type.Any()], Type.Any())]),
   })),
   { $id: 'ExpectationSchema' }
 ))

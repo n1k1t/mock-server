@@ -1,13 +1,9 @@
-import { Endpoint } from './model';
+import { Endpoint } from '../models';
 
 export default Endpoint
-  .build<null, { body: { id: string } }>()
+  .build<null, { body: void | { ids?: string[] } }>()
   .bindToHttp(<const>{ method: 'DELETE', path: '/_mock/expectations' })
-  .assignHandler(({ reply, body, expectationsStorage }) => {
-    if (!expectationsStorage.has(body.id)) {
-      return reply.notFound();
-    }
-
-    expectationsStorage.delete(body.id);
+  .assignHandler(async ({ reply, body, client }) => {
+    await client.deleteExpectations(body);
     reply.ok(null);
   });

@@ -1,7 +1,5 @@
 import _ from 'lodash';
-
-import { Endpoint } from './model';
-import { serverConfig } from '../../config';
+import { Endpoint } from '../models';
 
 export interface IGetConfigResponsePayload {
   historyRecordsLimit: number;
@@ -11,8 +9,8 @@ export default Endpoint
   .build<IGetConfigResponsePayload>()
   .bindToHttp(<const>{ method: 'GET', path: '/_mock/config' })
   .bindToWebSocket(<const>{ path: 'config:get' })
-  .assignHandler(async ({ reply }) =>
+  .assignHandler(async ({ reply, config }) =>
     reply.ok({
-      historyRecordsLimit: serverConfig.historyRecordsLimit,
+      historyRecordsLimit: config.server.historyRecordsLimit,
     })
   );

@@ -1,14 +1,10 @@
-import type { HistoryRecord } from '../history';
-import { Endpoint } from './model';
+import { HistoryRecord } from '../history';
+import { Endpoint } from '../models';
 
 export default Endpoint
   .build<HistoryRecord[]>()
   .bindToHttp(<const>{ method: 'GET', path: '/_mock/history' })
   .bindToWebSocket(<const>{ path: 'history:get' })
-  .assignHandler(({ reply, historyStorage }) =>
-    reply.ok(
-      [...historyStorage.values()]
-        .sort((a, b) => a.meta.requestedAt - b.meta.requestedAt)
-        .reverse()
-    )
+  .assignHandler(({ reply, storage }) =>
+    reply.ok([...storage.history.values()].sort((a, b) => b.meta.requestedAt - a.meta.requestedAt))
   );

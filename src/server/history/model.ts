@@ -1,6 +1,6 @@
 import { v4 as genUid } from 'uuid';
 
-import { Expectation } from '../expectations';
+import { Expectation } from '../../expectations';
 import { IRequestPlainContext, IResponsePlainContext } from '../models';
 import { IHistoryRecordMeta } from './types';
 

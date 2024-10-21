@@ -1,14 +1,14 @@
 import generateAnimalName from 'random-animal-name';
-import type { AxiosProxyConfig } from 'axios';
+import { AxiosProxyConfig } from 'axios';
 import { Type } from '@n1k1t/typebox';
 import { v4 as genUid } from 'uuid';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import { TRequestProtocol } from '../../types';
 import { exploreNestedExpectationSchema, extractMetaAdditionalFromExpectationSchema } from './utils';
-import { UseValidation, validate } from '../utils';
 import { ExpectationTargetionalValidationSchema, ExpectationValidationSchema } from './validation-schemas';
+import { UseValidation, validate } from '../utils';
+import { TRequestProtocol } from '../types';
 import {
   BuildExpectaionSchema,
   IExpectationDelay,
@@ -52,12 +52,15 @@ export class Expectation {
 
   @UseValidation(Type.Optional(ExpectationValidationSchema))
   public request?: BuildExpectaionSchema<{
+    context: TExpectationContext<'request'>;
+
     validationLocation: 'path' | 'method' | 'headers' | 'body' | 'query';
     manipulationLocation: 'path' | 'method' | 'headers' | 'body' | 'query';
   }>;
 
   @UseValidation(Type.Optional(ExpectationValidationSchema))
   public response?: BuildExpectaionSchema<{
+    context: TExpectationContext<'response'>;
     manipulationLocation: 'headers' | 'data' | 'statusCode';
   }>;
 

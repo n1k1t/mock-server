@@ -1,4 +1,4 @@
-import type { Expectation } from '../expectations';
+import type { Expectation } from '../../expectations';
 import type { HistoryRecord } from '../history';
 
 export interface IWebSocketExchangeEventToPayloadMap {

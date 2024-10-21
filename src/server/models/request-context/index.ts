@@ -3,7 +3,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { IHttpRequestIncommingContext, IRequestPlainContext, IResponsePlainContext, TRequestFlow } from './types';
 import { TRequestMethod, TRequestPayloadType } from '../../../types';
 import { extractHttpIncommingParameters } from './utils';
-import type { Expectation } from '../../expectations';
+import type { Expectation } from '../../../expectations';
 import type { HistoryRecord } from '../../history';
 import { ServerContext } from '../server-context';
 import { ReplyService } from '../reply-service';

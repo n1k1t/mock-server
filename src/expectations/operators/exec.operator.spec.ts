@@ -14,10 +14,10 @@ describe('Expectations.Operators.Exec', () => {
 
   it('should exec by multiline command', () => {
     const context = buildExpectationContext()
-    const command = `{
+    const command = `
       context.body.foo.push({ test: 1 });
       context.body.foo.push({ test: 2 });
-    }`;
+    `;
 
     expect(operator('manipulation', command, context, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
     expect((<any>context.body).foo[2].test).toEqual(1);

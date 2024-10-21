@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Middleware } from './model';
+import { Middleware } from '../models';
 
 export default Middleware
   .build(__filename)
@@ -10,7 +10,7 @@ export default Middleware
         .assign({ error: { code: context.shared.expectation.destroy, isManual: true } })
         .changeState('finished');
 
-      context.webSocketExchange.publish('history:updated', context.shared.historyRecord);
+      context.exchange.ws.publish('history:updated', context.shared.historyRecord);
       return context.http.response.destroy(new Error(context.shared.expectation.destroy));
     }
 

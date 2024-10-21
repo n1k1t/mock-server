@@ -1,6 +1,6 @@
-export type * from './expectations';
+export type * from '../expectations';
 
-export interface IStartHttpServerOptions {
+export interface IMockServerStartOptions {
   port: number;
   host: string;
 }

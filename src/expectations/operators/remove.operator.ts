@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { buildExpectationOperatorHandler, extractContextPayloadSegment } from './utils';
-import { extractByJsonPathSafe } from '../../../utils';
+import { extractByJsonPathSafe } from '../../utils';
 
 export default buildExpectationOperatorHandler<'$remove'>((mode, schema, context) => {
   if (mode !== 'manipulation' || !schema.$location) {

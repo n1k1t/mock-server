@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
+import { Middleware } from '../models';
 import { wait } from '../../utils';
-import { Middleware } from './model';
 
 export default Middleware
   .build(__filename)
