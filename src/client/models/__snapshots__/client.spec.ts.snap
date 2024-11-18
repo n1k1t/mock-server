@@ -1,0 +1,1127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Client.Models.Client should create expectation with complex schema as function 1`] = `
+{
+  "id": "12426262-85a3-4340-969b-272e003722e9",
+  "isEnabled": true,
+  "meta": {
+    "additional": {},
+    "executionsCount": 0,
+  },
+  "name": "MaliciousCobra",
+  "schema": {
+    "request": {
+      "$and": [
+        {
+          "$has": {
+            "$location": "path",
+            "$value": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$valueAnyOf": [
+              "/foo",
+              "/foo/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$match": "/foo/*",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$matchAnyOf": [
+              "/foo/*",
+              "*/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$regExp": {
+              "flags": "",
+              "source": "^\\/foo",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "^\\/foo$",
+              },
+              {
+                "flags": "",
+                "source": "^\\/foo\\/bar$",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload.includes('/foo')",
+            "$location": "path",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$value": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$valueAnyOf": [
+              "/foo",
+              "/foo/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$match": "/foo/*",
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$matchAnyOf": [
+              "/foo/*",
+              "*/bar",
+            ],
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$regExp": {
+              "flags": "",
+              "source": "^\\/foo",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "^\\/foo$",
+              },
+              {
+                "flags": "",
+                "source": "^\\/foo\\/bar$",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload.includes('/foo')",
+            "$location": "path",
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$value": {
+              "bar": "a",
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$valueAnyOf": [
+              {
+                "bar": "a",
+                "foo": "a",
+              },
+              {
+                "bar": "b",
+                "foo": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$match": {
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$matchAnyOf": [
+              {
+                "foo": "a",
+              },
+              {
+                "foo": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload?.foo === 'a'",
+            "$location": "incoming.query",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$value": "a",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$valueAnyOf": [
+              "a",
+              "b",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$match": "a",
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$matchAnyOf": [
+              "a",
+              "b",
+            ],
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$regExp": {
+              "flags": "",
+              "source": "a|b",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$regExpAnyOf": [
+              {
+                "flags": "i",
+                "source": "a",
+              },
+              {
+                "flags": "i",
+                "source": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload === 'a'",
+            "$location": "incoming.query",
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$value": {
+              "bar": [
+                "a",
+              ],
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$valueAnyOf": [
+              {
+                "bar": [
+                  "a",
+                ],
+                "foo": "a",
+              },
+              {
+                "bar": [
+                  "b",
+                ],
+              },
+              {
+                "baz": {},
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": {
+              "baz": {
+                "foo": 1,
+              },
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              {
+                "baz": {},
+              },
+              {
+                "bar": [],
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload?.baz?.foo === 1",
+            "$location": "incoming.body",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz",
+            "$value": {
+              "bar": 1,
+              "foo": 1,
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz",
+            "$valueAnyOf": [
+              {
+                "foo": 1,
+              },
+              {
+                "bar": 1,
+                "foo": 1,
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": {
+              "foo": 1,
+            },
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              {},
+              {
+                "foo": 1,
+              },
+            ],
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload?.foo === 1",
+            "$location": "incoming.body",
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$jsonPath": "123.123.213",
+            "$location": "incoming.body",
+            "$match": {},
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$value": [
+              1,
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$valueAnyOf": [
+              [
+                1,
+              ],
+              [
+                1,
+                2,
+              ],
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": "*",
+            "$path": "baz.baz.0",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              "1",
+              "2",
+            ],
+            "$path": "baz.baz.0",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$regExp": {
+              "flags": "",
+              "source": "1",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "1",
+              },
+              {
+                "flags": "",
+                "source": "2",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload?.[0] === 1",
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+          },
+        },
+      ],
+    },
+    "response": {
+      "$or": [
+        {
+          "$switch": {
+            "$cases": {
+              "200": {
+                "$and": [
+                  {
+                    "$set": {
+                      "$location": "outgoing.data",
+                      "$value": {},
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$location": "outgoing.data",
+                      "$path": "foo",
+                      "$value": "a",
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$exec": "() => ({})",
+                      "$location": "outgoing.headers",
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$location": "outgoing.headers",
+                      "$path": "foo",
+                      "$value": "bar",
+                    },
+                  },
+                ],
+              },
+            },
+            "$default": {
+              "$set": {
+                "$location": "outgoing.data",
+                "$value": {},
+              },
+            },
+            "$location": "outgoing.status",
+          },
+        },
+        {
+          "$switch": {
+            "$cases": {
+              "1": {
+                "$and": [
+                  {
+                    "$merge": {
+                      "$location": "outgoing.data",
+                      "$value": {},
+                    },
+                  },
+                  {
+                    "$remove": {
+                      "$location": "outgoing.data",
+                      "$path": "foo",
+                    },
+                  },
+                ],
+              },
+            },
+            "$location": "incoming.body",
+            "$path": "baz.bar",
+          },
+        },
+        {
+          "$switch": {
+            "$cases": {
+              "1": {
+                "$and": [],
+              },
+            },
+            "$exec": "(payload) => payload.baz.bar",
+            "$location": "incoming.body",
+          },
+        },
+        {
+          "$switch": {
+            "$cases": {
+              "a": {
+                "$and": [
+                  {
+                    "$exec": "({ context }) => {
+                                    if (context.incoming.body.foo === 'a') {
+                                        context.outgoing.status = 200;
+                                    }
+                                }",
+                  },
+                ],
+              },
+            },
+            "$exec": "(payload) => payload.foo",
+            "$location": "outgoing.headers",
+          },
+        },
+      ],
+    },
+  },
+  "type": "HTTP",
+}
+`;
+
+exports[`Client.Models.Client should create expectation with complex schema as object 1`] = `
+{
+  "id": "12426262-85a3-4340-969b-272e003722e9",
+  "isEnabled": true,
+  "meta": {
+    "additional": {},
+    "executionsCount": 0,
+  },
+  "name": "MaliciousCobra",
+  "schema": {
+    "request": {
+      "$and": [
+        {
+          "$has": {
+            "$location": "path",
+            "$value": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$valueAnyOf": [
+              "/foo",
+              "/foo/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$match": "/foo/*",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$matchAnyOf": [
+              "/foo/*",
+              "*/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$regExp": {
+              "flags": "",
+              "source": "^\\/foo",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "^\\/foo$",
+              },
+              {
+                "flags": "",
+                "source": "^\\/foo\\/bar$",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload.includes('/foo')",
+            "$location": "path",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$value": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$valueAnyOf": [
+              "/foo",
+              "/foo/bar",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$match": "/foo/*",
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$matchAnyOf": [
+              "/foo/*",
+              "*/bar",
+            ],
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$regExp": {
+              "flags": "",
+              "source": "^\\/foo",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "path",
+            "$path": "/foo",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "^\\/foo$",
+              },
+              {
+                "flags": "",
+                "source": "^\\/foo\\/bar$",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload.includes('/foo')",
+            "$location": "path",
+            "$path": "/foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$value": {
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$valueAnyOf": [
+              {
+                "foo": "a",
+              },
+              {
+                "foo": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$match": {
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$matchAnyOf": [
+              {
+                "foo": "a",
+              },
+              {
+                "foo": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload, { T }) => T(payload)?.foo === 'a'",
+            "$location": "incoming.query",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$value": "a",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$valueAnyOf": [
+              "a",
+              "b",
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$match": "a",
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$matchAnyOf": [
+              "a",
+              "b",
+            ],
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$regExp": {
+              "flags": "",
+              "source": "a|b",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.query",
+            "$path": "foo",
+            "$regExpAnyOf": [
+              {
+                "flags": "i",
+                "source": "a",
+              },
+              {
+                "flags": "i",
+                "source": "b",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload === 'a'",
+            "$location": "incoming.query",
+            "$path": "foo",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$value": {
+              "bar": [
+                "a",
+              ],
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$valueAnyOf": [
+              {
+                "bar": [
+                  "a",
+                ],
+                "foo": "a",
+              },
+              {
+                "bar": [
+                  "b",
+                ],
+              },
+              {
+                "baz": {},
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": {
+              "baz": {
+                "foo": 1,
+              },
+              "foo": "a",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              {
+                "baz": {},
+              },
+              {
+                "bar": [],
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload, { T }) => T(payload)?.baz?.foo === 1",
+            "$location": "incoming.body",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz",
+            "$value": {
+              "bar": 1,
+              "foo": 1,
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz",
+            "$valueAnyOf": [
+              {
+                "foo": 1,
+              },
+              {
+                "bar": 1,
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": {
+              "foo": 1,
+            },
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              {},
+              {
+                "foo": "1",
+              },
+            ],
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload, { T }) => T(payload)?.foo === 1",
+            "$location": "incoming.body",
+            "$path": "baz",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$value": [
+              1,
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$valueAnyOf": [
+              [
+                1,
+              ],
+              [
+                1,
+                2,
+              ],
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$match": "*",
+            "$path": "baz.baz",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$matchAnyOf": [
+              "1",
+              "2",
+            ],
+            "$path": "baz.baz",
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$regExp": {
+              "flags": "",
+              "source": "1",
+            },
+          },
+        },
+        {
+          "$has": {
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+            "$regExpAnyOf": [
+              {
+                "flags": "",
+                "source": "1",
+              },
+              {
+                "flags": "",
+                "source": "2",
+              },
+            ],
+          },
+        },
+        {
+          "$has": {
+            "$exec": "(payload) => payload === 1",
+            "$location": "incoming.body",
+            "$path": "baz.baz",
+          },
+        },
+      ],
+    },
+    "response": {
+      "$or": [
+        {
+          "$switch": {
+            "$cases": {
+              "200": {
+                "$and": [
+                  {
+                    "$set": {
+                      "$location": "outgoing.data",
+                      "$value": {},
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$location": "outgoing.data",
+                      "$path": "foo",
+                      "$value": "a",
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$exec": "() => ({})",
+                      "$location": "outgoing.headers",
+                    },
+                  },
+                  {
+                    "$set": {
+                      "$location": "outgoing.headers",
+                      "$path": "foo",
+                      "$value": "bar",
+                    },
+                  },
+                ],
+              },
+            },
+            "$default": {
+              "$set": {
+                "$location": "outgoing.data",
+                "$value": {},
+              },
+            },
+            "$location": "outgoing.status",
+          },
+        },
+        {
+          "$switch": {
+            "$cases": {
+              "1": {
+                "$and": [
+                  {
+                    "$merge": {
+                      "$location": "outgoing.data",
+                      "$value": {},
+                    },
+                  },
+                  {
+                    "$remove": {
+                      "$location": "outgoing.data",
+                      "$path": "foo",
+                    },
+                  },
+                ],
+              },
+            },
+            "$location": "outgoing.data",
+            "$path": "baz.bar",
+          },
+        },
+        {
+          "$switch": {
+            "$cases": {
+              "a": {
+                "$and": [
+                  {
+                    "$exec": "({ context }) => {
+                                                    if (context.incoming.body?.foo === 'a') {
+                                                        context.outgoing.status = 200;
+                                                    }
+                                                }",
+                  },
+                ],
+              },
+            },
+            "$exec": "(payload) => payload.foo",
+            "$location": "outgoing.headers",
+          },
+        },
+      ],
+    },
+  },
+  "type": "HTTP",
+}
+`;

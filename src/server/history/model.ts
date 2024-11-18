@@ -1,21 +1,18 @@
 import { v4 as genUid } from 'uuid';
 
-import { Expectation } from '../../expectations';
-import { IRequestPlainContext, IResponsePlainContext } from '../models';
-import { IHistoryRecordMeta } from './types';
+import type { IHistoryRecordMeta } from './types';
+import type { HttpRequestContext } from '../models';
+import type { Expectation } from '../../expectations';
 
-export class HistoryRecord {
+export class History {
+  public TPlain!: Pick<History, 'id' | 'forwaded' | 'error' | 'meta' | 'request'> & {
+    expectation?: Expectation<any>['TPlain'];
+  }
+
   public id: string = genUid();
 
-  public expectation?: Expectation;
-  public response?: IResponsePlainContext;
-
-  public forwaded?: {
-    request: IRequestPlainContext;
-
-    response?: IResponsePlainContext;
-    curl?: string;
-  };
+  public expectation?: Expectation<any>;
+  public forwaded?: Pick<HttpRequestContext, 'incoming' | 'outgoing'>;
 
   public error?: {
     code?: string;
@@ -30,29 +27,46 @@ export class HistoryRecord {
     updatedAt: Date.now(),
   };
 
-  constructor(public request: IRequestPlainContext) {}
+  constructor(public request: Pick<HttpRequestContext, 'incoming' | 'outgoing'>) {}
 
   public changeState(state: IHistoryRecordMeta['state']): this {
     Object.assign(this.meta, { state, updatedAt: Date.now() });
     return this;
   }
 
-  public assign<T extends Partial<Omit<HistoryRecord, 'id' | 'request' | 'meta'>>>(context: T) {
+  public assign<T extends Partial<Omit<History, 'id' | 'request' | 'meta'>>>(context: T) {
     Object.assign(this.meta, { updatedAt: Date.now() });
     return Object.assign(this, context);
   }
 
-  public extendForwarded(
-    this: SetRequiredKeys<this, 'forwaded'>,
-    forwarded: Partial<NonNullable<this['forwaded']>>,
-  ): this {
-    Object.assign(this.meta, { updatedAt: Date.now() });
-    Object.assign(this.forwaded!, forwarded);
+  public assignOutgoing(outgoing: NonNullable<HttpRequestContext['outgoing']>) {
+    this.meta.updatedAt = Date.now();
+    this.request.outgoing = outgoing;
 
     return this;
   }
 
-  static build(request: IRequestPlainContext) {
-    return new HistoryRecord(request);
+  public extendForwarded(forwarded: Partial<NonNullable<History['forwaded']>>) {
+    this.meta.updatedAt = Date.now();
+    this.forwaded = Object.assign(<NonNullable<History['forwaded']>>(this.forwaded ?? {}), forwarded);
+
+    return this;
+  }
+
+  public toPlain(): History['TPlain'] {
+    return {
+      id: this.id,
+      meta: this.meta,
+
+      request: this.request,
+      forwaded: this.forwaded,
+
+      error: this.error,
+      expectation: this.expectation?.toPlain(),
+    };
+  }
+
+  static build(request: History['request']) {
+    return new History(request);
   }
 }

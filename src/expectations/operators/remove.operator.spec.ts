@@ -1,48 +1,40 @@
 import { buildExpectationContext } from '../__utils__';
-import { exploreNestedExpectationSchema } from '../utils';
-
-import operator from './remove.operator';
+import * as operators from './index';
 
 describe('Expectations.Operators.Remove', () => {
-  it('should handle invalid payload', () => {
-    const schema: Parameters<typeof operator>[1] = { $location: 'query' };
-    expect(operator('manipulation', schema, <any>{}, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
-  });
-
-  it('should handle schema without location', () => {
-    expect(operator('manipulation', {}, <any>{}, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
-  });
-
   it('should handle schema with non object payload', () => {
-    const schema: Parameters<typeof operator>[1] = { $location: 'path' };
-    expect(operator('manipulation', schema, <any>{}, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
+    const operator = new operators.$remove(operators, { $location: 'path' });
+    const context = operator.manipulate({ incoming: { path: 'foo' } });
+
+    expect(context.incoming.path).toEqual('foo');
   });
 
   it('should handle schema without targeting properties', () => {
-    const schema: Parameters<typeof operator>[1] = { $location: 'headers' };
-    expect(operator('manipulation', schema, <any>{}, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
+    const operator = new operators.$remove(operators, { $location: 'incoming.headers' });
+    const context = operator.manipulate({ headers: { 'content-type': 'unknown' } });
+
+    expect(context.headers['content-type']).toEqual('unknown');
   });
 
   it('should manipulate by schema using path', () => {
-    const context = buildExpectationContext();
-    const schema: Parameters<typeof operator>[1] = {
-      $location: 'query',
+    const operator = new operators.$remove(operators, {
+      $location: 'incoming.query',
       $path: 'foo',
-    };
+    });
 
-    expect(operator('manipulation', schema, context, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
-    expect((<any>context.query).foo).toBeUndefined();
+    const context = operator.manipulate<any>(buildExpectationContext());
+    expect(context.incoming.query.foo).toBeUndefined();
   });
 
   it('should manipulate by schema using jsonPath', () => {
-    const context = buildExpectationContext();
-    const schema: Parameters<typeof operator>[1] = {
-      $location: 'body',
+    const operator = new operators.$remove(operators, {
+      $location: 'incoming.body',
       $jsonPath: '$.foo[*].bar,baz',
-    };
+    });
 
-    expect(operator('manipulation', schema, context, { exploreNestedSchema: exploreNestedExpectationSchema })).toBeTruthy();
-    expect((<any>context.body).foo[0].bar).toBeUndefined();
-    expect((<any>context.body).foo[1].baz).toBeUndefined();
+    const context = operator.manipulate<any>(buildExpectationContext());
+
+    expect(context.incoming.body.foo[0].bar).toBeUndefined();
+    expect(context.incoming.body.foo[1].baz).toBeUndefined();
   });
 });

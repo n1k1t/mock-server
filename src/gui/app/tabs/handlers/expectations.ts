@@ -1,9 +1,9 @@
-import { getSelectedTab } from '../utils';
 import { emptyPlaceholderComponent, expectationRowComponent } from '../../components';
+import { getSelectedTab } from '../utils';
 
 import context from '../../context';
 
-context.webSocket.subscribe('expectation:added', (expectation) => {
+context.services.ws.subscribe('expectation:added', (expectation) => {
   if (getSelectedTab() !== 'expectations') {
     return null;
   }
@@ -14,7 +14,7 @@ context.webSocket.subscribe('expectation:added', (expectation) => {
   tabContainer.prepend(expectationRowComponent.buildElement(expectation));
 });
 
-context.webSocket.subscribe('expectation:updated', (expectation) => {
+context.services.ws.subscribe('expectation:updated', (expectation) => {
   if (getSelectedTab() !== 'expectations') {
     return null;
   }
@@ -31,7 +31,7 @@ export default async () => {
 
   tabContainer.innerHTML = '';
 
-  const { data } = await context.webSocket.exec('expectations:get', {});
+  const { data } = await context.services.ws.exec('expectations:get');
   if (!data.length) {
     return tabContainer.append(emptyPlaceholderComponent.buildElement());
   }

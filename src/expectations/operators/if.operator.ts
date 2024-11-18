@@ -1,15 +1,64 @@
-import { buildExpectationOperatorHandler } from './utils';
+import { IExpectationOperatorContext, IExpectationOperatorsSchema, TExpectationOperatorLocation } from '../types';
+import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 
-export default buildExpectationOperatorHandler<'$if'>((mode, schema, context, { exploreNestedSchema }) => {
-  const { $then, $else, ...schemaPart } = schema;
-  const result = exploreNestedSchema(mode, schemaPart, context);
+export default class IfExpectationOperator<
+  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
+  TValue = void
+> extends ExpectationOperator<
+  TContext,
+  {
+    $condition: Pick<IExpectationOperatorsSchema<TContext, TLocation, TValue>, '$and' | '$exec' | '$has' | '$or' | '$not'>;
 
-  if ($then && result) {
-    return exploreNestedSchema(mode, $then, context);
+    $then?: IExpectationOperatorsSchema<TContext, TLocation, TValue>;
+    $else?: IExpectationOperatorsSchema<TContext, TLocation, TValue>;
   }
-  if ($else && !result) {
-    return exploreNestedSchema(mode, $else, context);
+> {
+  public compiled = {
+    condition: (() => {
+      const extracted = this.extractNestedSchema(this.command.$condition);
+      if (!extracted) {
+        return null;
+      }
+
+      const Operator = <TExpectationOperatorConstructor<TContext>>this.operators[extracted.key];
+      return new Operator(this.operators, extracted.nested);
+    })(),
+
+    ...(this.command.$then && {
+      then: (() => {
+        const extracted = this.extractNestedSchema(this.command.$then);
+        if (!extracted) {
+          return null;
+        }
+
+        const Operator = <TExpectationOperatorConstructor<TContext>>this.operators[extracted.key];
+        return new Operator(this.operators, extracted.nested);
+      })(),
+    }),
+
+    ...(this.command.$else && {
+      else: (() => {
+        const extracted = this.extractNestedSchema(this.command.$else);
+        if (!extracted) {
+          return null;
+        }
+
+        const Operator = <TExpectationOperatorConstructor<TContext>>this.operators[extracted.key];
+        return new Operator(this.operators, extracted.nested);
+      })(),
+    }),
+  };
+
+  public match(context: TContext): boolean {
+    const result = this.compiled.condition?.match(context) ?? false;
+    return (result ? this.compiled.then?.match(context) : this.compiled.else?.match(context)) ?? false;
   }
 
-  return false;
-});
+  public manipulate<T extends TContext>(context: T): T {
+    const result = this.compiled.condition?.match(context) ?? false;
+
+    result ? this.compiled.then?.manipulate(context) : this.compiled.else?.manipulate(context);
+    return context;
+  }
+}

@@ -1,38 +1,48 @@
-import { IRequestPlainContext, IResponsePlainContext } from '../../server/models';
+import { IExpectationOperatorContext } from '../types';
 
-export const buildExpectationContext = (): IRequestPlainContext & IResponsePlainContext => ({
-  path: '/foo/bar/baz',
-  method: 'POST',
-  payloadType: 'json',
+export const buildExpectationContext = (): PartialDeep<IExpectationOperatorContext> => ({
+  incoming: {
+    type: 'json',
 
-  statusCode: 200,
+    path: '/foo/bar/baz',
+    method: 'POST',
 
-  dataRaw: '{"foo": {"bar": {"baz": true}}}',
-  data: {
-    foo: {
+    query: {
+      foo: 1,
       bar: {
-        baz: true,
+        baz: null,
       },
     },
-  },
 
-  query: {
-    foo: 1,
-    bar: {
-      baz: null,
+    bodyRaw: '{"foo": [{"bar": 1}, {"baz": ["2"]}]}',
+    body: {
+      foo: [
+        { bar: 1 },
+        { baz: ['2'] },
+      ],
+    },
+
+    headers: {
+      'content-type': 'application/json',
+      'accept-language': 'en/gb',
     },
   },
 
-  bodyRaw: '{"foo": [{"bar": 1}, {"baz": ["2"]}]}',
-  body: {
-    foo: [
-      { bar: 1 },
-      { baz: ['2'] },
-    ],
-  },
+  outgoing: {
+    type: 'json',
+    status: 200,
 
-  headers: {
-    'content-type': 'application/json',
-    'accept-language': 'en/gb',
+    dataRaw: '{"foo": {"bar": {"baz": true}}}',
+    data: {
+      foo: {
+        bar: {
+          baz: true,
+        },
+      },
+    },
+
+    headers: {
+      'content-type': 'application/json',
+    },
   },
 });

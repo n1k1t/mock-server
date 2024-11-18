@@ -1,47 +1,53 @@
 import _ from 'lodash';
-import { Middleware } from '../models';
+import { extractPayloadType, HttpRequestContext, IRequestContextIncoming, IRequestContextOutgoing, Middleware, serializePayload } from '../models';
+
+const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextOutgoing => ({
+  type: incoming.type,
+  status: 200,
+
+  data: incoming.type === 'plain' ? '' : {},
+  dataRaw: '',
+
+  headers: {
+    'content-type': incoming.type === 'json'
+      ? 'application/json'
+      : incoming.type === 'xml'
+      ? 'application/xml'
+      : incoming.headers['content-type'] ?? 'text/plain',
+  },
+});
 
 export default Middleware
-  .build(__dirname)
-  .requires(['historyRecord', 'expectation'])
+  .build(__dirname, ['history', 'expectation'])
   .assignHandler((context) => {
-    const responseContext = context.shared.expectation.manipulateContext(
-      'response',
-      Object.assign(context.toPlain(), context.shared.forwarded?.response ?? {
-        statusCode: 200,
-        headers: {},
+    const { incoming, forwarded } = context.toPlain({ locations: ['incoming', 'forwarded.outgoing'], clone: true });
 
-        data: {},
-        dataRaw: '',
-      }),
-      { clone: true }
-    );
+    const manipulated = context.shared.expectation.response?.manipulate({
+      incoming,
+      outgoing: forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming),
+    });
 
-    const dataRaw = Buffer.from(
-      Object.keys(responseContext?.data ?? {}).length
-        ? JSON.stringify(responseContext.data)
-        : (responseContext.dataRaw ?? '')
-    );
+    const outgoing = manipulated?.outgoing ?? forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming);
+    const type = extractPayloadType(outgoing.headers);
 
-    Object.assign(responseContext, {
-      dataRaw: dataRaw.toString(),
-      headers: {
-        ...(responseContext.payloadType === 'json' && { 'content-type': 'application/json' }),
-        ...responseContext.headers,
+    const data = outgoing.data === undefined ? outgoing.dataRaw : outgoing.data;
+    const dataRaw = Buffer.from(typeof data === 'object' ? serializePayload(type, data) : String(data));
 
-        ...((!responseContext.headers?.['transfer-encoding'] && !context.http.request.headers['transfer-encoding']) && {
+    Object.assign(outgoing, {
+      type,
+      dataRaw,
+
+      headers: Object.assign(outgoing.headers, {
+        ...((!outgoing.headers?.['transfer-encoding'] && !context.request.headers['transfer-encoding']) && {
           'content-length': String(dataRaw.length),
         }),
-      }
-    })
+      })
+    });
 
-    context.http.response.writeHead(responseContext.statusCode ?? 200, responseContext.headers);
-    context.http.response.write(responseContext.dataRaw);
-    context.http.response.end();
+    context.response.writeHead(outgoing.status ?? 200, outgoing.headers);
+    context.response.write(outgoing.dataRaw);
+    context.response.end();
 
-    context.shared.historyRecord
-      .assign({ response: responseContext })
-      .changeState('finished');
-
-    context.exchange.ws.publish('history:updated', context.shared.historyRecord);
+    context.shared.history.assignOutgoing(outgoing).changeState('finished');
+    context.server.exchange.ws.publish('history:updated', context.shared.history.toPlain());
   });

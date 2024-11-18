@@ -4,7 +4,7 @@ import { TEndpoints } from '../types';
 import { cast } from '../../utils';
 
 export default ClientMethod
-  .build<TEndpoints['ping']['result'], TEndpoints['ping']['body']>()
+  .build<TEndpoints['ping']['result'], void>()
   .provide('remote', (instance) => async () => {
     const response = await instance
       .request<TEndpoints['ping']['response']>({

@@ -1,24 +1,19 @@
 import _ from 'lodash';
-import { buildExpectationOperatorHandler } from './utils';
 
-const arrowFunctionRegExp = /^\([^)]*\)\s*=>/;
+import { IExpectationOperatorExecUtils, IExpectationOperatorContext } from '../types';
+import { ExpectationOperator } from '../models/operator';
 
-export default buildExpectationOperatorHandler<'$exec'>(
-  (mode, command, context) => {
-    if (mode !== 'manipulation') {
-      return true;
-    }
+export default class ExecExpectationOperator<
+  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+> extends ExpectationOperator<TContext, string | TFunction<unknown, [IExpectationOperatorExecUtils<TContext>]>> {
+  public compiled = this.compileExecHandler(this.command, ['utils']);
 
-    const parameters = { _, context };
-    const fn = typeof command === 'function'
-      ? command
-      : Function('{ _, context }', `${arrowFunctionRegExp.test(command.trim()) ? 'return' : ''} ${command}`);
-
-    const handled = fn(parameters);
-    if (typeof handled === 'function') {
-      handled(parameters);
-    }
-
-    return true;
+  public match(context: TContext): boolean {
+    return this.compiled(context) ?? false;
   }
-);
+
+  public manipulate<T extends TContext>(context: T): T {
+    this.compiled(context);
+    return context;
+  }
+}

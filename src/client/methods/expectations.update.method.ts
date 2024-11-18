@@ -1,6 +1,6 @@
 import merge from 'deepmerge';
 
-import { prepareExpectationToRequest } from '../utils';
+import { prepareExpectationBodyToRequest } from '../utils';
 import { handleRequestError } from '../utils';
 import { ValidationError } from '../errors';
 import { ClientMethod } from '../models';
@@ -15,7 +15,7 @@ export default ClientMethod
       .request<TEndpoints['updateExpectation']['response']>({
         data: {
           id: body.id,
-          body: prepareExpectationToRequest(body.set),
+          body: prepareExpectationBodyToRequest(body.set),
         },
 
         ...cast<TEndpoints['updateExpectation']['location']>({
@@ -28,14 +28,14 @@ export default ClientMethod
     return response.data.data;
   })
   .provide('onsite', (context) => async (body) => {
-    const expectation = context.storage.expectations.get(body.id);
-    if (!expectation) {
+    const found = context.storage.expectations.get(body.id);
+    if (!found) {
       return null;
     }
 
-    const updated = Expectation.build(expectation.type, merge(expectation, body.set ?? {}));
-    const errors = updated.validate();
+    const updated = Expectation.build(merge(found.toPlain(), body.set ?? {}));
 
+    const errors = updated.validate();
     if (errors.length) {
       throw new ValidationError({}, errors);
     }
@@ -43,5 +43,5 @@ export default ClientMethod
     context.storage.expectations.set(body.id, updated);
     context.exchange.ws.publish('expectation:updated', updated);
 
-    return updated;
+    return updated.toPlain();
   });

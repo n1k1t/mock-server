@@ -8,9 +8,7 @@ export interface IGetConfigResponsePayload {
 export default Endpoint
   .build<IGetConfigResponsePayload>()
   .bindToHttp(<const>{ method: 'GET', path: '/_mock/config' })
-  .bindToWebSocket(<const>{ path: 'config:get' })
-  .assignHandler(async ({ reply, config }) =>
-    reply.ok({
-      historyRecordsLimit: config.server.historyRecordsLimit,
-    })
+  .bindToWs(<const>{ path: 'config:get' })
+  .assignHandler(async ({ reply, server }) =>
+    reply.ok({ historyRecordsLimit: server.config.server.historyRecordsLimit })
   );

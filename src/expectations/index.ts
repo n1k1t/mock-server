@@ -1,4 +1,3 @@
-export * from './storage';
-export * from './model';
+export * from './models';
 export * from './types';
 export * from './utils';

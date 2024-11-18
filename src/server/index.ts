@@ -2,19 +2,17 @@ import { IncomingMessage, ServerResponse, createServer } from 'http';
 import { Server } from 'socket.io';
 import _ from 'lodash';
 
-import { RequestContext, ServerContext } from './models';
-import { IMockServerStartOptions } from './types';
-import { internalEndpointsMap } from './router';
+import { HttpRequestContext, Middleware, ServerContext, WsRequestContext } from './models';
+import { routes } from './router';
 
 import * as middlewares from './middlewares';
 
 export * from './proxy';
-export * from './types';
 
-const middlewaresToUse = [
+const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [
   middlewares.resolvePublicMiddleware,
   middlewares.handleInternalMiddleware,
-  middlewares.validateExpectationRequestMiddleware,
+  middlewares.matchExpectationMiddleware,
   middlewares.addHistoryMiddleware,
   middlewares.handleExpectationForwardMiddleware,
   middlewares.handleExpectationDelayMiddleware,
@@ -22,55 +20,48 @@ const middlewaresToUse = [
   middlewares.replyMiddleware,
 ];
 
-const handleHttpRequestWithMiddlewares = (
-  context: SetRequiredKeys<RequestContext, 'http'> & { shared: any },
-  position: number = 0
-): unknown => middlewaresToUse[position]?.compile(context).exec(
-  context,
-  (result?: object) => handleHttpRequestWithMiddlewares(context.extendShared(result ?? {}), ++position)
-);
+const handleHttpRequestWithMiddlewares = (context: HttpRequestContext, position: number = 0): unknown =>
+  middlewaresToUse[position]?.exec(
+    context,
+    (result?: unknown) => handleHttpRequestWithMiddlewares(context.share(result ?? {}), ++position)
+  );
 
-const httpRequestListener = (serverContext: ServerContext) =>
-  async (request: IncomingMessage, response: ServerResponse) => {
-    const requestContext = await RequestContext
-      .build()
-      .extendWithServerContext(serverContext)
-      .assignFlow('http', { request, response })
-      .prepareHttpIncommingContext();
-
-    return handleHttpRequestWithMiddlewares(requestContext);
-  }
+const httpRequestListener = (context: ServerContext) =>
+  async (request: IncomingMessage, response: ServerResponse) =>
+    handleHttpRequestWithMiddlewares(await HttpRequestContext.build(context, request, response));
 
 export class MockServer {
   public authority = `http://${this.options.host}:${this.options.port}`;
   public context = ServerContext.build();
 
-  constructor(public options: IMockServerStartOptions) {}
+  constructor(public options: {
+    port: number;
+    host: string;
+  }) {}
 
   get client() {
     return this.context.client;
   }
 
-  static async start(options: IMockServerStartOptions) {
+  static async start(options: MockServer['options']) {
     const server = new MockServer(options);
 
     const http = createServer(httpRequestListener(server.context));
-    const webSocket = new Server(http);
+    const ws = new Server(http);
 
-    webSocket.on('connection', (socket) =>
-      Object.values(internalEndpointsMap.ws).forEach((route) =>
-        socket.on(route.webSocket.path, (...args) =>
+    ws.on('connection', (socket) =>
+      Object.values(routes.ws).forEach((route) =>
+        socket.on(route.ws.path, (...args) =>
           route.handler?.(
-            RequestContext
-              .build()
-              .extendWithServerContext(server.context)
-              .assignFlow('ws', { callback: _.last(args) })
-              .assign({ body: _.first(args) })
+            WsRequestContext.build(server.context, {
+              callback: _.last(args),
+              body: _.first(args)
+            })
         ))
       )
     );
 
-    server.context.assignWebSocketExchange(webSocket);
+    server.context.assignWsExchange(ws);
 
     await new Promise<void>((resolve) =>
       http.listen(options.port, options.host, () => {

@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 
-import { buildWebSocketExchange } from '../web-socket-exchange';
-import { ExpectationsStorage } from '../../expectations/storage';
+import { ExpectationsStorage } from '../../expectations/models/storage';
+import { buildWsExchange } from '../ws-exchange';
 import { HistoryStorage } from '../history/storage';
 import { OnsiteClient } from '../../client';
 
@@ -17,11 +17,11 @@ export class ServerContext {
   };
 
   public exchange = {
-    ws: buildWebSocketExchange({ emit: () => false }),
+    ws: buildWsExchange({ emit: () => false }),
   };
 
-  public assignWebSocketExchange(io: Server) {
-    this.exchange.ws = buildWebSocketExchange(io);
+  public assignWsExchange(io: Server) {
+    this.exchange.ws = buildWsExchange(io);
     return this;
   }
 

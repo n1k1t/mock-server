@@ -1,16 +1,16 @@
-import { Expectation } from '../../expectations';
+import { Expectation, TBuildExpectationConfiguration } from '../../expectations';
 import { Endpoint } from '../models';
 
-type TBody = Partial<Pick<Expectation, 'delay' | 'destroy' | 'forward' | 'request' | 'response' | 'isEnabled'>>;
-
 export default Endpoint
-  .build<Expectation, { body: { id: string, set: TBody } }>()
+  .build<Expectation['TPlain'], {
+    body: {
+      id: string;
+      set: Partial<Omit<TBuildExpectationConfiguration<any>, 'type'>>;
+    };
+  }>()
   .bindToHttp(<const>{ method: 'PUT', path: '/_mock/expectations' })
-  .bindToWebSocket(<const>{ path: 'expectations:update' })
-  .assignHandler(async ({ reply, body, client }) => {
-    const result = await client.updateExpectation(body);
-
-    result
-      ? reply.ok(result)
-      : reply.notFound();
+  .bindToWs(<const>{ path: 'expectations:update' })
+  .assignHandler(async ({ reply, incoming, server }) => {
+    const result = await server.client.updateExpectation(incoming.body);
+    result ? reply.ok(result) : reply.notFound();
   });

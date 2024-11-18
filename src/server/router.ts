@@ -1,30 +1,20 @@
 import _ from 'lodash';
 
-import type { RequestContext, Endpoint } from './models';
+import type { Endpoint } from './models';
 import * as endpoints from './endpoints';
 
-interface IInternalEndpointsMap {
+interface IRoutes {
   http: Record<string, SetRequiredKeys<Endpoint, 'http'>>;
-  ws: Record<string, SetRequiredKeys<Endpoint, 'webSocket'>>;
-}
+  ws: Record<string, SetRequiredKeys<Endpoint, 'ws'>>;
+};
 
-export const internalEndpointsMap = Object.values(endpoints).reduce((acc, endpoint) => {
+export const routes = Object.values(endpoints).reduce((acc, endpoint) => {
   if (endpoint.http) {
     _.set(acc, ['http', `${endpoint.http.method}:${endpoint.http.path}`], endpoint);
   }
-  if (endpoint.webSocket) {
-    _.set(acc, ['ws', endpoint.webSocket.path], endpoint);
+  if (endpoint.ws) {
+    _.set(acc, ['ws', endpoint.ws.path], endpoint);
   }
 
   return acc;
-}, <IInternalEndpointsMap>{ http: {}, ws: {} });
-
-export const resolveInternalEndpoint =
-  (requestContext: SetRequiredKeys<RequestContext, 'flow'>): { handle: TFunction } | null => {
-    const key = [requestContext.method, requestContext.path].filter(Boolean).join(':');
-    const endpoint = internalEndpointsMap[requestContext.flow][key];
-
-    return endpoint?.handler
-      ? { handle: () => (endpoint.handler!)(requestContext) }
-      : null;
-  }
+}, <IRoutes>{ http: {}, ws: {} });

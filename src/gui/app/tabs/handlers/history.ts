@@ -1,12 +1,12 @@
 import _unset from 'lodash/unset';
 import _set from 'lodash/set';
 
-import { getSelectedTab } from '../utils';
 import { emptyPlaceholderComponent, historyRecordRowComponent } from '../../components';
+import { getSelectedTab } from '../utils';
 
 import context from '../../context';
 
-context.webSocket.subscribe('history:added', (historyRecord) => {
+context.services.ws.subscribe('history:added', (history) => {
   if (getSelectedTab() !== 'history') {
     return null;
   }
@@ -14,7 +14,7 @@ context.webSocket.subscribe('history:added', (historyRecord) => {
   const { tabContainer } = context.elements;
 
   tabContainer.querySelector('div.empty-placeholder')?.remove();
-  tabContainer.prepend(historyRecordRowComponent.buildElement(historyRecord));
+  tabContainer.prepend(historyRecordRowComponent.buildElement(history));
 
   if ((tabContainer.childNodes.length ?? 0) > context.config.historyRecordsLimit) {
     const historyRecordElementToRemove = tabContainer.lastChild;
@@ -27,15 +27,15 @@ context.webSocket.subscribe('history:added', (historyRecord) => {
   }
 });
 
-context.webSocket.subscribe('history:updated', (historyRecord) => {
+context.services.ws.subscribe('history:updated', (history) => {
   if (getSelectedTab() !== 'history') {
     return null;
   }
 
   const { tabContainer } = context.elements;
-  const rowElement = tabContainer.querySelector(`div.row[id="${historyRecord.id}"]`);
+  const rowElement = tabContainer.querySelector(`div.row[id="${history.id}"]`);
 
-  rowElement?.before(historyRecordRowComponent.buildElement(historyRecord));
+  rowElement?.before(historyRecordRowComponent.buildElement(history));
   rowElement?.remove();
 });
 
@@ -44,7 +44,7 @@ export default async () => {
 
   tabContainer.innerHTML = '';
 
-  const { data } = await context.webSocket.exec('history:get', {});
+  const { data } = await context.services.ws.exec('history:get');
   if (!data.length) {
     return tabContainer.append(emptyPlaceholderComponent.buildElement());
   }

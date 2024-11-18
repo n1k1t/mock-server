@@ -3,11 +3,11 @@ import type { AxiosInstance } from 'axios';
 import type { ServerContext } from '../../server/models';
 import { cast } from '../../utils';
 
-type TClientMethodHandler<TContext, TResult, TBody> = (context: TContext) => (body: TBody) => Promise<TResult>;
+type THandler<TContext, TResult, TBody> = (context: TContext) => (body: TBody) => Promise<TResult>;
 
-interface IClientMethodHandlers<TResult = void, TBody = void> {
-  remote: TClientMethodHandler<AxiosInstance, TResult, TBody>;
-  onsite: TClientMethodHandler<ServerContext, TResult, TBody>;
+export interface IClientMethodHandlers<TResult = void, TBody = void> {
+  remote: THandler<AxiosInstance, TResult, TBody>;
+  onsite: THandler<ServerContext, TResult, TBody>;
 }
 
 export class ClientMethod<TResult = void, TBody = void> {
@@ -31,7 +31,7 @@ export class ClientMethod<TResult = void, TBody = void> {
     type: K,
     context: Parameters<IClientMethodHandlers<TResult, TBody>[K]>[0]
   ) {
-    const handler: TClientMethodHandler<any, TResult, TBody> = this.handlers[type];
+    const handler: THandler<any, TResult, TBody> = this.handlers[type];
     return handler(context);
   }
 

@@ -6,20 +6,22 @@ export type TMethodsSchema = {
 };
 
 export interface IRemoteClientConnectOptions {
-  host: string
-  port: number
-  timeout?: number
+  host: string;
+  port: number;
+  timeout?: number;
 }
 
 export type TEndpoints = {
   [K in keyof typeof endpoints]: {
+    http: (typeof endpoints)[K]['http'];
+    ws: (typeof endpoints)[K]['ws'];
+
     location: {
       url: (typeof endpoints)[K]['http']['path'];
       method: (typeof endpoints)[K]['http']['method'];
     };
 
     body: (typeof endpoints)[K]['TParameters']['body'];
-
     result: (typeof endpoints)[K]['TResponse']['data'];
     response: (typeof endpoints)[K]['TResponse'];
   };

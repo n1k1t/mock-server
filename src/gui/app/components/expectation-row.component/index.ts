@@ -2,7 +2,8 @@ import JsonFormatHighlight from '../../../../../../json-formatter';
 import hbs from 'handlebars';
 import _pick from 'lodash/pick';
 
-import type { getExpectationsList } from '../../../../server/endpoints';
+import type { Expectation } from '../../../../expectations';
+
 import { popupsContainerComponent } from '../popups-container.component';
 import { Component } from '../../models';
 
@@ -12,7 +13,7 @@ const template = require('./template.hbs');
 const render = hbs.compile(template);
 
 export class ExpectationRowComponent extends Component {
-  public buildElement(expectation: typeof getExpectationsList['TResponse']['data'][0]): Element {
+  public buildElement(expectation: Expectation): Element {
     const jsonComponent = new JsonFormatHighlight(
       _pick(expectation, ['id', 'type', 'destroy', 'delay', 'request', 'response', 'forward']),
       1,
@@ -26,7 +27,7 @@ export class ExpectationRowComponent extends Component {
 
     element.querySelector('pre')?.appendChild(jsonComponent.render());
     element.querySelector('button.activity')?.addEventListener('click', () =>
-      context.webSocket.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } })
+      context.services.ws.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } })
     );
 
     return element;

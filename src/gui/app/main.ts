@@ -12,9 +12,9 @@ initHandlebars();
 context.instances.ws.on('connect', async () => {
   console.log('WebSocket has connected');
 
-  await context.webSocket.exec('ping', {});
+  await context.services.ws.exec('ping');
 
-  const { data } = await context.webSocket.exec('config:get', {});
+  const { data } = await context.services.ws.exec('config:get');
   Object.assign(context, { config: data });
 
   initTabsPanel();

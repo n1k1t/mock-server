@@ -8,33 +8,33 @@ import { Middleware } from '../models';
 export default Middleware
   .build(__filename)
   .assignHandler(async (context, next) => {
-    if (!context.path.includes(context.config.client.publicRoute)) {
+    if (!context.incoming.path.includes(context.server.config.client.publicRoute)) {
       return next();
     }
 
-    const requestPath = context.path.replace(context.config.client.publicRoute, '');
+    const requestPath = context.incoming.path.replace(context.server.config.client.publicRoute, '');
     const requestPathDetails = path.parse(requestPath);
 
     if (!requestPath) {
-      return context.http.response
-        .writeHead(301, 'Moved', { Location: path.join(context.config.client.publicRoute, '/') })
+      return context.response
+        .writeHead(301, 'Moved', { Location: path.join(context.server.config.client.publicRoute, '/') })
         .end();
     }
 
     if (requestPathDetails.dir === '/' && !requestPathDetails.ext) {
-      context.http.response.writeHead(200, 'Ok', { 'Content-type': 'text/html;charset=utf-8' });
+      context.response.writeHead(200, 'Ok', { 'Content-type': 'text/html;charset=utf-8' });
 
-      return createReadStream(path.join(context.config.client.publicDirPath, '/index.html'))
-        .pipe(context.http.response);
+      return createReadStream(path.join(context.server.config.client.publicDirPath, '/index.html'))
+        .pipe(context.response);
     }
 
-    const fileStat = await fs.stat(path.join(context.config.client.publicDirPath, requestPath)).catch(() => null);
+    const fileStat = await fs.stat(path.join(context.server.config.client.publicDirPath, requestPath)).catch(() => null);
     if (fileStat === null) {
-      return context.http.response
+      return context.response
         .writeHead(404, 'Not found')
         .end();
     }
 
-    return createReadStream(path.join(context.config.client.publicDirPath, requestPath))
-      .pipe(context.http.response);
+    return createReadStream(path.join(context.server.config.client.publicDirPath, requestPath))
+      .pipe(context.response);
   });

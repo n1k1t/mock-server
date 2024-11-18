@@ -1,8 +1,9 @@
 import JsonFormatHighlight from '../../../../../../json-formatter';
-import hbs from 'handlebars';
 import _pick from 'lodash/pick';
+import hbs from 'handlebars';
 
-import type { getHistoryRecordsList } from '../../../../server/endpoints';
+import type { History } from '../../../../server/history';
+
 import { popupsContainerComponent } from '../popups-container.component';
 import { Component } from '../../models';
 
@@ -10,18 +11,18 @@ const template = require('./template.hbs');
 const render = hbs.compile(template);
 
 export class HistoryRecordRowComponent extends Component {
-  public buildElement(historyRecord: typeof getHistoryRecordsList['TResponse']['data'][0]): Element {
-    const { request, response, forwaded, expectation } = historyRecord;
+  public buildElement(history: History): Element {
+    const { request, request: response, forwaded, expectation } = history;
 
     const element = Object.assign(
       this.compileHtmlStringToElement(
-        render(Object.assign(historyRecord, {
+        render(Object.assign(history, {
           ...((!response && !expectation) && {
             response: { statusCode: 404},
           }),
         }))
       ),
-      { id: historyRecord.id }
+      { id: history.id }
     );
 
     const jsonContainerElement = element.querySelector('pre');
@@ -33,7 +34,7 @@ export class HistoryRecordRowComponent extends Component {
 
       if (element.querySelector('pre div.json-formatter-row') === null) {
         const jsonComponent = new JsonFormatHighlight(
-          Object.assign(_pick(historyRecord, ['error']), {
+          Object.assign(_pick(history, ['error']), {
             request: Object.assign(_pick(request, ['path', 'method', 'headers']), {
               ...(request.bodyRaw.length && { body: request.bodyRaw }),
               ...(Object.keys(request.query ?? {}).length && { query: request.query }),

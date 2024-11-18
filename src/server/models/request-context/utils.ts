@@ -1,14 +1,23 @@
-import { IncomingMessage } from 'http';
-import { parse as parseUrl } from 'url';
 import { parse as parseQueryString } from 'querystring';
+import { XMLBuilder, XMLParser } from 'fast-xml-parser';
+import { parse as parseUrl } from 'url';
+import { IncomingMessage } from 'http';
 import _ from 'lodash';
 
+import { IRequestContextIncoming } from './types';
+import { TRequestPayloadType } from '../../../types';
 import { parseJsonSafe } from '../../../utils';
-import { TRequestMethod, TRequestPayloadType } from '../../../types';
-import { IRequestPlainContext } from './types';
 
-const extractHttpQuerySearchParams = (queryString: string) => {
-  return Object.entries(parseQueryString(queryString)).reduce((acc, [key, value]) => {
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+});
+
+const xmlBuilder = new XMLBuilder({
+  ignoreAttributes: false,
+});
+
+const parseQuerySearch = (queryString: string): Record<string, unknown> =>
+  Object.entries(parseQueryString(queryString)).reduce((acc, [key, value]) => {
     const valueAsJson = _.flatten([value]).map(arrValue => {
       const parsingArrayValueAsJsonResult = parseJsonSafe(arrValue ?? '');
       return parsingArrayValueAsJsonResult.status === 'OK' ? parsingArrayValueAsJsonResult.result : arrValue;
@@ -16,44 +25,63 @@ const extractHttpQuerySearchParams = (queryString: string) => {
 
     return _.set(acc, key, valueAsJson?.length === 1 ? valueAsJson[0] : valueAsJson);
   }, {});
-}
 
-export const extractHttpPayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType => {
+
+export const extractPayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType => {
   const contentTypeKey = Object.keys(headers).find((key) => key.toLowerCase() === 'content-type');
   const contextType = _.flatten([_.get(headers, contentTypeKey ?? '', '')]).join(',').toLowerCase();
 
   if (contextType.includes('application/json')) {
     return 'json'
   }
-  if (contextType.includes('text/xml')) {
+  if (contextType.includes('/xml')) {
     return 'xml'
   }
 
   return 'plain';
 }
 
-export const extractHttpIncommingParameters = async (
-  request: IncomingMessage
-): Promise<IRequestPlainContext> => {
-  let bodyRaw = '';
+export const parsePayload = (type: TRequestPayloadType, raw: string): object | undefined => {
+  if (type === 'json') {
+    const parsed = parseJsonSafe(raw);
+    return parsed.status === 'OK' ? parsed.result : undefined;
+  }
+  if (type === 'xml') {
+    return xmlParser.parse(raw) ?? undefined;
+  }
 
-  request.on('data', chunk => bodyRaw += chunk);
-  await new Promise(resolve => request.on('end', resolve));
+  return undefined;
+}
 
-  const { pathname, query: rawQuery } = parseUrl(request?.url ?? '');
-  const parsingBodyResult = parseJsonSafe(bodyRaw);
-  const query = extractHttpQuerySearchParams(rawQuery ?? '');
+export const serializePayload = (type: TRequestPayloadType, payload: object | null): string => {
+  if (type === 'json') {
+    return JSON.stringify(payload);
+  }
+  if (type === 'xml') {
+    return xmlBuilder.build(payload ?? {});
+  }
+
+  return '';
+}
+
+export const extractHttpIncommingParameters = (
+  request: IncomingMessage & { incomingBodyRaw: string }
+): IRequestContextIncoming => {
+  const { pathname, query: rawQuery } = parseUrl(request.url ?? '');
+
+  const type = extractPayloadType(request.headers);
+  const query = parseQuerySearch(rawQuery ?? '');
 
   return {
-    payloadType: extractHttpPayloadType(request.headers),
+    type,
 
-    method: <TRequestMethod>request.method ?? 'GET',
+    method: String(request.method ?? 'GET').toUpperCase(),
     path: pathname ?? '/',
 
     query,
 
-    body: parsingBodyResult.status === 'OK' ? parsingBodyResult.result : undefined,
-    bodyRaw,
+    bodyRaw: request.incomingBodyRaw,
+    body: parsePayload(type, request.incomingBodyRaw),
 
     headers: Object
       .entries(request.headers)

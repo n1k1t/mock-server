@@ -1,32 +1,26 @@
-import { TRequestMethod, TRequestPayloadType } from '../../../types';
+import { TRequestPayloadType } from '../../../types';
 
-export type TRequestFlow = 'http' | 'ws';
+export type TRequestContextType = 'http' | 'ws';
 
-export interface IHttpRequestIncommingContext {
-  body?: object | void;
-  query?: object | void;
-  headers?: Record<string, string>;
-}
+export interface IRequestContextIncoming {
+  type: TRequestPayloadType;
 
-export interface IRequestPlainContext<T extends IHttpRequestIncommingContext = IHttpRequestIncommingContext> {
   path: string;
-  method: TRequestMethod;
-  payloadType: TRequestPayloadType;
+  method: string;
+  headers: Record<string, string | string[]>;
 
-  body?: T['body'];
-  bodyRaw: string;
+  query?: Record<string, unknown>;
 
-  query: T['query'];
-  headers: T['headers'];
+  body?: unknown;
+  bodyRaw?: string;
 }
 
-export interface IResponsePlainContext extends Omit<
-  IRequestPlainContext,
-  'query' | 'body' | 'bodyRaw' | 'path' | 'method'
-> {
-  statusCode?: number;
-  error?: Error;
+export interface IRequestContextOutgoing {
+  type: TRequestPayloadType;
 
-  data?: object;
+  status: number;
+  headers: Record<string, string | string[]>;
+
+  data?: unknown;
   dataRaw?: string;
 }

@@ -1,13 +1,11 @@
-import { IRequestPlainContext } from '../models';
-import { HistoryRecord } from './model';
-
+import { History } from './model';
 import config from '../../config';
 
-export class HistoryStorage extends Map<string, HistoryRecord> {
+export class HistoryStorage extends Map<string, History> {
   private idsStack: string[] = [];
 
-  public register(requestContext: IRequestPlainContext): HistoryRecord {
-    const historyRecord = HistoryRecord.build(requestContext);
+  public register(request: History['request']): History {
+    const historyRecord = History.build(request);
 
     this.set(historyRecord.id, historyRecord);
 

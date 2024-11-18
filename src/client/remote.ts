@@ -2,23 +2,28 @@ import axios from 'axios';
 import _ from 'lodash';
 
 import { IRemoteClientConnectOptions, TMethodsSchema } from './types';
+import { Client } from './models';
+
 import * as methods from './methods';
 
-export class RemoteClient {
-  public instance = axios.create({
-    baseURL: `http://${this.options.host}:${this.options.port}`,
-    timeout: this.options.timeout ?? 1000 * 10,
-  });
+export class RemoteClient extends Client {
+  constructor(public options: IRemoteClientConnectOptions) {
+    const instance = axios.create({
+      baseURL: `http://${options.host}:${options.port}`,
+      timeout: options.timeout ?? 1000 * 10,
+    });
 
-  constructor(public options: IRemoteClientConnectOptions) {}
+    super(
+      Object
+        .entries(methods)
+        .reduce((acc, [name, method]) => _.set(acc, name, method.compile('remote', instance)), <TMethodsSchema>{})
+    );
+  }
 
   static async connect(options: IRemoteClientConnectOptions) {
     const client = new RemoteClient(options);
-    const compiled: TMethodsSchema = Object
-      .entries(methods)
-      .reduce((acc, [name, method]) => _.set(acc, name, method.compile('remote', client.instance)), <TMethodsSchema>{});
 
-    await compiled.ping();
-    return Object.assign(client, compiled);
+    await client.ping();
+    return client;
   }
 }

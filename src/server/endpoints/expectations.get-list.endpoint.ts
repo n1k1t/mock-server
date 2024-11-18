@@ -2,7 +2,11 @@ import { Expectation } from '../../expectations';
 import { Endpoint } from '../models';
 
 export default Endpoint
-  .build<Expectation[]>()
+  .build<Expectation['TPlain'][]>()
   .bindToHttp(<const>{ method: 'GET', path: '/_mock/expectations' })
-  .bindToWebSocket(<const>{ path: 'expectations:get' })
-  .assignHandler(({ reply, storage }) => reply.ok([...storage.expectations.values()]));
+  .bindToWs(<const>{ path: 'expectations:get' })
+  .assignHandler(({ reply, server }) =>
+    reply.ok(
+      [...server.storage.expectations.values()].map((expectation) => expectation.toPlain())
+    )
+  );

@@ -7,3 +7,5 @@ export { default as $set } from './set.operator';
 export { default as $merge } from './merge.operator';
 export { default as $remove } from './remove.operator';
 export { default as $exec } from './exec.operator';
+export { default as $switch } from './switch.operator';
+export { default as root } from './root.operator';

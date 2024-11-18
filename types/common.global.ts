@@ -1,4 +1,6 @@
 declare global {
+  type TValue = object | string | number | boolean | null | undefined;
+
   type TFunction<T = unknown, U extends unknown[] = unknown[]> = (...args: U) => T;
   type Constructable<T, U extends any[] = any[]> = new (...args: U) => T;
   type KeyOfUnion<T> = T extends T ? keyof T: never;
@@ -8,8 +10,8 @@ declare global {
   type SetPartialKeys<T extends object, U extends keyof T = keyof T> = Omit<T, U> & { [K in U]?: T[K] };
 
   type OmitNeverKeys<T extends object> = Pick<T, ExtractKeysWithoutType<T, never>>;
-  type OmitPartial<T extends object> = OmitNeverKeys<{ [K in keyof T]-?: {} extends Pick<T, K> ? never : K }>;
-  type OmitRequired<T extends object> = OmitNeverKeys<{ [K in keyof T]-?: {} extends Pick<T, K> ? K : never }>;
+  type OmitPartial<T extends object> = { [K in keyof T as (T[K] extends void | undefined ? never : K)]-?: T[K] };
+  type OmitRequired<T extends object> = { [K in keyof T as (T[K] extends void | undefined ? K : never)]-?: T[K] };
 
   type PickWithType<T extends object, U> = Pick<T, ExtractKeysWithType<T, U>>;
   type PickRequiredByKeys<T extends object, U extends keyof T = keyof T> = T & { [K in U]-?: Pick<T, K> };
@@ -107,6 +109,23 @@ declare global {
   type FlattenArrays<T extends unknown[][]> = [
     ...(T extends Array<infer R> ? R extends unknown[][] ? FlattenArrays<R> : R : T)
   ];
+
+  type ConvertPathToObject<TPath extends string, TValue> = TPath extends `${infer R0}.${infer R1}`
+    ? { [K in R0]: ConvertPathToObject<R1, TValue> }
+    : TPath extends string
+    ? { [K in TPath]: TValue }
+    : never;
+
+  type ExtractObjectValueByPath<TObject extends object, TPath extends string> =
+    TPath extends `${infer R0}.${infer R1}`
+      ? R0 extends keyof TObject
+        ? Exclude<TObject[R0], undefined> extends object
+          ? ExtractObjectValueByPath<Exclude<TObject[R0], undefined>, R1>
+          : TObject[R0]
+        : never
+      : TPath extends keyof TObject
+        ? TObject[TPath]
+        : never;
 }
 
 export {};

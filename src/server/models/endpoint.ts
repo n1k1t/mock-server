@@ -1,35 +1,47 @@
-import type { IHttpRequestIncommingContext, RequestContext } from './request-context';
+import type { HttpRequestContext, IRequestContextIncoming, WsRequestContext } from './request-context';
 import type { IBaseRouteResponse } from './reply-service';
-import type { TRequestMethod } from '../../types';
 
-export class Endpoint<T = unknown, U extends IHttpRequestIncommingContext = IHttpRequestIncommingContext> {
-  public TResponse!: IBaseRouteResponse<T>;
-  public TParameters!: U;
+export class Endpoint<
+  TResponse = unknown,
+  TRequest extends Partial<Pick<IRequestContextIncoming, 'body' | 'query'>> = {}
+> {
+  public TResponse!: IBaseRouteResponse<TResponse>;
+  public TParameters!: {
+    body: 'body' extends keyof TRequest ? TRequest['body'] : (void | undefined);
+    query: 'query' extends keyof TRequest ? TRequest['query'] : (void | undefined);
+  };
 
-  public handler?: TFunction<unknown, [RequestContext<U, T>]>;
+  public handler?: TFunction<unknown, [
+    (HttpRequestContext<TResponse> | WsRequestContext<TResponse>) & {
+      incoming: OmitPartial<Endpoint<TResponse, TRequest>['TParameters']>;
+    }
+  ]>;
 
-  public webSocket?: {
+  public ws?: {
     path: string;
   };
 
   public http?: {
-    method: TRequestMethod;
+    method: string;
     path: string;
   };
 
-  public bindToHttp<This extends NonNullable<Endpoint<T, U>['http']>>(http: This) {
+  public bindToHttp<This extends NonNullable<Endpoint<TResponse, TRequest>['http']>>(http: This) {
     return Object.assign(this, { http });
   }
 
-  public bindToWebSocket<Q extends NonNullable<Endpoint<T, U>['webSocket']>>(webSocket: Q) {
-    return Object.assign(this, { webSocket });
+  public bindToWs<Q extends NonNullable<Endpoint<TResponse, TRequest>['ws']>>(ws: Q) {
+    return Object.assign(this, { ws });
   }
 
-  public assignHandler<Q extends NonNullable<Endpoint<T, U>['handler']>>(handler: Q) {
+  public assignHandler<Q extends NonNullable<Endpoint<TResponse, TRequest>['handler']>>(handler: Q) {
     return Object.assign(this, { handler });
   }
 
-  static build<T = unknown, U extends IHttpRequestIncommingContext = IHttpRequestIncommingContext>() {
-    return new Endpoint<T, U>();
+  static build<
+    TResponse = unknown,
+    TRequest extends Partial<Pick<IRequestContextIncoming, 'body' | 'query'>> = {}
+  >() {
+    return new Endpoint<TResponse, TRequest>();
   }
 }

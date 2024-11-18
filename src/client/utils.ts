@@ -2,10 +2,16 @@ import { AxiosError } from 'axios';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import { ConnectionError, InternalServerError, ValidationError } from './errors';
-import { Expectation, introspectExpectationSchema } from '../expectations';
 import type { IRequestConfiguration } from './errors/types';
 import type { IBaseRouteResponse } from '../server/models';
+
+import { ConnectionError, InternalServerError, ValidationError } from './errors';
+import { serializeRegExp } from '../utils';
+import {
+  Expectation,
+  IExpectationOperatorsSchema,
+  introspectExpectationOperatorsSchema,
+} from '../expectations';
 
 const clone = rfdc();
 
@@ -32,20 +38,35 @@ export const handleRequestError = (error: AxiosError<IBaseRouteResponse<any>>) =
   throw new InternalServerError(configuration, error.message);
 }
 
-export const prepareExpectationToRequest = <T extends PartialDeep<Expectation>>(body: T): object => {
-  const result = clone(body);
+export const prepareExpectationBodyToRequest = <T extends Partial<Expectation['TPlain']>>(body: T): T => {
+  const cloned = clone(body.schema ?? {});
 
-  introspectExpectationSchema(result.request ?? {}, (key, segment) => {
-    if (key === '$exec') {
-      _.set(segment, key, segment.$exec?.toString());
-    }
-  });
+  Object
+    .entries(<Record<string, IExpectationOperatorsSchema>>_.pick(body.schema ?? {}, ['request', 'response']))
+    .forEach(([name, segment]) =>
+      introspectExpectationOperatorsSchema(segment, (key, schema, path) => {
+        if (key === '$exec') {
+          _.set(cloned, `${name}.${path}`, schema.$exec?.toString());
+        }
 
-  introspectExpectationSchema(result.response ?? {}, (key, segment) => {
-    if (key === '$exec') {
-      _.set(segment, key, segment.$exec?.toString());
-    }
-  });
+        if (key === '$has' && schema.$has?.$regExp) {
+          _.set(cloned, `${name}.${path}.$regExp`, serializeRegExp(schema.$has.$regExp));
+        }
+        if (key === '$has' && schema.$has?.$regExpAnyOf) {
+          _.set(cloned, `${name}.${path}.$regExpAnyOf`, schema.$has.$regExpAnyOf.map((expr) => serializeRegExp(expr)));
+        }
 
-  return result;
+        if (key === '$has' && schema.$has?.$exec) {
+          _.set(cloned, `${name}.${path}.$exec`, schema.$has.$exec.toString());
+        }
+        if (key === '$set' && schema.$set?.$exec) {
+          _.set(cloned, `${name}.${path}.$exec`, schema.$set.$exec.toString());
+        }
+        if (key === '$switch' && schema.$switch?.$exec) {
+          _.set(cloned, `${name}.${path}.$exec`, schema.$switch.$exec.toString());
+        }
+      })
+    );
+
+  return { ...body, schema: cloned };
 }

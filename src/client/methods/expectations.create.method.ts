@@ -1,4 +1,4 @@
-import { handleRequestError, prepareExpectationToRequest } from '../utils';
+import { handleRequestError, prepareExpectationBodyToRequest } from '../utils';
 import { ValidationError } from '../errors';
 import { ClientMethod } from '../models';
 import { TEndpoints } from '../types';
@@ -9,7 +9,7 @@ export default ClientMethod
   .provide('remote', (instance) => async (body) => {
     const response = await instance
       .request<TEndpoints['createExpectation']['response']>({
-        data: prepareExpectationToRequest(body),
+        data: prepareExpectationBodyToRequest(body),
 
         ...cast<TEndpoints['createExpectation']['location']>({
           url: '/_mock/expectations',
@@ -27,5 +27,5 @@ export default ClientMethod
     }
 
     context.exchange.ws.publish('expectation:added', result.expectation);
-    return { id: result.expectation.id };
+    return result.expectation.toPlain();
   });

@@ -1,14 +1,13 @@
 import { io } from 'socket.io-client';
 
-import type { IWebSocketExchangeEventToPayloadMap } from '../../server/web-socket-exchange';
-import type * as endpoints from '../../server/endpoints';
+import type { IWsExchangeEventToPayloadMap } from '../../server/ws-exchange';
+import type { TEndpoints } from '../../client';
 
-type TEnpoints = typeof endpoints;
-type TWebSocketEndpoint = {
-  [K in keyof TEnpoints]-?: TEnpoints[K]['webSocket'] extends object ? TEnpoints[K] : never;
-}[keyof TEnpoints];
+type TWsEndpoints = {
+  [K in keyof TEndpoints as (TEndpoints[K]['ws'] extends object ? TEndpoints[K]['ws']['path'] : never)]-?: TEndpoints[K];
+};
 
-const webSocketInstance = io(location.origin);
+const ws = io(location.origin);
 
 export default {
   config: {
@@ -16,23 +15,19 @@ export default {
   },
 
   instances: {
-    ws: webSocketInstance,
+    ws,
   },
 
-  webSocket: {
-    exec: <
-      K extends TWebSocketEndpoint['webSocket']['path'],
-      T extends Extract<TWebSocketEndpoint, { webSocket: { path: K } }>
-    >(path: K, parameters: T['TParameters']['body']): Promise<T['TResponse']> =>
-      new Promise<T['TResponse']>((resolve) => webSocketInstance.emit(path, parameters, resolve)),
+  services: {
+    ws: {
+      exec: <K extends keyof TWsEndpoints>(path: K, body?: TWsEndpoints[K]['body']): Promise<TWsEndpoints[K]['response']> =>
+        new Promise((resolve) => ws.emit(path, body, resolve)),
 
-    subscribe: <
-      K extends keyof IWebSocketExchangeEventToPayloadMap,
-      T extends IWebSocketExchangeEventToPayloadMap[K]
-    >(
-      channel: K,
-      handler: (payload: T) => unknown
-    ) => webSocketInstance.on(<string>channel, handler)
+      subscribe: <
+        K extends keyof IWsExchangeEventToPayloadMap,
+        T extends IWsExchangeEventToPayloadMap[K]
+      >(channel: K, handler: (payload: T) => unknown) => ws.on(<string>channel, handler)
+    },
   },
 
   elements: {

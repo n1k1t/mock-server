@@ -1,5 +1,21 @@
+import type { AxiosProxyConfig } from 'axios';
 import type _ from 'lodash';
-import type { IRequestPlainContext, IResponsePlainContext } from '../server/models';
+
+import type { HttpRequestContext } from '../server/models';
+import type { TRequestProtocol } from '../types';
+
+import type * as operators from './operators';
+
+import type AndExpectationOperator from './operators/and.operator';
+import type SetExpectationOperator from './operators/set.operator';
+import type HasExpectationOperator from './operators/has.operator';
+import type OrExpectationOperator from './operators/or.operator';
+import type NotExpectationOperator from './operators/not.operator';
+import type IfExpectationOperator from './operators/if.operator';
+import type MergeExpectationOperator from './operators/merge.operator';
+import type RemoveExpectationOperator from './operators/remove.operator';
+import type ExecExpectationOperator from './operators/exec.operator';
+import type SwitchExpectationOperator from './operators/switch.operator';
 
 export type TExpectationType = ConvertTupleToUnion<typeof LExpectationType>;
 export const LExpectationType = <const>['HTTP'];
@@ -9,9 +25,6 @@ export const LExpectationForwardProtocol = <const>['HTTP', 'HTTPS'];
 
 export type TExpectationDestroyType = ConvertTupleToUnion<typeof LExpectationDestroyType>;
 export const LExpectationDestroyType = <const>['ECONNABORTED'];
-
-export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
-export const LExpectationOperatorLocation = <const>['path', 'method', 'headers', 'body', 'query', 'data', 'statusCode'];
 
 export type TExpectationConditionalOperator = ConvertTupleToUnion<typeof LExpectationConditionalOperator>;
 export const LExpectationConditionalOperator = <const>['$if', '$not', '$and', '$or', '$has'];
@@ -38,106 +51,101 @@ export interface IExpectationDelay {
 };
 
 export type TExpectationContextLocation = 'request' | 'response';
-export type TExpectationContext<TLocation extends TExpectationContextLocation = TExpectationContextLocation> = {
-  request: IRequestPlainContext;
-  response: IRequestPlainContext & IResponsePlainContext;
-}[TLocation];
 
-export type TExpectationOperatorMode = 'validation' | 'manipulation';
+export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
+export const LExpectationOperatorLocation = <const>[
+  'path',
+  'method',
+  'incoming.body',
+  'incoming.bodyRaw',
+  'incoming.query',
+  'incoming.headers',
+  'outgoing.status',
+  'outgoing.headers',
+  'outgoing.data',
+  'outgoing.dataRaw',
+]
 
-export type TExpectationOperatorHandlerParameters<
-  K extends TExpectationOperator = TExpectationOperator
-> = [
-  TExpectationOperatorMode,
-  NonNullable<IExpectationSchema[K]>,
-  TExpectationContext,
-];
+export type TExpectationOperators = Omit<typeof operators, 'root'>;
+export interface IExpectationOperatorContext extends Pick<HttpRequestContext, 'incoming' | 'outgoing'> {};
 
-export type TExpectationOperatorHandler<
-  K extends TExpectationOperator = TExpectationOperator
-> = TFunction<boolean, [
-  ...TExpectationOperatorHandlerParameters<K>,
-  {
-    exploreNestedSchema: TFunction<boolean, TExpectationOperatorHandlerParameters>;
-  }
-]>;
+type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
+  TLocation extends 'path' | 'method' ? { path: 'incoming.path', method: 'incoming.method' }[TLocation] : TLocation;
 
-export type TExpectationOperator =
-  | TExpectationConditionalOperator
-  | TExpectationActionalOperator;
+export type ExtractExpectationContextValueByLocation<
+  TContext extends object,
+  TLocation extends TExpectationOperatorLocation,
+  T = ExtractObjectValueByPath<TContext, ConvertExpectationLocationToContextPath<TLocation>>,
+  U = ExtractObjectValueByPath<IExpectationOperatorContext, ConvertExpectationLocationToContextPath<TLocation>>,
+> = Exclude<T, never> extends never ? Exclude<U, never> extends never ? any : U : T;
 
-export type TExpectationTargetionalValidationOperator = keyof IExpectationTargetionalSchema;
-export type TExpectationTargetionalManipulationOperator = '$location' | '$path' | '$jsonPath' | '$value';
+export type ExtractExpectationContextValue<
+  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TLocation extends TExpectationOperatorLocation,
+  TPath extends string | void = void,
+  T = ExtractExpectationContextValueByLocation<TContext, TLocation>,
+  U = TPath extends string ? T extends object ? ExtractObjectValueByPath<T, TPath> : any : T
+> = Exclude<U, never> extends never ? any : U;
 
-export type TExpectationTargetionalOperator =
-  | TExpectationTargetionalValidationOperator
-  | TExpectationTargetionalManipulationOperator;
+export type CompileExpectationOperatorValue<
+  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TLocation extends TExpectationOperatorLocation,
+  TProvided = void,
+  T = ExtractExpectationContextValue<TContext, TLocation>
+> = Exclude<TProvided, void> extends never ? T : TProvided;
 
-export interface IExpectationTargetionalSchema<
-  TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation
+export type CompileExpectationOperatorValueWithPredicate<
+  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TLocation extends TExpectationOperatorLocation,
+  TProvided = void,
+  T = CompileExpectationOperatorValue<TContext, TLocation, TProvided>
+> = T extends object ? (T | object) : T;
+
+export interface IExpectationOperatorsSchema<
+  TContext extends PartialDeep<IExpectationOperatorContext> = IExpectationOperatorContext,
+  TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
+  TValue = void
 > {
-  $location?: TLocation;
+  $and?: AndExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $or?: OrExpectationOperator<TContext, TLocation, TValue>['TSchema'];
 
-  $path?: string;
-  $jsonPath?: string;
+  $not?: NotExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $if?: IfExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $switch?: SwitchExpectationOperator<TContext, TLocation, TValue, TLocation, TValue>['TSchema'];
 
-  $regExp?: RegExp;
-  $regExpAnyOf?: RegExp[];
+  $set?: SetExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $has?: HasExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $merge?: MergeExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $remove?: RemoveExpectationOperator<TContext, TLocation>['TSchema'];
 
-  $value?: unknown;
-  $valueAnyOf?: unknown[];
-
-  $minimatch?: string;
-  $minimatchAnyOf?: string[];
+  $exec?: ExecExpectationOperator<TContext>['TSchema'];
 };
 
-export interface IExpectationSchemaConfiguration {
-  operator: TExpectationOperator;
-  context: TExpectationContext;
+export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOperatorContext> = {}> {
+  delay?: IExpectationDelay | IExpectationDelay[];
+  destroy?: 'ECONNABORTED'
 
-  targetionalValidationOperator: TExpectationTargetionalValidationOperator;
-  targetionalManipulationOperator: TExpectationTargetionalManipulationOperator;
-
-  validationLocation: TExpectationOperatorLocation;
-  manipulationLocation: TExpectationOperatorLocation;
-};
-
-export interface IExpectationSchema<
-  T extends IExpectationSchemaConfiguration = IExpectationSchemaConfiguration
-> {
-  $has?: Pick<
-    IExpectationTargetionalSchema<T['validationLocation']>,
-    Extract<T['targetionalValidationOperator'], TExpectationTargetionalValidationOperator>
+  request?: IExpectationOperatorsSchema<
+    TContext,
+    'path' | 'method' | 'incoming.body' | 'incoming.bodyRaw' | 'incoming.query' | 'incoming.headers'
   >;
 
-  $set?: Pick<
-    IExpectationTargetionalSchema<T['manipulationLocation']>,
-    Extract<T['targetionalManipulationOperator'], TExpectationTargetionalManipulationOperator>
-  >;
+  response?: IExpectationOperatorsSchema<TContext>;
 
-  $remove?: Pick<
-    IExpectationTargetionalSchema<T['manipulationLocation']>,
-    Extract<T['targetionalManipulationOperator'], TExpectationTargetionalManipulationOperator>
-  >;
+  forward?: {
+    url?: string;
+    baseUrl?: string;
 
-  $merge?: Pick<
-    IExpectationTargetionalSchema<T['manipulationLocation']>,
-    Extract<T['targetionalManipulationOperator'], TExpectationTargetionalManipulationOperator>
-  >;
-
-  $if?: IExpectationSchema<T> & {
-    $then?: Pick<IExpectationSchema<T>, T['operator']>;
-    $else?: Pick<IExpectationSchema<T>, T['operator']>;
+    timeout?: number;
+    proxy?: AxiosProxyConfig & {
+      protocol: TRequestProtocol;
+    };
   };
-
-  $not?: Pick<IExpectationSchema<T>, T['operator']>;
-  $and?: Pick<IExpectationSchema<T>, T['operator']>[];
-  $or?: Pick<IExpectationSchema<T>, T['operator']>[];
-
-  $exec?: string | TFunction<unknown, [{ _: typeof _, context: T['context'] }]>;
 };
 
-export type BuildExpectaionSchema<
-  TConfiguration extends Partial<IExpectationSchemaConfiguration>,
-  U extends IExpectationSchemaConfiguration = IExpectationSchemaConfiguration & TConfiguration
-> = Pick<IExpectationSchema<U>, U['operator']>;
+export interface IExpectationOperatorExecUtils<T extends PartialDeep<IExpectationOperatorContext>> {
+  context: IExpectationOperatorContext & T;
+
+  T: <T = any>(payload: unknown) => T;
+  _: typeof _;
+}

@@ -7,7 +7,7 @@ export interface IJsonPathExtractionResult {
   parentProperty: string;
 };
 
-export const extractByJsonPathSafe = (params: Omit<JSONPathOptions, 'resultType'>) => {
+export const extractWithJsonPathSafe = (params: Omit<JSONPathOptions, 'resultType'>) => {
   try {
     return <const>{
       status: 'OK',
