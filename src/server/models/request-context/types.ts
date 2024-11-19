@@ -13,6 +13,9 @@ export interface IRequestContextIncoming {
 
   body?: unknown;
   bodyRaw?: string;
+
+  delay?: number;
+  error?: 'ECONNABORTED';
 }
 
 export interface IRequestContextOutgoing {

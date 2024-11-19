@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs';
-import fs from 'fs/promises';
 import path from 'path';
+import fs from 'fs/promises';
 import _ from 'lodash';
 
 import { Middleware } from '../models';

@@ -32,14 +32,14 @@ export default class MergeExpectationOperator<
 
   public manipulate<T extends TContext>(context: T): T {
     const payload = extractContextByLocation(this.command.$location, context);
-    if (payload?.type !== 'object') {
+    if (payload?.type !== 'object' || !_.isObject(payload.value)) {
       return context;
     }
 
     if (this.command.$path) {
       _.set(
-        payload.value,
-        this.command.$path,
+        payload.parent,
+        `${payload.key}.${this.command.$path}`,
         merge(_.get(payload.value, this.command.$path), <object>this.command.$value ?? {})
       );
 
@@ -50,16 +50,16 @@ export default class MergeExpectationOperator<
       extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value })
         .results?.forEach(
           (segment) => _.set(
-            payload.value,
+            <object>payload.value,
             segment.pointer.substring(1).replace(/\//g, '.'),
-            merge(_.get(segment.parent, segment.parentProperty), <object>this.command.$value ?? {})
+            merge(_.get(segment.parent, segment.parentProperty), this.command.$value ?? {})
           )
         );
 
       return context;
     }
 
-    _.set(payload.parent, payload.key, merge(payload.value, <object>this.command.$value ?? {}));
+    _.set(payload.parent, payload.key, merge(payload.value, this.command.$value ?? {}));
     return context;
   }
 }

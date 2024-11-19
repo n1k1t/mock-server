@@ -2,6 +2,7 @@ import type {
   ExtractExpectationContextValue,
   IExpectationOperatorContext,
   TExpectationOperatorLocation,
+  TExpectationOperatorObjectLocation,
 } from '../../expectations';
 
 import type AndExpectationOperator from '../../expectations/operators/and.operator';
@@ -14,13 +15,6 @@ import type OrExpectationOperator from '../../expectations/operators/or.operator
 import type RemoveExpectationOperator from '../../expectations/operators/remove.operator';
 import type SetExpectationOperator from '../../expectations/operators/set.operator';
 import type SwitchExpectationOperator from '../../expectations/operators/switch.operator';
-
-type TExpectationOperatorObjectLocation =
-  | 'incoming.body'
-  | 'incoming.headers'
-  | 'incoming.query'
-  | 'outgoing.data'
-  | 'outgoing.headers';
 
 export interface ICompiledExpectationOperators<T extends PartialDeep<IExpectationOperatorContext>> {
   not<S extends NotExpectationOperator<T, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $not: S };

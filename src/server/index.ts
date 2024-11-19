@@ -10,25 +10,30 @@ import * as middlewares from './middlewares';
 export * from './proxy';
 
 const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [
-  middlewares.resolvePublicMiddleware,
+  middlewares.publicMiddleware,
   middlewares.handleInternalMiddleware,
   middlewares.matchExpectationMiddleware,
-  middlewares.addHistoryMiddleware,
-  middlewares.handleExpectationForwardMiddleware,
-  middlewares.handleExpectationDelayMiddleware,
-  middlewares.buildDestroyRequestMiddleware,
+  middlewares.manipulateExpectationMiddleware,
+  middlewares.historyMiddleware,
+  middlewares.delayMiddleware,
+  middlewares.destroyMiddleware,
+  middlewares.forwardMiddleware,
   middlewares.replyMiddleware,
 ];
 
-const handleHttpRequestWithMiddlewares = (context: HttpRequestContext, position: number = 0): unknown =>
-  middlewaresToUse[position]?.exec(
-    context,
-    (result?: unknown) => handleHttpRequestWithMiddlewares(context.share(result ?? {}), ++position)
-  );
+const handleHttpRequest = async (context: HttpRequestContext) => {
+  for (const middleware of middlewaresToUse) {
+    if (!middleware.required.every((key) => key in context.shared)) {
+      continue;
+    }
+
+    await new Promise((resolve) => middleware.exec(context, (result) => resolve(context.share(result ?? {}))));
+  }
+};
 
 const httpRequestListener = (context: ServerContext) =>
   async (request: IncomingMessage, response: ServerResponse) =>
-    handleHttpRequestWithMiddlewares(await HttpRequestContext.build(context, request, response));
+    handleHttpRequest(await HttpRequestContext.build(context, request, response));
 
 export class MockServer {
   public authority = `http://${this.options.host}:${this.options.port}`;

@@ -2,18 +2,10 @@ import generateAnimalName from 'random-animal-name';
 import { AxiosProxyConfig } from 'axios';
 import { v4 as genUid } from 'uuid';
 import { ValueError } from '@n1k1t/typebox/errors';
-import { Type } from '@n1k1t/typebox';
 import _ from 'lodash';
 
+import { IExpectationMeta, IExpectationOperatorContext, IExpectationSchema, TExpectationType } from '../types';
 import { TRequestProtocol } from '../../types';
-import { UseValidation } from '../../utils';
-import {
-  IExpectationMeta,
-  IExpectationOperatorContext,
-  IExpectationSchema,
-  LExpectationDestroyType,
-  TExpectationType,
-} from '../types';
 
 import * as operators from '../operators';
 
@@ -41,27 +33,6 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
   public response = this.schema.response
     ? new operators.root<TContext>(operators, this.schema.response)
     : null;
-
-  @UseValidation(
-    Type.Optional(
-      Type.Object({
-        ms: Type.Number(),
-        times: Type.Optional(Type.Number()),
-      })
-    )
-  )
-  public get delay() {
-    return this.schema.delay;
-  };
-
-  @UseValidation(
-    Type.Optional(
-      Type.Union(LExpectationDestroyType.map((value) => Type.Literal(value)))
-    )
-  )
-  public get destroy() {
-    return this.schema.destroy;
-  }
 
   public get forward() {
     return this.schema.forward;

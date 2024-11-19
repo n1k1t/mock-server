@@ -9,7 +9,8 @@ export default class ExecExpectationOperator<
   public compiled = this.compileExecHandler(this.command, ['utils']);
 
   public match(context: TContext): boolean {
-    return this.compiled(context) ?? false;
+    const result = this.compiled(context);
+    return typeof result === 'boolean' ? result : true;
   }
 
   public manipulate<T extends TContext>(context: T): T {

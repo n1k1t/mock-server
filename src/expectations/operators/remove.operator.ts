@@ -34,7 +34,7 @@ export default class RemoveExpectationOperator<
       return context;
     }
 
-    if (this.command.$jsonPath) {
+    if (this.command.$jsonPath && _.isObject(payload.value)) {
       extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value })
         .results?.forEach((segment) => _.unset(segment.parent, segment.parentProperty));
 

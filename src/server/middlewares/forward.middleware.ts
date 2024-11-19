@@ -5,17 +5,15 @@ import _ from 'lodash';
 import { extractPayloadType, Middleware, parsePayload, serializePayload } from '../models';
 
 export default Middleware
-  .build(__filename, ['expectation', 'history'])
+  .build(__filename, ['expectation', 'manipulated', 'history'])
   .assignHandler(async (context, next) => {
     if (!context.shared.expectation.forward) {
       return next();
     }
 
     const { url, baseUrl, timeout, proxy } = context.shared.expectation.forward;
-    const forwarded = context.toPlain({ locations: ['incoming'], clone: true });
 
-    context.shared.expectation.request?.manipulate(forwarded);
-
+    const forwarded = context.shared.manipulated;
     const incomingType = extractPayloadType(forwarded.incoming.headers);
 
     const body = forwarded.incoming.body === undefined ? forwarded.incoming.bodyRaw : forwarded.incoming.body;
@@ -36,7 +34,7 @@ export default Middleware
     });
 
     const history = context.shared.history.extendForwarded(forwarded);
-    context.server.exchange.ws.publish('history:updated', history);
+    context.server.exchange.ws.publish('history:updated', history.toPlain());
 
     const response = await axios({
       timeout: timeout ?? 1000 * 30,
@@ -61,7 +59,7 @@ export default Middleware
           .assign({ error: _.pick(error, ['message', 'code']) })
           .changeState('finished');
 
-        context.server.exchange.ws.publish('history:updated', history);
+        context.server.exchange.ws.publish('history:updated', history.toPlain());
         context.reply.internalError(error.message);
 
         throw error;

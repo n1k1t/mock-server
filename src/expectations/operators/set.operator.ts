@@ -51,23 +51,29 @@ export default class SetExpectationOperator<
     switch(payload.type) {
       case 'number':
       case 'string': {
-        this.compiled.exec
-          ? _.set(payload.parent, payload.key, this.compiled.exec(context, payload.value))
-          : _.set(payload.parent, payload.key, this.command.$value);
+        _.set(
+          payload.parent,
+          payload.key,
+          this.compiled.exec ? this.compiled.exec(context, payload.value) : this.command.$value
+        );
 
         return context;
       }
 
       case 'object': {
         if (this.command.$path) {
-          this.compiled.exec
-            ? _.set(payload.value, this.command.$path, this.compiled.exec(context, _.get(payload.value, this.command.$path)))
-            : _.set(payload.value, this.command.$path, this.command.$value);
+          _.set(
+            payload.parent,
+            `${payload.key}.${this.command.$path}`,
+            this.compiled.exec
+              ? this.compiled.exec(context, _.get(payload.value, this.command.$path))
+              : this.command.$value
+          );
 
           return context;
         }
 
-        if (this.command.$jsonPath) {
+        if (this.command.$jsonPath && _.isObject(payload.value)) {
           extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.forEach(
             ({ parent, parentProperty, value }) => this.compiled.exec
               ? _.set(parent, parentProperty, this.compiled.exec(context, value))
@@ -77,7 +83,12 @@ export default class SetExpectationOperator<
           return context;
         }
 
-        _.set(payload.parent, [payload.key], this.command.$value);
+        _.set(
+          payload.parent,
+          payload.key,
+          this.compiled.exec ? this.compiled.exec(context, payload.value) : this.command.$value
+        );
+
         return context;
       }
 

@@ -41,7 +41,7 @@ export default ClientMethod
     }
 
     context.storage.expectations.set(body.id, updated);
-    context.exchange.ws.publish('expectation:updated', updated);
+    context.exchange.ws.publish('expectation:updated', updated.toPlain());
 
     return updated.toPlain();
   });

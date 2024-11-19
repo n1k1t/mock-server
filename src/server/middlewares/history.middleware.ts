@@ -8,6 +8,6 @@ export default Middleware
       .register(context.toPlain({ locations: ['incoming'] }))
       .assign({ expectation: context.shared.expectation });
 
-    context.server.exchange.ws.publish('history:added', history);
+    context.server.exchange.ws.publish('history:added', history.toPlain());
     next({ history });
   });

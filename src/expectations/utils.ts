@@ -8,92 +8,129 @@ import {
   IExpectationOperatorContext,
   IExpectationOperatorsSchema,
   TExpectationOperatorLocation,
-  IExpectationOperatorExecUtils,
 } from './types';
 
 type TBaseExtractedContext = { parent: object, key: string };
 type TExtractedContext =
-  | (TBaseExtractedContext & { value: object, type: 'object' })
-  | (TBaseExtractedContext & { value: string, type: 'string' })
-  | (TBaseExtractedContext & { value: number, type: 'number' });
+  | (TBaseExtractedContext & { value?: unknown, type: 'object' })
+  | (TBaseExtractedContext & { value?: string, type: 'string' })
+  | (TBaseExtractedContext & { value?: number, type: 'number' });
+
+export const checkIsLocationInContext = (
+  location: TExpectationOperatorLocation,
+  context: PartialDeep<IExpectationOperatorContext>
+): boolean => {
+  switch(location) {
+    case 'delay':
+    case 'error':
+    case 'method':
+    case 'path': return _.has(context.incoming, location);
+
+    default: return _.has(context, location);
+  }
+}
 
 export const extractContextByLocation = (
   location: TExpectationOperatorLocation,
   context: PartialDeep<IExpectationOperatorContext>
 ): TExtractedContext | null => {
-  if (!_.has(context, location) && location !== 'method' && location !== 'path') {
-    return null;
-  }
-
   switch(location) {
     case 'path': return {
-      key: 'path',
+      key: 'incoming.path',
       type: 'string',
-      parent: context.incoming!,
-      value: context.incoming!.path!,
+      parent: context,
+      value: context.incoming?.path,
     };
 
     case 'method': return {
-      key: 'method',
+      key: 'incoming.method',
       type: 'string',
-      parent: context.incoming!,
-      value: context.incoming!.method!,
+      parent: context,
+      value: context.incoming?.method,
     };
 
     case 'incoming.body': return {
-      key: 'body',
+      key: 'incoming.body',
       type: 'object',
-      parent: context.incoming!,
-      value: context.incoming!.body!,
+      parent: context,
+      value: context.incoming?.body,
     };
 
     case 'incoming.bodyRaw': return {
-      key: 'bodyRaw',
+      key: 'incoming.bodyRaw',
       type: 'string',
-      parent: context.incoming!,
-      value: context.incoming!.bodyRaw!,
+      parent: context,
+      value: context.incoming?.bodyRaw,
     };
 
     case 'incoming.query': return {
-      key: 'query',
+      key: 'incoming.query',
       type: 'object',
-      parent: context.incoming!,
-      value: context.incoming!.query!,
+      parent: context,
+      value: context.incoming?.query,
     };
 
     case 'incoming.headers': return {
-      key: 'headers',
+      key: 'incoming.headers',
       type: 'object',
-      parent: context.incoming!,
-      value: context.incoming!.headers!,
+      parent: context,
+      value: context.incoming?.headers,
     };
 
     case 'outgoing.data': return {
-      key: 'data',
+      key: 'outgoing.data',
       type: 'object',
-      parent: context.outgoing!,
-      value: context.outgoing!.data!,
+      parent: context,
+      value: context.outgoing?.data,
     };
 
     case 'outgoing.dataRaw': return {
-      key: 'dataRaw',
+      key: 'outgoing.dataRaw',
       type: 'string',
-      parent: context.outgoing!,
-      value: context.outgoing!.dataRaw!,
+      parent: context,
+      value: context.outgoing?.dataRaw,
     };
 
     case 'outgoing.headers': return {
-      key: 'headers',
+      key: 'outgoing.headers',
       type: 'object',
-      parent: context.outgoing!,
-      value: context.outgoing!.headers!,
+      parent: context,
+      value: context.outgoing?.headers,
     };
 
     case 'outgoing.status': return {
-      key: 'status',
+      key: 'outgoing.status',
       type: 'number',
-      parent: context.outgoing!,
-      value: context.outgoing!.status!,
+      parent: context,
+      value: context.outgoing?.status,
+    };
+
+    case 'delay': return {
+      key: 'incoming.delay',
+      type: 'number',
+      parent: context,
+      value: context.incoming?.delay,
+    };
+
+    case 'error': return {
+      key: 'incoming.error',
+      type: 'string',
+      parent: context,
+      value: context.incoming?.error,
+    };
+
+    case 'seed': return {
+      key: 'seed',
+      type: 'number',
+      parent: context,
+      value: context.seed,
+    };
+
+    case 'state': return {
+      key: 'state',
+      type: 'object',
+      parent: context,
+      value: context.state,
     };
 
     default: return null;
@@ -121,7 +158,7 @@ export const extractMetaAdditionalFromExpectationSchema = (schema: IExpectationO
 
   introspectExpectationOperatorsSchema(schema, (key, segment) => {
     if (key === '$set' && segment[key]?.$location === 'outgoing.status') {
-      acc.responseStatuses = (acc.responseStatuses ?? []).concat([<number>segment[key]?.$value].filter(Boolean));
+      acc.statuses = (acc.statuses ?? []).concat([<number>segment[key]?.$value].filter(Boolean));
     }
 
     if (key === '$has' && ['method', 'path'].includes(segment[key]?.$location ?? '')) {
@@ -135,11 +172,11 @@ export const extractMetaAdditionalFromExpectationSchema = (schema: IExpectationO
 
       switch(segment[key]?.$location) {
         case 'method': {
-          acc.requestMethods = (acc.requestMethods ?? []).concat(_.flatten([valuePredicate]).map(String));
+          acc.methods = (acc.methods ?? []).concat(_.flatten([valuePredicate]).map(String));
           break;
         };
         case 'path': {
-          acc.requestPaths = (acc.requestPaths ?? []).concat(_.flatten([valuePredicate]).map(String));
+          acc.paths = (acc.paths ?? []).concat(_.flatten([valuePredicate]).map(String));
           break;
         }
       }

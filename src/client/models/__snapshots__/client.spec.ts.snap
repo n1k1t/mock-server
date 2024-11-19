@@ -469,6 +469,17 @@ exports[`Client.Models.Client should create expectation with complex schema as f
             "$path": "baz.baz",
           },
         },
+        {
+          "$switch": {
+            "$cases": {
+              "a": {
+                "$and": [],
+              },
+            },
+            "$location": "incoming.query",
+            "$path": "foo",
+          },
+        },
       ],
     },
     "response": {

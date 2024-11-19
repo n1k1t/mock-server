@@ -4,10 +4,10 @@ import { Middleware } from '../models';
 import { wait } from '../../utils';
 
 export default Middleware
-  .build(__filename, ['expectation'])
+  .build(__filename, ['manipulated'])
   .assignHandler(async (context, next) => {
-    if (context.shared.expectation.delay) {
-      await wait(_.flatten([context.shared.expectation.delay])[0].ms);
+    if (context.shared.manipulated.incoming.delay) {
+      await wait(context.shared.manipulated.incoming.delay);
     }
 
     next();

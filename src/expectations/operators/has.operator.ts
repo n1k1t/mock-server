@@ -1,7 +1,7 @@
 import minimatch from 'minimatch';
 import _ from 'lodash';
 
-import { extractContextByLocation } from '../utils';
+import { checkIsLocationInContext, extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
 import { ExpectationOperator } from '../models/operator';
 import {
@@ -63,6 +63,10 @@ export default class HasExpectationOperator<
   };
 
   public match(context: TContext): boolean {
+    if (!checkIsLocationInContext(this.command.$location, context)) {
+      return false;
+    }
+
     const payload = extractContextByLocation(this.command.$location, context);
     if (!payload) {
       return false;
@@ -78,17 +82,17 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.regExp) {
-          return this.compiled.regExp.test(payload.value);
+          return this.compiled.regExp.test(payload.value ?? '');
         }
         if (this.compiled.regExpAnyOf) {
-          return this.compiled.regExpAnyOf.some((regExp) => regExp.test(payload.value));
+          return this.compiled.regExpAnyOf.some((regExp) => regExp.test(payload.value ?? ''));
         }
 
         if (typeof this.command.$match === 'string') {
-          return minimatch(payload.value, this.command.$match);
+          return minimatch(payload.value ?? '', this.command.$match);
         }
         if (this.command.$matchAnyOf) {
-          return this.command.$matchAnyOf.some((pattern) => minimatch(payload.value, String(pattern)));
+          return this.command.$matchAnyOf.some((pattern) => minimatch(payload.value ?? '', String(pattern)));
         }
 
         if (this.compiled.exec) {
@@ -125,7 +129,7 @@ export default class HasExpectationOperator<
         const values = (
           this.command.$path
             ? [_.get(payload.value, this.command.$path)]
-            : this.command.$jsonPath
+            : (this.command.$jsonPath && _.isObject(payload.value))
             ? extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.map(({ value }) => value)
             : [payload.value]
         ) ?? [];

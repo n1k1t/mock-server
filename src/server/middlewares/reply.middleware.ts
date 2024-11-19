@@ -1,5 +1,13 @@
 import _ from 'lodash';
-import { extractPayloadType, HttpRequestContext, IRequestContextIncoming, IRequestContextOutgoing, Middleware, serializePayload } from '../models';
+
+import {
+  extractPayloadType,
+  HttpRequestContext,
+  IRequestContextIncoming,
+  IRequestContextOutgoing,
+  Middleware,
+  serializePayload,
+} from '../models';
 
 const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextOutgoing => ({
   type: incoming.type,
@@ -20,14 +28,13 @@ const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextO
 export default Middleware
   .build(__dirname, ['history', 'expectation'])
   .assignHandler((context) => {
-    const { incoming, forwarded } = context.toPlain({ locations: ['incoming', 'forwarded.outgoing'], clone: true });
-
+    const plain = context.toPlain({ locations: ['incoming', 'forwarded.outgoing'], clone: true });
     const manipulated = context.shared.expectation.response?.manipulate({
-      incoming,
-      outgoing: forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming),
+      ...plain,
+      outgoing: plain.forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming),
     });
 
-    const outgoing = manipulated?.outgoing ?? forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming);
+    const outgoing = manipulated?.outgoing ?? plain.forwarded?.outgoing ?? buildEmptyOutgoing(context.incoming);
     const type = extractPayloadType(outgoing.headers);
 
     const data = outgoing.data === undefined ? outgoing.dataRaw : outgoing.data;

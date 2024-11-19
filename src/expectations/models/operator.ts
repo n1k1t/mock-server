@@ -1,3 +1,5 @@
+import { Faker, ru, en, en_GB } from '@faker-js/faker';
+import dayjs from 'dayjs';
 import _ from 'lodash';
 
 import {
@@ -50,11 +52,19 @@ export abstract class ExpectationOperator<TContext extends PartialDeep<IExpectat
   }
 
   private compileExecUtils<T extends TContext>(context: T): IExpectationOperatorExecUtils<T> {
+    const faker = new Faker({ locale: [ru, en, en_GB] });
+
+    if (context.seed) {
+      faker.seed(context.seed);
+    }
+
     return {
       context: <T & IExpectationOperatorContext>context,
+      T: (payload) => <any>payload,
 
       _: _,
-      T: (payload) => <any>payload,
+      d: dayjs,
+      faker: faker,
     }
   }
 }

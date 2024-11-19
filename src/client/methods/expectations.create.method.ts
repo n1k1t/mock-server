@@ -26,6 +26,6 @@ export default ClientMethod
       throw new ValidationError({}, result.reasons);
     }
 
-    context.exchange.ws.publish('expectation:added', result.expectation);
+    context.exchange.ws.publish('expectation:added', result.expectation.toPlain());
     return result.expectation.toPlain();
   });

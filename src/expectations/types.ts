@@ -1,4 +1,6 @@
 import type { AxiosProxyConfig } from 'axios';
+import type { faker } from '@faker-js/faker';
+import type dayjs from 'dayjs';
 import type _ from 'lodash';
 
 import type { HttpRequestContext } from '../server/models';
@@ -39,21 +41,21 @@ export interface IExpectationMeta {
   executionsCount: number;
 
   additional: {
-    requestPaths?: string[];
-    requestMethods?: string[];
-    responseStatuses?: number[];
-  }
-};
-
-export interface IExpectationDelay {
-  ms: number;
-  times?: number;
+    paths?: string[];
+    methods?: string[];
+    statuses?: number[];
+  };
 };
 
 export type TExpectationContextLocation = 'request' | 'response';
 
 export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
 export const LExpectationOperatorLocation = <const>[
+  'error',
+  'delay',
+  'state',
+  'seed',
+
   'path',
   'method',
   'incoming.body',
@@ -64,13 +66,35 @@ export const LExpectationOperatorLocation = <const>[
   'outgoing.headers',
   'outgoing.data',
   'outgoing.dataRaw',
-]
+];
+
+export type TExpectationOperatorObjectLocation =
+  | 'state'
+  | 'incoming.body'
+  | 'incoming.headers'
+  | 'incoming.query'
+  | 'outgoing.data'
+  | 'outgoing.headers';
 
 export type TExpectationOperators = Omit<typeof operators, 'root'>;
-export interface IExpectationOperatorContext extends Pick<HttpRequestContext, 'incoming' | 'outgoing'> {};
+
+export interface IExpectationOperatorContext extends Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'> {
+  state: Record<string, unknown>;
+  window?: Record<string, unknown>;
+
+  seed?: number;
+  delay?: number;
+};
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
-  TLocation extends 'path' | 'method' ? { path: 'incoming.path', method: 'incoming.method' }[TLocation] : TLocation;
+  TLocation extends 'path' | 'method' | 'error' | 'delay'
+    ? {
+      path: 'incoming.path';
+      delay: 'incoming.delay';
+      error: 'incoming.error';
+      method: 'incoming.method';
+    }[TLocation]
+    : TLocation;
 
 export type ExtractExpectationContextValueByLocation<
   TContext extends object,
@@ -122,14 +146,7 @@ export interface IExpectationOperatorsSchema<
 };
 
 export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOperatorContext> = {}> {
-  delay?: IExpectationDelay | IExpectationDelay[];
-  destroy?: 'ECONNABORTED'
-
-  request?: IExpectationOperatorsSchema<
-    TContext,
-    'path' | 'method' | 'incoming.body' | 'incoming.bodyRaw' | 'incoming.query' | 'incoming.headers'
-  >;
-
+  request?: IExpectationOperatorsSchema<TContext>;
   response?: IExpectationOperatorsSchema<TContext>;
 
   forward?: {
@@ -145,7 +162,9 @@ export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOpe
 
 export interface IExpectationOperatorExecUtils<T extends PartialDeep<IExpectationOperatorContext>> {
   context: IExpectationOperatorContext & T;
-
   T: <T = any>(payload: unknown) => T;
+
   _: typeof _;
+  d: typeof dayjs;
+  faker: typeof faker;
 }

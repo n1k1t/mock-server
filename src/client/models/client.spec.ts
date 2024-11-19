@@ -232,6 +232,12 @@ describe('Client.Models.Client', () => {
             $.has('incoming.body', '$path', 'baz.baz', { $regExp: /1/ }),
             $.has('incoming.body', '$path', 'baz.baz', { $regExpAnyOf: [/1/, /2/] }),
             $.has('incoming.body', '$path', 'baz.baz', { $exec: (payload) => payload?.[0] === 1 }),
+
+            $.switch('incoming.query', '$path', 'foo', {
+              $cases: {
+                'a': $.and([])
+              },
+            }),
           ]),
 
           response: $.or([
