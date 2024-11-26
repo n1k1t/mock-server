@@ -4,12 +4,11 @@ import { ExpectationsStorage } from '../../expectations/models/storage';
 import { buildWsExchange } from '../ws-exchange';
 import { HistoryStorage } from '../history/storage';
 import { OnsiteClient } from '../../client';
-
-import config from '../../config';
+import { Plugins } from './plugins';
 
 export class ServerContext {
   public client = OnsiteClient.build(this);
-  public config = config;
+  public plugins = new Plugins();
 
   public storage = {
     expectations: new ExpectationsStorage(),

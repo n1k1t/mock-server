@@ -1,5 +1,6 @@
 import type { HttpRequestContext, IRequestContextIncoming, WsRequestContext } from './request-context';
-import type { IBaseRouteResponse } from './reply-service';
+import type { OmitPartial, TFunction } from '../../types';
+import type { IBaseRouteResponse } from './reply';
 
 export class Endpoint<
   TResponse = unknown,

@@ -5,7 +5,7 @@ import { ValueError } from '@n1k1t/typebox/errors';
 import _ from 'lodash';
 
 import { IExpectationMeta, IExpectationOperatorContext, IExpectationSchema, TExpectationType } from '../types';
-import { TRequestProtocol } from '../../types';
+import { PartialDeep, TRequestProtocol } from '../../types';
 
 import * as operators from '../operators';
 

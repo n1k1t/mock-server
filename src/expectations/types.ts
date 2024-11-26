@@ -3,8 +3,10 @@ import type { faker } from '@faker-js/faker';
 import type dayjs from 'dayjs';
 import type _ from 'lodash';
 
+import type { ConvertTupleToUnion, ExtractObjectValueByPath, PartialDeep, TRequestProtocol } from '../types';
 import type { HttpRequestContext } from '../server/models';
-import type { TRequestProtocol } from '../types';
+import type { MetaContext } from '../meta';
+import type { Logger } from '../logger';
 
 import type * as operators from './operators';
 
@@ -80,7 +82,6 @@ export type TExpectationOperators = Omit<typeof operators, 'root'>;
 
 export interface IExpectationOperatorContext extends Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'> {
   state: Record<string, unknown>;
-  window?: Record<string, unknown>;
 
   seed?: number;
   delay?: number;
@@ -160,8 +161,15 @@ export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOpe
   };
 };
 
+export type IExpectationOperatorExecMode = 'match' | 'manipulate';
+
 export interface IExpectationOperatorExecUtils<T extends PartialDeep<IExpectationOperatorContext>> {
   context: IExpectationOperatorContext & T;
+  logger: Logger;
+
+  mode: IExpectationOperatorExecMode;
+  meta: MetaContext;
+
   T: <T = any>(payload: unknown) => T;
 
   _: typeof _;

@@ -26,8 +26,8 @@ const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextO
 });
 
 export default Middleware
-  .build(__dirname, ['history', 'expectation'])
-  .assignHandler((context) => {
+  .build(__filename, ['history', 'expectation'])
+  .assignHandler(async (context) => {
     const plain = context.toPlain({ locations: ['incoming', 'forwarded.outgoing'], clone: true });
     const manipulated = context.shared.expectation.response?.manipulate({
       ...plain,
@@ -51,10 +51,10 @@ export default Middleware
       })
     });
 
-    context.response.writeHead(outgoing.status ?? 200, outgoing.headers);
-    context.response.write(outgoing.dataRaw);
-    context.response.end();
+    await context.server.plugins.exec('outgoing.response', context.response, context.assignOutgoing(outgoing));
 
-    context.shared.history.assignOutgoing(outgoing).changeState('finished');
+    context.shared.history.assignOutgoing(context.outgoing!).changeState('finished');
     context.server.exchange.ws.publish('history:updated', context.shared.history.toPlain());
+
+    context.complete();
   });

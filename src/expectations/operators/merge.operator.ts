@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
 import { ExpectationOperator } from '../models/operator';
+import { PartialDeep } from '../../types';
 import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,

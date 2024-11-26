@@ -1,6 +1,7 @@
-import { cast } from '../../../utils';
+import type { HttpRequestContext, WsRequestContext } from '../request-context';
+
 import { IBaseRouteResponse } from './types';
-import type { HttpRequestContext, RequestContext, WsRequestContext } from '../../models/request-context';
+import { cast } from '../../../utils';
 
 const defaultHeaders = {
   'Content-type': 'Application/json',
@@ -8,7 +9,7 @@ const defaultHeaders = {
 
 export * from './types';
 
-export class ReplyService<TResponse = unknown> {
+export class Reply<TResponse = unknown> {
   constructor(public context: HttpRequestContext | WsRequestContext) {}
 
   public ok(payload: TResponse) {
@@ -63,7 +64,7 @@ export class ReplyService<TResponse = unknown> {
     }
   }
 
-  static build<T>(context: HttpRequestContext | WsRequestContext) {
-    return new ReplyService(context);
+  static build<TResponse>(context: HttpRequestContext | WsRequestContext) {
+    return new Reply<TResponse>(context);
   }
 }

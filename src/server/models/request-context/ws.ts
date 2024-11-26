@@ -1,9 +1,11 @@
+import type { ServerContext } from '../server-context';
+import type { TFunction } from '../../../types';
+
 import { RequestContext } from './model';
-import { ServerContext } from '../server-context';
-import { ReplyService } from '../reply-service';
+import { Reply } from '../reply';
 
 export class WsRequestContext<TResponse = unknown> extends RequestContext<'ws'> {
-  public reply: ReplyService<TResponse> = ReplyService.build<TResponse>(this);
+  public reply: Reply<TResponse> = Reply.build<TResponse>(this);
 
   public incoming = {
     body: this.request.body,

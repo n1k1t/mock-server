@@ -1,4 +1,5 @@
 import { IExpectationOperatorContext } from '../types';
+import { PartialDeep } from '../../types';
 
 export const buildExpectationContext = (): PartialDeep<IExpectationOperatorContext> => ({
   incoming: {

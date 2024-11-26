@@ -1,6 +1,8 @@
 import _ from 'lodash';
 
+import type { SetRequiredKeys } from '../types';
 import type { Endpoint } from './models';
+
 import * as endpoints from './endpoints';
 
 interface IRoutes {

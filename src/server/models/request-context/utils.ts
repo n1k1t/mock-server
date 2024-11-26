@@ -65,7 +65,7 @@ export const serializePayload = (type: TRequestPayloadType, payload: object | nu
 }
 
 export const extractHttpIncommingParameters = (
-  request: IncomingMessage & { incomingBodyRaw: string }
+  request: IncomingMessage & { parsed: { raw: string, payload?: object } }
 ): IRequestContextIncoming => {
   const { pathname, query: rawQuery } = parseUrl(request.url ?? '');
 
@@ -80,8 +80,8 @@ export const extractHttpIncommingParameters = (
 
     query,
 
-    bodyRaw: request.incomingBodyRaw,
-    body: parsePayload(type, request.incomingBodyRaw),
+    bodyRaw: request.parsed.raw,
+    body: 'payload' in request.parsed ? request.parsed.payload : parsePayload(type, request.parsed.raw),
 
     headers: Object
       .entries(request.headers)

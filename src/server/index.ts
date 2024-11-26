@@ -3,15 +3,17 @@ import { Server } from 'socket.io';
 import _ from 'lodash';
 
 import { HttpRequestContext, Middleware, ServerContext, WsRequestContext } from './models';
+import { metaStorage } from '../meta';
+import { Logger } from '../logger';
 import { routes } from './router';
 
 import * as middlewares from './middlewares';
 
-export * from './proxy';
+const logger = Logger.build('Server');
 
 const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [
   middlewares.publicMiddleware,
-  middlewares.handleInternalMiddleware,
+  middlewares.internalMiddleware,
   middlewares.matchExpectationMiddleware,
   middlewares.manipulateExpectationMiddleware,
   middlewares.historyMiddleware,
@@ -23,17 +25,34 @@ const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [
 
 const handleHttpRequest = async (context: HttpRequestContext) => {
   for (const middleware of middlewaresToUse) {
+    if (context.completed || context.response.closed) {
+      break;
+    }
     if (!middleware.required.every((key) => key in context.shared)) {
+      logger.warn(`Middleware [${middleware.name}] has skiped`);
       continue;
     }
 
-    await new Promise((resolve) => middleware.exec(context, (result) => resolve(context.share(result ?? {}))));
+    await middleware.exec(context).catch((error) => {
+      logger.error(`Got error while middleware [${middleware.name}] execution`, error?.stack ?? error);
+      context.complete();
+    });
   }
 };
 
-const httpRequestListener = (context: ServerContext) =>
-  async (request: IncomingMessage, response: ServerResponse) =>
-    handleHttpRequest(await HttpRequestContext.build(context, request, response));
+const httpRequestListener = (server: ServerContext) =>
+  async (request: IncomingMessage, response: ServerResponse) => {
+    const context = await HttpRequestContext.build(server, request, response);
+
+    logger.info('Incoming request', `[${context.incoming.method} ${context.incoming.path}]`);
+
+    await metaStorage
+      .wrap(context.meta, () => handleHttpRequest(context))
+      .catch((error) => {
+        logger.error('Get error while handling incoming request', error?.stack ?? error);
+        response.end();
+      });
+  }
 
 export class MockServer {
   public authority = `http://${this.options.host}:${this.options.port}`;
@@ -70,8 +89,8 @@ export class MockServer {
 
     await new Promise<void>((resolve) =>
       http.listen(options.port, options.host, () => {
-        console.log(`Server has started on [${server.authority}]`);
-        console.log(`GUI is available on [${server.authority}/_mock/gui]`);
+        logger.info(`Server has started on [${server.authority}]`);
+        logger.info(`GUI is available on [${server.authority}/_mock/gui]`);
 
         resolve();
       })

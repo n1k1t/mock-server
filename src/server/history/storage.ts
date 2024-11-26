@@ -1,5 +1,5 @@
-import { History } from './model';
 import config from '../../config';
+import { History } from './model';
 
 export class HistoryStorage extends Map<string, History> {
   private idsStack: string[] = [];
@@ -9,7 +9,7 @@ export class HistoryStorage extends Map<string, History> {
 
     this.set(historyRecord.id, historyRecord);
 
-    if (this.idsStack.push(historyRecord.id) > config.server.historyRecordsLimit) {
+    if (this.idsStack.push(historyRecord.id) > config.get('history').limit) {
       this.delete(this.idsStack.shift()!);
     }
 

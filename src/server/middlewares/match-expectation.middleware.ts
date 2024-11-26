@@ -3,7 +3,7 @@ import { Middleware } from '../models';
 
 export default Middleware
   .build(__filename)
-  .assignHandler((context, next) => {
+  .assignHandler((context, { logger }) => {
     const plain = context.toPlain({ locations: ['incoming'] });
     const expectation = context.server.storage.expectations.match<any>('request', plain);
 
@@ -16,8 +16,10 @@ export default Middleware
       return context.reply.notFound();
     }
 
-    expectation.increaseExecutionsCounter();
-    context.server.exchange.ws.publish('expectation:updated', expectation.toPlain());
+    logger.info('Has matched with', `"${expectation.name}" [${expectation.id}]`);
 
-    return next({ expectation });
+    expectation.increaseExecutionsCounter();
+
+    context.server.exchange.ws.publish('expectation:updated', expectation.toPlain());
+    context.share({ expectation });
   });

@@ -1,4 +1,5 @@
 import type { IExpectationOperatorContext, TBuildExpectationConfiguration } from '../../expectations';
+import type { PartialDeep, TFunction } from '../../types';
 import type { TMethodsSchema } from '../types';
 
 import { compileExpectationOperators, ICompiledExpectationOperators } from '../helpers';

@@ -1,6 +1,8 @@
 import { TObject, TSchema, Type } from '@n1k1t/typebox';
 import { Value, ValueError } from '@n1k1t/typebox/value';
 
+import type { Constructable } from '../types';
+
 interface IValidationMetaContext {
   schema: TObject;
   properties: Set<string | Symbol>;

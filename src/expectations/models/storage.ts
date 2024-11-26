@@ -2,6 +2,7 @@ import { ValueError } from '@n1k1t/typebox/errors';
 
 import { IExpectationOperatorContext, TExpectationContextLocation } from '../types';
 import { Expectation, TBuildExpectationConfiguration } from './expectation';
+import { PartialDeep } from '../../types';
 
 export type TExpectationsStorageRegisterationResult =
   | { status: 'REGISTRED', expectation: Expectation<any> }

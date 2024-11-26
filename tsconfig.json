@@ -98,9 +98,9 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true,                                /* Skip type checking all .d.ts files. */
-    "typeRoots": ["node_modules/@types", "types/**/*.global.ts"],
+    "typeRoots": ["node_modules/@types"],
   },
-  "include": ["bin/**/*.ts", "src/**/*.ts", "types/**/*.ts", "task-processor.ts", "test/**/*.ts"],
+  "include": ["bin/**/*.ts", "src/**/*.ts"],
   "exclude": ["node_modules", "src/gui"],
   "ts-node": {
     "transpileOnly": true

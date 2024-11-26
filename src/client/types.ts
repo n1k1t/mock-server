@@ -1,3 +1,5 @@
+import type { TFunction } from '../types';
+
 import type * as methods from './methods';
 import type * as endpoints from '../server/endpoints';
 

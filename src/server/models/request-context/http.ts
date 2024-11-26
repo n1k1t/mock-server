@@ -8,9 +8,12 @@ import type { ServerContext } from '../server-context';
 import type { History } from '../../history';
 
 import { extractHttpIncommingParameters } from './utils';
+import { metaStorage } from '../../../meta';
 import { RequestContext } from './model';
-import { ReplyService } from '../reply-service';
+import { Logger } from '../../../logger';
+import { Reply } from '../reply';
 
+const logger = Logger.build('Server.Models.HttpRequestContext');
 const clone = rfdc();
 
 export class HttpRequestContext<TResponse = unknown> extends RequestContext<'http'> {
@@ -18,10 +21,13 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
     HttpRequestContext['shared'], 'forwarded' | 'state' | 'seed'
   >;
 
-  public reply: ReplyService<TResponse> = ReplyService.build(this);
-
   public incoming = extractHttpIncommingParameters(this.request);
   public outgoing?: IRequestContextOutgoing;
+
+  public reply: Reply<TResponse> = Reply.build(this);
+  public meta = metaStorage.generate({
+    ...(this.incoming.headers['x-request-id'] && { requestId: String(this.incoming.headers['x-request-id']) }),
+  });
 
   public shared: {
     state: Record<string, unknown>;
@@ -46,7 +52,7 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
 
   constructor(
     public server: ServerContext,
-    public request: IncomingMessage & { incomingBodyRaw: string },
+    public request: IncomingMessage & { parsed: { raw: string, payload?: object } },
     public response: ServerResponse
   ) {
     super('http', server);
@@ -56,13 +62,26 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
     return Object.assign(this, { shared: Object.assign(this.shared, shared) });
   }
 
+  public assignOutgoing<T extends NonNullable<HttpRequestContext<any>['outgoing']>>(outgoing: T) {
+    return Object.assign(this, { outgoing });
+  }
+
+  public complete() {
+    logger.info(
+      `Incoming request [${this.incoming.method} ${this.incoming.path}] has finished`,
+      `in [${Date.now() - this.timestamp}ms]`
+    );
+
+    return super.complete();
+  }
+
   public toPlain<K extends 'incoming' | 'outgoing' | 'forwarded.incoming' | 'forwarded.outgoing'>(
     options?: {
       locations?: K[];
       clone?: boolean;
     }
   ): HttpRequestContext<TResponse>['TPlain'] {
-    const shouldInclude = {
+    const locations = {
       incoming: options?.locations?.includes(<K>'incoming') ?? true,
       outgoing: (options?.locations?.includes(<K>'outgoing') ?? true) && this.outgoing,
 
@@ -76,22 +95,16 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
       state: options?.clone ? clone(this.shared.state) : this.shared.state,
 
       ...(this.shared.seed !== undefined && { seed: this.shared.seed }),
+      ...(locations.incoming && { incoming: options?.clone ? clone(this.incoming) : this.incoming }),
+      ...(locations.outgoing && { outgoing: options?.clone ? clone(this.outgoing) : this.outgoing }),
 
-      ...(shouldInclude.incoming && {
-        incoming: options?.clone ? clone(this.incoming) : this.incoming,
-      }),
-
-      ...(shouldInclude.outgoing && {
-        outgoing: options?.clone ? clone(this.outgoing) : this.outgoing,
-      }),
-
-      ...((shouldInclude.forwarded.incoming || shouldInclude.forwarded.outgoing) && {
+      ...((locations.forwarded.incoming || locations.forwarded.outgoing) && {
         forwarded: {
-          ...(shouldInclude.forwarded.incoming && {
+          ...(locations.forwarded.incoming && {
             incoming: options?.clone ? clone(this.shared.forwarded!.incoming) : this.shared.forwarded!.incoming,
           }),
 
-          ...(shouldInclude.forwarded.outgoing && {
+          ...(locations.forwarded.outgoing && {
             outgoing: options?.clone ? clone(this.shared.forwarded!.outgoing) : this.shared.forwarded!.outgoing,
           }),
         },
@@ -100,11 +113,7 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
   }
 
   static async build(server: ServerContext, request: IncomingMessage, response: ServerResponse) {
-    let incomingBodyRaw = '';
-
-    request.on('data', chunk => incomingBodyRaw += chunk);
-    await new Promise(resolve => request.on('end', resolve));
-
-    return new HttpRequestContext(server, Object.assign(request, { incomingBodyRaw }), response);
+    const parsed = await server.plugins.exec('incoming.body', request);
+    return new HttpRequestContext(server, Object.assign(request, { parsed }), response);
   }
 }

@@ -1,3 +1,5 @@
+import type { FlattenArrays } from '../types';
+
 export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const cast = <T>(payload: T) => payload;
 

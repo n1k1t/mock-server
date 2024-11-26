@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+import { PartialDeep } from '../types';
 import {
   IExpectationSchema,
   IExpectationMeta,

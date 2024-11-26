@@ -3,7 +3,7 @@ export { default as delayMiddleware } from './delay.middleware';
 export { default as destroyMiddleware } from './destroy.midleware';
 export { default as matchExpectationMiddleware } from './match-expectation.middleware';
 export { default as manipulateExpectationMiddleware } from './manipulate-expectation.middleware';
-export { default as handleInternalMiddleware } from './internal-route.middleware';
+export { default as internalMiddleware } from './internal.middleware';
 export { default as publicMiddleware } from './public.middleware';
 export { default as historyMiddleware } from './history.middleware';
 export { default as replyMiddleware } from './reply.middleware';

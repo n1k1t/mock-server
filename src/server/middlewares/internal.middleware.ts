@@ -1,13 +1,16 @@
 import _ from 'lodash';
 
-import { routes } from '../router';
 import { Middleware } from '../models';
+import { routes } from '../router';
 
 export default Middleware
   .build(__filename)
-  .assignHandler((context, next) => {
+  .assignHandler(async (context) => {
     const key = [context.incoming.method, context.incoming.path].join(':');
     const endpoint = routes[context.type][key];
 
-    return endpoint?.handler ? endpoint.handler(context) : next();
+    if (endpoint?.handler) {
+      await endpoint.handler(context);
+      context.complete();
+    }
   });

@@ -1,5 +1,9 @@
 import { IExpectationOperatorContext, IExpectationOperatorsSchema, TExpectationOperatorLocation } from '../types';
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
+import { PartialDeep } from '../../types';
+import { Logger } from '../../logger';
+
+const logger = Logger.build('Expectations.Operators.Root');
 
 export default class RootExpectationOperator<
   TContext extends PartialDeep<IExpectationOperatorContext> = {},
@@ -22,8 +26,8 @@ export default class RootExpectationOperator<
   public match(context: TContext): boolean {
     try {
       return this.compiled?.match(context) ?? false;
-    } catch(error) {
-      console.error('Got error on expectation matching', error);
+    } catch(error: any) {
+      logger.error('Got error on expectation matching', error?.stack ?? error);
       return false;
     }
   }
@@ -31,8 +35,8 @@ export default class RootExpectationOperator<
   public manipulate<T extends TContext>(context: T): T {
     try {
       return this.compiled?.manipulate(context) ?? context;
-    } catch(error) {
-      console.error('Got error on expectation manipulation', error);
+    } catch(error: any) {
+      logger.error('Got error on expectation manipulation', error?.stack ?? error);
       return context;
     }
   }

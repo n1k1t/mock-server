@@ -6,9 +6,9 @@ import { extractPayloadType, Middleware, parsePayload, serializePayload } from '
 
 export default Middleware
   .build(__filename, ['expectation', 'manipulated', 'history'])
-  .assignHandler(async (context, next) => {
+  .assignHandler(async (context, { logger }) => {
     if (!context.shared.expectation.forward) {
-      return next();
+      return null;
     }
 
     const { url, baseUrl, timeout, proxy } = context.shared.expectation.forward;
@@ -36,24 +36,29 @@ export default Middleware
     const history = context.shared.history.extendForwarded(forwarded);
     context.server.exchange.ws.publish('history:updated', history.toPlain());
 
-    const response = await axios({
-      timeout: timeout ?? 1000 * 30,
+    const configuration = await context.server.plugins.exec(
+      'forward.request', {
+        timeout: timeout ?? 1000 * 30,
 
-      method: forwarded.incoming.method,
-      headers: <Record<string, string>>forwarded.incoming.headers,
+        method: forwarded.incoming.method,
+        headers: <Record<string, string>>forwarded.incoming.headers,
 
-      ...(url && { url }),
-      ...(baseUrl && { baseURL: baseUrl, url: forwarded.incoming.path }),
+        ...(url && { url }),
+        ...(baseUrl && { baseURL: baseUrl, url: forwarded.incoming.path }),
 
-      data: bodyRaw,
-      params: context.incoming.query,
-      responseType: 'arraybuffer',
+        data: bodyRaw,
+        params: context.incoming.query,
+        responseType: 'arraybuffer',
 
-      ...(proxy && {
-        proxy,
-        httpsAgent: HttpsProxyAgent(proxy.host)
-      }),
-    }).catch((error: AxiosError) => {
+        ...(proxy && {
+          proxy,
+          httpsAgent: HttpsProxyAgent(proxy.host)
+        }),
+      },
+      context
+    );
+
+    const response = await axios.request(configuration).catch((error: AxiosError) => {
       if (!error.response) {
         history
           .assign({ error: _.pick(error, ['message', 'code']) })
@@ -62,14 +67,15 @@ export default Middleware
         context.server.exchange.ws.publish('history:updated', history.toPlain());
         context.reply.internalError(error.message);
 
+        logger.error('Got error while forwaring', error?.stack ?? error);
         throw error;
       }
 
       return error.response;
     });
 
+    const parsed = await context.server.plugins.exec('forward.response', response, context);
     const outgoingType = extractPayloadType(response.headers);
-    const dataRaw = response.data?.toString() ?? '';
 
     forwarded.outgoing = {
       type: outgoingType,
@@ -77,12 +83,12 @@ export default Middleware
       status: response.status,
       headers: response.headers,
 
-      dataRaw,
-      data: parsePayload(outgoingType, dataRaw),
+      dataRaw: parsed.raw,
+      data: 'payload' in parsed ? parsed.payload : parsePayload(outgoingType, parsed.raw),
     };
 
     history.extendForwarded(forwarded);
-    context.server.exchange.ws.publish('history:updated', history.toPlain());
 
-    return next({ forwarded });
+    context.server.exchange.ws.publish('history:updated', history.toPlain());
+    context.share({ forwarded });
   });

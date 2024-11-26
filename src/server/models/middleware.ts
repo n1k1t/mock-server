@@ -1,7 +1,10 @@
 import path from 'path';
 import _ from 'lodash';
 
+import type { SetRequiredKeys, TFunction } from '../../types';
 import type { HttpRequestContext } from '../models';
+
+import { Logger } from '../../logger';
 
 export class Middleware<
   TRequired extends keyof HttpRequestContext['shared'] = never,
@@ -10,7 +13,9 @@ export class Middleware<
   }
 > {
   public TCompiled!: SetRequiredKeys<Middleware<TRequired, TContext>, 'handler'>;
-  public handler?: TFunction<unknown, [TContext, (shared?: Partial<HttpRequestContext['shared']>) => unknown]>;
+  public handler?: TFunction<unknown, [TContext, { logger: Logger }]>;
+
+  private logger = Logger.build(`Server.Middleware [${this.name}]`);
 
   constructor(public name: string, public required: TRequired[] = []) {}
 
@@ -18,24 +23,11 @@ export class Middleware<
     return Object.assign(this, { handler });
   }
 
-  public exec<This extends this['TCompiled']>(
-    this: This,
-    context: TContext,
-    next: (result?: Partial<HttpRequestContext['shared']>) => unknown
-  ) {
-    return this.check(context).handler(context, next);
-  }
-
-  private check(context: HttpRequestContext) {
-    const notExistentRequiredKeys = this.required?.filter((key) => !_.has(context.shared, key)) ?? [];
-    if (notExistentRequiredKeys.length) {
-      throw new Error(`Middleware "${this.name}" requires: ${notExistentRequiredKeys.join(', ')}`);
-    }
-
-    return this;
+  public async exec<This extends this['TCompiled']>(this: This, context: TContext) {
+    return this.handler(context, { logger: this.logger });
   }
 
   static build<TRequired extends keyof HttpRequestContext['shared'] = never>(name: string, required?: TRequired[]) {
-    return new Middleware(path.parse(name).name, required);
+    return new Middleware(path.parse(name).name.split('.')[0], required);
   }
 }

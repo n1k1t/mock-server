@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import { checkIsLocationInContext, extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
+import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
 import {
   CompileExpectationOperatorValue,
@@ -96,7 +97,7 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return this.compiled.exec(context, payload.value) === true;
+          return this.compiled.exec('match', context, payload.value) === true;
         }
       }
 
@@ -117,7 +118,7 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return this.compiled.exec(context, payload.value) === true;
+          return this.compiled.exec('match', context, payload.value) === true;
         }
       }
 
@@ -163,7 +164,7 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return values.every((value) => this.compiled.exec!(context, value) === true);
+          return values.every((value) => this.compiled.exec!('match', context, value) === true);
         }
 
         return values.length !== 0;

@@ -1,5 +1,5 @@
-import { Expectation } from '../../expectations';
 import { prepareExpectationBodyToRequest } from '../utils';
+import { Expectation } from '../../expectations';
 import { Client } from './client';
 
 interface IExpectationContext {

@@ -4,37 +4,39 @@ import fs from 'fs/promises';
 import _ from 'lodash';
 
 import { Middleware } from '../models';
+import config from '../../config';
 
 export default Middleware
   .build(__filename)
-  .assignHandler(async (context, next) => {
-    if (!context.incoming.path.includes(context.server.config.client.publicRoute)) {
-      return next();
+  .assignHandler(async (context) => {
+    const gui = config.get('gui');
+    const statics = config.get('statics');
+
+    if (!context.incoming.path.includes(gui.route)) {
+      return null;
     }
 
-    const requestPath = context.incoming.path.replace(context.server.config.client.publicRoute, '');
+    const requestPath = context.incoming.path.replace(gui.route, '');
     const requestPathDetails = path.parse(requestPath);
 
     if (!requestPath) {
-      return context.response
-        .writeHead(301, 'Moved', { Location: path.join(context.server.config.client.publicRoute, '/') })
-        .end();
+      context.response.writeHead(301, 'Moved', { Location: path.join(gui.route, '/') }).end();
+      return context.complete();
     }
 
     if (requestPathDetails.dir === '/' && !requestPathDetails.ext) {
       context.response.writeHead(200, 'Ok', { 'Content-type': 'text/html;charset=utf-8' });
 
-      return createReadStream(path.join(context.server.config.client.publicDirPath, '/index.html'))
-        .pipe(context.response);
+      createReadStream(path.join(statics.public.dir, '/index.html')).pipe(context.response);
+      return context.complete();
     }
 
-    const fileStat = await fs.stat(path.join(context.server.config.client.publicDirPath, requestPath)).catch(() => null);
+    const fileStat = await fs.stat(path.join(statics.public.dir, requestPath)).catch(() => null);
     if (fileStat === null) {
-      return context.response
-        .writeHead(404, 'Not found')
-        .end();
+      context.response.writeHead(404, 'Not found').end();
+      return context.complete();
     }
 
-    return createReadStream(path.join(context.server.config.client.publicDirPath, requestPath))
-      .pipe(context.response);
+    createReadStream(path.join(statics.public.dir, requestPath)).pipe(context.response);
+    context.complete();
   });

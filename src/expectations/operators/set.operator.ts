@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
+import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
 import {
   CompileExpectationOperatorValue,
@@ -54,7 +55,7 @@ export default class SetExpectationOperator<
         _.set(
           payload.parent,
           payload.key,
-          this.compiled.exec ? this.compiled.exec(context, payload.value) : this.command.$value
+          this.compiled.exec ? this.compiled.exec('manipulate', context, payload.value) : this.command.$value
         );
 
         return context;
@@ -66,7 +67,7 @@ export default class SetExpectationOperator<
             payload.parent,
             `${payload.key}.${this.command.$path}`,
             this.compiled.exec
-              ? this.compiled.exec(context, _.get(payload.value, this.command.$path))
+              ? this.compiled.exec('manipulate', context, _.get(payload.value, this.command.$path))
               : this.command.$value
           );
 
@@ -76,7 +77,7 @@ export default class SetExpectationOperator<
         if (this.command.$jsonPath && _.isObject(payload.value)) {
           extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.forEach(
             ({ parent, parentProperty, value }) => this.compiled.exec
-              ? _.set(parent, parentProperty, this.compiled.exec(context, value))
+              ? _.set(parent, parentProperty, this.compiled.exec('manipulate', context, value))
               : _.set(parent, parentProperty, this.command.$value)
           );
 
@@ -86,7 +87,7 @@ export default class SetExpectationOperator<
         _.set(
           payload.parent,
           payload.key,
-          this.compiled.exec ? this.compiled.exec(context, payload.value) : this.command.$value
+          this.compiled.exec ? this.compiled.exec('manipulate', context, payload.value) : this.command.$value
         );
 
         return context;

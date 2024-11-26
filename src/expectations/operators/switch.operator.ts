@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { extractContextByLocation } from '../utils';
+import { PartialDeep, TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   IExpectationOperatorContext,
@@ -99,7 +100,7 @@ export default class SwitchExpectationOperator<
     }
 
     if (this.compiled.exec) {
-      return this.compiled.exec(context, payload.value);
+      return this.compiled.exec('match', context, payload.value);
     }
 
     return this.command.$path

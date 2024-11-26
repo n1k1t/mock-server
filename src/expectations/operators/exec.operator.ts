@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 import { IExpectationOperatorExecUtils, IExpectationOperatorContext } from '../types';
+import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
 
 export default class ExecExpectationOperator<
@@ -9,12 +10,12 @@ export default class ExecExpectationOperator<
   public compiled = this.compileExecHandler(this.command, ['utils']);
 
   public match(context: TContext): boolean {
-    const result = this.compiled(context);
+    const result = this.compiled('match', context);
     return typeof result === 'boolean' ? result : true;
   }
 
   public manipulate<T extends TContext>(context: T): T {
-    this.compiled(context);
+    this.compiled('manipulate', context);
     return context;
   }
 }
