@@ -1,7 +1,12 @@
-import { IExpectationOperatorContext, IExpectationOperatorsSchema, TExpectationOperatorLocation } from '../types';
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { PartialDeep } from '../../types';
 import { Logger } from '../../logger';
+import {
+  IExpectationOperatorContext,
+  IExpectationOperatorsSchema,
+  TExpectationMetaTag,
+  TExpectationOperatorLocation,
+} from '../types';
 
 const logger = Logger.build('Expectations.Operators.Root');
 
@@ -22,6 +27,10 @@ export default class RootExpectationOperator<
     const Operator = <TExpectationOperatorConstructor<TContext>>this.operators[extracted.key];
     return new Operator(this.operators, extracted.nested);
   })();
+
+  public get tags(): TExpectationMetaTag[] {
+    return this.compiled?.tags ?? [];
+  }
 
   public match(context: TContext): boolean {
     try {

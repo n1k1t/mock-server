@@ -1,0 +1,41 @@
+module.exports = `
+  <div class="container history" id="{{id}}">
+    <div class="meta">
+      <div class="segment">
+        <span class="time">{{#toLocaleTime meta.requestedAt}}{{/toLocaleTime}}</span>
+
+        {{#if request.error}}
+          <span class="error">
+            {{#compare request.error.code.length 'lte' 24}}{{request.error.code}}{{/compare}}
+            {{#compare request.error.code.length 'gt' 24}}Error{{/compare}}
+          </span>
+        {{/if}}
+
+        {{#compare meta.state 'eq' 'pending'}}
+          <span class="pending"><i class="fas fa-hourglass-start"></i></span>
+        {{/compare}}
+
+        {{#if request.outgoing}}
+          <span class="status
+            {{#compare request.outgoing.status 'lt' 400}}green{{/compare}}
+            {{#compare request.outgoing.status 'gte' 400}}red{{/compare}}
+          ">{{request.outgoing.status}}</span>
+        {{/if}}
+
+        <span class="method">{{{request.incoming.method}}}</span>
+        <span class="path">{{{request.incoming.path}}}</span>
+      </div>
+
+      <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+
+      {{#if request.seed}}<span class="seed">{{request.seed}}</span>{{/if}}
+
+      {{#if expectation}}
+        <div class="segment">{{>expectationMeta expectation format='short'}}</div>
+      {{else}}
+        <span class="handled-with red">Nowhere</span>
+      {{/if}}
+    </div>
+    <pre class="hidden"></pre>
+  </div>
+`

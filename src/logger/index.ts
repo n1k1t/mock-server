@@ -1,3 +1,6 @@
+import colors from 'colors';
+import _ from 'lodash';
+
 import { calculateLogLevelWeight, colorifyLogLevel, serializeLogSegments } from './utils';
 import { TLoggerLevel, TLoggerSerializer } from './types';
 import { TFunction } from '../types';
@@ -51,10 +54,10 @@ export class Logger {
 
   private publish(level: TLoggerLevel, ...messages: unknown[]): void {
     console.log(
-      new Date().toLocaleTimeString().gray,
+      colors.gray(new Date().toLocaleTimeString()),
       colorifyLogLevel(level),
-      (<string & { brightWhite: string }>this.title).brightWhite,
-      ...serializeLogSegments(messages, Logger.serializer).map((segment) => String(segment).white)
+      _.get(colors, 'brightWhite')(this.title),
+      ...serializeLogSegments(messages, Logger.serializer).map((segment) => colors.white(String(segment)))
     );
   }
 

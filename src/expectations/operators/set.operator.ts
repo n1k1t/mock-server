@@ -9,6 +9,7 @@ import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,
   IExpectationOperatorExecUtils,
+  TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
@@ -38,6 +39,22 @@ export default class SetExpectationOperator<
       exec: this.compileExecHandler(this.command.$exec, ['payload', 'utils']),
     }),
   };
+
+  public get tags(): TExpectationMetaTag[] {
+    if (this.command.$location === 'outgoing.status') {
+      return this.command.$value
+        ? [{ location: 'outgoing.status', value: Number(this.command.$value) }]
+        : [];
+    }
+
+    if (this.command.$location === 'error') {
+      return this.command.$value
+        ? [{ location: 'error', value: String(this.command.$value) }]
+        : [];
+    }
+
+    return [];
+  }
 
   public match(): boolean {
     return true;

@@ -5,8 +5,85 @@ exports[`Client.Models.Client should create expectation with complex schema as f
   "id": "12426262-85a3-4340-969b-272e003722e9",
   "isEnabled": true,
   "meta": {
-    "additional": {},
     "executionsCount": 0,
+    "tags": [
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo/bar",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "*/bar",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo$",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo\\/bar$",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo/bar",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "*/bar",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo$",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo\\/bar$",
+      },
+      {
+        "location": "outgoing.status",
+        "value": "200",
+      },
+    ],
   },
   "name": "MaliciousCobra",
   "schema": {
@@ -593,8 +670,85 @@ exports[`Client.Models.Client should create expectation with complex schema as o
   "id": "12426262-85a3-4340-969b-272e003722e9",
   "isEnabled": true,
   "meta": {
-    "additional": {},
     "executionsCount": 0,
+    "tags": [
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo/bar",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "*/bar",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo$",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo\\/bar$",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo",
+      },
+      {
+        "location": "path",
+        "value": "/foo/bar",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "/foo/*",
+      },
+      {
+        "location": "path",
+        "value": "*/bar",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo$",
+      },
+      {
+        "location": "path",
+        "value": "^\\/foo\\/bar$",
+      },
+      {
+        "location": "outgoing.status",
+        "value": "200",
+      },
+    ],
   },
   "name": "MaliciousCobra",
   "schema": {

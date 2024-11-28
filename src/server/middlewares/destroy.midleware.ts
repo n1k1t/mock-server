@@ -6,8 +6,8 @@ export default Middleware
   .assignHandler((context, { logger }) => {
     if (context.shared.manipulated.incoming.error) {
       context.shared.history
-        .assign({ error: { code: context.shared.manipulated.incoming.error, isManual: true } })
-        .changeState('finished');
+        .assignError({ code: context.shared.manipulated.incoming.error, isManual: true })
+        .switchState('finished');
 
       context.server.exchange.ws.publish('history:updated', context.shared.history.toPlain());
       logger.info(`Has destroyed using [${context.shared.manipulated.incoming.error}]`);

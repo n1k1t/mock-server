@@ -21,11 +21,6 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
 
   public isEnabled: boolean = true;
 
-  public meta: IExpectationMeta = {
-    executionsCount: 0,
-    additional: {},
-  };
-
   public request = this.schema.request
     ? new operators.root<TContext>(operators, this.schema.request)
     : null;
@@ -33,6 +28,11 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
   public response = this.schema.response
     ? new operators.root<TContext>(operators, this.schema.response)
     : null;
+
+  public meta: IExpectationMeta = {
+    executionsCount: 0,
+    tags: (this.request?.tags ?? []).concat(this.response?.tags ?? []),
+  };
 
   public get forward() {
     return this.schema.forward;
@@ -65,11 +65,6 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
   static build<TContext extends PartialDeep<IExpectationOperatorContext> = {}>(
     configuration: TBuildExpectationConfiguration<TContext>
   ) {
-    // expectation.meta.additional = Object.assign(
-    //   extractMetaAdditionalFromExpectationSchema(expectation.request ?? {}),
-    //   extractMetaAdditionalFromExpectationSchema(expectation.response ?? {}),
-    // );
-
     return Object.assign(
       new Expectation(configuration.type ?? 'HTTP', configuration.schema),
       _.omit(configuration, ['schema', 'type'])

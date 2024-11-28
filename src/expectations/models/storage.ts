@@ -27,7 +27,7 @@ export class ExpectationsStorage extends Map<string, Expectation<any>> {
   ): Expectation<TContext> | null {
     for (const expectation of this.values()) {
       if (expectation.isEnabled && expectation[location]?.match(context)) {
-        return expectation;
+        return expectation.increaseExecutionsCounter();
       }
     }
 

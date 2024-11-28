@@ -3,11 +3,9 @@ import _ from 'lodash';
 import { PartialDeep } from '../types';
 import {
   IExpectationSchema,
-  IExpectationMeta,
-  LExpectationAttachlessOperator,
-  TExpectationAttachlessOperator,
+  LExpectationFlatOperator,
+  TExpectationFlatOperator,
   IExpectationOperatorContext,
-  IExpectationOperatorsSchema,
   TExpectationOperatorLocation,
 } from './types';
 
@@ -148,41 +146,8 @@ export const introspectExpectationOperatorsSchema = <T extends object = IExpecta
 
     handler(key, schema, path);
 
-    if (_.isObject(schema[key]) && !LExpectationAttachlessOperator.includes(<TExpectationAttachlessOperator>key)) {
+    if (_.isObject(schema[key]) && !LExpectationFlatOperator.includes(<TExpectationFlatOperator>key)) {
       introspectExpectationOperatorsSchema(<T>schema[key], handler, path);
     }
   });
-}
-
-export const extractMetaAdditionalFromExpectationSchema = (schema: IExpectationOperatorsSchema) => {
-  const acc: IExpectationMeta['additional'] = {};
-
-  introspectExpectationOperatorsSchema(schema, (key, segment) => {
-    if (key === '$set' && segment[key]?.$location === 'outgoing.status') {
-      acc.statuses = (acc.statuses ?? []).concat([<number>segment[key]?.$value].filter(Boolean));
-    }
-
-    if (key === '$has' && ['method', 'path'].includes(segment[key]?.$location ?? '')) {
-      const valuePredicate = segment[key]?.$value
-        ?? segment[key]?.$valueAnyOf
-        ?? segment[key]?.$match
-        ?? segment[key]?.$matchAnyOf
-        ?? segment[key]?.$regExp
-        ?? segment[key]?.$regExpAnyOf
-        ?? [];
-
-      switch(segment[key]?.$location) {
-        case 'method': {
-          acc.methods = (acc.methods ?? []).concat(_.flatten([valuePredicate]).map(String));
-          break;
-        };
-        case 'path': {
-          acc.paths = (acc.paths ?? []).concat(_.flatten([valuePredicate]).map(String));
-          break;
-        }
-      }
-    }
-  });
-
-  return acc;
 }

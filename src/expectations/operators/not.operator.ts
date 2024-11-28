@@ -1,6 +1,11 @@
-import { IExpectationOperatorContext, IExpectationOperatorsSchema, TExpectationOperatorLocation } from '../types';
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { PartialDeep } from '../../types';
+import {
+  IExpectationOperatorContext,
+  IExpectationOperatorsSchema,
+  TExpectationMetaTag,
+  TExpectationOperatorLocation,
+} from '../types';
 
 export default class NotExpectationOperator<
   TContext extends PartialDeep<IExpectationOperatorContext> = {},
@@ -19,6 +24,10 @@ export default class NotExpectationOperator<
     const Operator = <TExpectationOperatorConstructor<TContext>>this.operators[extracted.key];
     return new Operator(this.operators, extracted.nested);
   })();
+
+  public get tags(): TExpectationMetaTag[] {
+    return [];
+  }
 
   public match(context: TContext): boolean {
     return this.compiled ? !this.compiled.match(context) : false;

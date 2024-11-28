@@ -1,5 +1,3 @@
-import './process';
-
 export { default as config } from './config';
 
 export * from './server';

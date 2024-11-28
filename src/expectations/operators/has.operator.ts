@@ -10,6 +10,7 @@ import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,
   IExpectationOperatorExecUtils,
+  TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
@@ -62,6 +63,44 @@ export default class HasExpectationOperator<
       exec: this.compileExecHandler(this.command.$exec, ['payload', 'utils']),
     }),
   };
+
+  public get tags(): TExpectationMetaTag[] {
+    if (this.command.$location !== 'path' && this.command.$location !== 'method') {
+      return [];
+    }
+
+    if (this.command.$value) {
+      return [{ location: this.command.$location, value: String(this.command.$value) }];
+    }
+    if (this.command.$valueAnyOf) {
+      return this.command.$valueAnyOf.map((value) => (<TExpectationMetaTag>{
+        location: this.command.$location,
+        value: String(value)
+      }));
+    }
+
+    if (this.command.$match) {
+      return [{ location: this.command.$location, value: String(this.command.$match) }];
+    }
+    if (this.command.$matchAnyOf) {
+      return this.command.$matchAnyOf.map((value) => (<TExpectationMetaTag>{
+        location: this.command.$location,
+        value: String(value)
+      }));
+    }
+
+    if (this.command.$regExp) {
+      return [{ location: this.command.$location, value: this.command.$regExp.source }];
+    }
+    if (this.command.$regExpAnyOf) {
+      return this.command.$regExpAnyOf.map((value) => (<TExpectationMetaTag>{
+        location: this.command.$location,
+        value: value.source,
+      }));
+    }
+
+    return [];
+  }
 
   public match(context: TContext): boolean {
     if (!checkIsLocationInContext(this.command.$location, context)) {

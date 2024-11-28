@@ -15,29 +15,24 @@ module.exports = `
 
   <span class="name">{{name}}</span>
 
-  {{#each meta.additional.requestMethods}}
-    <span class="method">{{this}}</span>
-  {{/each}}
-
-  {{#each meta.additional.requestPaths}}
-    <span class="path">{{this}}</span>
-  {{/each}}
-
   {{#compare format 'neq' 'short'}}
-    {{#each meta.additional.responseStatuses}}
-      <span class="status
-        {{#compare this 'lt' 400}}green{{/compare}}
-        {{#compare this 'gte' 400}}red{{/compare}}
-      ">{{this}}</span>
+    {{#compare meta.tags.length 'gt' 0}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/compare}}
+
+    {{#each meta.tags}}
+      {{#compare @index 'lte' 5}}
+        {{#if (compare location 'eq' 'outgoing.status')}}
+          <span class="status
+            {{#compare value 'lt' 400}}green{{/compare}}
+            {{#compare value 'gte' 400}}red{{/compare}}
+          ">{{value}}</span>
+        {{else}}
+          <span class="{{location}}">{{value}}</span>
+        {{/if}}
+      {{/compare}}
     {{/each}}
   {{/compare}}
 
-  {{#if forward}}
-    <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-    <span class="forward">{{forward.host}}:{{forward.port}}</span>
-  {{/if}}
-
-  {{#if destroy}}
-    <span class="error">{{destroy}}</span>
-  {{/if}}
+  {{#if schema.forward}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/if}}
+  {{#if schema.forward.baseUrl}}<span class="forward">{{schema.forward.baseUrl}}</span>{{/if}}
+  {{#if schema.forward.url}}<span class="forward">{{schema.forward.url}}</span>{{/if}}
 `

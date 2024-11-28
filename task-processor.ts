@@ -20,15 +20,9 @@ useLivereloadServer();
 registerBackgroundTasks([
   {
     name: 'Compile ts',
-    watch: {
-      match: 'src/gui/app/**/*.ts',
-      triggerOnly: true,
-    },
+    watch: { match: 'src/gui/app/**/*.{ts,hbs}', triggerOnly: true },
     use: [
-      {
-        processor: 'get-files',
-        path: 'src/gui/app/main.ts',
-      },
+      { processor: 'get-files', path: 'src/gui/app/main.ts' },
       {
         processor: 'commonjs-bundle',
         target: 'ESNext',
@@ -50,33 +44,18 @@ registerBackgroundTasks([
           }],
         ],
       },
-      {
-        processor: 'write-files',
-        dir: `${PUBLIC_DIR}/scripts`,
-        ext: '.js',
-      },
-      {
-        processor: 'livereload',
-        action: 'reload',
-      },
+      { processor: 'write-files', dir: `${PUBLIC_DIR}/scripts`, ext: '.js' },
+      { processor: 'livereload', action: 'reload' },
     ],
   },
   {
     name: 'Compile scss',
-    watch: { match: 'src/gui/styles/*.scss', ignore: '**/_*' },
+    watch: { match: 'src/gui/styles/**/*.scss', triggerOnly: true },
     use: [
-      {
-        processor: 'sass-bundle',
-      },
-      {
-        processor: 'write-files',
-        dir: `${PUBLIC_DIR}/styles`,
-        ext: '.css',
-      },
-      {
-        processor: 'livereload',
-        action: 'inject',
-      },
+      { processor: 'get-files', path: 'src/gui/styles/main.scss' },
+      { processor: 'sass-bundle' },
+      { processor: 'write-files', dir: `${PUBLIC_DIR}/styles`, ext: '.css' },
+      { processor: 'livereload', action: 'inject' },
     ],
   },
 ]);

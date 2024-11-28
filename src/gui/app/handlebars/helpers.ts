@@ -4,9 +4,9 @@ type TCompareMethod = 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte';
 
 export const compare = buildHandlebarsHelper<[string, TCompareMethod, string]>(
   (context) =>
-  (arg1, method, arg2, { fn, inverse }) => {
+  (arg1, operator, arg2, { fn, inverse }) => {
     const check = () => {
-      switch(method) {
+      switch(operator) {
         case 'eq': return arg1 === arg2;
         case 'neq': return arg1 !== arg2;
         case 'lt': return arg1 < arg2;
@@ -17,7 +17,8 @@ export const compare = buildHandlebarsHelper<[string, TCompareMethod, string]>(
       }
     }
 
-    return check() ? fn(context) : inverse(context);
+    const result = check();
+    return result ? fn ? fn(context) : inverse ? inverse(context) : result : null;
   }
 );
 

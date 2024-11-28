@@ -8,6 +8,7 @@ import { PartialDeep } from '../../types';
 import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,
+  TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
@@ -27,6 +28,10 @@ export default class MergeExpectationOperator<
     }
   }[TLocation]
 > {
+  public get tags(): TExpectationMetaTag[] {
+    return [];
+  }
+
   public match(): boolean {
     return true;
   }

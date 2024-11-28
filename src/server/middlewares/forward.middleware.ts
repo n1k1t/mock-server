@@ -3,6 +3,7 @@ import HttpsProxyAgent from 'https-proxy-agent';
 import _ from 'lodash';
 
 import { extractPayloadType, Middleware, parsePayload, serializePayload } from '../models';
+import { URL } from 'url';
 
 export default Middleware
   .build(__filename, ['expectation', 'manipulated', 'history'])
@@ -19,29 +20,19 @@ export default Middleware
     const body = forwarded.incoming.body === undefined ? forwarded.incoming.bodyRaw : forwarded.incoming.body;
     const bodyRaw = Buffer.from(typeof body === 'object' ? serializePayload(incomingType, body) : String(body));
 
-    Object.assign(forwarded.incoming, {
-      type: incomingType,
-      bodyRaw: bodyRaw.toString(),
-
-      headers: {
-        'connection': 'close',
-
-        ...forwarded.incoming.headers,
-        ...((!forwarded.incoming.headers?.['transfer-encoding'] && bodyRaw?.length) && {
-          'content-length': String(bodyRaw.length),
-        }),
-      },
-    });
-
-    const history = context.shared.history.extendForwarded(forwarded);
-    context.server.exchange.ws.publish('history:updated', history.toPlain());
-
     const configuration = await context.server.plugins.exec(
       'forward.request', {
         timeout: timeout ?? 1000 * 30,
 
         method: forwarded.incoming.method,
-        headers: <Record<string, string>>forwarded.incoming.headers,
+        headers: {
+          'connection': 'close',
+
+          ...forwarded.incoming.headers,
+          ...((!forwarded.incoming.headers?.['transfer-encoding'] && bodyRaw.length) && {
+            'content-length': String(bodyRaw.length),
+          }),
+        },
 
         ...(url && { url }),
         ...(baseUrl && { baseURL: baseUrl, url: forwarded.incoming.path }),
@@ -58,11 +49,36 @@ export default Middleware
       context
     );
 
+    const forwardedType = extractPayloadType(<Record<string, string>>configuration.headers ?? {});
+
+    Object.assign(forwarded.incoming, {
+      type: forwardedType,
+
+      path: new URL(configuration.url ?? forwarded.incoming.path, baseUrl).pathname,
+      method: configuration.method ?? forwarded.incoming.method,
+
+      headers: configuration.headers ?? {},
+
+      ...(configuration.params && { query: configuration.params }),
+
+      body: parsePayload(
+        forwardedType,
+        configuration.data instanceof Buffer ? configuration.data.toString() : configuration.data
+      ),
+
+      bodyRaw: configuration.data instanceof Buffer
+        ? configuration.data.toString()
+        : typeof configuration.data === 'string'
+        ? configuration.data
+        : '',
+    });
+
+    const history = context.shared.history.extendForwarded(forwarded);
+    context.server.exchange.ws.publish('history:updated', history.toPlain());
+
     const response = await axios.request(configuration).catch((error: AxiosError) => {
       if (!error.response) {
-        history
-          .assign({ error: _.pick(error, ['message', 'code']) })
-          .changeState('finished');
+        history.assignError(_.pick(error, ['message', 'code'])).switchState('finished');
 
         context.server.exchange.ws.publish('history:updated', history.toPlain());
         context.reply.internalError(error.message);

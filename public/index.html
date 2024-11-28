@@ -10,14 +10,20 @@
   <link type="image/png" sizes="120x120" rel="icon" href="images/favicon.png">
 </head>
 <body>
-  <div class="main-container">
-    <ul class="tabs">
-      <li class="tab"><a href="#expectations">Expectations</a></li>
-      <li class="tab"><a href="#history">Requests history</a></li>
-    </ul>
+  <header>
+    <div id="container-select" class="buttons-container">
+      <button id="switch-to-expectations-container" class="checked"><i class="fas fa-magic"></i>Expectations</button>
+      <button id="switch-to-history-container"><i class="fas fa-history"></i>History</button>
+    </div>
+  </header>
 
-    <div class="tab-container"></div>
-  </div>
+  <section id="expectations">
+    <div id="config"></div>
+  </section>
+
+  <section id="history">
+    <div id="config"></div>
+  </section>
 
   <div class="popups-container"></div>
   <script src="/_mock/gui/scripts/main.js"></script>

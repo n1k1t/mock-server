@@ -10,6 +10,7 @@ import {
   IExpectationOperatorExecMode,
   IExpectationOperatorExecUtils,
   IExpectationOperatorsSchema,
+  TExpectationMetaTag,
   TExpectationOperators,
 } from '../types';
 
@@ -24,6 +25,8 @@ export abstract class ExpectationOperator<TContext extends PartialDeep<IExpectat
 
   public abstract match(context: TContext): boolean;
   public abstract manipulate<T extends TContext>(context: T): T;
+
+  public abstract get tags(): TExpectationMetaTag[];
 
   constructor(public operators: TExpectationOperators, public command: TSchema) {}
 

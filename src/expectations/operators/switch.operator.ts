@@ -8,6 +8,9 @@ import {
   IExpectationOperatorContext,
   IExpectationOperatorExecUtils,
   IExpectationOperatorsSchema,
+  LExpectationMetaTagLocation,
+  TExpectationMetaTag,
+  TExpectationMetaTagLocation,
   TExpectationOperatorLocation,
 } from '../types';
 
@@ -71,6 +74,19 @@ export default class SwitchExpectationOperator<
       exec: this.compileExecHandler(this.command.$exec, ['payload', 'utils']),
     }),
   };
+
+  public get tags(): TExpectationMetaTag[] {
+    return [
+      ...(
+        LExpectationMetaTagLocation.includes(<TExpectationMetaTagLocation>this.command.$location)
+          ? Object.keys(this.compiled.cases).map((value) => (<TExpectationMetaTag>{ location: this.command.$location, value }))
+          : []
+      ),
+
+      ...Object.values(this.compiled.cases).reduce<TExpectationMetaTag[]>((acc, operator) => acc.concat(operator.tags), []),
+      ...(this.compiled.default?.tags ?? []),
+    ];
+  }
 
   public match(context: TContext): boolean {
     const operator = this.handle(context);

@@ -42,8 +42,8 @@ export default Middleware
 
     Object.assign(outgoing, {
       type,
-      dataRaw,
 
+      dataRaw: dataRaw.toString(),
       headers: Object.assign(outgoing.headers, {
         ...((!outgoing.headers?.['transfer-encoding'] && !context.request.headers['transfer-encoding']) && {
           'content-length': String(dataRaw.length),
@@ -53,7 +53,7 @@ export default Middleware
 
     await context.server.plugins.exec('outgoing.response', context.response, context.assignOutgoing(outgoing));
 
-    context.shared.history.assignOutgoing(context.outgoing!).changeState('finished');
+    context.shared.history.assignOutgoing(context.outgoing!).switchState('finished');
     context.server.exchange.ws.publish('history:updated', context.shared.history.toPlain());
 
     context.complete();

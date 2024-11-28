@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { IExpectationOperatorExecUtils, IExpectationOperatorContext } from '../types';
+import { IExpectationOperatorExecUtils, IExpectationOperatorContext, TExpectationMetaTag } from '../types';
 import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
 
@@ -8,6 +8,10 @@ export default class ExecExpectationOperator<
   TContext extends PartialDeep<IExpectationOperatorContext> = {},
 > extends ExpectationOperator<TContext, string | TFunction<unknown, [IExpectationOperatorExecUtils<TContext>]>> {
   public compiled = this.compileExecHandler(this.command, ['utils']);
+
+  public get tags(): TExpectationMetaTag[] {
+    return [];
+  }
 
   public match(context: TContext): boolean {
     const result = this.compiled('match', context);

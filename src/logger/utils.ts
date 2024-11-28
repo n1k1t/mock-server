@@ -1,4 +1,6 @@
+import colors from 'colors';
 import _ from 'lodash';
+
 import { TLoggerLevel, TLoggerSerializer } from './types';
 
 export const serializeLogSegments = (
@@ -7,11 +9,11 @@ export const serializeLogSegments = (
 ): unknown[] => segments.map((segment) => (_.isObject(segment) ? JSON.stringify(segment, serializer ?? undefined) : segment));
 
 export const colorifyLogLevel = _.memoize((level: TLoggerLevel): string => ({
-  D: '[D]'.gray,
-  I: '[I]'.cyan,
-  W: '[W]'.yellow,
-  E: '[E]'.red,
-  F: '[F]'.magenta,
+  D: colors.gray('[D]'),
+  I: colors.cyan('[I]'),
+  W: colors.yellow('[W]'),
+  E: colors.red('[E]'),
+  F: colors.magenta('[F]'),
 })[level]);
 
 export const calculateLogLevelWeight = _.memoize((level: TLoggerLevel): number => ({

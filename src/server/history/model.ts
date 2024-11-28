@@ -1,56 +1,60 @@
 import { v4 as genUid } from 'uuid';
 
-import type { IHistoryRecordMeta } from './types';
+import type { IHistoryMeta, IHistoryRequest } from './types';
 import type { HttpRequestContext } from '../models';
 import type { Expectation } from '../../expectations';
 
 export class History {
-  public TPlain!: Pick<History, 'id' | 'forwaded' | 'error' | 'meta' | 'request'> & {
+  public TPlain!: Pick<History, 'id' | 'forwaded' | 'meta' | 'request'> & {
     expectation?: Expectation<any>['TPlain'];
   }
 
   public id: string = genUid();
 
   public expectation?: Expectation<any>;
-  public forwaded?: Pick<HttpRequestContext, 'incoming' | 'outgoing'>;
+  public forwaded?: Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'>;
 
-  public error?: {
-    code?: string;
-    message?: string;
-    isManual?: boolean;
-  };
-
-  public meta: IHistoryRecordMeta = {
+  public meta: IHistoryMeta = {
     state: 'pending',
 
     requestedAt: Date.now(),
     updatedAt: Date.now(),
   };
 
-  constructor(public request: Pick<HttpRequestContext, 'incoming' | 'outgoing'>) {}
+  constructor(public request: IHistoryRequest) {}
 
-  public changeState(state: IHistoryRecordMeta['state']): this {
-    Object.assign(this.meta, { state, updatedAt: Date.now() });
+  public switchState(state: IHistoryMeta['state']): this {
+    this.meta.updatedAt = Date.now();
+    this.meta.state = state;
+
     return this;
   }
 
-  public assign<T extends Partial<Omit<History, 'id' | 'request' | 'meta'>>>(context: T) {
-    Object.assign(this.meta, { updatedAt: Date.now() });
-    return Object.assign(this, context);
+  public assignExpectation(expectation: NonNullable<History['expectation']>): this {
+    this.meta.updatedAt = Date.now();
+    return Object.assign(this, { expectation });
   }
 
-  public assignOutgoing(outgoing: NonNullable<HttpRequestContext['outgoing']>) {
+  public assignError(error: NonNullable<IHistoryRequest['error']>): this {
+    this.meta.updatedAt = Date.now();
+    this.request.error = error;
+
+    return this;
+  }
+
+  public assignOutgoing(outgoing: NonNullable<HttpRequestContext['outgoing']>): this {
     this.meta.updatedAt = Date.now();
     this.request.outgoing = outgoing;
 
     return this;
   }
 
-  public extendForwarded(forwarded: Partial<NonNullable<History['forwaded']>>) {
+  public extendForwarded(forwarded: Partial<NonNullable<History['forwaded']>>): this {
     this.meta.updatedAt = Date.now();
-    this.forwaded = Object.assign(<NonNullable<History['forwaded']>>(this.forwaded ?? {}), forwarded);
 
-    return this;
+    return Object.assign(this, {
+      forwarded: Object.assign(<NonNullable<History['forwaded']>>(this.forwaded ?? {}), forwarded)
+    });
   }
 
   public toPlain(): History['TPlain'] {
@@ -61,7 +65,6 @@ export class History {
       request: this.request,
       forwaded: this.forwaded,
 
-      error: this.error,
       expectation: this.expectation?.toPlain(),
     };
   }

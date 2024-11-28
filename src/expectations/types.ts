@@ -24,29 +24,19 @@ import type SwitchExpectationOperator from './operators/switch.operator';
 export type TExpectationType = ConvertTupleToUnion<typeof LExpectationType>;
 export const LExpectationType = <const>['HTTP'];
 
-export type TExpectationForwardProtocol = ConvertTupleToUnion<typeof LExpectationForwardProtocol>;
-export const LExpectationForwardProtocol = <const>['HTTP', 'HTTPS'];
+export type TExpectationFlatOperator = ConvertTupleToUnion<typeof LExpectationFlatOperator>;
+export const LExpectationFlatOperator = <const>['$set', '$remove', '$merge', '$exec', '$has'];
 
-export type TExpectationDestroyType = ConvertTupleToUnion<typeof LExpectationDestroyType>;
-export const LExpectationDestroyType = <const>['ECONNABORTED'];
+export type TExpectationMetaTagLocation = ConvertTupleToUnion<typeof LExpectationMetaTagLocation>;
+export const LExpectationMetaTagLocation = <const>['path', 'method', 'outgoing.status'];
 
-export type TExpectationConditionalOperator = ConvertTupleToUnion<typeof LExpectationConditionalOperator>;
-export const LExpectationConditionalOperator = <const>['$if', '$not', '$and', '$or', '$has'];
-
-export type TExpectationActionalOperator = ConvertTupleToUnion<typeof LExpectationActionalOperator>;
-export const LExpectationActionalOperator = <const>['$set', '$remove', '$merge', '$exec'];
-
-export type TExpectationAttachlessOperator = ConvertTupleToUnion<typeof LExpectationAttachlessOperator>;
-export const LExpectationAttachlessOperator = <const>[...LExpectationActionalOperator, '$has'];
+export type TExpectationMetaTag =
+  | { location: 'path' | 'method' | 'error', value: string }
+  | { location: 'outgoing.status', value: number };
 
 export interface IExpectationMeta {
   executionsCount: number;
-
-  additional: {
-    paths?: string[];
-    methods?: string[];
-    statuses?: number[];
-  };
+  tags: TExpectationMetaTag[];
 };
 
 export type TExpectationContextLocation = 'request' | 'response';

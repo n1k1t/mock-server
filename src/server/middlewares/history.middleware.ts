@@ -6,7 +6,7 @@ export default Middleware
   .assignHandler((context) => {
     const history = context.server.storage.history
       .register(context.toPlain({ locations: ['incoming'] }))
-      .assign({ expectation: context.shared.expectation });
+      .assignExpectation(context.shared.expectation);
 
     context.server.exchange.ws.publish('history:added', history.toPlain());
     context.share({ history });
