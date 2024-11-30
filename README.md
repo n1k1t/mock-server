@@ -93,7 +93,7 @@ By default it can be found on `/_mock/gui` of a host of mock server. Example: `l
 
 Also it provides convenient util to navigate through payload of expectations and requests payload
 
-![screenshot](screenshots/preview.png)
+![screenshot](screenshots/history.png)
 
 ## Mock
 
