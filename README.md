@@ -425,7 +425,7 @@ await server.client.createExpectation({
   schema: {
     request: {
       $and: [
-	    { $has: { $location: 'path', $match: 'foo/*' } },
+        { $has: { $location: 'path', $match: 'foo/*' } },
         { $has: { $location: 'method', $valueAnyOf: ['GET', 'POST'] } },
       ],
     },
@@ -463,7 +463,7 @@ await server.client.createExpectation({
   schema: {
     request: {
       $or: [
-	    { $has: { $location: 'path', $match: 'foo/*' } },
+        { $has: { $location: 'path', $match: 'foo/*' } },
         { $has: { $location: 'method', $valueAnyOf: ['GET', 'POST'] } },
       ],
     },
