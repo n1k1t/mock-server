@@ -680,7 +680,9 @@ await client.createExpectation<{
 
 ## State
 
-State is a unique storage for each request. It can be used to handle complex expectations
+State is a unique storage of each request. It can be used to handle complex expectations
+
+By default an object of state extracts from `X-Use-Mock-State` in `incoming.headers` (as serialized json in **base64 encoding**) or creates an empty object
 
 **Example**
 
@@ -720,7 +722,7 @@ await client.createExpectation<{
 
 Seeds can help to generate content with the same values each request using [faker](https://www.npmjs.com/package/@faker-js/faker)
 
-By default the number of seed takes from `X-Mock-Seed` in `incoming.headers` but also expectation provides a flow to do it from everywhere in [context](#context)
+By default a number of seed takes from `X-Use-Mock-Seed` in `incoming.headers`
 
 **Example**
 
