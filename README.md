@@ -19,6 +19,8 @@ Mock, match, modify and manipulate a HTTP request/response payload using flexibl
 	- [Utils](#utils)
 	- [Operators](#operators)
 	- [Typings](#typings)
+	- [State](#state)
+	- [Seeds](#seeds)
 - [API](#api)
 	- [Ping](#ping)
 	- [Create expectation](#create-expectation)
@@ -672,6 +674,69 @@ await client.createExpectation<{
         },
       }),
     ]),
+  },
+}));
+```
+
+## State
+
+State is a unique storage for each request. It can be used to handle complex expectations
+
+**Example**
+
+```ts
+await client.createExpectation<{
+  state: {
+    id?: number;
+  };
+  incoming: {
+    query: {
+      foo: 'a' | 'b' | 'c';
+    };
+  };
+  outgoing: {
+    data: {
+      id: number;
+    };
+  };
+}>(({ $ }) => ({
+  schema: {
+    request: $.and([
+      $.switch('incoming.query', '$exec', (payload) => payload.foo, {
+        $cases: {
+          'a': $.set('state', '$path', 'id', { $value: 1 }),
+          'b': $.set('state', '$path', 'id', { $value: 2 }),
+        },
+      }),
+    ]),
+    response: $.set('outgoing.data', {
+      $exec: (payload, { state }) => ({ id: state.id ?? 0 }),
+    }),
+  },
+}));
+```
+
+## Seeds
+
+Seeds can help to generate content with the same values each request using [faker](https://www.npmjs.com/package/@faker-js/faker)
+
+By default the number of seed takes from `X-Mock-Seed` in `incoming.headers` but also expectation provides a flow to do it from everywhere in [context](#context)
+
+**Example**
+
+```ts
+await client.createExpectation(({ $ }) => ({
+  schema: {
+    request: $.and([
+      $.set('seed', { $exec: (seed) => seed ?? 123 }),
+    ]),
+    response: $.set('outgoing.data', {
+      $exec: (payload, { faker }) => ({
+        id: faker.number.int({ max: 1000, min: 500 }),
+        first_name: faker.person.firstName('male'),
+        last_name: faker.person.lastName('male'),
+      }),
+    }),
   },
 }));
 ```
