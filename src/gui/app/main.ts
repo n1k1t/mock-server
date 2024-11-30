@@ -2,7 +2,7 @@ import _unset from 'lodash/unset';
 import _omit from 'lodash/omit';
 import _set from 'lodash/set';
 
-import { PopupsComponent } from './components';
+import { LoaderComponent, PopupsComponent } from './components';
 import * as containers from './containers';
 
 import handlebars from './handlebars';
@@ -10,6 +10,7 @@ import context from './context';
 
 handlebars.init();
 
+const loader = LoaderComponent.build().show();
 const switchButtonIdToContainerElementMap = {
   'switch-to-expectations-container': containers.expectations.hide(),
   'switch-to-history-container': containers.history.hide(),
@@ -20,6 +21,8 @@ context
   .share({ popups: PopupsComponent.build() });
 
 document.body.append(context.shared.popups.element);
+document.body.append(loader.element);
+
 document.querySelector('div#container-select')!.addEventListener('click', (source) => {
   const event = <Event & { target: Element }>source;
   if (event.target?.nodeName !== 'BUTTON') {
@@ -48,4 +51,7 @@ context.instances.ws.on('connect', async () => {
 
   context.assignConfig(data);
   containers.expectations.initialize().show();
+
+  loader.hide();
+  document.title = context.config.gui.title;
 });

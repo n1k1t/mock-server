@@ -23,7 +23,8 @@ const ws = io(location.origin);
 class Context {
   public config = cast<Pick<Config['storage'], 'gui' | 'history'>>({
     gui: {
-      route: '_blank',
+      title: 'Mock server',
+      route: 'about:blank',
     },
 
     history: {

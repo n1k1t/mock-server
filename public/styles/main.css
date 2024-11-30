@@ -93,6 +93,21 @@ div.empty p {
   font-weight: 300;
 }
 
+div.curtain {
+  cursor: pointer;
+  position: fixed;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
+  height: calc(100% - 50px);
+  width: 100%;
+  padding-top: 50px;
+  background-color: rgba(30, 30, 30, 0.95);
+}
+div.curtain > * {
+  cursor: auto;
+}
+
 .hidden {
   visibility: hidden;
   display: none !important;
@@ -159,6 +174,7 @@ body > header {
 }
 body > header button {
   text-decoration: none;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
 }
 body > header button i {
@@ -182,6 +198,57 @@ body > header hr {
 }
 body > header div.buttons-container#container-select button {
   padding: 10px 20px;
+}
+
+@keyframes l43 {
+  0% {
+    background-position: 0% 50%, 33.3333333333% 50%, 66.6666666667% 50%, 100% 50%;
+  }
+  16.67% {
+    background-position: 0% 0, 33.3333333333% 50%, 66.6666666667% 50%, 100% 50%;
+  }
+  33.33% {
+    background-position: 0% 100%, 33.3333333333% 0, 66.6666666667% 50%, 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%, 33.3333333333% 100%, 66.6666666667% 0, 100% 50%;
+  }
+  66.67% {
+    background-position: 0% 50%, 33.3333333333% 50%, 66.6666666667% 100%, 100% 0;
+  }
+  83.33% {
+    background-position: 0% 50%, 33.3333333333% 50%, 66.6666666667% 50%, 100% 100%;
+  }
+  100% {
+    background-position: 0% 50%, 33.3333333333% 50%, 66.6666666667% 50%, 100% 50%;
+  }
+}
+.loader {
+  height: 20px;
+  aspect-ratio: 2.5;
+  --_g: no-repeat radial-gradient(farthest-side, #fff 90%, #0000);
+  background: var(--_g), var(--_g), var(--_g), var(--_g);
+  background-size: 20% 50%;
+  animation: l43 1s infinite linear;
+}
+
+div.curtain#loader {
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  height: 100%;
+}
+div.curtain#loader p {
+  color: #fff;
+  font-weight: 100;
+  font-size: 25px;
+}
+div.curtain#loader > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 section#history div.history:hover div.meta {

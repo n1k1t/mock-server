@@ -94,3 +94,17 @@ div.empty {
     font-weight: 300;
   }
 }
+
+div.curtain {
+  cursor: pointer;
+  position: fixed;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
+  height: calc(100% - 50px);
+  width: 100%;
+  padding-top: 50px;
+  background-color: rgba($color-dark, .95);
+
+  & > * { cursor: auto }
+}

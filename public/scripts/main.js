@@ -19814,6 +19814,25 @@ exports.hasBinary = hasBinary;
 
 },{}],229:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CurtainComponent = void 0;
+const models_1 = require("../models");
+class CurtainComponent extends models_1.Component {
+    constructor(options = {}) {
+        super('<div class="curtain hidden"></div>');
+        this.options = options;
+        if (!options.isPreventedToManualClose) {
+            this.element.addEventListener('click', (event) => event.target === this.element ? this.hide() : null);
+        }
+    }
+    static build(options) {
+        return new CurtainComponent(options);
+    }
+}
+exports.CurtainComponent = CurtainComponent;
+
+},{"../models":254}],230:[function(require,module,exports){
+"use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19830,7 +19849,7 @@ class EmptyComponent extends models_1.Component {
 }
 exports.EmptyComponent = EmptyComponent;
 
-},{"../../models":252,"./template.hbs":230,"handlebars":60}],230:[function(require,module,exports){
+},{"../../models":254,"./template.hbs":231,"handlebars":60}],231:[function(require,module,exports){
 module.exports = `
   <div class="empty">
     <i class="fas fa-hourglass-start"></i>
@@ -19838,7 +19857,7 @@ module.exports = `
   </div>
 `
 
-},{}],231:[function(require,module,exports){
+},{}],232:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19874,7 +19893,7 @@ class ExpectationComponent extends models_1.Component {
 }
 exports.ExpectationComponent = ExpectationComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":241,"../../models":252,"./template.hbs":232,"handlebars":60,"lodash/pick":212}],232:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":233,"handlebars":60,"lodash/pick":212}],233:[function(require,module,exports){
 module.exports = `
   <div class="container expectation" id="{{id}}">
     <div class="meta">{{> expectationMeta this}}</div>
@@ -19882,7 +19901,7 @@ module.exports = `
   </div>
 `
 
-},{}],233:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19937,7 +19956,7 @@ class HistoryComponent extends models_1.Component {
 }
 exports.HistoryComponent = HistoryComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":241,"../../models":252,"./template.hbs":234,"handlebars":60,"lodash/pick":212}],234:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":235,"handlebars":60,"lodash/pick":212}],235:[function(require,module,exports){
 module.exports = `
   <div class="container history" id="{{id}}">
     <div class="meta">
@@ -19980,7 +19999,7 @@ module.exports = `
   </div>
 `
 
-},{}],235:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19999,10 +20018,28 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./expectation.component"), exports);
 __exportStar(require("./history.component"), exports);
+__exportStar(require("./curtain.component"), exports);
+__exportStar(require("./loader.component"), exports);
 __exportStar(require("./popups.component"), exports);
 __exportStar(require("./empty.component"), exports);
 
-},{"./empty.component":229,"./expectation.component":231,"./history.component":233,"./popups.component":236}],236:[function(require,module,exports){
+},{"./curtain.component":229,"./empty.component":230,"./expectation.component":232,"./history.component":234,"./loader.component":237,"./popups.component":238}],237:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LoaderComponent = void 0;
+const curtain_component_1 = require("./curtain.component");
+class LoaderComponent extends curtain_component_1.CurtainComponent {
+    constructor() {
+        super({ isPreventedToManualClose: true });
+        this.append('<div><p>Ping pong</p><div class="loader"></div></div>').assignId('loader');
+    }
+    static build() {
+        return new LoaderComponent();
+    }
+}
+exports.LoaderComponent = LoaderComponent;
+
+},{"./curtain.component":229}],238:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20029,7 +20066,7 @@ class PopupsComponent extends models_1.Component {
 }
 exports.PopupsComponent = PopupsComponent;
 
-},{"../../models":252,"./template.hbs":237,"handlebars":60}],237:[function(require,module,exports){
+},{"../../models":254,"./template.hbs":239,"handlebars":60}],239:[function(require,module,exports){
 module.exports = `
   <div class="popup-message {{level}}">
     <i class="{{icon}}"></i>
@@ -20037,7 +20074,7 @@ module.exports = `
   </div>
 `
 
-},{}],238:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20080,7 +20117,7 @@ const container = models_1.Container
 });
 exports.default = container.append(empty);
 
-},{"../components":235,"../context":241,"../models":252}],239:[function(require,module,exports){
+},{"../components":236,"../context":243,"../models":254}],241:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20132,7 +20169,7 @@ const container = models_1.Container
 });
 exports.default = container.append(empty);
 
-},{"../components":235,"../context":241,"../models":252}],240:[function(require,module,exports){
+},{"../components":236,"../context":243,"../models":254}],242:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20144,7 +20181,7 @@ Object.defineProperty(exports, "expectations", { enumerable: true, get: function
 var history_1 = require("./history");
 Object.defineProperty(exports, "history", { enumerable: true, get: function () { return __importDefault(history_1).default; } });
 
-},{"./expectations":238,"./history":239}],241:[function(require,module,exports){
+},{"./expectations":240,"./history":241}],243:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_client_1 = require("socket.io-client");
@@ -20155,7 +20192,8 @@ class Context {
     constructor() {
         this.config = (0, common_1.cast)({
             gui: {
-                route: '_blank',
+                title: 'Mock server',
+                route: 'about:blank',
             },
             history: {
                 limit: 100,
@@ -20185,7 +20223,7 @@ class Context {
 }
 exports.default = new Context();
 
-},{"../../utils/common":254,"./models":252,"socket.io-client":221}],242:[function(require,module,exports){
+},{"../../utils/common":256,"./models":254,"socket.io-client":221}],244:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toLocaleTime = exports.compare = void 0;
@@ -20207,7 +20245,7 @@ exports.compare = (0, utils_1.buildHandlebarsHelper)((context) => (arg1, operato
 });
 exports.toLocaleTime = (0, utils_1.buildHandlebarsHelper)(() => (timestamp) => new Date(timestamp).toLocaleTimeString());
 
-},{"./utils":246}],243:[function(require,module,exports){
+},{"./utils":248}],245:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20246,7 +20284,7 @@ exports.default = {
     },
 };
 
-},{"./helpers":242,"./partials":245,"handlebars":60}],244:[function(require,module,exports){
+},{"./helpers":244,"./partials":247,"handlebars":60}],246:[function(require,module,exports){
 module.exports = `
   {{#compare format 'neq' 'short'}}
     <button class="activity">
@@ -20286,13 +20324,13 @@ module.exports = `
   {{#if schema.forward.url}}<span class="forward">{{schema.forward.url}}</span>{{/if}}
 `
 
-},{}],245:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.expectationMeta = void 0;
 exports.expectationMeta = require('./expectation-meta.hbs');
 
-},{"./expectation-meta.hbs":244}],246:[function(require,module,exports){
+},{"./expectation-meta.hbs":246}],248:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildHandlebarsHelper = void 0;
@@ -20303,7 +20341,7 @@ const buildHandlebarsHelper = (handler) => {
 };
 exports.buildHandlebarsHelper = buildHandlebarsHelper;
 
-},{}],247:[function(require,module,exports){
+},{}],249:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Button = void 0;
@@ -20336,7 +20374,7 @@ class Button {
 }
 exports.Button = Button;
 
-},{}],248:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = void 0;
@@ -20349,6 +20387,10 @@ class Component {
     }
     get isHidden() {
         return this.element.classList.contains('hidden');
+    }
+    assignId(id) {
+        this.element.id = id;
+        return this;
     }
     show() {
         this.element.classList.remove('hidden');
@@ -20388,7 +20430,7 @@ class Component {
 }
 exports.Component = Component;
 
-},{}],249:[function(require,module,exports){
+},{}],251:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20427,7 +20469,7 @@ class Container extends component_1.Component {
 }
 exports.Container = Container;
 
-},{"./component":248,"./dynamic-storage":250,"events":27}],250:[function(require,module,exports){
+},{"./component":250,"./dynamic-storage":252,"events":27}],252:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20462,7 +20504,7 @@ class DynamicStorage {
 }
 exports.DynamicStorage = DynamicStorage;
 
-},{"../utils":253,"./form":251,"lodash/set":213}],251:[function(require,module,exports){
+},{"../utils":255,"./form":253,"lodash/set":213}],253:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20518,7 +20560,7 @@ class Form extends component_1.Component {
 }
 exports.Form = Form;
 
-},{"../utils":253,"./component":248,"lodash/set":213}],252:[function(require,module,exports){
+},{"../utils":255,"./component":250,"lodash/set":213}],254:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20541,7 +20583,7 @@ __exportStar(require("./container"), exports);
 __exportStar(require("./button"), exports);
 __exportStar(require("./form"), exports);
 
-},{"./button":247,"./component":248,"./container":249,"./dynamic-storage":250,"./form":251}],253:[function(require,module,exports){
+},{"./button":249,"./component":250,"./container":251,"./dynamic-storage":252,"./form":253}],255:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20560,7 +20602,7 @@ exports.convertObjectToKeyValueCouples = convertObjectToKeyValueCouples;
 const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
 exports.buildCounter = buildCounter;
 
-},{"lodash/isObject":201}],254:[function(require,module,exports){
+},{"lodash/isObject":201}],256:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.flattenArrayed = exports.cast = exports.wait = void 0;
@@ -20579,7 +20621,7 @@ const flattenArrayed = (payload) => {
 };
 exports.flattenArrayed = flattenArrayed;
 
-},{}],255:[function(require,module,exports){
+},{}],257:[function(require,module,exports){
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -20597,6 +20639,7 @@ function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyri
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 _handlebars["default"].init();
+var loader = _components.LoaderComponent.build().show();
 var switchButtonIdToContainerElementMap = {
   'switch-to-expectations-container': containers.expectations.hide(),
   'switch-to-history-container': containers.history.hide()
@@ -20605,6 +20648,7 @@ _context2["default"].switchStorage(containers.expectations.storage).share({
   popups: _components.PopupsComponent.build()
 });
 document.body.append(_context2["default"].shared.popups.element);
+document.body.append(loader.element);
 document.querySelector('div#container-select').addEventListener('click', function (source) {
   var _event$target, _event$target$parentN;
   var event = source;
@@ -20639,7 +20683,9 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
           data = _yield$context$servic.data;
           _context2["default"].assignConfig(data);
           containers.expectations.initialize().show();
-        case 9:
+          loader.hide();
+          document.title = _context2["default"].config.gui.title;
+        case 11:
         case "end":
           return _context.stop();
       }
@@ -20647,4 +20693,4 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
   }, _callee);
 })));
 
-},{"./components":235,"./containers":240,"./context":241,"./handlebars":243,"lodash/omit":211,"lodash/set":213,"lodash/unset":217}]},{},[255]);
+},{"./components":236,"./containers":242,"./context":243,"./handlebars":245,"lodash/omit":211,"lodash/set":213,"lodash/unset":217}]},{},[257]);

@@ -11,6 +11,11 @@ export class Component {
     return this.element.classList.contains('hidden');
   }
 
+  public assignId(id: string) {
+    this.element.id = id;
+    return this;
+  }
+
   public show() {
     this.element.classList.remove('hidden');
     return this;

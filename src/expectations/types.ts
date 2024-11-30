@@ -72,9 +72,7 @@ export type TExpectationOperators = Omit<typeof operators, 'root'>;
 
 export interface IExpectationOperatorContext extends Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'> {
   state: Record<string, unknown>;
-
   seed?: number;
-  delay?: number;
 };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =

@@ -18,6 +18,7 @@ export class Config {
     },
 
     gui: {
+      title: 'Mock server',
       route: '/_mock/gui',
     },
 

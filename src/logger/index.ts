@@ -68,9 +68,9 @@ export class Logger {
     return Object.assign(Logger, { external });
   }
 
-  static useSerializers(serializers: Record<string, TFunction<unknown, [unknown]>>) {
+  static useSerializers(serializers: Record<string, TFunction<unknown, [any]>>) {
     return Object.assign(Logger, {
-      serializer: (key: string, value: unknown) => serializers[key] ?? value,
+      serializer: (key: string, value: unknown) => serializers[key] ? serializers[key](value) : value,
     });
   }
 
