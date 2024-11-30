@@ -220,8 +220,8 @@ await server.client.createExpectation({
 | $valueAnyOf | `any[]` | `any[]` | * | Checks by any of value equality in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $regExp | `RegExp` | `{ source: string, flags?: string }` | * | Checks by regular expression in context using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $regExpAnyOf | `RegExp[]` | `{ source: string, flags?: string }[]` | * | Checks by any of regular expression in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
-| $match | `string | object` | `string | object` | * | Checks by minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
-| $matchAnyOf | `(string | object)[]` | `(string | object)[]` | * | Checks by any of minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $match | `string &#124; object` | `string &#124; object` | * | Checks by minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $matchAnyOf | `(string &#124; object)[]` | `(string &#124; object)[]` | * | Checks by any of minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $exec | `(payload, utils) => boolean` | `string` | * | Checks payload in [context](#context) by function with arguments where `payload` is selected entity using `$location` (and `$path`, `$jsonPath` if it was specified) and `utils` is [utils](#utils) |
 
 **Example using application**
@@ -379,7 +379,7 @@ EOF
 
 | Type (application) | Type (cURL) | Description |
 |--|--|--|
-| `(utils) => boolean | unknown` | `string` | Does something you want or catch request/response payload in [context](#context) by function with arguments where `utils` is [utils](#utils) |
+| `(utils) => boolean &#124; unknown` | `string` | Does something you want or catch request/response payload in [context](#context) by function with arguments where `utils` is [utils](#utils) |
 
 **Example using application**
 
@@ -565,8 +565,8 @@ EOF
 | Property | Type (application) | Type (cURL) | Optional | Description |
 |--|--|--|--|--|
 | $location | `string` [enum](#context) | `string` [enum](#context) | | Location that describes what [context](#context) entity is selecting for operator to work with |
-| $cases | `Record<string | number, object>` | `Record<string | number, object>` | | An object where `key` is an extracted value from [enum](#context) using `$location` (and `$path`, `$exec` if it was specified) and `value` is an [operators](#operators) schema |
-| $default | `Record<string | number, object>` | `Record<string | number, object>` | * | Default behavior as an [operators](#operators) schema |
+| $cases | `Record<string &#124; number, object>` | `Record<string &#124; number, object>` | | An object where `key` is an extracted value from [enum](#context) using `$location` (and `$path`, `$exec` if it was specified) and `value` is an [operators](#operators) schema |
+| $default | `object` | `object` | * | Default behavior as an [operators](#operators) schema |
 | $path | `string` | `string` | * | Specifies a path to payload using [lodash get](https://lodash.com/docs/4.17.15#get) |
 | $exec | `(payload, utils) => any` | `string` | * | Sets payload in [context](#context) by function with arguments where `payload` is selected entity using `$location` and `utils` is [utils](#utils) |
 
