@@ -378,7 +378,7 @@ EOF
 ### $exec
 
 | Type (application) | Type (cURL) | Description |
-|--|--|--|--|--|
+|--|--|--|
 | `(utils) => boolean | unknown` | `string` | Does something you want or catch request/response payload in [context](#context) by function with arguments where `utils` is [utils](#utils) |
 
 **Example using application**
@@ -413,7 +413,7 @@ EOF
 ### $and
 
 | Type (application) | Type (cURL) | Description |
-|--|--|--|--|--|
+|--|--|--|
 | `object[]` | `object[]` | Provides [operators](#operators) schemas |
 
 **Example using application**
@@ -451,7 +451,7 @@ EOF
 ### $or
 
 | Type (application) | Type (cURL) | Description |
-|--|--|--|--|--|
+|--|--|--|
 | `object[]` | `object[]` | Provides [operators](#operators) schemas |
 
 **Example using application**
@@ -489,7 +489,7 @@ EOF
 ### $not
 
 | Type (application) | Type (cURL) | Description |
-|--|--|--|--|--|
+|--|--|--|
 | `object` | `object` | Provides an [operators](#operators) schema |
 
 **Example using application**
