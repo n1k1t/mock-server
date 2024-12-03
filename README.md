@@ -1122,12 +1122,28 @@ await server.client.createExpectation({
 
 | Plugin | Description |
 |--|--|
-| `incoming.body` | Describes how to handle incoming body |
-| `outgoing.response` | Describes how to reply |
-| `forward.request` | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
-| `forward.response` | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
+| [`incoming.body`](#incoming.body) | Describes how to handle incoming body |
+| [`outgoing.response`](#outgoing.response) | Describes how to reply |
+| [`forward.request`](#forward.request) | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
+| [`forward.response`](#forward.response) | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
 
-**Example of `incoming.body` plugin**
+### incoming.body
+
+`INPUT`
+
+| Argument | Type | Description |
+|--|--|--|
+| request | `http.IncomingMessage` | Raw HTTP request |
+
+`OUTPUT`
+
+| Property | Type | Optional | Description |
+|--|--|--|--|
+| raw | `string` | | Serialized incoming request body |
+| type | `xml ∣ json ∣ plain` | * | A type of `payload` |
+| payload | `object` | * | A payload object |
+
+**Example**
 
 ```ts
 server.context.plugins.register('incoming.body', async (request) => {
@@ -1140,7 +1156,22 @@ server.context.plugins.register('incoming.body', async (request) => {
 });
 ```
 
-**Example of `outgoing.response` plugin**
+### outgoing.response
+
+`INPUT`
+
+| Argument | Type | Description |
+|--|--|--|
+| response | `http.ServerResponse` | Raw HTTP response |
+| context | `object` | A request [context](#context) |
+
+`OUTPUT`
+
+| Type | Description |
+|--|--|
+| `unknown` | Result is not handing |
+
+**Example**
 
 ```ts
 server.context.plugins.register('outgoing.response', (response, context) => {
@@ -1150,7 +1181,22 @@ server.context.plugins.register('outgoing.response', (response, context) => {
 });
 ```
 
-**Example of `forward.request` plugin**
+### forward.request
+
+`INPUT`
+
+| Argument | Type | Description |
+|--|--|--|
+| config | `AxiosRequestConfig` | An [axios](https://www.npmjs.com/package/axios) request config |
+| context | `object` | A request [context](#context) |
+
+`OUTPUT`
+
+| Type | Description |
+|--|--|
+| `AxiosRequestConfig` | An [axios](https://www.npmjs.com/package/axios) request config |
+
+**Example**
 
 ```ts
 server.context.plugins.register('forward.request', (config) => ({
@@ -1159,7 +1205,24 @@ server.context.plugins.register('forward.request', (config) => ({
 }));
 ```
 
-**Example of `forward.response` plugin**
+### forward.response
+
+`INPUT`
+
+| Argument | Type | Description |
+|--|--|--|
+| config | `AxiosResponse` | An [axios](https://www.npmjs.com/package/axios) response |
+| context | `object` | A request [context](#context) |
+
+`OUTPUT`
+
+| Property | Type | Optional | Description |
+|--|--|--|--|
+| raw | `string` | | Serialized incoming request body |
+| type | `xml ∣ json ∣ plain` | * | A type of `payload` |
+| payload | `object` | * | A payload object |
+
+**Example**
 
 ```ts
 server.context.plugins.register('forward.response', async (response: AxiosResponse<Buffer>) => ({

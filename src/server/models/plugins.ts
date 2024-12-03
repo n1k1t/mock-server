@@ -1,17 +1,21 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { IncomingMessage, ServerResponse } from 'http';
 
-import type { SetRequiredKeys, TFunction } from '../../types';
+import type { SetRequiredKeys, TFunction, TRequestPayloadType } from '../../types';
 import type { HttpRequestContext } from './request-context';
 
 interface IPluginsStorage {
-  'incoming.body': TFunction<Promise<{ raw: string, payload?: object }>, [IncomingMessage]>;
+  'incoming.body': TFunction<Promise<{ raw: string, type?: TRequestPayloadType, payload?: object }>, [IncomingMessage]>;
   'outgoing.response': TFunction<unknown | Promise<unknown>, [
     ServerResponse,
     SetRequiredKeys<HttpRequestContext, 'outgoing'>
   ]>;
 
-  'forward.response': TFunction<Promise<{ raw: string, payload?: object }>, [AxiosResponse, HttpRequestContext]>;
+  'forward.response': TFunction<Promise<{ raw: string, type?: TRequestPayloadType, payload?: object }>, [
+    AxiosResponse,
+    HttpRequestContext
+  ]>;
+
   'forward.request': TFunction<AxiosRequestConfig | Promise<AxiosRequestConfig>, [
     AxiosRequestConfig,
     HttpRequestContext

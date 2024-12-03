@@ -91,7 +91,7 @@ export default Middleware
     });
 
     const parsed = await context.server.plugins.exec('forward.response', response, context);
-    const outgoingType = extractPayloadType(response.headers);
+    const outgoingType = parsed.type ?? extractPayloadType(response.headers);
 
     forwarded.outgoing = {
       type: outgoingType,

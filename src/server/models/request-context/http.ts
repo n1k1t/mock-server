@@ -8,8 +8,9 @@ import type { ServerContext } from '../server-context';
 import type { History } from '../../history';
 
 import { extractHttpIncommingParameters } from './utils';
-import { metaStorage } from '../../../meta';
+import { TRequestPayloadType } from '../../../types';
 import { RequestContext } from './model';
+import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
 import { Reply } from '../reply';
 
@@ -52,7 +53,7 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
 
   constructor(
     public server: ServerContext,
-    public request: IncomingMessage & { parsed: { raw: string, payload?: object } },
+    public request: IncomingMessage & { parsed: { raw: string, type?: TRequestPayloadType, payload?: object } },
     public response: ServerResponse
   ) {
     super('http', server);
