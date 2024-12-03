@@ -9,6 +9,8 @@ import { routes } from './router';
 
 import * as middlewares from './middlewares';
 
+export { serializePayload, parsePayload } from './models';
+
 const logger = Logger.build('Server');
 
 const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [

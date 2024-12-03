@@ -62,6 +62,9 @@ export const prepareExpectationBodyToRequest = <T extends Partial<Expectation['T
         if (key === '$set' && schema.$set?.$exec) {
           _.set(cloned, `${name}.${path}.$exec`, schema.$set.$exec.toString());
         }
+        if (key === '$merge' && schema.$merge?.$exec) {
+          _.set(cloned, `${name}.${path}.$exec`, schema.$merge.$exec.toString());
+        }
         if (key === '$switch' && schema.$switch?.$exec) {
           _.set(cloned, `${name}.${path}.$exec`, schema.$switch.$exec.toString());
         }

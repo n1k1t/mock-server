@@ -1,4 +1,5 @@
 
+
 # Mock server
 
 Mock, match, modify and manipulate a HTTP request/response payload using flexible expectations with types
@@ -21,6 +22,7 @@ Mock, match, modify and manipulate a HTTP request/response payload using flexibl
 	- [Typings](#typings)
 	- [State](#state)
 	- [Seeds](#seeds)
+	- [XML](#xml)
 - [API](#api)
 	- [Ping](#ping)
 	- [Create expectation](#create-expectation)
@@ -62,7 +64,7 @@ According on the picture above, main idea is to generate or modify response from
 ## Install
 
 ```bash
-npm i -D @n1k1t/mock-server
+npm i @n1k1t/mock-server
 ```
 
 ## Start
@@ -213,6 +215,8 @@ await server.client.createExpectation({
 
 ### $has
 
+> **!NOTE** `$exec` operators [have restrictions](#api) when it defined over `HTTP API` or `RemoteClient`
+
 | Property | Type (application) | Type (cURL) | Optional | Description |
 |--|--|--|--|--|
 | $location | `string` [enum](#context) | `string` [enum](#context) | | Location that describes what [context](#context) entity is selecting for operator to work with |
@@ -222,8 +226,8 @@ await server.client.createExpectation({
 | $valueAnyOf | `any[]` | `any[]` | * | Checks by any of value equality in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $regExp | `RegExp` | `{ source: string, flags?: string }` | * | Checks by regular expression in context using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $regExpAnyOf | `RegExp[]` | `{ source: string, flags?: string }[]` | * | Checks by any of regular expression in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
-| $match | `string &#124; object` | `string &#124; object` | * | Checks by minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
-| $matchAnyOf | `(string &#124; object)[]` | `(string &#124; object)[]` | * | Checks by any of minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $match | `string ∣ object` | `string ∣ object` | * | Checks by minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $matchAnyOf | `(string ∣ object)[]` | `(string ∣ object)[]` | * | Checks by any of minimatch for `string` and `number` (example `/foo/*/bar` or `2**`) or similar `object` by passing object payload in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
 | $exec | `(payload, utils) => boolean` | `string` | * | Checks payload in [context](#context) by function with arguments where `payload` is selected entity using `$location` (and `$path`, `$jsonPath` if it was specified) and `utils` is [utils](#utils) |
 
 **Example using application**
@@ -259,6 +263,8 @@ EOF
 ```
 
 ### $set
+
+> **!NOTE** `$exec` operators [have restrictions](#api) when it defined over `HTTP API` or `RemoteClient`
 
 | Property | Type (application) | Type (cURL) | Optional | Description |
 |--|--|--|--|--|
@@ -304,12 +310,15 @@ EOF
 
 ### $merge
 
+> **!NOTE** `$exec` operators [have restrictions](#api) when it defined over `HTTP API` or `RemoteClient`
+
 | Property | Type (application) | Type (cURL) | Optional | Description |
 |--|--|--|--|--|
 | $location | `string` [enum](#context) | `string` [enum](#context) | | Location that describes what [context](#context) entity is selecting for operator to work with |
 | $path | `string` | `string` | * | Specifies a path to payload using [lodash get](https://lodash.com/docs/4.17.15#get) |
 | $jsonPath | `string` | `string` | * | Specifies a path to payload using [JSON path](https://www.npmjs.com/package/jsonpath-plus) |
-| $value | `any` | `any` | | Merges value in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $value | `object` | `object` | * | Merges value in [context](#context) using `$location` (and `$path`, `$jsonPath` if it was specified) |
+| $exec | `(payload, utils) => any` | `string` | * | Merges payload in [context](#context) by function with arguments where `payload` is selected entity using `$location` (and `$path`, `$jsonPath` if it was specified) and `utils` is [utils](#utils) |
 
 **Example using application**
 
@@ -379,9 +388,11 @@ EOF
 
 ### $exec
 
+> **!NOTE** `$exec` operators [have restrictions](#api) when it defined over `HTTP API` or `RemoteClient`
+
 | Type (application) | Type (cURL) | Description |
 |--|--|--|
-| `(utils) => boolean &#124; unknown` | `string` | Does something you want or catch request/response payload in [context](#context) by function with arguments where `utils` is [utils](#utils) |
+| `(utils) => boolean ∣ unknown` | `string` | Does something you want or catch request/response payload in [context](#context) by function with arguments where `utils` is [utils](#utils) |
 
 **Example using application**
 
@@ -564,10 +575,12 @@ EOF
 
  ### $switch
 
+> **!NOTE** `$exec` operators [have restrictions](#api) when it defined over `HTTP API` or `RemoteClient`
+
 | Property | Type (application) | Type (cURL) | Optional | Description |
 |--|--|--|--|--|
 | $location | `string` [enum](#context) | `string` [enum](#context) | | Location that describes what [context](#context) entity is selecting for operator to work with |
-| $cases | `Record<string &#124; number, object>` | `Record<string &#124; number, object>` | | An object where `key` is an extracted value from [enum](#context) using `$location` (and `$path`, `$exec` if it was specified) and `value` is an [operators](#operators) schema |
+| $cases | `Record<string ∣ number, object>` | `Record<string ∣ number, object>` | | An object where `key` is an extracted value from [enum](#context) using `$location` (and `$path`, `$exec` if it was specified) and `value` is an [operators](#operators) schema |
 | $default | `object` | `object` | * | Default behavior as an [operators](#operators) schema |
 | $path | `string` | `string` | * | Specifies a path to payload using [lodash get](https://lodash.com/docs/4.17.15#get) |
 | $exec | `(payload, utils) => any` | `string` | * | Sets payload in [context](#context) by function with arguments where `payload` is selected entity using `$location` and `utils` is [utils](#utils) |
@@ -743,9 +756,60 @@ await client.createExpectation(({ $ }) => ({
 }));
 ```
 
+## XML
+
+The mock server uses the [fast-xml-parser](https://www.npmjs.com/package/fast-xml-parser) package to parse and serialize XML payload with options:
+
+```ts
+{
+  ignoreAttributes: false,
+}
+```
+
+To define a `incoming.data` as XML in incoming request `incoming.headers` should have `Content-Type: application/xml`.
+
+The same with `outgoing.data` and `outgoing.headers`
+
+**Example of serialized XML**
+
+```xml
+<tag type="default">
+    <nested type="nested">456</nested>
+    123
+</tag>
+```
+
+**Example of parsed XML**
+
+```json
+{
+  "tag":{
+    "nested":{
+      "#text":456,
+      "@_type":"nested"
+    },
+    "#text":123,
+    "@_type":"default"
+  }
+}
+```
+
+To parse an XML manually the application lib provides utils:
+
+```ts
+import { parsePayload, serializePayload } from '@n1k1t/mock-server';
+
+const parsed = parsePayload('xml', '<tag>123</tag>'); // { tag: 123 }
+const serialized = serializePayload('xml', parsed); // '<tag>123</tag>'
+```
+
 # API
 
-In general, there are 3 ways to register a mock expectation. Using cURL (or any HTTP client), via server instance or remote client (in case when the server is listening on another host)
+The mock server provides 3 different ways to work with. There are: `HTTP API` (eg using cURL), `RemoteClient` provided by application lib to connect and work with existent mock server on another host and `MockServer.client` on the same host (application script)
+
+The `HTTP API` and `RemoteClient` have some usage restrictions like:
+- Every `$exec` operator **cannot have an access to variables outside the function**. If you need to use some extra variables or modules that implemented in outer scope you have to use the `MockServer.client` to setup everything on the mock server side host
+- Plugins are not supported
 
 ## Ping
 
@@ -757,13 +821,13 @@ In general, there are 3 ways to register a mock expectation. Using cURL (or any 
 |--|--|
 | `string` | A `pong` message |
 
-### Using cURL
+**Using cURL**
 
 ```bash
 curl -H "Content-type: application/json" --location "localhost:8080/_mock/ping"
 ```
 
-### Using application lib on server side
+**Using application lib on server side**
 
 ```ts
 import { MockServer } from '@n1k1t/mock-server';
@@ -772,7 +836,7 @@ const server = await MockServer.start({ host: 'localhost', port: 8080 });
 await server.client.ping();
 ```
 
-### Using application lib on remotely
+**Using application lib on remotely**
 
 ```ts
 import { RemoteClient } from '@n1k1t/mock-server';
@@ -798,7 +862,7 @@ await client.ping();
 | name | | `string` | | An expectation name |
 | schema | [Schema](#schema) | `object` | | Provided schema |
 
-### Using cURL
+**Using cURL**
 
 ```bash
 curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
@@ -815,7 +879,7 @@ curl -H "Content-type: application/json" -X POST --location "localhost:8080/_moc
 EOF
 ```
 
-### Using application lib on server side
+**Using application lib on server side**
 
 ```ts
 import { MockServer } from '@n1k1t/mock-server';
@@ -835,7 +899,7 @@ const expectation = await server.client.createExpectation({
 console.log('Mock expectation has created', expectation.id);
 ```
 
-### Using application lib on remotely
+**Using application lib on remotely**
 
 ```ts
 import { RemoteClient } from '@n1k1t/mock-server';
@@ -874,7 +938,7 @@ console.log('Mock expectation has created', expectation.id);
 | name | | `string` | | An expectation name |
 | schema | [Schema](#schema) | `object` | | Provided schema |
 
-### Using cURL
+**Using cURL**
 
 ```bash
 curl -H "Content-type: application/json" -X PUT --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
@@ -885,7 +949,7 @@ curl -H "Content-type: application/json" -X PUT --location "localhost:8080/_mock
 EOF
 ```
 
-### Using application lib on server side
+**Using application lib on server side**
 
 ```ts
 import { MockServer } from '@n1k1t/mock-server';
@@ -899,7 +963,7 @@ const expectation = await server.client.updateExpectation({
 console.log('Mock expectation has updated', expectation);
 ```
 
-### Using application lib on remotely
+**Using application lib on remotely**
 
 ```ts
 import { RemoteClient } from '@n1k1t/mock-server';
@@ -921,7 +985,7 @@ console.log('Mock expectation has updated', expectation);
 |--|--|--|--|--|
 | ids | | `string[]` | * | An expectation IDs list to delete. Or **delete all expectations** if not provided |
 
-### Using cURL
+**Using cURL**
 
 ```bash
 curl -H "Content-type: application/json" -X DELETE --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
@@ -931,7 +995,7 @@ curl -H "Content-type: application/json" -X DELETE --location "localhost:8080/_m
 EOF
 ```
 
-### Using application lib on server side
+**Using application lib on server side**
 
 ```ts
 import { MockServer } from '@n1k1t/mock-server';
@@ -942,7 +1006,7 @@ await server.client.deleteExpectations({
 });
 ```
 
-### Using application lib on remotely
+**Using application lib on remotely**
 
 ```ts
 import { RemoteClient } from '@n1k1t/mock-server';
@@ -1063,7 +1127,7 @@ await server.client.createExpectation({
 | `forward.request` | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
 | `forward.response` | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
 
-Example of **`incoming.body`** plugin
+**Example of `incoming.body` plugin**
 
 ```ts
 server.context.plugins.register('incoming.body', async (request) => {
@@ -1076,7 +1140,7 @@ server.context.plugins.register('incoming.body', async (request) => {
 });
 ```
 
-Example of **`outgoing.response`** plugin
+**Example of `outgoing.response` plugin**
 
 ```ts
 server.context.plugins.register('outgoing.response', (response, context) => {
@@ -1086,7 +1150,7 @@ server.context.plugins.register('outgoing.response', (response, context) => {
 });
 ```
 
-Example of **`forward.request`** plugin
+**Example of `forward.request` plugin**
 
 ```ts
 server.context.plugins.register('forward.request', (config) => ({
@@ -1095,7 +1159,7 @@ server.context.plugins.register('forward.request', (config) => ({
 }));
 ```
 
-Example of **`forward.response`** plugin
+**Example of `forward.response` plugin**
 
 ```ts
 server.context.plugins.register('forward.response', async (response: AxiosResponse<Buffer>) => ({

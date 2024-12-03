@@ -3,11 +3,13 @@ import _ from 'lodash';
 
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
+import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
-import { PartialDeep } from '../../types';
 import {
+  CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,
+  IExpectationOperatorExecUtils,
   TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
@@ -21,13 +23,24 @@ export default class MergeExpectationOperator<
   {
     [K in TLocation]: {
       $location: K;
-      $value: CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>;
+
+      $value?: CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>;
+      $exec?: string | TFunction<CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>, [
+        CompileExpectationOperatorValue<TContext, K, TValue>,
+        IExpectationOperatorExecUtils<TContext>
+      ]>;
 
       $path?: string;
       $jsonPath?: string;
     }
   }[TLocation]
 > {
+  public compiled = {
+    ...(this.command.$exec && {
+      exec: this.compileExecHandler(this.command.$exec, ['payload', 'utils']),
+    }),
+  };
+
   public get tags(): TExpectationMetaTag[] {
     return [];
   }
@@ -43,29 +56,43 @@ export default class MergeExpectationOperator<
     }
 
     if (this.command.$path) {
+      const value = _.get(payload.value, this.command.$path);
+
       _.set(
         payload.parent,
         `${payload.key}.${this.command.$path}`,
-        merge(_.get(payload.value, this.command.$path), <object>this.command.$value ?? {})
+        this.compiled.exec
+          ? merge(value, this.compiled.exec('manipulate', context, value))
+          : merge(value, <object>this.command.$value ?? {})
       );
 
       return context;
     }
 
     if (this.command.$jsonPath) {
-      extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value })
-        .results?.forEach(
-          (segment) => _.set(
-            <object>payload.value,
-            segment.pointer.substring(1).replace(/\//g, '.'),
-            merge(_.get(segment.parent, segment.parentProperty), this.command.$value ?? {})
-          )
-        );
+      extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.forEach((segment) => {
+        const value = _.get(segment.parent, segment.parentProperty);
+
+        _.set(
+          <object>payload.value,
+          segment.pointer.substring(1).replace(/\//g, '.'),
+          this.compiled.exec
+            ? merge(value, this.compiled.exec('manipulate', context, value))
+            : merge(value, this.command.$value ?? {})
+        )
+      });
 
       return context;
     }
 
-    _.set(payload.parent, payload.key, merge(payload.value, this.command.$value ?? {}));
+    _.set(
+      payload.parent,
+      payload.key,
+      this.compiled.exec
+        ? merge(payload.value, this.compiled.exec('manipulate', context, payload.value))
+        : merge(payload.value, this.command.$value ?? {})
+    );
+
     return context;
   }
 }

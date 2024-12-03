@@ -23,7 +23,7 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
 
   public request = this.schema.request
     ? new operators.root<TContext>(operators, this.schema.request)
-    : null;
+    : new operators.root<TContext>(operators, { $exec: () => true });
 
   public response = this.schema.response
     ? new operators.root<TContext>(operators, this.schema.response)
