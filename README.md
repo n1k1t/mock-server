@@ -1122,10 +1122,10 @@ await server.client.createExpectation({
 
 | Plugin | Description |
 |--|--|
-| [`incoming.body`](#incoming.body) | Describes how to handle incoming body |
-| [`outgoing.response`](#outgoing.response) | Describes how to reply |
-| [`forward.request`](#forward.request) | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
-| [`forward.response`](#forward.response) | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
+| [`incoming.body`](#incomingbody) | Describes how to handle incoming body |
+| [`outgoing.response`](#outgoingresponse) | Describes how to reply |
+| [`forward.request`](#forwardrequest) | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
+| [`forward.response`](#forwardresponse) | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
 
 ### incoming.body
 
