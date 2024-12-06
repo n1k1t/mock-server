@@ -2,7 +2,6 @@ import { ValueError } from '@n1k1t/typebox/errors';
 
 import { IExpectationOperatorContext, TExpectationContextLocation } from '../types';
 import { Expectation, TBuildExpectationConfiguration } from './expectation';
-import { PartialDeep } from '../../types';
 
 export type TExpectationsStorageRegisterationResult =
   | { status: 'REGISTRED', expectation: Expectation<any> }
@@ -21,7 +20,7 @@ export class ExpectationsStorage extends Map<string, Expectation<any>> {
     return { status: 'REGISTRED', expectation };
   }
 
-  public match<TContext extends PartialDeep<IExpectationOperatorContext>>(
+  public match<TContext extends IExpectationOperatorContext<any>>(
     location: TExpectationContextLocation,
     context: TContext
   ): Expectation<TContext> | null {

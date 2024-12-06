@@ -1,31 +1,31 @@
 import { v4 as genUid } from 'uuid';
 
-import type { IHistoryMeta, IHistoryRequest } from './types';
-import type { HttpRequestContext } from '../models';
+import type { RequestContextSnapshot } from '../models';
 import type { Expectation } from '../../expectations';
 
+import { cast } from '../../utils';
+
 export class History {
-  public TPlain!: Pick<History, 'id' | 'forwaded' | 'meta' | 'request'> & {
+  public TPlain!: Pick<History, 'id' | 'status' | 'meta'> & {
+    snapshot: RequestContextSnapshot['TPlain'];
     expectation?: Expectation<any>['TPlain'];
-  }
+  };
 
   public id: string = genUid();
 
+  public status = cast<'pending' | 'finished'>('pending');
   public expectation?: Expectation<any>;
-  public forwaded?: Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'>;
 
-  public meta: IHistoryMeta = {
-    state: 'pending',
-
+  public meta = {
     requestedAt: Date.now(),
     updatedAt: Date.now(),
   };
 
-  constructor(public request: IHistoryRequest) {}
+  constructor(public snapshot: RequestContextSnapshot) {}
 
-  public switchState(state: IHistoryMeta['state']): this {
+  public switchStatus(status: History['status']): this {
     this.meta.updatedAt = Date.now();
-    this.meta.state = state;
+    this.status = status;
 
     return this;
   }
@@ -35,41 +35,18 @@ export class History {
     return Object.assign(this, { expectation });
   }
 
-  public assignError(error: NonNullable<IHistoryRequest['error']>): this {
-    this.meta.updatedAt = Date.now();
-    this.request.error = error;
-
-    return this;
-  }
-
-  public assignOutgoing(outgoing: NonNullable<HttpRequestContext['outgoing']>): this {
-    this.meta.updatedAt = Date.now();
-    this.request.outgoing = outgoing;
-
-    return this;
-  }
-
-  public extendForwarded(forwarded: Partial<NonNullable<History['forwaded']>>): this {
-    this.meta.updatedAt = Date.now();
-
-    return Object.assign(this, {
-      forwarded: Object.assign(<NonNullable<History['forwaded']>>(this.forwaded ?? {}), forwarded)
-    });
-  }
-
   public toPlain(): History['TPlain'] {
     return {
       id: this.id,
       meta: this.meta,
+      status: this.status,
 
-      request: this.request,
-      forwaded: this.forwaded,
-
+      snapshot: this.snapshot.toPlain(),
       expectation: this.expectation?.toPlain(),
     };
   }
 
-  static build(request: History['request']) {
+  static build(request: History['snapshot']) {
     return new History(request);
   }
 }

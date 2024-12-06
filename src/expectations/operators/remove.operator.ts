@@ -4,10 +4,9 @@ import { IExpectationOperatorContext, TExpectationMetaTag, TExpectationOperatorL
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
 import { ExpectationOperator } from '../models/operator';
-import { PartialDeep } from '../../types';
 
 export default class RemoveExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation
 > extends ExpectationOperator<
   TContext,

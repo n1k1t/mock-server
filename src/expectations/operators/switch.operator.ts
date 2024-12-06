@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { extractContextByLocation } from '../utils';
-import { PartialDeep, TFunction } from '../../types';
+import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   IExpectationOperatorContext,
@@ -15,7 +15,7 @@ import {
 } from '../types';
 
 export default class SwitchExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TPickLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TPickValue = void,
   TForwardLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,

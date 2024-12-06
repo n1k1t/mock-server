@@ -1,4 +1,6 @@
 import { buildExpectationContext } from '../__utils__';
+import { IExpectationOperatorContext } from '../types';
+
 import * as operators from './index';
 
 describe('Expectations.Operators.Exec', () => {
@@ -22,7 +24,9 @@ describe('Expectations.Operators.Exec', () => {
   });
 
   it('should exec by function', () => {
-    const operator = new operators.$exec<{ incoming: { query: { test: number } } }>(operators, ({ context }) => {
+    const operator = new operators.$exec<IExpectationOperatorContext<{
+      incoming: { query: { test: number } }
+    }>>(operators, ({ context }) => {
       context.incoming.query.test = 100;
     });
 
@@ -31,7 +35,9 @@ describe('Expectations.Operators.Exec', () => {
   });
 
   it('should exec by function with utils', () => {
-    const operator = new operators.$exec<{ incoming: { query: { test: number } } }>(operators, ({ context, _ }) => {
+    const operator = new operators.$exec<IExpectationOperatorContext<{
+      incoming: { query: { test: number } }
+    }>>(operators, ({ context, _ }) => {
       _.set(context, 'incoming.query.test', 100);
     });
 

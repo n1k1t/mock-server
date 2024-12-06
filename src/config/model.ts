@@ -1,8 +1,10 @@
+import type { RedisOptions } from 'ioredis';
+
 import merge from 'deepmerge';
 import path from 'path';
 
 import type { TLoggerLevel } from '../logger';
-import type { PartialDeep } from '../types';
+import type { PartialDeep, SetRequiredKeys } from '../types';
 
 import { cast } from '../utils';
 
@@ -29,13 +31,19 @@ export class Config {
     logger: {
       level: cast<TLoggerLevel>('D'),
     },
+
+    redis: cast<RedisOptions | undefined>(undefined),
   }, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));
 
   public get<K extends keyof Config['storage']>(key: K): Config['storage'][K] {
     return this.storage[key];
   }
 
+  public has<K extends keyof Config['storage']>(key: K): this is SetRequiredKeys<Config['storage'], K> {
+    return key in this.storage;
+  }
+
   public merge(payload: PartialDeep<Config['storage']>): this {
-    return Object.assign(this, { storage: merge(this.storage, payload) });
+    return Object.assign(this, { storage: merge(this.storage, payload, { arrayMerge: (target, source) => source }) });
   }
 }

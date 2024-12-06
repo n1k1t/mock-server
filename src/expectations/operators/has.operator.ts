@@ -15,7 +15,7 @@ import {
 } from '../types';
 
 export default class HasExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

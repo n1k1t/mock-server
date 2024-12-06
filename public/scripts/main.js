@@ -19909,7 +19909,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HistoryComponent = void 0;
 const json_formatter_1 = __importDefault(require("../../../../../../json-formatter"));
-const pick_1 = __importDefault(require("lodash/pick"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
 const context_1 = __importDefault(require("../../context"));
@@ -19930,10 +19929,11 @@ class HistoryComponent extends models_1.Component {
             }
             if (!this.element.querySelector('pre div.json-formatter-row')) {
                 const formatted = {
-                    incoming: history.request.incoming,
-                    ...(history.request.seed && { seed: history.request.seed }),
-                    ...(history.request.outgoing && { outgoing: history.request.outgoing }),
-                    ...(history.forwaded && { forwarded: (0, pick_1.default)(history.forwaded, ['incoming', 'outgoing']) }),
+                    incoming: history.snapshot.incoming,
+                    ...(history.snapshot.seed && { seed: history.snapshot.seed }),
+                    ...(history.snapshot.container && { container: history.snapshot.container }),
+                    ...(history.snapshot.outgoing && { outgoing: history.snapshot.outgoing }),
+                    ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
                     ...(history.expectation && {
                         expectation: {
                             id: history.expectation.id,
@@ -19956,38 +19956,39 @@ class HistoryComponent extends models_1.Component {
 }
 exports.HistoryComponent = HistoryComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":235,"handlebars":60,"lodash/pick":212}],235:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":235,"handlebars":60}],235:[function(require,module,exports){
 module.exports = `
   <div class="container history" id="{{id}}">
     <div class="meta">
       <div class="segment">
         <span class="time">{{#toLocaleTime meta.requestedAt}}{{/toLocaleTime}}</span>
 
-        {{#if request.error}}
+        {{#if snapshot.error}}
           <span class="error">
-            {{#compare request.error.code.length 'lte' 24}}{{request.error.code}}{{/compare}}
-            {{#compare request.error.code.length 'gt' 24}}Error{{/compare}}
+            {{#compare snapshot.error.code.length 'lte' 24}}{{snapshot.error.code}}{{/compare}}
+            {{#compare snapshot.error.code.length 'gt' 24}}Error{{/compare}}
           </span>
         {{/if}}
 
-        {{#compare meta.state 'eq' 'pending'}}
+        {{#compare state 'eq' 'pending'}}
           <span class="pending"><i class="fas fa-hourglass-start"></i></span>
         {{/compare}}
 
-        {{#if request.outgoing}}
+        {{#if snapshot.outgoing}}
           <span class="status
-            {{#compare request.outgoing.status 'lt' 400}}green{{/compare}}
-            {{#compare request.outgoing.status 'gte' 400}}red{{/compare}}
-          ">{{request.outgoing.status}}</span>
+            {{#compare snapshot.outgoing.status 'lt' 400}}green{{/compare}}
+            {{#compare snapshot.outgoing.status 'gte' 400}}red{{/compare}}
+          ">{{snapshot.outgoing.status}}</span>
         {{/if}}
 
-        <span class="method">{{{request.incoming.method}}}</span>
-        <span class="path">{{{request.incoming.path}}}</span>
+        <span class="method">{{{snapshot.incoming.method}}}</span>
+        <span class="path">{{{snapshot.incoming.path}}}</span>
       </div>
 
       <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
-      {{#if request.seed}}<span class="seed">{{request.seed}}</span>{{/if}}
+      {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
+      {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
 
       {{#if expectation}}
         <div class="segment">{{>expectationMeta expectation format='short'}}</div>

@@ -374,6 +374,10 @@ div.container div.meta span.seed {
   background-color: #a7ff7b;
   color: #1e1e1e;
 }
+div.container div.meta span.cache {
+  background-color: #ff7ba7;
+  color: #1e1e1e;
+}
 div.container pre {
   margin: 0;
   margin-bottom: 20px;

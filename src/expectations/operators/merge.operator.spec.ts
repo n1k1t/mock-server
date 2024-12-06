@@ -3,7 +3,7 @@ import * as operators from './index';
 
 describe('Expectations.Operators.Merge', () => {
   it('should handle schema with non object payload', () => {
-    const operator = new operators.$merge(operators, {
+    const operator = new operators.$merge<any, any>(operators, {
       $location: 'path',
       $value: true,
     });

@@ -2,8 +2,8 @@ import _ from 'lodash';
 
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
-import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
+import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
@@ -14,7 +14,7 @@ import {
 } from '../types';
 
 export default class SetExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

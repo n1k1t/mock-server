@@ -1,5 +1,4 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
-import { PartialDeep } from '../../types';
 import {
   IExpectationOperatorContext,
   IExpectationOperatorsSchema,
@@ -8,7 +7,7 @@ import {
 } from '../types';
 
 export default class AndExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

@@ -130,6 +130,11 @@ div.container {
       background-color: $color-green;
       color: $color-dark;
     }
+
+    span.cache {
+      background-color: adjust-hue($color-green, -120);
+      color: $color-dark;
+    }
   }
 
   pre {

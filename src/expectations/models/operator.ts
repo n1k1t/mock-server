@@ -2,7 +2,7 @@ import { Faker, ru, en, en_GB } from '@faker-js/faker';
 import dayjs from 'dayjs';
 import _ from 'lodash';
 
-import { Constructable, PartialDeep, TFunction } from '../../types';
+import { Constructable, TFunction } from '../../types';
 import { metaStorage } from '../../meta';
 import { Logger } from '../../logger';
 import {
@@ -16,10 +16,10 @@ import {
 
 const logger = Logger.build('Expectations.Models.Operator');
 
-export type TExpectationOperatorConstructor<TContext extends PartialDeep<IExpectationOperatorContext>> =
+export type TExpectationOperatorConstructor<TContext extends IExpectationOperatorContext<any>> =
   Constructable<ExpectationOperator<TContext, any>, ConstructorParameters<typeof ExpectationOperator>>
 
-export abstract class ExpectationOperator<TContext extends PartialDeep<IExpectationOperatorContext>, TSchema> {
+export abstract class ExpectationOperator<TContext extends IExpectationOperatorContext<any>, TSchema> {
   public TContext!: TContext;
   public TSchema!: TSchema;
 

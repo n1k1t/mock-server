@@ -7,6 +7,6 @@ export default Endpoint
   .bindToWs(<const>{ path: 'expectations:get' })
   .assignHandler(({ reply, server }) =>
     reply.ok(
-      [...server.storage.expectations.values()].map((expectation) => expectation.toPlain())
+      [...server.storages.expectations.values()].map((expectation) => expectation.toPlain())
     )
   );

@@ -1,6 +1,5 @@
 import _ from 'lodash';
 
-import { PartialDeep } from '../types';
 import {
   IExpectationSchema,
   LExpectationFlatOperator,
@@ -17,7 +16,7 @@ type TExtractedContext =
 
 export const checkIsLocationInContext = (
   location: TExpectationOperatorLocation,
-  context: PartialDeep<IExpectationOperatorContext>
+  context: IExpectationOperatorContext<any>
 ): boolean => {
   switch(location) {
     case 'delay':
@@ -31,7 +30,7 @@ export const checkIsLocationInContext = (
 
 export const extractContextByLocation = (
   location: TExpectationOperatorLocation,
-  context: PartialDeep<IExpectationOperatorContext>
+  context: IExpectationOperatorContext<any>
 ): TExtractedContext | null => {
   switch(location) {
     case 'path': return {
@@ -131,6 +130,20 @@ export const extractContextByLocation = (
       parent: context,
       value: context.state,
     };
+
+    case 'options': return {
+      key: 'options',
+      type: 'object',
+      parent: context,
+      value: context.options,
+    };
+
+    case 'container': return {
+      key: 'container',
+      type: 'object',
+      parent: context,
+      value: context.container,
+    }
 
     default: return null;
   }

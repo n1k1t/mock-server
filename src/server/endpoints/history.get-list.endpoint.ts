@@ -7,7 +7,7 @@ export default Endpoint
   .bindToWs(<const>{ path: 'history:get' })
   .assignHandler(({ reply, server }) =>
     reply.ok(
-      [...server.storage.history.values()]
+      [...server.storages.history.values()]
         .sort((a, b) => b.meta.requestedAt - a.meta.requestedAt)
         .map((history) => history.toPlain())
     )

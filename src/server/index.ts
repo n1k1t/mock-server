@@ -98,6 +98,13 @@ export class MockServer {
       })
     );
 
+    setInterval(() => {
+      server.context.storages.containers.getExpired().forEach((container) => {
+        container.unbind();
+        logger.info(`Container [${container.link}] has unbinded by expiration of [${container.configuration.ttl}] seconds`);
+      });
+    }, 60 * 60 * 1000);
+
     return server;
   }
 }

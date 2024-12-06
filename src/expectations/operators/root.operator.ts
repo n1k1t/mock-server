@@ -1,5 +1,4 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
-import { PartialDeep } from '../../types';
 import { Logger } from '../../logger';
 import {
   IExpectationOperatorContext,
@@ -11,7 +10,7 @@ import {
 const logger = Logger.build('Expectations.Operators.Root');
 
 export default class RootExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

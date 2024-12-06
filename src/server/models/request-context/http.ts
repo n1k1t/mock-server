@@ -2,12 +2,13 @@ import { IncomingMessage, ServerResponse } from 'http';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import type { Expectation, IExpectationOperatorContext } from '../../../expectations';
 import type { IRequestContextOutgoing } from './types';
 import type { ServerContext } from '../server-context';
+import type { Expectation } from '../../../expectations';
 import type { History } from '../../history';
 
 import { extractHttpIncommingParameters } from './utils';
+import { RequestContextSnapshot } from './snapshot';
 import { TRequestPayloadType } from '../../../types';
 import { RequestContext } from './model';
 import { metaStorage } from '../../../meta';
@@ -18,10 +19,6 @@ const logger = Logger.build('Server.Models.HttpRequestContext');
 const clone = rfdc();
 
 export class HttpRequestContext<TResponse = unknown> extends RequestContext<'http'> {
-  public TPlain!: Pick<HttpRequestContext, 'incoming' | 'outgoing'> & Pick<
-    HttpRequestContext['shared'], 'forwarded' | 'state' | 'seed'
-  >;
-
   public incoming = extractHttpIncommingParameters(this.request);
   public outgoing?: IRequestContextOutgoing;
 
@@ -31,24 +28,12 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
   });
 
   public shared: {
-    state: Record<string, unknown>;
-    seed?: number;
+    snapshot: RequestContextSnapshot;
 
-    expectation?: Expectation<Pick<HttpRequestContext, 'incoming' | 'outgoing'>>;
-    manipulated?: IExpectationOperatorContext;
-
-    forwarded?: Pick<HttpRequestContext, 'incoming' | 'outgoing'>;
+    expectation?: Expectation<any>;
     history?: History;
   } = {
-    state: {},
-
-    ...(this.incoming.headers['x-use-mock-seed'] && {
-      seed: Number(this.incoming.headers['x-use-mock-seed']),
-    }),
-
-    ...(this.incoming.headers['x-use-mock-state'] && {
-      state: JSON.parse(Buffer.from(String(this.incoming.headers['x-use-mock-state']), 'base64').toString()),
-    }),
+    snapshot: this.compileSnapshot({ clone: true }),
   };
 
   constructor(
@@ -61,6 +46,14 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
 
   public share<T extends Partial<HttpRequestContext['shared']>>(shared: T) {
     return Object.assign(this, { shared: Object.assign(this.shared, shared) });
+  }
+
+  public assignExpectation(expectation: NonNullable<HttpRequestContext['shared']['expectation']>) {
+    if (this.shared.snapshot.options.cache.isEnabled && expectation.forward?.options?.cache) {
+      Object.assign(this.shared.snapshot.options.cache, expectation.forward.options.cache);
+    }
+
+    return this.share({ expectation });
   }
 
   public assignOutgoing<T extends NonNullable<HttpRequestContext<any>['outgoing']>>(outgoing: T) {
@@ -76,41 +69,28 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
     return super.complete();
   }
 
-  public toPlain<K extends 'incoming' | 'outgoing' | 'forwarded.incoming' | 'forwarded.outgoing'>(
-    options?: {
-      locations?: K[];
-      clone?: boolean;
-    }
-  ): HttpRequestContext<TResponse>['TPlain'] {
-    const locations = {
-      incoming: options?.locations?.includes(<K>'incoming') ?? true,
-      outgoing: (options?.locations?.includes(<K>'outgoing') ?? true) && this.outgoing,
+  public compileSnapshot(options?: { clone?: boolean }): RequestContextSnapshot {
+    return RequestContextSnapshot.build({
+      storage: this.server.storages.containers,
+      state: {},
 
-      forwarded: {
-        incoming: (options?.locations?.includes(<K>'forwarded.incoming') ?? true) && this.shared.forwarded?.incoming,
-        outgoing: (options?.locations?.includes(<K>'forwarded.outgoing') ?? true) && this.shared.forwarded?.outgoing,
-      },
-    };
-
-    return <HttpRequestContext<TResponse>['TPlain']>{
-      state: options?.clone ? clone(this.shared.state) : this.shared.state,
-
-      ...(this.shared.seed !== undefined && { seed: this.shared.seed }),
-      ...(locations.incoming && { incoming: options?.clone ? clone(this.incoming) : this.incoming }),
-      ...(locations.outgoing && { outgoing: options?.clone ? clone(this.outgoing) : this.outgoing }),
-
-      ...((locations.forwarded.incoming || locations.forwarded.outgoing) && {
-        forwarded: {
-          ...(locations.forwarded.incoming && {
-            incoming: options?.clone ? clone(this.shared.forwarded!.incoming) : this.shared.forwarded!.incoming,
-          }),
-
-          ...(locations.forwarded.outgoing && {
-            outgoing: options?.clone ? clone(this.shared.forwarded!.outgoing) : this.shared.forwarded!.outgoing,
-          }),
+      options: {
+        cache: {
+          isEnabled: Boolean(this.server.storages.redis),
         },
+      },
+
+      incoming: options?.clone ? clone(this.incoming) : this.incoming,
+      outgoing: this.outgoing ? options?.clone ? clone(this.outgoing) : this.outgoing : undefined,
+
+      ...(this.incoming.headers['x-use-mock-seed'] && {
+        seed: Number(this.incoming.headers['x-use-mock-seed']),
       }),
-    };
+
+      ...(this.incoming.headers['x-use-mock-state'] && {
+        state: JSON.parse(Buffer.from(String(this.incoming.headers['x-use-mock-state']), 'base64').toString()),
+      }),
+    });
   }
 
   static async build(server: ServerContext, request: IncomingMessage, response: ServerResponse) {

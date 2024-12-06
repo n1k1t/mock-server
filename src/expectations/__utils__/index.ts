@@ -1,7 +1,16 @@
 import { IExpectationOperatorContext } from '../types';
-import { PartialDeep } from '../../types';
+import { ContainersStorage } from '../../server/models';
 
-export const buildExpectationContext = (): PartialDeep<IExpectationOperatorContext> => ({
+export const buildExpectationContext = (): IExpectationOperatorContext<any> => ({
+  storage: new ContainersStorage(),
+  state: {},
+
+  options: {
+    cache: {
+      isEnabled: false,
+    },
+  },
+
   incoming: {
     type: 'json',
 

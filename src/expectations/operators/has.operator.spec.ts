@@ -5,7 +5,7 @@ describe('Expectations.Operators.Has', () => {
   describe('incoming.query', () => {
     it('should handle invalid schema', () => {
       const operator = new operators.$has(operators, { $location: 'incoming.query' });
-      expect(operator.match({})).toBeFalsy();
+      expect(operator.match(<any>{})).toBeFalsy();
     });
 
     it('should match by schema using exec', () => {

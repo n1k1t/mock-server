@@ -3,20 +3,20 @@ import _ from 'lodash';
 
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
-import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
+import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
   IExpectationOperatorContext,
   IExpectationOperatorExecUtils,
   TExpectationMetaTag,
-  TExpectationOperatorLocation,
+  TExpectationOperatorObjectLocation,
 } from '../types';
 
 export default class MergeExpectationOperator<
-  TContext extends PartialDeep<IExpectationOperatorContext> = {},
-  TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
+  TContext extends IExpectationOperatorContext<any>,
+  TLocation extends TExpectationOperatorObjectLocation = TExpectationOperatorObjectLocation,
   TValue = void
 > extends ExpectationOperator<
   TContext,
@@ -62,8 +62,8 @@ export default class MergeExpectationOperator<
         payload.parent,
         `${payload.key}.${this.command.$path}`,
         this.compiled.exec
-          ? merge(value, this.compiled.exec('manipulate', context, value))
-          : merge(value, <object>this.command.$value ?? {})
+          ? merge(value, this.compiled.exec('manipulate', context, value), { arrayMerge: (target, source) => source })
+          : merge(value, <object>this.command.$value ?? {}, { arrayMerge: (target, source) => source })
       );
 
       return context;

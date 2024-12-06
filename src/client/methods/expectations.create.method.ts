@@ -21,11 +21,11 @@ export default ClientMethod
     return response.data.data;
   })
   .provide('onsite', (context) => async (body) => {
-    const result = context.storage.expectations.register(body);
+    const result = context.storages.expectations.register(body);
     if (result.status === 'ERROR') {
       throw new ValidationError({}, result.reasons);
     }
 
-    context.exchange.ws.publish('expectation:added', result.expectation.toPlain());
+    context.exchanges.ws.publish('expectation:added', result.expectation.toPlain());
     return result.expectation.toPlain();
   });

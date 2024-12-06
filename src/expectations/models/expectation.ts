@@ -4,17 +4,26 @@ import { v4 as genUid } from 'uuid';
 import { ValueError } from '@n1k1t/typebox/errors';
 import _ from 'lodash';
 
-import { IExpectationMeta, IExpectationOperatorContext, IExpectationSchema, TExpectationType } from '../types';
-import { PartialDeep, TRequestProtocol } from '../../types';
+import { TRequestProtocol } from '../../types';
+import {
+  IExpectationMeta,
+  IExpectationOperatorContext,
+  IExpectationOperatorContextInput,
+  IExpectationSchema,
+  TExpectationType,
+} from '../types';
 
 import * as operators from '../operators';
 
-export type TBuildExpectationConfiguration<TContext extends PartialDeep<IExpectationOperatorContext> = {}> =
+export type TBuildExpectationConfiguration<TContext extends IExpectationOperatorContext<any>> =
   Pick<Expectation<TContext>, 'schema'> & Partial<Pick<Expectation<TContext>, 'name' | 'isEnabled' | 'type'>>;
 
-export class Expectation<TContext extends PartialDeep<IExpectationOperatorContext> = {}> {
+export class Expectation<
+  TInput extends IExpectationOperatorContextInput = {},
+  TContext extends IExpectationOperatorContext<TInput> = IExpectationOperatorContext<TInput>
+> {
   public TSchema!: IExpectationSchema<TContext>;
-  public TPlain!: Pick<Expectation<TContext>, 'schema' | 'type' | 'id' | 'isEnabled' | 'meta' | 'name'>;
+  public TPlain!: Pick<Expectation<TInput, TContext>, 'schema' | 'type' | 'id' | 'isEnabled' | 'meta' | 'name'>;
 
   public id: string = genUid();
   public name: string = generateAnimalName().split(' ').map(_.capitalize).join('');
@@ -49,7 +58,7 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
     return [];
   }
 
-  public toPlain(): Expectation<TContext>['TPlain'] {
+  public toPlain(): Expectation<TInput, TContext>['TPlain'] {
     return {
       id: this.id,
       type: this.type,
@@ -62,7 +71,7 @@ export class Expectation<TContext extends PartialDeep<IExpectationOperatorContex
     };
   }
 
-  static build<TContext extends PartialDeep<IExpectationOperatorContext> = {}>(
+  static build<TContext extends IExpectationOperatorContext<any>>(
     configuration: TBuildExpectationConfiguration<TContext>
   ) {
     return Object.assign(

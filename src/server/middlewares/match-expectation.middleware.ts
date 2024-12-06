@@ -6,26 +6,27 @@ import { cast } from '../../utils';
 export default Middleware
   .build(__filename)
   .assignHandler((context, { logger }) => {
-    const plain = context.toPlain({ clone: true, locations: ['incoming'] });
-    const expectation = context.server.storage.expectations.match<any>('request', plain);
+    const expectation = context.server.storages.expectations.match('request', context.shared.snapshot);
 
     if (!expectation) {
-      const history = context.server.storage.history
-        .register(Object.assign(plain, {
-          outgoing: cast<IRequestContextOutgoing>({
-            type: 'json',
-            status: 404,
-            headers: {},
+      const history = context.server.storages.history
+        .register(
+          context.shared.snapshot.assign({
+            outgoing: cast<IRequestContextOutgoing>({
+              type: 'json',
+              status: 404,
+              headers: {},
+            })
           })
-        }))
-        .switchState('finished');
+        )
+        .switchStatus('finished');
 
-      context.server.exchange.ws.publish('history:added', history.toPlain());
+      context.server.exchanges.ws.publish('history:added', history.toPlain());
       return context.reply.notFound();
     }
 
     logger.info('Has matched with', `"${expectation.name}" [${expectation.id}]`);
 
-    context.server.exchange.ws.publish('expectation:updated', expectation.toPlain());
-    context.share({ expectation });
+    context.server.exchanges.ws.publish('expectation:updated', expectation.toPlain());
+    context.assignExpectation(expectation);
   });

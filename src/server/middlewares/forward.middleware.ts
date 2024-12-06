@@ -1,49 +1,113 @@
 import axios, { AxiosError } from 'axios';
+import { gzip, ungzip } from 'node-gzip';
 import HttpsProxyAgent from 'https-proxy-agent';
+import { Value } from '@n1k1t/typebox/value';
+import { URL } from 'url';
 import _ from 'lodash';
 
-import { extractPayloadType, Middleware, parsePayload, serializePayload } from '../models';
-import { URL } from 'url';
+import { IExpectationOperatorContext } from '../../expectations';
+import {
+  extractPayloadType,
+  IRequestContextOutgoing,
+  Middleware,
+  parsePayload,
+  RequestContext,
+  serializePayload,
+} from '../models';
+
+const compileCacheContext = (context: RequestContext, forwarded: IExpectationOperatorContext) => {
+  if (!context.server.storages.redis || !forwarded.options.cache.isEnabled) {
+    return null;
+  }
+
+  const payload = forwarded.options.cache.key ?? _.pick(forwarded.incoming, ['path', 'method', 'body', 'query']);
+  const key = typeof payload === 'object' ? Value.Hash(payload).toString() : String(payload);
+
+  return {
+    key: `${forwarded.options.cache.prefix ?? ''}${key}`,
+    ttl: forwarded.options.cache.ttl ?? 3600,
+  };
+}
 
 export default Middleware
-  .build(__filename, ['expectation', 'manipulated', 'history'])
+  .build(__filename, ['expectation', 'history'])
   .assignHandler(async (context, { logger }) => {
     if (!context.shared.expectation.forward) {
       return null;
     }
 
-    const { url, baseUrl, timeout, proxy } = context.shared.expectation.forward;
+    const snapshot = context.shared.snapshot.assign({ forwarded: _.pick(context.shared.snapshot, ['incoming']) });
+    const incomingType = extractPayloadType(snapshot.incoming.headers);
 
-    const forwarded = context.shared.manipulated;
-    const incomingType = extractPayloadType(forwarded.incoming.headers);
+    const cache = compileCacheContext(context, snapshot);
 
-    const body = forwarded.incoming.body === undefined ? forwarded.incoming.bodyRaw : forwarded.incoming.body;
+    context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
+    context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
+
+    if (cache) {
+      const cached = await context.server.storages.redis!.get(cache.key).catch((error) => {
+        logger.error('Got error while redis get', error?.stack ?? error);
+        return null;
+      });
+
+      const unziped = cached
+        ? await ungzip(Buffer.from(cached, 'base64')).catch((error) => {
+          logger.error('Got error while cache unzip', error?.stack ?? error);
+          return null;
+        })
+        : null;
+
+      const outgoing = <IRequestContextOutgoing | null>(unziped ? parsePayload('json', unziped.toString()) : null);
+
+      if (outgoing) {
+        logger.info(`Got cache [${cache.key}]`);
+
+        snapshot.assign({ forwarded: Object.assign(snapshot.forwarded!, { outgoing }) });
+
+        context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
+        context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
+
+        return context.share({ snapshot });
+      }
+    }
+
+    const body = snapshot.incoming.body === undefined ? snapshot.incoming.bodyRaw : snapshot.incoming.body;
     const bodyRaw = Buffer.from(typeof body === 'object' ? serializePayload(incomingType, body) : String(body));
+
+    const url = new URL(
+      context.shared.expectation.forward.url ?? snapshot.incoming.path,
+      context.shared.expectation.forward.baseUrl
+    );
 
     const configuration = await context.server.plugins.exec(
       'forward.request', {
-        timeout: timeout ?? 1000 * 30,
+        timeout: context.shared.expectation.forward.timeout ?? 1000 * 30,
 
-        method: forwarded.incoming.method,
+        method: snapshot.incoming.method,
         headers: {
           'connection': 'close',
 
-          ...forwarded.incoming.headers,
-          ...((!forwarded.incoming.headers?.['transfer-encoding'] && bodyRaw.length) && {
+          ...snapshot.incoming.headers,
+          ...(context.shared.expectation.forward.options?.host === 'origin' && { host: url.host }),
+
+          ...((!snapshot.incoming.headers?.['transfer-encoding'] && bodyRaw.length) && {
             'content-length': String(bodyRaw.length),
           }),
         },
 
-        ...(url && { url }),
-        ...(baseUrl && { baseURL: baseUrl, url: forwarded.incoming.path }),
+        ...(context.shared.expectation.forward.url && { url: context.shared.expectation.forward.url }),
+        ...(context.shared.expectation.forward.baseUrl && {
+          baseURL: context.shared.expectation.forward.baseUrl,
+          url: snapshot.incoming.path
+        }),
 
         data: bodyRaw,
         params: context.incoming.query,
         responseType: 'arraybuffer',
 
-        ...(proxy && {
-          proxy,
-          httpsAgent: HttpsProxyAgent(proxy.host)
+        ...(context.shared.expectation.forward.proxy && {
+          proxy: context.shared.expectation.forward.proxy,
+          httpsAgent: HttpsProxyAgent(context.shared.expectation.forward.proxy.host)
         }),
       },
       context
@@ -51,12 +115,11 @@ export default Middleware
 
     const forwardedType = extractPayloadType(<Record<string, string>>configuration.headers ?? {});
 
-    Object.assign(forwarded.incoming, {
+    Object.assign(snapshot.incoming, {
       type: forwardedType,
 
-      path: new URL(configuration.url ?? forwarded.incoming.path, baseUrl).pathname,
-      method: configuration.method ?? forwarded.incoming.method,
-
+      path: url.pathname,
+      method: configuration.method ?? snapshot.incoming.method,
       headers: configuration.headers ?? {},
 
       ...(configuration.params && { query: configuration.params }),
@@ -73,14 +136,12 @@ export default Middleware
         : '',
     });
 
-    const history = context.shared.history.extendForwarded(forwarded);
-    context.server.exchange.ws.publish('history:updated', history.toPlain());
-
     const response = await axios.request(configuration).catch((error: AxiosError) => {
       if (!error.response) {
-        history.assignError(_.pick(error, ['message', 'code'])).switchState('finished');
+        context.shared.history.snapshot.assign({ error: _.pick(error, ['message', 'code']) });
+        context.shared.history.switchStatus('finished');
 
-        context.server.exchange.ws.publish('history:updated', history.toPlain());
+        context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
         context.reply.internalError(error.message);
 
         logger.error('Got error while forwaring', error?.stack ?? error);
@@ -93,7 +154,7 @@ export default Middleware
     const parsed = await context.server.plugins.exec('forward.response', response, context);
     const outgoingType = parsed.type ?? extractPayloadType(response.headers);
 
-    forwarded.outgoing = {
+    snapshot.forwarded!.outgoing = {
       type: outgoingType,
 
       status: response.status,
@@ -103,8 +164,25 @@ export default Middleware
       data: 'payload' in parsed ? parsed.payload : parsePayload(outgoingType, parsed.raw),
     };
 
-    history.extendForwarded(forwarded);
+    if (cache) {
+      const payload = Object.assign({ isCached: true }, snapshot.forwarded!.outgoing);
+      const serialized = await gzip(serializePayload('json', payload)).catch((error) => {
+        logger.error('Got error while zip payload', error?.stack ?? error);
+        return null;
+      });
 
-    context.server.exchange.ws.publish('history:updated', history.toPlain());
-    context.share({ forwarded });
+      if (serialized) {
+        await context.server.storages.redis!.setex(cache.key, cache.ttl, serialized.toString('base64'))
+          .then(() => logger.info(`Wrote cache [${cache.key}] for [${cache.ttl}] seconds`))
+          .catch((error) => {
+            logger.error('Got error while redis set', error?.stack ?? error);
+            return null;
+          });
+      }
+    }
+
+    context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
+    context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
+
+    context.share({ snapshot });
   });

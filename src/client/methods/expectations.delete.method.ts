@@ -21,8 +21,8 @@ export default ClientMethod
   })
   .provide('onsite', (context) => async (body) => {
     body?.ids
-      ? body.ids.forEach((id) => context.storage.expectations.delete(id))
-      : context.storage.expectations.clear();
+      ? body.ids.forEach((id) => context.storages.expectations.delete(id))
+      : context.storages.expectations.clear();
 
     return null;
   });

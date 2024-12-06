@@ -28,11 +28,13 @@ export class HistoryComponent extends Component {
 
       if (!this.element.querySelector('pre div.json-formatter-row')) {
         const formatted = {
-          incoming: history.request.incoming,
+          incoming: history.snapshot.incoming,
 
-          ...(history.request.seed && { seed: history.request.seed }),
-          ...(history.request.outgoing && { outgoing: history.request.outgoing }),
-          ...(history.forwaded && { forwarded: _pick(history.forwaded, ['incoming', 'outgoing']) }),
+          ...(history.snapshot.seed && { seed: history.snapshot.seed }),
+          ...(history.snapshot.container && { container: history.snapshot.container }),
+
+          ...(history.snapshot.outgoing && { outgoing: history.snapshot.outgoing }),
+          ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
 
           ...(history.expectation && {
             expectation: {

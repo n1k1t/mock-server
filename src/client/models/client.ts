@@ -1,26 +1,30 @@
-import type { IExpectationOperatorContext, TBuildExpectationConfiguration } from '../../expectations';
-import type { PartialDeep, TFunction } from '../../types';
 import type { TMethodsSchema } from '../types';
+import type { TFunction } from '../../types';
+import type {
+  IExpectationOperatorContext,
+  IExpectationOperatorContextInput,
+  TBuildExpectationConfiguration,
+} from '../../expectations';
 
 import { compileExpectationOperators, ICompiledExpectationOperators } from '../helpers';
 
-interface IExpectationHandlerContext<T extends PartialDeep<IExpectationOperatorContext>> {
-  $: ICompiledExpectationOperators<T>;
+interface IExpectationHandlerContext<TInput extends IExpectationOperatorContextInput> {
+  $: ICompiledExpectationOperators<TInput>;
   T: <T>(payload: T) => T extends TFunction<any, any[]> ? TFunction<any, any[]> : T;
 }
 
-interface IUnknownExpectationContext {
-  incoming: IExpectationOperatorContext['incoming'] & {
+type TUnknownExpectationContext = IExpectationOperatorContext<{
+  incoming: {
     headers: any;
     query: any;
     body: any;
   };
 
-  outgoing?: IExpectationOperatorContext['outgoing'] & {
+  outgoing?: {
     headers: any;
     data: any;
   };
-}
+}>
 
 export class Client {
   constructor(protected methods: TMethodsSchema) {}
@@ -33,29 +37,32 @@ export class Client {
     return this.methods.deleteExpectations;
   }
 
-  public createExpectation<T extends PartialDeep<IExpectationOperatorContext> = {}>(
-    predicate: TBuildExpectationConfiguration<IUnknownExpectationContext> | TFunction<
+  public createExpectation<TInput extends IExpectationOperatorContextInput = {}>(
+    predicate: TBuildExpectationConfiguration<TUnknownExpectationContext> | TFunction<
       TBuildExpectationConfiguration<any>,
-      [IExpectationHandlerContext<T>]
+      [IExpectationHandlerContext<TInput>]
     >
   ): ReturnType<TMethodsSchema['createExpectation']> {
     return typeof predicate === 'function'
       ? this.methods.createExpectation(predicate({
-        $: compileExpectationOperators<T>(),
+        $: compileExpectationOperators<TInput>(),
         T: (payload: any) => payload,
       }))
       : this.methods.createExpectation(predicate);
   }
 
-  public updateExpectation<T extends Partial<IExpectationOperatorContext>>(
-    predicate: { id: string, set: Partial<Omit<TBuildExpectationConfiguration, 'type'>> } | TFunction<
+  public updateExpectation<TInput extends IExpectationOperatorContextInput = {}>(
+    predicate: {
+      id: string,
+      set: Partial<Omit<TBuildExpectationConfiguration<TUnknownExpectationContext>, 'type'>>
+    } | TFunction<
       { id: string, set: Partial<Omit<TBuildExpectationConfiguration<any>, 'type'>> },
-      [IExpectationHandlerContext<T>]
+      [IExpectationHandlerContext<TInput>]
     >
   ): ReturnType<TMethodsSchema['updateExpectation']> {
     return typeof predicate === 'function'
       ? this.methods.updateExpectation(predicate({
-        $: compileExpectationOperators<T>(),
+        $: compileExpectationOperators<TInput>(),
         T: (payload: any) => payload,
       }))
       : this.methods.updateExpectation(predicate);

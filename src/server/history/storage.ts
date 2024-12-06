@@ -4,7 +4,7 @@ import { History } from './model';
 export class HistoryStorage extends Map<string, History> {
   private ids: string[] = [];
 
-  public register(request: History['request']): History {
+  public register(request: History['snapshot']): History {
     const history = History.build(request);
     this.set(history.id, history);
 

@@ -4,7 +4,7 @@ import type dayjs from 'dayjs';
 import type _ from 'lodash';
 
 import type { ConvertTupleToUnion, ExtractObjectValueByPath, PartialDeep, TRequestProtocol } from '../types';
-import type { HttpRequestContext } from '../server/models';
+import type { Container, ContainersStorage, RequestContextSnapshot } from '../server/models';
 import type { MetaContext } from '../meta';
 import type { Logger } from '../logger';
 
@@ -43,6 +43,8 @@ export type TExpectationContextLocation = 'request' | 'response';
 
 export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
 export const LExpectationOperatorLocation = <const>[
+  'container',
+  'options',
   'error',
   'delay',
   'state',
@@ -61,6 +63,7 @@ export const LExpectationOperatorLocation = <const>[
 ];
 
 export type TExpectationOperatorObjectLocation =
+  | 'options'
   | 'state'
   | 'incoming.body'
   | 'incoming.headers'
@@ -70,10 +73,29 @@ export type TExpectationOperatorObjectLocation =
 
 export type TExpectationOperators = Omit<typeof operators, 'root'>;
 
-export interface IExpectationOperatorContext extends Pick<HttpRequestContext['TPlain'], 'incoming' | 'outgoing'> {
-  state: Record<string, unknown>;
-  seed?: number;
-};
+export interface IExpectationOperatorContextInput extends PartialDeep<
+  Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'state'>
+> {
+  container?: object;
+}
+
+export interface IExpectationOperatorContext<TInput extends IExpectationOperatorContextInput = {}> {
+    options: RequestContextSnapshot['options'];
+
+    state: TInput['state'];
+    seed?: RequestContextSnapshot['seed'];
+
+    storage: ContainersStorage<NonNullable<TInput['container']>>;
+    container?: Container<NonNullable<TInput['container']>>;
+
+    incoming: TInput['incoming'] extends undefined
+      ? RequestContextSnapshot['incoming']
+      : RequestContextSnapshot['incoming'] & TInput['incoming'];
+
+    outgoing: TInput['outgoing'] extends undefined
+      ? RequestContextSnapshot['outgoing']
+      : NonNullable<RequestContextSnapshot['outgoing']> & TInput['outgoing'];
+  };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
   TLocation extends 'path' | 'method' | 'error' | 'delay'
@@ -93,7 +115,7 @@ export type ExtractExpectationContextValueByLocation<
 > = Exclude<T, never> extends never ? Exclude<U, never> extends never ? any : U : T;
 
 export type ExtractExpectationContextValue<
-  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation,
   TPath extends string | void = void,
   T = ExtractExpectationContextValueByLocation<TContext, TLocation>,
@@ -101,21 +123,21 @@ export type ExtractExpectationContextValue<
 > = Exclude<U, never> extends never ? any : U;
 
 export type CompileExpectationOperatorValue<
-  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation,
   TProvided = void,
   T = ExtractExpectationContextValue<TContext, TLocation>
 > = Exclude<TProvided, void> extends never ? T : TProvided;
 
 export type CompileExpectationOperatorValueWithPredicate<
-  TContext extends PartialDeep<IExpectationOperatorContext>,
+  TContext extends IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation,
   TProvided = void,
   T = CompileExpectationOperatorValue<TContext, TLocation, TProvided>
 > = T extends object ? (T | object) : T;
 
 export interface IExpectationOperatorsSchema<
-  TContext extends PartialDeep<IExpectationOperatorContext> = IExpectationOperatorContext,
+  TContext extends IExpectationOperatorContext<any> = IExpectationOperatorContext<any>,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > {
@@ -128,13 +150,13 @@ export interface IExpectationOperatorsSchema<
 
   $set?: SetExpectationOperator<TContext, TLocation, TValue>['TSchema'];
   $has?: HasExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $merge?: MergeExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $merge?: MergeExpectationOperator<TContext, Extract<TLocation, TExpectationOperatorObjectLocation>, TValue>['TSchema'];
   $remove?: RemoveExpectationOperator<TContext, TLocation>['TSchema'];
 
   $exec?: ExecExpectationOperator<TContext>['TSchema'];
 };
 
-export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOperatorContext> = {}> {
+export interface IExpectationSchema<TContext extends IExpectationOperatorContext<any> = IExpectationOperatorContext<any>> {
   request?: IExpectationOperatorsSchema<TContext>;
   response?: IExpectationOperatorsSchema<TContext>;
 
@@ -143,6 +165,15 @@ export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOpe
     baseUrl?: string;
 
     timeout?: number;
+
+    options?: {
+      host?: 'origin';
+
+      cache?: Pick<TContext['options']['cache'], 'key' | 'prefix' | 'ttl'> & {
+        storage?: 'redis';
+      };
+    };
+
     proxy?: AxiosProxyConfig & {
       protocol: TRequestProtocol;
     };
@@ -151,8 +182,8 @@ export interface IExpectationSchema<TContext extends PartialDeep<IExpectationOpe
 
 export type IExpectationOperatorExecMode = 'match' | 'manipulate';
 
-export interface IExpectationOperatorExecUtils<T extends PartialDeep<IExpectationOperatorContext>> {
-  context: IExpectationOperatorContext & T;
+export interface IExpectationOperatorExecUtils<T extends IExpectationOperatorContext<any>> {
+  context: T;
   logger: Logger;
 
   mode: IExpectationOperatorExecMode;

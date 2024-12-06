@@ -28,20 +28,20 @@ export default ClientMethod
     return response.data.data;
   })
   .provide('onsite', (context) => async (body) => {
-    const found = context.storage.expectations.get(body.id);
+    const found = context.storages.expectations.get(body.id);
     if (!found) {
       return null;
     }
 
-    const updated = Expectation.build(merge(found.toPlain(), body.set ?? {}));
+    const updated = Expectation.build(merge(found.toPlain(), body.set ?? {}, { arrayMerge: (target, source) => source }));
 
     const errors = updated.validate();
     if (errors.length) {
       throw new ValidationError({}, errors);
     }
 
-    context.storage.expectations.set(body.id, updated);
-    context.exchange.ws.publish('expectation:updated', updated.toPlain());
+    context.storages.expectations.set(body.id, updated);
+    context.exchanges.ws.publish('expectation:updated', updated.toPlain());
 
     return updated.toPlain();
   });

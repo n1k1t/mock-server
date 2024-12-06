@@ -26,4 +26,19 @@ export interface IRequestContextOutgoing {
 
   data?: unknown;
   dataRaw?: string;
+
+  isCached?: boolean;
+}
+
+export interface IRequestContextOptions {
+  cache: {
+    isEnabled: boolean;
+    prefix?: string;
+    key?: string | object;
+
+    /**
+     * Seconds
+     */
+    ttl?: number;
+  }
 }
