@@ -19971,7 +19971,7 @@ module.exports = `
           </span>
         {{/if}}
 
-        {{#compare state 'eq' 'pending'}}
+        {{#compare status 'eq' 'pending'}}
           <span class="pending"><i class="fas fa-hourglass-start"></i></span>
         {{/compare}}
 

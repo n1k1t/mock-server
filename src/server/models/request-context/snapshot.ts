@@ -65,6 +65,11 @@ export class RequestContextSnapshot {
     return <Omit<RequestContextSnapshot, K>>_.omit(this, keys);
   }
 
+  public unset<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Omit<RequestContextSnapshot, K> {
+    keys.forEach((key) => _.unset(this, key));
+    return this;
+  }
+
   public toPlain(): RequestContextSnapshot['TPlain'] {
     return {
       state: this.state,

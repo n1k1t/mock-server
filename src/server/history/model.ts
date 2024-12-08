@@ -1,6 +1,7 @@
 import { v4 as genUid } from 'uuid';
 
 import type { RequestContextSnapshot } from '../models';
+import type { SetPartialKeys } from '../../types';
 import type { Expectation } from '../../expectations';
 
 import { cast } from '../../utils';
@@ -21,7 +22,7 @@ export class History {
     updatedAt: Date.now(),
   };
 
-  constructor(public snapshot: RequestContextSnapshot) {}
+  constructor(public snapshot: SetPartialKeys<RequestContextSnapshot, 'outgoing'>) {}
 
   public switchStatus(status: History['status']): this {
     this.meta.updatedAt = Date.now();

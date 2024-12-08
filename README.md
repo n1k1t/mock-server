@@ -158,11 +158,11 @@ await server.client.createExpectation({
 | Property | Nested | `$location` | Type | Optional | Description |
 |--|--|--|--|--|--|
 | storage | [Storage](#storage) | | `object` | | A storage of `container` entities |
-| container | [Container](#containers) | `container` | `object` | | A temporary cell in `storage`. Should be useful to sync expectations between each other or store and use any data each request |
+| container | [Container](#containers) | `container` | `object` | * | A temporary cell in `storage`. Should be useful to sync expectations between each other or store and use any data each request |
 | state | | `state` | `object` | | An [object](#state) with custom data |
 | seed | | `seed` | `string` | * | Incoming request [seed](#seeds) |
 | cache | | `cache` | `object` | | [Cache](#cache) configuration |
-| | isEnabled | | `boolean` | * | Toggle of cache usage |
+| | isEnabled | | `boolean` | | Toggle of cache usage |
 | | key | | `string ∣ object` | * | Key to get read/write access of cached payload. Value provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm  |
 | | prefix | | `string` | * | Prefix of the `key` of cache |
 | | ttl | | `number` | * | Time to live of cache in seconds |
