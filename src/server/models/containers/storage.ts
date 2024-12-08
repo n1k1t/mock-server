@@ -45,13 +45,13 @@ export class ContainersStorage<TPayload extends object = object> {
     return <Container<T>>this.storage.get(compileContainerLink(key));
   }
 
+  public delete(key: string | object): this {
+    this.storage.delete(compileContainerLink(key));
+    return this;
+  }
+
   public getExpired(): Container[] {
     const timestamp = Date.now();
     return [...this.storage.values()].filter((container) => container.expiresAt < timestamp);
-  }
-
-  public unlink(key: string | object): this {
-    this.storage.delete(compileContainerLink(key));
-    return this;
   }
 }
