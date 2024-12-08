@@ -28,6 +28,13 @@ export class Config {
       limit: 100,
     },
 
+    containers: {
+      /**
+       * Seconds
+       */
+      garbageInterval: 60 * 60,
+    },
+
     logger: {
       level: cast<TLoggerLevel>('D'),
     },

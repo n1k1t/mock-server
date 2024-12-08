@@ -5,16 +5,21 @@ import { PartialDeep, TFunction } from '../../../types';
 import { compileContainerLink } from './utils';
 
 export class Container<TPayload extends object = object> {
-  public TPlain!: Pick<Container<TPayload>, 'link' | 'prefix' | 'payload' | 'expiresAt'>;
+  public TPlain!: Pick<Container<TPayload>, 'key' | 'prefix' | 'payload' | 'ttl'>;
 
-  public expiresAt = this.configuration.timestamp + this.configuration.ttl * 1000;
-  public prefix = this.configuration.prefix ?? '';
-  public link = this.prefix + this.key;
+  public ttl = this.provided.ttl;
+  public expiresAt = this.provided.timestamp + this.ttl * 1000;
+
+  public payload = this.provided.payload;
+
+  public prefix = this.provided.prefix ?? '';
+  public key = this.prefix + this.provided.key;
 
   constructor(
-    public key: string,
-    public payload: TPayload,
-    public configuration: {
+    private provided: {
+      key: string;
+      payload: TPayload;
+
       /**
        * Seconds
        */
@@ -50,20 +55,24 @@ export class Container<TPayload extends object = object> {
   }
 
   public bind(key: string | object): this {
-    this.configuration.hooks?.onBind?.(compileContainerLink(key), this);
+    this.provided.hooks?.onBind?.(compileContainerLink(key), this);
     return this;
   }
 
   public unbind(): this {
-    this.configuration.hooks?.onUnbind?.(this);
+    this.provided.hooks?.onUnbind?.(this);
     return this;
   }
 
-  public toPlain(): Container<TPayload>['TPlain'] {
-    return _.pick(this, ['link', 'prefix', 'payload', 'expiresAt']);
+  public clone(provided: Partial<Container<TPayload>['provided']>): Container<TPayload> {
+    return new Container<TPayload>({ ...this.provided, ...provided });
   }
 
-  static build<T extends object>(key: string, payload: T, options: Container['configuration']) {
-    return new Container(key, payload, options);
+  public toPlain(): Container<TPayload>['TPlain'] {
+    return _.pick(this, ['key', 'prefix', 'payload', 'ttl']);
+  }
+
+  static build<T extends object>(provided: Container<T>['provided']) {
+    return new Container<T>(provided);
   }
 }

@@ -8,7 +8,10 @@ const storage = new Map<string, ExpectationComponent>();
 
 const container = Container
   .build(document.querySelector('section#expectations')!)
-  .once('intialize', async () => {
+  .on('intialize', async () => {
+    container.clear().append(empty);
+    storage.clear();
+
     const { data } = await context.services.ws.exec('expectations:get');
 
     data.forEach((expectation) => {
@@ -45,4 +48,4 @@ const container = Container
     });
   });
 
-export default container.append(empty);
+export default container;

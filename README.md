@@ -1,5 +1,6 @@
 
 
+
 # Mock server
 
 Mock, match, modify and manipulate a HTTP request/response payload using flexible expectations with types
@@ -16,10 +17,14 @@ Mock, match, modify and manipulate a HTTP request/response payload using flexibl
     - [Mock](#mock)
 - [Expectations](#expectations)
 	- [Schema](#schema)
+	- [Forwarding](#forwarding)
 	- [Context](#context)
 	- [Utils](#utils)
 	- [Operators](#operators)
 	- [Typings](#typings)
+	- [Storage](#storage)
+	- [Containers](#containers)
+	- [Cache](#cache)
 	- [State](#state)
 	- [Seeds](#seeds)
 	- [XML](#xml)
@@ -113,9 +118,7 @@ An expectation schema can contain some rules to handle `request`, `response` and
 |--|--|--|--|--|
 | request | [Operators](#operators) | `object` | * | Describes a way to catch by request and how to manipulate it |
 | response | [Operators](#operators) | `object` | * | Describes how to manipulate response. Also can be used to catch response in case of forwarding |
-| forward | | `object` | * | Describes configuration to forward a request to another host |
-| | url | `string` | * | Absolute URL to target |
-| | baseUrl | `string` | * | Base URL to target. The path will be provided from request |
+| forward | [Forwarding](#forwarding) | `object` | * | Describes configuration to forward a request to another host |
 
 **Example**
 
@@ -136,12 +139,33 @@ await server.client.createExpectation({
 });
 ```
 
+## Forwarding
+
+| Property | Nested | Type | Optional | Description |
+|--|--|--|--|--|
+| url | | `string` | * | Absolute URL to target |
+| baseUrl | | `string` | * | Base URL to target. The path will be provided from request |
+| options | | `string` | * | Forwarding options |
+| | host | `origin` | * | Provides `Host` header as same as mock server host (if not specified). If specified to `origin` then value for `Host` header will be taken from url |
+| cache | | `object` | * | [Cache](#cache) configuration for a payload of forwarded requests |
+| | storage | `redis` | * | Storage to read/write a cache |
+| | key | `string` | * | Key to get read/write access of cached payload |
+| | prefix | `string` | * | Prefix of the `key` of cache |
+| | ttl | `number` | * | Time to live of cache in seconds |
+
 ## Context
 
 | Property | Nested | `$location` | Type | Optional | Description |
 |--|--|--|--|--|--|
+| storage | [Storage](#storage) | | `object` | | A storage of `container` entities |
+| container | [Container](#containers) | `container` | `object` | | A temporary cell in `storage`. Should be useful to sync expectations between each other or store and use any data each request |
+| state | | `state` | `object` | | An [object](#state) with custom data |
 | seed | | `seed` | `string` | * | Incoming request [seed](#seeds) |
-| state | | `state` | `object` | | Incoming request [state](#state) with a custom data while request finish |
+| cache | | `cache` | `object` | | [Cache](#cache) configuration |
+| | isEnabled | | `boolean` | * | Toggle of cache usage |
+| | key | | `string ∣ object` | * | Key to get read/write access of cached payload. Value provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm  |
+| | prefix | | `string` | * | Prefix of the `key` of cache |
+| | ttl | | `number` | * | Time to live of cache in seconds |
 | incoming | | | `object` | | Payload with data of incoming request |
 | | path | `path` | `string` | | Incoming request path |
 | | method | `method` | `string` | | Incoming request method in **uppercase** |
@@ -691,6 +715,101 @@ await client.createExpectation<{
 }));
 ```
 
+## Storage
+
+Storage is a temporary storage that provides an access to read/write [containers](#containers)
+
+| Property | Type | Description |
+|--|--|--|
+| find | `(key: string ∣ object) => Container ∣ null` | Finds a container in storage. Every `key` provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm |
+| delete | `(key: string ∣ object) => Container ∣ null` | Deletes a container in storage. Every `key` provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm |
+| register | `(configuration: Container) => Container` | Registers a container in storage (overrides if existent) |
+| provide | `(configuration: Container) => Container` | Finds or registers a container in storage |
+
+As a temporary storage it has a job to garbage an expired containers. Use `containers.garbageInterval` to setup an interval of clearance in [configuration](#configuration)
+
+> **!NOTE** See example of usage in [containers](#containers) section below
+
+## Containers
+
+| Property | Type | Description |
+|--|--|--|
+| key | `string` | A key of container |
+| prefix | `string` | A prefix of container |
+| payload | `object` | An object with custom data |
+| ttl | `number` | Time to live of container in seconds **(default: 1h)** |
+| expiresAt | `number` | An expiration date/time as unix timestamp with milliseconds |
+| bind | `(key: string ∣ object) => Container` | Binds a container to one more key. Every `key` provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm |
+| unbind | `(key: string ∣ object) => Container` | Unbinds a container from key. Every `key` provided as `object` will hashed using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm |
+| assign | `(payload: object ∣ (payload: object) => object) => Container` | Uses as payload predicate to assign payload values to existent |
+| merge | `(payload: object ∣ (payload: object) => object) => Container` | Uses as payload predicate to deep merge of payload values with existent |
+
+
+**Example**
+
+```ts
+await client.createExpectation<{
+  container: {
+    counter: number;
+  };
+}>(({ $ }) => ({
+  schema: {
+    request: $.set('container', {
+      $exec: (container, { context }) => context.storage
+        .provide({ key: 'foo', payload: { counter: 0 } })
+        .assign((payload) => ({ counter: payload.counter + 1 }))
+    }),
+
+    response: $.set('outgoing.data', {
+      $exec: (payload, { context }) => ({
+        count: context.container!.payload.counter,
+      }),
+    }),
+  },
+}));
+```
+
+## Cache
+
+> **!NOTE** Cache is usable **only** to store a payload of forwarded requests
+
+To work with cache the mock server uses [ioredis](https://www.npmjs.com/package/ioredis) package. To configure it use `cache` in [configuration](#configuration)
+
+**How it works in steps?**
+
+0. [Expectation schema](#schema) should have `forward` configuration specified
+1. Preparing incoming request...
+2. Preparing [request schema](#schema) in expectation...
+3. Setting up cache configuration from [context](#context) or [forward.cache](#forwarding)...
+4. If `cache.isEnabled` is equals `true` the mock server checks a cache using provided configuration
+5. If `key` was not provided a key for cache will calculated with `path`, `method`, `body` and `query` property values using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm
+6. If cache was found then step `7` is skipping
+7. Forwarding a request....
+8. Preparing [response schema](#schema) in expectation...
+9. Setting up cache configuration from [context](#context)...
+10. If `cache.isEnabled` is equals `true` the mock server will write a cache over provided `ttl`
+11. Replying...
+
+**Example**
+
+```ts
+await client.createExpectation(({ $ }) => ({
+  schema: {
+    response: $.set('cache', '$path', 'isEnabled', {
+      $exec: (payload, { context }) => context.outgoing.status < 400,
+    }),
+
+    forward: {
+      baseUrl: 'https://example.com',
+
+      cache: {
+        ttl: 30 * 24 * 60 * 60,
+      },
+    },
+  },
+}));
+```
+
 ## State
 
 State is a unique storage of each request. It can be used to handle complex expectations
@@ -1031,12 +1150,18 @@ config.merge({
     level: 'D', // Logger level (default: D)
   },
 
+  redis: <ioredis.RedisOptions>{...} // IO Redis configuration
+
   gui: {
     title: 'My app', // Title for a GUI application page (default: Mock server)
   },
 
   history: {
     limit: 100, // Limit for history of requests (default: 100)
+  },
+
+  containers: {
+    garbageInterval: 60 * 60, // Containers clearance interval in seconds (default: 1h)
   },
 });
 ```

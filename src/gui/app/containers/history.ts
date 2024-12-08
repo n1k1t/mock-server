@@ -13,7 +13,12 @@ const ids: string[] = [];
 
 const container = Container
   .build(document.querySelector('section#history')!)
-  .once('intialize', async () => {
+  .on('intialize', async () => {
+    container.clear().append(empty);
+
+    storage.clear();
+    ids.splice(0, ids.length);
+
     const { data } = await context.services.ws.exec('history:get');
 
     data.forEach((history) => {
@@ -63,4 +68,4 @@ const container = Container
     });
   });
 
-export default container.append(empty);
+export default container;

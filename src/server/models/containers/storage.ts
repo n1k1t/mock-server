@@ -16,21 +16,24 @@ export class ContainersStorage<TPayload extends object = object> {
   private storage = new Map<string, Container>();
 
   public register<T extends TPayload>(configuration: IContainerConfiguration<T>): Container<T> {
-    const link = compileContainerLink(configuration.key);
-    const container = Container.build(link, configuration.payload, {
+    const key = compileContainerLink(configuration.key);
+    const container = Container.build({
+      key,
+      payload: configuration.payload,
+
       timestamp: Date.now(),
       ttl: configuration?.ttl ?? 3600,
 
       hooks: {
-        onUnbind: (target) => this.storage.delete(target.link),
+        onUnbind: (target) => this.storage.delete(target.key),
         onBind: (key, target) => {
-          const alias = Container.build(key, target.payload, target.configuration);
-          this.storage.set(alias.link, alias);
+          const alias = target.clone({ key });
+          this.storage.set(alias.key, alias);
         },
       },
     });
 
-    this.storage.set(container.link, container);
+    this.storage.set(container.key, container);
     return container;
   }
 

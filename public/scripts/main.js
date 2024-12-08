@@ -19930,6 +19930,7 @@ class HistoryComponent extends models_1.Component {
             if (!this.element.querySelector('pre div.json-formatter-row')) {
                 const formatted = {
                     incoming: history.snapshot.incoming,
+                    ...(history.snapshot.cache.isEnabled && { cache: history.snapshot.cache }),
                     ...(history.snapshot.seed && { seed: history.snapshot.seed }),
                     ...(history.snapshot.container && { container: history.snapshot.container }),
                     ...(history.snapshot.outgoing && { outgoing: history.snapshot.outgoing }),
@@ -19987,10 +19988,10 @@ module.exports = `
 
       <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
-      {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
-      {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
-
       {{#if expectation}}
+        {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
+        {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
+
         <div class="segment">{{>expectationMeta expectation format='short'}}</div>
       {{else}}
         <span class="handled-with red">Nowhere</span>
@@ -20088,7 +20089,9 @@ const empty = components_1.EmptyComponent.build();
 const storage = new Map();
 const container = models_1.Container
     .build(document.querySelector('section#expectations'))
-    .once('intialize', async () => {
+    .on('intialize', async () => {
+    container.clear().append(empty);
+    storage.clear();
     const { data } = await context_1.default.services.ws.exec('expectations:get');
     data.forEach((expectation) => {
         const component = components_1.ExpectationComponent.build(expectation);
@@ -20116,7 +20119,7 @@ const container = models_1.Container
         empty.hide();
     });
 });
-exports.default = container.append(empty);
+exports.default = container;
 
 },{"../components":236,"../context":243,"../models":254}],241:[function(require,module,exports){
 "use strict";
@@ -20132,7 +20135,10 @@ const storage = new Map();
 const ids = [];
 const container = models_1.Container
     .build(document.querySelector('section#history'))
-    .once('intialize', async () => {
+    .on('intialize', async () => {
+    container.clear().append(empty);
+    storage.clear();
+    ids.splice(0, ids.length);
     const { data } = await context_1.default.services.ws.exec('history:get');
     data.forEach((history) => {
         const component = components_1.HistoryComponent.build(history);
@@ -20168,7 +20174,7 @@ const container = models_1.Container
         empty.hide();
     });
 });
-exports.default = container.append(empty);
+exports.default = container;
 
 },{"../components":236,"../context":243,"../models":254}],242:[function(require,module,exports){
 "use strict";
@@ -20642,7 +20648,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 _handlebars["default"].init();
 var loader = _components.LoaderComponent.build().show();
 var switchButtonIdToContainerElementMap = {
-  'switch-to-expectations-container': containers.expectations.hide(),
+  'switch-to-expectations-container': containers.expectations,
   'switch-to-history-container': containers.history.hide()
 };
 _context2["default"].switchStorage(containers.expectations.storage).share({
@@ -20664,8 +20670,8 @@ document.querySelector('div#container-select').addEventListener('click', functio
     return container.hide();
   });
   var container = switchButtonIdToContainerElementMap[event.target.id];
-  container.show().initialize();
   _context2["default"].switchStorage(container.storage);
+  container.show();
 });
 _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
   var _yield$context$servic, data;
@@ -20683,7 +20689,9 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
           _yield$context$servic = _context.sent;
           data = _yield$context$servic.data;
           _context2["default"].assignConfig(data);
-          containers.expectations.initialize().show();
+          Object.values(containers).forEach(function (container) {
+            return container.initialize();
+          });
           loader.hide();
           document.title = _context2["default"].config.gui.title;
         case 11:

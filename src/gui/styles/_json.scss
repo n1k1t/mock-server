@@ -17,4 +17,8 @@
     $key-color: adjust-hue($color-main, 180),
     $url-color: #027BFF
   );
+
+  .json-formatter-string {
+    max-height: 60px;
+  }
 }

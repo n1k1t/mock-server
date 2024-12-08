@@ -5,10 +5,8 @@ export const buildExpectationContext = (): IExpectationOperatorContext<any> => (
   storage: new ContainersStorage(),
   state: {},
 
-  options: {
-    cache: {
-      isEnabled: false,
-    },
+  cache: {
+    isEnabled: false,
   },
 
   incoming: {

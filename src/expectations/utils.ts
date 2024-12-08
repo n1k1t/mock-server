@@ -131,11 +131,11 @@ export const extractContextByLocation = (
       value: context.state,
     };
 
-    case 'options': return {
-      key: 'options',
+    case 'cache': return {
+      key: 'cache',
       type: 'object',
       parent: context,
-      value: context.options,
+      value: context.cache,
     };
 
     case 'container': return {

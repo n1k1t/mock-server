@@ -1,31 +1,33 @@
 import axios, { AxiosError } from 'axios';
-import { gzip, ungzip } from 'node-gzip';
 import HttpsProxyAgent from 'https-proxy-agent';
+import { ungzip } from 'node-gzip';
 import { Value } from '@n1k1t/typebox/value';
 import { URL } from 'url';
 import _ from 'lodash';
 
-import { IExpectationOperatorContext } from '../../expectations';
 import {
   extractPayloadType,
   IRequestContextOutgoing,
   Middleware,
   parsePayload,
-  RequestContext,
+  RequestContextSnapshot,
   serializePayload,
 } from '../models';
 
-const compileCacheContext = (context: RequestContext, forwarded: IExpectationOperatorContext) => {
-  if (!context.server.storages.redis || !forwarded.options.cache.isEnabled) {
+const compileCacheContext = (snapshot: RequestContextSnapshot) => {
+  if (!snapshot.cache.isEnabled) {
     return null;
   }
 
-  const payload = forwarded.options.cache.key ?? _.pick(forwarded.incoming, ['path', 'method', 'body', 'query']);
+  const payload = snapshot.cache.key ?? _.pick(snapshot.incoming, ['path', 'method', 'body', 'query']);
   const key = typeof payload === 'object' ? Value.Hash(payload).toString() : String(payload);
 
   return {
-    key: `${forwarded.options.cache.prefix ?? ''}${key}`,
-    ttl: forwarded.options.cache.ttl ?? 3600,
+    isEnabled: true,
+    ttl: snapshot.cache.ttl ?? 3600,
+
+    key: `${snapshot.cache.prefix ?? ''}${key}`,
+    prefix: snapshot.cache.prefix,
   };
 }
 
@@ -36,12 +38,13 @@ export default Middleware
       return null;
     }
 
-    const snapshot = context.shared.snapshot.assign({ forwarded: _.pick(context.shared.snapshot, ['incoming']) });
-    const incomingType = extractPayloadType(snapshot.incoming.headers);
+    const cache = compileCacheContext(context.shared.snapshot);
+    const incomingType = extractPayloadType(context.shared.snapshot.incoming.headers);
 
-    const cache = compileCacheContext(context, snapshot);
+    const forwarded = context.shared.snapshot.pick(['incoming', 'outgoing']);
+    const snapshot = context.shared.snapshot.assign({ forwarded, ...(cache && { cache }) });
 
-    context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
+    context.shared.history.snapshot.assign(snapshot.pick(['forwarded', 'cache']));
     context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
 
     if (cache) {
@@ -62,20 +65,18 @@ export default Middleware
       if (outgoing) {
         logger.info(`Got cache [${cache.key}]`);
 
-        snapshot.assign({ forwarded: Object.assign(snapshot.forwarded!, { outgoing }) });
+        forwarded.outgoing = outgoing;
 
-        context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
         context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
-
         return context.share({ snapshot });
       }
     }
 
-    const body = snapshot.incoming.body === undefined ? snapshot.incoming.bodyRaw : snapshot.incoming.body;
+    const body = forwarded.incoming.body === undefined ? forwarded.incoming.bodyRaw : forwarded.incoming.body;
     const bodyRaw = Buffer.from(typeof body === 'object' ? serializePayload(incomingType, body) : String(body));
 
     const url = new URL(
-      context.shared.expectation.forward.url ?? snapshot.incoming.path,
+      context.shared.expectation.forward.url ?? forwarded.incoming.path,
       context.shared.expectation.forward.baseUrl
     );
 
@@ -83,14 +84,14 @@ export default Middleware
       'forward.request', {
         timeout: context.shared.expectation.forward.timeout ?? 1000 * 30,
 
-        method: snapshot.incoming.method,
+        method: forwarded.incoming.method,
         headers: {
           'connection': 'close',
 
-          ...snapshot.incoming.headers,
+          ...forwarded.incoming.headers,
           ...(context.shared.expectation.forward.options?.host === 'origin' && { host: url.host }),
 
-          ...((!snapshot.incoming.headers?.['transfer-encoding'] && bodyRaw.length) && {
+          ...((!forwarded.incoming.headers?.['transfer-encoding'] && bodyRaw.length) && {
             'content-length': String(bodyRaw.length),
           }),
         },
@@ -98,7 +99,7 @@ export default Middleware
         ...(context.shared.expectation.forward.url && { url: context.shared.expectation.forward.url }),
         ...(context.shared.expectation.forward.baseUrl && {
           baseURL: context.shared.expectation.forward.baseUrl,
-          url: snapshot.incoming.path
+          url: forwarded.incoming.path
         }),
 
         data: bodyRaw,
@@ -115,11 +116,11 @@ export default Middleware
 
     const forwardedType = extractPayloadType(<Record<string, string>>configuration.headers ?? {});
 
-    Object.assign(snapshot.incoming, {
+    Object.assign(forwarded.incoming, {
       type: forwardedType,
 
       path: url.pathname,
-      method: configuration.method ?? snapshot.incoming.method,
+      method: configuration.method ?? forwarded.incoming.method,
       headers: configuration.headers ?? {},
 
       ...(configuration.params && { query: configuration.params }),
@@ -154,7 +155,7 @@ export default Middleware
     const parsed = await context.server.plugins.exec('forward.response', response, context);
     const outgoingType = parsed.type ?? extractPayloadType(response.headers);
 
-    snapshot.forwarded!.outgoing = {
+    forwarded.outgoing = {
       type: outgoingType,
 
       status: response.status,
@@ -164,25 +165,6 @@ export default Middleware
       data: 'payload' in parsed ? parsed.payload : parsePayload(outgoingType, parsed.raw),
     };
 
-    if (cache) {
-      const payload = Object.assign({ isCached: true }, snapshot.forwarded!.outgoing);
-      const serialized = await gzip(serializePayload('json', payload)).catch((error) => {
-        logger.error('Got error while zip payload', error?.stack ?? error);
-        return null;
-      });
-
-      if (serialized) {
-        await context.server.storages.redis!.setex(cache.key, cache.ttl, serialized.toString('base64'))
-          .then(() => logger.info(`Wrote cache [${cache.key}] for [${cache.ttl}] seconds`))
-          .catch((error) => {
-            logger.error('Got error while redis set', error?.stack ?? error);
-            return null;
-          });
-      }
-    }
-
-    context.shared.history.snapshot.assign({ forwarded: snapshot.forwarded });
     context.server.exchanges.ws.publish('history:updated', context.shared.history.toPlain());
-
     context.share({ snapshot });
   });

@@ -5,6 +5,7 @@
 @import 'popups';
 @import 'header';
 @import 'loader';
+@import 'json';
 
 @import 'containers/expectations';
 @import 'containers/history';
@@ -132,7 +133,7 @@ div.container {
     }
 
     span.cache {
-      background-color: adjust-hue($color-green, -120);
+      background-color: #fff;
       color: $color-dark;
     }
   }

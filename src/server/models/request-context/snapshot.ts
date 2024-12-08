@@ -1,8 +1,9 @@
 import _ from 'lodash';
 
-import type { IRequestContextIncoming, IRequestContextOptions, IRequestContextOutgoing } from './types';
+import type { IRequestContextCache, IRequestContextIncoming, IRequestContextOutgoing } from './types';
 import type { Container, ContainersStorage } from '../containers';
 import type { HttpRequestContext } from './http';
+import type { PartialDeep } from '../../../types';
 
 const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextOutgoing => ({
   type: incoming.type,
@@ -27,8 +28,7 @@ export class RequestContextSnapshot {
   }
 
   public storage: ContainersStorage<any> = this.provided.storage;
-
-  public options: IRequestContextOptions = this.provided.options;
+  public cache: IRequestContextCache = this.provided.cache;
   public state: Record<string, any> = this.provided.state;
 
   public forwarded?: Pick<HttpRequestContext, 'incoming' | 'outgoing'> = this.provided.forwarded;
@@ -49,18 +49,26 @@ export class RequestContextSnapshot {
 
   constructor(
     private provided:
-      & Pick<RequestContextSnapshot, 'state' | 'seed' | 'options' | 'container' | 'incoming' | 'forwarded' | 'storage'>
       & Partial<Pick<RequestContextSnapshot, 'outgoing'>>
+      & Pick<RequestContextSnapshot, 'state' | 'seed' | 'container' | 'incoming' | 'forwarded' | 'storage' | 'error' | 'cache'>
   ) {}
 
-  public assign(payload: Partial<RequestContextSnapshot['provided'] & Pick<RequestContextSnapshot, 'error'>>) {
+  public assign(payload: Partial<RequestContextSnapshot['provided']>) {
     return Object.assign(this, payload);
+  }
+
+  public pick<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Pick<RequestContextSnapshot, K> {
+    return _.pick(this, keys);
+  }
+
+  public omit<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Omit<RequestContextSnapshot, K> {
+    return <Omit<RequestContextSnapshot, K>>_.omit(this, keys);
   }
 
   public toPlain(): RequestContextSnapshot['TPlain'] {
     return {
-      options: this.options,
       state: this.state,
+      cache: this.cache,
 
       seed: this.seed,
       container: this.container?.toPlain(),

@@ -28,10 +28,10 @@ module.exports = `
 
       <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
-      {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
-      {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
-
       {{#if expectation}}
+        {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
+        {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
+
         <div class="segment">{{>expectationMeta expectation format='short'}}</div>
       {{else}}
         <span class="handled-with red">Nowhere</span>

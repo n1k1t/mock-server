@@ -7,6 +7,7 @@ import { metaStorage } from '../meta';
 import { Logger } from '../logger';
 import { routes } from './router';
 
+import config from '../config';
 import * as middlewares from './middlewares';
 
 export { serializePayload, parsePayload } from './models';
@@ -101,9 +102,9 @@ export class MockServer {
     setInterval(() => {
       server.context.storages.containers.getExpired().forEach((container) => {
         container.unbind();
-        logger.info(`Container [${container.link}] has unbinded by expiration of [${container.configuration.ttl}] seconds`);
+        logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
       });
-    }, 60 * 60 * 1000);
+    }, config.get('containers').garbageInterval * 1000);
 
     return server;
   }

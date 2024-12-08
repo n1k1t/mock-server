@@ -44,11 +44,12 @@ export type TExpectationContextLocation = 'request' | 'response';
 export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
 export const LExpectationOperatorLocation = <const>[
   'container',
-  'options',
-  'error',
-  'delay',
+  'cache',
   'state',
   'seed',
+
+  'error',
+  'delay',
 
   'path',
   'method',
@@ -63,7 +64,7 @@ export const LExpectationOperatorLocation = <const>[
 ];
 
 export type TExpectationOperatorObjectLocation =
-  | 'options'
+  | 'cache'
   | 'state'
   | 'incoming.body'
   | 'incoming.headers'
@@ -80,22 +81,21 @@ export interface IExpectationOperatorContextInput extends PartialDeep<
 }
 
 export interface IExpectationOperatorContext<TInput extends IExpectationOperatorContextInput = {}> {
-    options: RequestContextSnapshot['options'];
+  storage: ContainersStorage<NonNullable<TInput['container']>>;
+  cache: TInput extends object ? RequestContextSnapshot['cache'] : any;
+  state: TInput['state'];
 
-    state: TInput['state'];
-    seed?: RequestContextSnapshot['seed'];
+  container?: Container<NonNullable<TInput['container']>>;
+  seed?: RequestContextSnapshot['seed'];
 
-    storage: ContainersStorage<NonNullable<TInput['container']>>;
-    container?: Container<NonNullable<TInput['container']>>;
+  incoming: TInput['incoming'] extends undefined
+    ? RequestContextSnapshot['incoming']
+    : RequestContextSnapshot['incoming'] & TInput['incoming'];
 
-    incoming: TInput['incoming'] extends undefined
-      ? RequestContextSnapshot['incoming']
-      : RequestContextSnapshot['incoming'] & TInput['incoming'];
-
-    outgoing: TInput['outgoing'] extends undefined
-      ? RequestContextSnapshot['outgoing']
-      : NonNullable<RequestContextSnapshot['outgoing']> & TInput['outgoing'];
-  };
+  outgoing: TInput['outgoing'] extends undefined
+    ? RequestContextSnapshot['outgoing']
+    : NonNullable<RequestContextSnapshot['outgoing']> & TInput['outgoing'];
+};
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
   TLocation extends 'path' | 'method' | 'error' | 'delay'
@@ -163,15 +163,14 @@ export interface IExpectationSchema<TContext extends IExpectationOperatorContext
   forward?: {
     url?: string;
     baseUrl?: string;
-
     timeout?: number;
+
+    cache?: Pick<RequestContextSnapshot['cache'], 'key' | 'prefix' | 'ttl'> & {
+      storage?: 'redis';
+    };
 
     options?: {
       host?: 'origin';
-
-      cache?: Pick<TContext['options']['cache'], 'key' | 'prefix' | 'ttl'> & {
-        storage?: 'redis';
-      };
     };
 
     proxy?: AxiosProxyConfig & {

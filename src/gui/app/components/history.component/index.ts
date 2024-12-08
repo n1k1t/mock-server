@@ -30,6 +30,8 @@ export class HistoryComponent extends Component {
         const formatted = {
           incoming: history.snapshot.incoming,
 
+          ...(history.snapshot.cache.isEnabled && { cache: history.snapshot.cache }),
+
           ...(history.snapshot.seed && { seed: history.snapshot.seed }),
           ...(history.snapshot.container && { container: history.snapshot.container }),
 

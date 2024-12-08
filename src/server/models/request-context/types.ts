@@ -30,15 +30,13 @@ export interface IRequestContextOutgoing {
   isCached?: boolean;
 }
 
-export interface IRequestContextOptions {
-  cache: {
-    isEnabled: boolean;
-    prefix?: string;
-    key?: string | object;
+export interface IRequestContextCache {
+  isEnabled: boolean;
+  prefix?: string;
+  key?: string | object;
 
-    /**
-     * Seconds
-     */
-    ttl?: number;
-  }
+  /**
+   * Seconds
+   */
+  ttl?: number;
 }

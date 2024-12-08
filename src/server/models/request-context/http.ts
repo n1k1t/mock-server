@@ -49,8 +49,8 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
   }
 
   public assignExpectation(expectation: NonNullable<HttpRequestContext['shared']['expectation']>) {
-    if (this.shared.snapshot.options.cache.isEnabled && expectation.forward?.options?.cache) {
-      Object.assign(this.shared.snapshot.options.cache, expectation.forward.options.cache);
+    if (this.server.storages.redis && expectation.forward?.cache) {
+      Object.assign(this.shared.snapshot.cache, { isEnabled: true }, expectation.forward.cache);
     }
 
     return this.share({ expectation });
@@ -74,10 +74,8 @@ export class HttpRequestContext<TResponse = unknown> extends RequestContext<'htt
       storage: this.server.storages.containers,
       state: {},
 
-      options: {
-        cache: {
-          isEnabled: Boolean(this.server.storages.redis),
-        },
+      cache: {
+        isEnabled: false,
       },
 
       incoming: options?.clone ? clone(this.incoming) : this.incoming,

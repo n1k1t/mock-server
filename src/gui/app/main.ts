@@ -12,7 +12,7 @@ handlebars.init();
 
 const loader = LoaderComponent.build().show();
 const switchButtonIdToContainerElementMap = {
-  'switch-to-expectations-container': containers.expectations.hide(),
+  'switch-to-expectations-container': containers.expectations,
   'switch-to-history-container': containers.history.hide(),
 };
 
@@ -38,8 +38,8 @@ document.querySelector('div#container-select')!.addEventListener('click', (sourc
     <keyof typeof switchButtonIdToContainerElementMap>event.target.id
   ];
 
-  container.show().initialize();
   context.switchStorage(container.storage);
+  container.show();
 });
 
 context.instances.ws.on('connect', async () => {
@@ -50,7 +50,7 @@ context.instances.ws.on('connect', async () => {
   const { data } = await context.services.ws.exec('config:get');
 
   context.assignConfig(data);
-  containers.expectations.initialize().show();
+  Object.values(containers).forEach((container) => container.initialize());
 
   loader.hide();
   document.title = context.config.gui.title;
