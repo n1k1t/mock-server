@@ -1150,7 +1150,7 @@ config.merge({
     level: 'D', // Logger level (default: D)
   },
 
-  redis: <ioredis.RedisOptions>{...} // IO Redis configuration
+  redis: <ioredis.RedisOptions>{...}, // IO Redis configuration
 
   gui: {
     title: 'My app', // Title for a GUI application page (default: Mock server)
