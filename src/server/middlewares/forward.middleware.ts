@@ -82,7 +82,7 @@ export default Middleware
 
     const configuration = await context.server.plugins.exec(
       'forward.request', {
-        timeout: context.shared.expectation.forward.timeout ?? 1000 * 30,
+        timeout: context.shared.expectation.forward.timeout ?? 30000,
 
         method: forwarded.incoming.method,
         headers: {

@@ -1,6 +1,3 @@
-
-
-
 # Mock server
 
 Mock, match, modify and manipulate a HTTP request/response payload using flexible expectations with types
