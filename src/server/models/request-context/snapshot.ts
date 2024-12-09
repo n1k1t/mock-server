@@ -3,7 +3,6 @@ import _ from 'lodash';
 import type { IRequestContextCache, IRequestContextIncoming, IRequestContextOutgoing } from './types';
 import type { Container, ContainersStorage } from '../containers';
 import type { HttpRequestContext } from './http';
-import type { PartialDeep } from '../../../types';
 
 const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextOutgoing => ({
   type: incoming.type,

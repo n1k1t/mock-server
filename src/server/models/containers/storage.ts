@@ -27,7 +27,7 @@ export class ContainersStorage<TPayload extends object = object> {
       hooks: {
         onUnbind: (target) => this.storage.delete(target.key),
         onBind: (key, target) => {
-          const alias = target.clone({ key });
+          const alias = Container.build({ ...target.provided, key });
           this.storage.set(alias.key, alias);
         },
       },

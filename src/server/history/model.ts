@@ -28,6 +28,10 @@ export class History {
     this.meta.updatedAt = Date.now();
     this.status = status;
 
+    if (status === 'finished' && this.snapshot.container) {
+      this.snapshot.container = this.snapshot.container.clone();
+    }
+
     return this;
   }
 

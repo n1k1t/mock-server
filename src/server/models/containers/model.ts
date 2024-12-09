@@ -1,8 +1,11 @@
 import merge from 'deepmerge';
+import rfdc from 'rfdc';
 import _ from 'lodash';
 
 import { PartialDeep, TFunction } from '../../../types';
 import { compileContainerLink } from './utils';
+
+const clone = rfdc();
 
 export class Container<TPayload extends object = object> {
   public TPlain!: Pick<Container<TPayload>, 'key' | 'prefix' | 'payload' | 'ttl'>;
@@ -16,7 +19,7 @@ export class Container<TPayload extends object = object> {
   public key = this.prefix + this.provided.key;
 
   constructor(
-    private provided: {
+    public provided: {
       key: string;
       payload: TPayload;
 
@@ -64,8 +67,8 @@ export class Container<TPayload extends object = object> {
     return this;
   }
 
-  public clone(provided: Partial<Container<TPayload>['provided']>): Container<TPayload> {
-    return new Container<TPayload>({ ...this.provided, ...provided });
+  public clone(): Container<TPayload> {
+    return new Container<TPayload>({ ...this.provided, payload: clone(this.payload) });
   }
 
   public toPlain(): Container<TPayload>['TPlain'] {
