@@ -1,5 +1,4 @@
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import _ from 'lodash';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
@@ -51,42 +50,19 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     incoming: IRequestContextIncoming,
     configuration: IExpectationSchemaForward
   ) {
-    const url = new URL(configuration.url ?? incoming.path, configuration.baseUrl);
+    const response = await axios
+      .request(this.compileForwardingConfiguration(context, incoming, configuration))
+      .catch((error: AxiosError) => {
+        if (!error.response) {
+          context.snapshot.assign({ error: _.pick(error, ['message', 'code']) });
+          context.complete();
 
-    const response = await axios.request({
-      timeout: configuration.timeout ?? 30000,
+          logger.error('Got error while forwaring', error?.stack ?? error);
+          throw error;
+        }
 
-      method: incoming.method,
-      headers: Object.assign(incoming.headers, {
-        connection: 'close',
-
-        ...(configuration.options?.host === 'origin' && { host: url.host }),
-        ...(incoming.dataRaw && { 'content-length': String(Buffer.from(incoming.dataRaw).length) }),
-      }),
-
-      ...(configuration.url && { url: configuration.url }),
-      ...(configuration.baseUrl && { baseURL: configuration.baseUrl, url: incoming.path }),
-
-      data: incoming.dataRaw,
-      params: context.incoming.query,
-      responseType: 'arraybuffer',
-
-      ...(
-        configuration.proxy && url.protocol.includes('https')
-          ? { httpsAgent: new HttpsProxyAgent(url.host) }
-          : { proxy: configuration.proxy }
-      ),
-    }).catch((error: AxiosError) => {
-      if (!error.response) {
-        context.snapshot.assign({ error: _.pick(error, ['message', 'code']) });
-        context.complete();
-
-        logger.error('Got error while forwaring', error?.stack ?? error);
-        throw error;
-      }
-
-      return error.response;
-    });
+        return error.response;
+      });
 
     const dataRaw = response.data.toString();
 
@@ -121,5 +97,37 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     context.response.end();
 
     return outgoing;
+  }
+
+  /**
+   * Compiles Axios request configuration to forward
+   */
+  protected compileForwardingConfiguration(
+    context: HttpRequestContext,
+    incoming: IRequestContextIncoming,
+    configuration: IExpectationSchemaForward
+  ): AxiosRequestConfig {
+    const url = new URL(configuration.url ?? incoming.path, configuration.baseUrl);
+
+    return {
+      timeout: configuration.timeout ?? 30000,
+
+      method: incoming.method,
+      headers: Object.assign(incoming.headers, {
+        connection: 'close',
+
+        ...(configuration.options?.host === 'origin' && { host: url.host }),
+        ...(incoming.dataRaw && { 'content-length': String(Buffer.from(incoming.dataRaw).length) }),
+      }),
+
+      ...(configuration.url && { url: configuration.url }),
+      ...(configuration.baseUrl && { baseURL: configuration.baseUrl, url: incoming.path }),
+
+      data: incoming.dataRaw,
+      params: context.incoming.query,
+      responseType: 'arraybuffer',
+
+      ...(configuration.proxy && { proxy: configuration.proxy }),
+    };
   }
 }

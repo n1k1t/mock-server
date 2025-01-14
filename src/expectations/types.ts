@@ -1,4 +1,3 @@
-import type { AxiosProxyConfig } from 'axios';
 import type { Observable } from 'rxjs';
 import type { faker } from '@faker-js/faker';
 import type dayjs from 'dayjs';
@@ -195,7 +194,10 @@ export interface IExpectationSchemaForward {
     host?: 'origin';
   };
 
-  proxy?: AxiosProxyConfig;
+  proxy?: {
+    host: string;
+    port: number;
+  };
 }
 
 export interface IExpectationSchema<TContext extends IExpectationSchemaContext = IExpectationSchemaContext> {
