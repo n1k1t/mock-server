@@ -1,0 +1,25 @@
+@import '../constants';
+
+section#settings {
+  div.container {
+    p {
+      color: rgba(#fff, .4);
+      margin-left: 10px;
+      margin-top: 0;
+
+      i { margin-right: 10px }
+      span { color: rgba(#fff, .2) }
+    }
+
+    div.panel {
+      button.checked {
+        background-color: $color-main;
+        color: $color-dark;
+      }
+    }
+
+    &#groups-filter button.checked {
+      pointer-events: all;
+    }
+  }
+}

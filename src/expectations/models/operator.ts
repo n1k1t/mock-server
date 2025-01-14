@@ -1,14 +1,15 @@
 import { Faker, ru, en, en_GB } from '@faker-js/faker';
 import dayjs from 'dayjs';
 import _ from 'lodash';
+import * as rxjs from 'rxjs';
 
 import { Constructable, TFunction } from '../../types';
 import { metaStorage } from '../../meta';
 import { Logger } from '../../logger';
 import {
-  IExpectationOperatorContext,
-  IExpectationOperatorExecMode,
-  IExpectationOperatorExecUtils,
+  IExpectationSchemaContext,
+  IExpectationExecMode,
+  IExpectationExecUtils,
   IExpectationOperatorsSchema,
   TExpectationMetaTag,
   TExpectationOperators,
@@ -16,10 +17,10 @@ import {
 
 const logger = Logger.build('Expectations.Models.Operator');
 
-export type TExpectationOperatorConstructor<TContext extends IExpectationOperatorContext<any>> =
+export type TExpectationOperatorConstructor<TContext extends IExpectationSchemaContext> =
   Constructable<ExpectationOperator<TContext, any>, ConstructorParameters<typeof ExpectationOperator>>
 
-export abstract class ExpectationOperator<TContext extends IExpectationOperatorContext<any>, TSchema> {
+export abstract class ExpectationOperator<TContext extends IExpectationSchemaContext, TSchema> {
   public TContext!: TContext;
   public TSchema!: TSchema;
 
@@ -42,7 +43,7 @@ export abstract class ExpectationOperator<TContext extends IExpectationOperatorC
 
     const handler = typeof raw === 'function' ? raw : Function(parameters.join(', '), `return (() => ${raw})()`);
 
-    return (mode: IExpectationOperatorExecMode, context: TContext, ...args: unknown[]) => {
+    return (mode: IExpectationExecMode, context: TContext, ...args: unknown[]) => {
       const utils = this.compileExecUtils(mode, context);
       const handled = handler(...args, utils);
 
@@ -61,9 +62,9 @@ export abstract class ExpectationOperator<TContext extends IExpectationOperatorC
   }
 
   private compileExecUtils<T extends TContext>(
-    mode: IExpectationOperatorExecMode,
+    mode: IExpectationExecMode,
     context: T
-  ): IExpectationOperatorExecUtils<T> {
+  ): IExpectationExecUtils<T> {
     const faker = new Faker({ locale: [ru, en, en_GB] });
 
     if (context.seed) {
@@ -71,16 +72,18 @@ export abstract class ExpectationOperator<TContext extends IExpectationOperatorC
     }
 
     return {
+      _,
+
+      faker,
       mode,
       logger,
-      context: <IExpectationOperatorExecUtils<T>['context']>context,
 
+      context: <IExpectationExecUtils<T>['context']>context,
       meta: metaStorage.provide(),
-      T: (payload) => <any>payload,
 
-      _: _,
+      T: (payload) => <any>payload,
+      rx: rxjs,
       d: dayjs,
-      faker: faker,
     }
   }
 }

@@ -2,11 +2,16 @@ import axios from 'axios';
 import _ from 'lodash';
 
 import { IRemoteClientConnectOptions, TMethodsSchema } from './types';
+import { IServerContext } from '../server/types';
 import { Client } from './models';
 
 import * as methods from './methods';
 
-export class RemoteClient extends Client {
+export class RemoteClient<TContext extends IServerContext<any>> extends Client<TContext> {
+  get updateExpectationsGroup() {
+    return this.methods.updateExpectationsGroup;
+  }
+
   constructor(public options: IRemoteClientConnectOptions) {
     const instance = axios.create({
       baseURL: `http://${options.host}:${options.port}`,
@@ -20,8 +25,8 @@ export class RemoteClient extends Client {
     );
   }
 
-  static async connect(options: IRemoteClientConnectOptions) {
-    const client = new RemoteClient(options);
+  static async connect<TContext extends IServerContext<any>>(options: IRemoteClientConnectOptions) {
+    const client = new RemoteClient<TContext>(options);
 
     await client.ping();
     return client;

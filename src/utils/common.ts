@@ -17,3 +17,18 @@ export const flattenArrayed = <
 
   return <Q>[[payload]];
 };
+
+/**
+ * @example
+ * ```ts
+ * const counter = buildCounter(5);
+ *
+ * counter() // 6
+ * counter() // 7
+ * counter(2) // 9
+ * ```
+ */
+export const buildCounter =
+  (initial = 0, step = 1) =>
+  (value = step) =>
+    (initial += value);

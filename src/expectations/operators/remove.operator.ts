@@ -1,12 +1,12 @@
 import _ from 'lodash';
 
-import { IExpectationOperatorContext, TExpectationMetaTag, TExpectationOperatorLocation } from '../types';
+import { IExpectationSchemaContext, TExpectationMetaTag, TExpectationOperatorLocation } from '../types';
 import { extractContextByLocation } from '../utils';
 import { extractWithJsonPathSafe } from '../../utils';
 import { ExpectationOperator } from '../models/operator';
 
 export default class RemoveExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation
 > extends ExpectationOperator<
   TContext,

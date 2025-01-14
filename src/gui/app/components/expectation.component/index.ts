@@ -19,14 +19,14 @@ export class ExpectationComponent extends Component {
   public refresh(expectation: Expectation['TPlain']) {
     this.clear().append(render(expectation));
 
-    const json = new JsonFormatHighlight(_pick(expectation, ['id', 'type', 'schema']), 2, {
+    const json = new JsonFormatHighlight(_pick(expectation, ['id', 'type', 'transports', 'schema']), 2, {
       theme: 'custom',
       afterCopyHandler: () => context.shared.popups.push('Copied', { icon: 'fas fa-clone', level: 'info' }),
     });
 
     this.element.querySelector('pre')?.appendChild(json.render());
     this.element.querySelector('button.activity')?.addEventListener('click', () =>
-      context.services.ws.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } })
+      context.services.io.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } })
     );
 
     return Object.assign(this, { expectation });

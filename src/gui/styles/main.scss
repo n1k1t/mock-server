@@ -8,6 +8,7 @@
 @import 'json';
 
 @import 'containers/expectations';
+@import 'containers/settings';
 @import 'containers/history';
 
 div.container {
@@ -45,13 +46,31 @@ div.container {
       }
     }
 
+    span.name b {
+      font-weight: normal;
+      color: $color-main;
+      position: relative;
+      display: inline-block;
+
+      &:after {
+        content: '';
+        display: inline-block;
+        position: relative;
+        height: 14px;
+        width: 1px;
+        background-color: rgba(#fff, .1);
+        top: 2px;
+        margin-left: 10px;
+        margin-right: 5px;
+      }
+    }
+
     span.arrow {
       background: transparent;
       color: rgba(#fff, .3);
-      padding: 7px 5px;
-      margin-right: 0;
-
-      i { margin: 0 10px; }
+      padding: 8px 10px;
+      padding-left: 12px;
+      margin-right: 5px;
     }
 
     button.activity i {
@@ -60,17 +79,27 @@ div.container {
     }
 
     span.status {
+      min-width: 35px;
+      text-align: center;
+
       &.red { color: $color-red }
       &.green { color: $color-green }
     }
+
+    span.transport {
+      color: rgba(#fff, .4);
+    }
+
     span.method {
       background-color: $color-main;
       color: $color-dark;
     }
+
     span.path {
       background-color: adjust-hue($color-main, -20);
       color: $color-dark;
     }
+
     span.time {
       width: 60px;
       text-align: center;
@@ -90,7 +119,7 @@ div.container {
     }
 
     span.pending {
-      min-width: 25px;
+      min-width: 35px;
       text-align: center;
 
       i:before { animation: pending 1s infinite }
@@ -124,7 +153,7 @@ div.container {
       }
     }
 
-    span.forward { background-color: $colors-purple }
+    span.forward { background-color: $color-purple }
     span.error { background-color: darken($color-red, 10) }
 
     span.seed {
@@ -141,9 +170,6 @@ div.container {
   pre {
     margin: 0;
     margin-bottom: 20px;
-    padding: 20px;
-    border-radius: 5px;
-    background-color: rgba(#fff, .05);
     overflow: hidden;
 
     &.hidden {

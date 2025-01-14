@@ -3,13 +3,18 @@ import { ClientMethod } from '../models';
 import { TEndpoints } from '../types';
 import { cast } from '../../utils';
 
+import config from '../../config';
+
 export default ClientMethod
-  .build<TEndpoints['ping']['result'], void>()
-  .provide('remote', (instance) => async () => {
+  .build<{
+    incoming: void;
+    outgoing: TEndpoints['ping']['outgoing']['data'];
+  }>()
+  .register('remote', (instance) => async () => {
     const response = await instance
-      .request<TEndpoints['ping']['response']>({
+      .request<TEndpoints['ping']['outgoing']>({
         ...cast<TEndpoints['ping']['location']>({
-          url: '/_mock/ping',
+          url: `${config.get('routes').internal.root}/ping`,
           method: 'GET',
         }),
       })
@@ -17,6 +22,4 @@ export default ClientMethod
 
     return response.data.data;
   })
-  .provide('onsite', (context) => async () => {
-    return 'pong';
-  });
+  .register('onsite', () => async () => 'pong');

@@ -8,14 +8,14 @@ import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
-  IExpectationOperatorContext,
-  IExpectationOperatorExecUtils,
+  IExpectationSchemaContext,
+  IExpectationExecUtils,
   TExpectationMetaTag,
   TExpectationOperatorObjectLocation,
 } from '../types';
 
 export default class MergeExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorObjectLocation = TExpectationOperatorObjectLocation,
   TValue = void
 > extends ExpectationOperator<
@@ -27,7 +27,7 @@ export default class MergeExpectationOperator<
       $value?: CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>;
       $exec?: string | TFunction<CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>, [
         CompileExpectationOperatorValue<TContext, K, TValue>,
-        IExpectationOperatorExecUtils<TContext>
+        IExpectationExecUtils<TContext>
       ]>;
 
       $path?: string;

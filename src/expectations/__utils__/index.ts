@@ -1,9 +1,14 @@
-import { IExpectationOperatorContext } from '../types';
+import { IExpectationSchemaContext } from '../types';
 import { ContainersStorage } from '../../server/models';
 
-export const buildExpectationContext = (): IExpectationOperatorContext<any> => ({
+export const buildExpectationContext = (): IExpectationSchemaContext => ({
   storage: new ContainersStorage(),
+
+  transport: 'http',
+  event: 'connection',
+
   state: {},
+  flags: {},
 
   cache: {
     isEnabled: false,
@@ -22,8 +27,8 @@ export const buildExpectationContext = (): IExpectationOperatorContext<any> => (
       },
     },
 
-    bodyRaw: '{"foo": [{"bar": 1}, {"baz": ["2"]}]}',
-    body: {
+    dataRaw: '{"foo": [{"bar": 1}, {"baz": ["2"]}]}',
+    data: {
       foo: [
         { bar: 1 },
         { baz: ['2'] },

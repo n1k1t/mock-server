@@ -19831,7 +19831,7 @@ class CurtainComponent extends models_1.Component {
 }
 exports.CurtainComponent = CurtainComponent;
 
-},{"../models":254}],230:[function(require,module,exports){
+},{"../models":257}],230:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19849,7 +19849,7 @@ class EmptyComponent extends models_1.Component {
 }
 exports.EmptyComponent = EmptyComponent;
 
-},{"../../models":254,"./template.hbs":231,"handlebars":60}],231:[function(require,module,exports){
+},{"../../models":257,"./template.hbs":231,"handlebars":60}],231:[function(require,module,exports){
 module.exports = `
   <div class="empty">
     <i class="fas fa-hourglass-start"></i>
@@ -19879,12 +19879,12 @@ class ExpectationComponent extends models_1.Component {
     }
     refresh(expectation) {
         this.clear().append(render(expectation));
-        const json = new json_formatter_1.default((0, pick_1.default)(expectation, ['id', 'type', 'schema']), 2, {
+        const json = new json_formatter_1.default((0, pick_1.default)(expectation, ['id', 'type', 'transports', 'schema']), 2, {
             theme: 'custom',
             afterCopyHandler: () => context_1.default.shared.popups.push('Copied', { icon: 'fas fa-clone', level: 'info' }),
         });
         this.element.querySelector('pre')?.appendChild(json.render());
-        this.element.querySelector('button.activity')?.addEventListener('click', () => context_1.default.services.ws.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } }));
+        this.element.querySelector('button.activity')?.addEventListener('click', () => context_1.default.services.io.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } }));
         return Object.assign(this, { expectation });
     }
     static build(expectation) {
@@ -19893,11 +19893,11 @@ class ExpectationComponent extends models_1.Component {
 }
 exports.ExpectationComponent = ExpectationComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":233,"handlebars":60,"lodash/pick":212}],233:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":246,"../../models":257,"./template.hbs":233,"handlebars":60,"lodash/pick":212}],233:[function(require,module,exports){
 module.exports = `
   <div class="container expectation" id="{{id}}">
     <div class="meta">{{> expectationMeta this}}</div>
-    <pre></pre>
+    <pre class="panel"></pre>
   </div>
 `
 
@@ -19918,37 +19918,44 @@ class HistoryComponent extends models_1.Component {
     constructor(history) {
         super();
         this.history = history;
+        this.isExpanded = false;
         this.refresh(history);
     }
     refresh(history) {
         this.clear().append(render(history));
-        const pre = this.element.querySelector('pre');
-        this.element.addEventListener('click', (event) => {
+        const pre = this.element.querySelector('div.history > pre');
+        const formatted = {
+            event: history.snapshot.event,
+            ...(Object.keys(history.snapshot.flags).length && { flags: history.snapshot.flags }),
+            ...(history.expectation && {
+                expectation: {
+                    id: history.expectation.id,
+                    group: history.expectation.group,
+                    ...(history.expectation.schema.forward && { forward: history.expectation.schema.forward }),
+                },
+            }),
+            ...(history.snapshot.cache?.isEnabled && { cache: history.snapshot.cache }),
+            ...(history.snapshot.seed && { seed: history.snapshot.seed }),
+            ...(history.snapshot.container && { container: history.snapshot.container }),
+            incoming: history.snapshot.incoming,
+            ...(history.status === 'completed' && { outgoing: history.snapshot.outgoing }),
+            ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
+            ...(history.snapshot.messages?.length && { messages: history.snapshot.messages }),
+        };
+        if (this.isExpanded) {
+            pre.classList.remove('hidden');
+        }
+        const json = new json_formatter_1.default(formatted, 2, {
+            theme: 'custom',
+            afterCopyHandler: () => context_1.default.shared.popups.push('Copied!', { icon: 'fas fa-clone', level: 'info' }),
+        });
+        pre.appendChild(json.render());
+        this.element.querySelector('div.meta').addEventListener('click', (event) => {
             if (event.composedPath().some((element) => element?.classList?.contains('meta')) === false) {
                 return null;
             }
-            if (!this.element.querySelector('pre div.json-formatter-row')) {
-                const formatted = {
-                    incoming: history.snapshot.incoming,
-                    ...(history.snapshot.cache.isEnabled && { cache: history.snapshot.cache }),
-                    ...(history.snapshot.seed && { seed: history.snapshot.seed }),
-                    ...(history.snapshot.container && { container: history.snapshot.container }),
-                    ...(history.snapshot.outgoing && { outgoing: history.snapshot.outgoing }),
-                    ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
-                    ...(history.expectation && {
-                        expectation: {
-                            id: history.expectation.id,
-                            ...(history.expectation.schema.forward && { forward: history.expectation.schema.forward }),
-                        },
-                    }),
-                };
-                const json = new json_formatter_1.default(formatted, 2, {
-                    theme: 'custom',
-                    afterCopyHandler: () => context_1.default.shared.popups.push('Copied!', { icon: 'fas fa-clone', level: 'info' }),
-                });
-                pre.appendChild(json.render());
-            }
             pre.classList.toggle('hidden');
+            this.isExpanded = !this.isExpanded;
         });
     }
     static build(history) {
@@ -19957,7 +19964,7 @@ class HistoryComponent extends models_1.Component {
 }
 exports.HistoryComponent = HistoryComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":243,"../../models":254,"./template.hbs":235,"handlebars":60}],235:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":246,"../../models":257,"./template.hbs":235,"handlebars":60}],235:[function(require,module,exports){
 module.exports = `
   <div class="container history" id="{{id}}">
     <div class="meta">
@@ -19975,29 +19982,53 @@ module.exports = `
           <span class="pending"><i class="fas fa-hourglass-start"></i></span>
         {{/compare}}
 
-        {{#if snapshot.outgoing}}
+        {{#compare status 'eq' 'completed'}}
           <span class="status
-            {{#compare snapshot.outgoing.status 'lt' 400}}green{{/compare}}
-            {{#compare snapshot.outgoing.status 'gte' 400}}red{{/compare}}
+            {{#compare snapshot.transport 'eq' 'http'}}
+              {{#compare snapshot.outgoing.status 'lt' 400}}green{{/compare}}
+              {{#compare snapshot.outgoing.status 'gte' 400}}red{{/compare}}
+            {{/compare}}
           ">{{snapshot.outgoing.status}}</span>
-        {{/if}}
+        {{/compare}}
 
-        <span class="method">{{{snapshot.incoming.method}}}</span>
-        <span class="path">{{{snapshot.incoming.path}}}</span>
+        <span class="transport">{{snapshot.transport}}</span>
+        <span class="method">{{snapshot.incoming.method}}</span>
+        <span class="path">{{snapshot.incoming.path}}</span>
       </div>
 
       <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
       {{#if expectation}}
         {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
-        {{#if snapshot.outgoing.isCached}}<span class="cache">Cached</span>{{/if}}
+        {{#if snapshot.forwarded.isCached}}<span class="cache">Cached</span>{{/if}}
 
         <div class="segment">{{>expectationMeta expectation format='short'}}</div>
       {{else}}
         <span class="handled-with red">Nowhere</span>
       {{/if}}
     </div>
-    <pre class="hidden"></pre>
+
+    {{!-- {{#if snapshot.messages}}
+      <p class="messages-title">
+        <span class="count">Total messages <b>{{snapshot.messages.length}}</b></span>
+      </p>
+
+      <div class="messages">
+        {{#each snapshot.messages}}
+          <div id="{{id}}" class="message {{location}}">
+            <p class="header">
+              {{#compare location 'eq' 'incoming'}}<i class="fas fa-angle-right"></i>{{/compare}}
+              {{#compare location 'eq' 'outgoing'}}<i class="fas fa-angle-left"></i>{{/compare}}
+              <span class="time">{{#toLocaleTime timestamp}}{{/toLocaleTime}}</span>
+            </p>
+
+            <pre class="panel hidden"></pre>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}} --}}
+
+    <pre class="panel hidden"></pre>
   </div>
 `
 
@@ -20019,13 +20050,14 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./expectation.component"), exports);
+__exportStar(require("./settings.component"), exports);
 __exportStar(require("./history.component"), exports);
 __exportStar(require("./curtain.component"), exports);
 __exportStar(require("./loader.component"), exports);
 __exportStar(require("./popups.component"), exports);
 __exportStar(require("./empty.component"), exports);
 
-},{"./curtain.component":229,"./empty.component":230,"./expectation.component":232,"./history.component":234,"./loader.component":237,"./popups.component":238}],237:[function(require,module,exports){
+},{"./curtain.component":229,"./empty.component":230,"./expectation.component":232,"./history.component":234,"./loader.component":237,"./popups.component":238,"./settings.component":240}],237:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoaderComponent = void 0;
@@ -20068,7 +20100,7 @@ class PopupsComponent extends models_1.Component {
 }
 exports.PopupsComponent = PopupsComponent;
 
-},{"../../models":254,"./template.hbs":239,"handlebars":60}],239:[function(require,module,exports){
+},{"../../models":257,"./template.hbs":239,"handlebars":60}],239:[function(require,module,exports){
 module.exports = `
   <div class="popup-message {{level}}">
     <i class="{{icon}}"></i>
@@ -20082,6 +20114,88 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SettingsComponent = void 0;
+const handlebars_1 = __importDefault(require("handlebars"));
+const models_1 = require("../../models");
+const common_1 = require("../../../../utils/common");
+const context_1 = __importDefault(require("../../context"));
+const template = require('./template.hbs');
+const render = handlebars_1.default.compile(template);
+class SettingsComponent extends models_1.Component {
+    constructor() {
+        super();
+        this.filters = this.compileEmptyFilters();
+    }
+    resetFilters() {
+        this.filters = this.compileEmptyFilters();
+        return this;
+    }
+    refresh() {
+        this.clear().append(render({
+            groups: {
+                all: {
+                    isEnabled: this.filters.groups ? this.filters.groups.size === context_1.default.shared.groups.size : true,
+                },
+                segmented: [...context_1.default.shared.groups].map((group) => ({
+                    name: group,
+                    isEnabled: this.filters.groups?.has(group) ?? true,
+                })),
+            },
+        }));
+        const groupsFilterButtons = {
+            all: this.element.querySelector('div#groups-filter button#all'),
+            segmented: this.element.querySelectorAll('div#groups-filter button:not(#all)'),
+        };
+        groupsFilterButtons.all.addEventListener('click', (event) => {
+            const isChecked = event.target.classList.toggle('checked');
+            this.filters.groups = isChecked ? new Set(context_1.default.shared.groups.values()) : new Set();
+            groupsFilterButtons.segmented.forEach((element) => isChecked ? element.classList.add('checked') : element.classList.remove('checked'));
+        });
+        groupsFilterButtons.segmented.forEach((element) => element.addEventListener('click', () => {
+            const isChecked = element.classList.toggle('checked');
+            this.filters.groups = this.filters.groups ?? new Set(context_1.default.shared.groups.values());
+            isChecked ? this.filters.groups.add(element.id) : this.filters.groups.delete(element.id);
+            this.filters.groups.size === context_1.default.shared.groups.size
+                ? groupsFilterButtons.all.classList.add('checked')
+                : groupsFilterButtons.all.classList.remove('checked');
+        }));
+        return this;
+    }
+    compileEmptyFilters() {
+        return {
+            groups: (0, common_1.cast)(null),
+        };
+    }
+    static build() {
+        return new SettingsComponent();
+    }
+}
+exports.SettingsComponent = SettingsComponent;
+
+},{"../../../../utils/common":259,"../../context":246,"../../models":257,"./template.hbs":241,"handlebars":60}],241:[function(require,module,exports){
+module.exports = `
+  <div class="settings">
+    <div id="groups-filter" class="container">
+      <p><i class="fas fa-filter"></i> Groups filter <span>(hides/shows expectations and history in GUI)</span></p>
+      <div class="panel">
+          <div class="buttons">
+          <button id="all" class="{{#if groups.all.isEnabled}}checked{{/if}}">ALL</button>
+
+          {{#each groups.segmented}}
+            <button id="{{name}}" class="{{#if isEnabled}}checked{{/if}}">{{name}}</button>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+`
+
+},{}],242:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 const components_1 = require("../components");
 const models_1 = require("../models");
 const context_1 = __importDefault(require("../context"));
@@ -20089,25 +20203,41 @@ const empty = components_1.EmptyComponent.build();
 const storage = new Map();
 const container = models_1.Container
     .build(document.querySelector('section#expectations'))
-    .on('intialize', async () => {
+    .on('select', () => {
+    if (context_1.default.shared.settings.filters.groups) {
+        empty.hide();
+        const components = [...storage.values()].map((component) => context_1.default.shared.settings.filters.groups.has(component.expectation.group)
+            ? component.show()
+            : component.hide());
+        if (components.every((component) => component.isHidden)) {
+            empty.show();
+        }
+    }
+})
+    .on('initialize', async () => {
     container.clear().append(empty);
+    context_1.default.shared.groups.clear();
     storage.clear();
-    const { data } = await context_1.default.services.ws.exec('expectations:get');
+    const { data } = await context_1.default.services.io.exec('expectations:get-list');
     data.forEach((expectation) => {
         const component = components_1.ExpectationComponent.build(expectation);
         storage.set(expectation.id, component);
+        context_1.default.shared.groups.add(expectation.group);
         container.append(component);
     });
     storage.size ? empty.hide() : empty.show();
 })
-    .once('intialize', () => {
-    context_1.default.services.ws.subscribe('expectation:added', (expectation) => {
+    .once('initialize', () => {
+    context_1.default.services.io.subscribe('expectation:added', (expectation) => {
         const component = components_1.ExpectationComponent.build(expectation);
         storage.set(expectation.id, component);
+        context_1.default.shared.groups.add(expectation.group);
         container.append(component);
-        empty.hide();
+        !(context_1.default.shared.settings.filters.groups?.has(expectation.group) ?? true)
+            ? component.hide()
+            : empty.hide();
     });
-    context_1.default.services.ws.subscribe('expectation:updated', (expectation) => {
+    context_1.default.services.io.subscribe('expectation:updated', (expectation) => {
         const component = storage.get(expectation.id) ?? components_1.ExpectationComponent.build(expectation);
         if (storage.has(expectation.id)) {
             component.refresh(expectation);
@@ -20116,12 +20246,15 @@ const container = models_1.Container
             container.append(component);
         }
         storage.set(expectation.id, component);
-        empty.hide();
+        context_1.default.shared.groups.add(expectation.group);
+        !(context_1.default.shared.settings.filters.groups?.has(expectation.group) ?? true)
+            ? component.hide()
+            : empty.hide();
     });
 });
 exports.default = container;
 
-},{"../components":236,"../context":243,"../models":254}],241:[function(require,module,exports){
+},{"../components":236,"../context":246,"../models":257}],243:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20135,11 +20268,22 @@ const storage = new Map();
 const ids = [];
 const container = models_1.Container
     .build(document.querySelector('section#history'))
-    .on('intialize', async () => {
+    .on('select', () => {
+    if (context_1.default.shared.settings.filters.groups) {
+        empty.hide();
+        const components = [...storage.values()].map((component) => context_1.default.shared.settings.filters.groups.has(component.history.group)
+            ? component.show()
+            : component.hide());
+        if (components.every((component) => component.isHidden)) {
+            empty.show();
+        }
+    }
+})
+    .on('initialize', async () => {
     container.clear().append(empty);
     storage.clear();
     ids.splice(0, ids.length);
-    const { data } = await context_1.default.services.ws.exec('history:get');
+    const { data } = await context_1.default.services.io.exec('history:get-list');
     data.forEach((history) => {
         const component = components_1.HistoryComponent.build(history);
         storage.set(history.id, component);
@@ -20148,71 +20292,92 @@ const container = models_1.Container
     });
     storage.size ? empty.hide() : empty.show();
 })
-    .once('intialize', () => {
-    context_1.default.services.ws.subscribe('history:added', (history) => {
+    .once('initialize', () => {
+    context_1.default.services.io.subscribe('history:added', (history) => {
         const component = components_1.HistoryComponent.build(history);
         storage.set(history.id, component);
         ids.push(history.id);
-        if (ids.length > context_1.default.config.history.limit) {
+        if (ids.length > context_1.default.config.history.limit * context_1.default.shared.groups.size) {
             const id = ids.shift();
             storage.get(id)?.remove();
             storage.delete(id);
         }
         container.prepend(component);
-        empty.hide();
+        !(context_1.default.shared.settings.filters.groups?.has(history.group) ?? true)
+            ? component.hide()
+            : empty.hide();
     });
-    context_1.default.services.ws.subscribe('history:updated', (history) => {
+    context_1.default.services.io.subscribe('history:updated', (history) => {
         const component = storage.get(history.id) ?? components_1.HistoryComponent.build(history);
-        storage.has(history.id)
-            ? component.refresh(history)
-            : ids.push(history.id);
-        container.element.childNodes.values();
-        if (!container.element.querySelector(`div.history[id="${history.id}"]`)) {
-            container.append(component);
-        }
+        storage.has(history.id) ? component.refresh(history) : ids.push(history.id);
         storage.set(history.id, component);
-        empty.hide();
+        if (!container.element.querySelector(`div.history[id="${history.id}"]`)) {
+            container.prepend(component);
+        }
+        !(context_1.default.shared.settings.filters.groups?.has(history.group) ?? true)
+            ? component.hide()
+            : empty.hide();
     });
 });
 exports.default = container;
 
-},{"../components":236,"../context":243,"../models":254}],242:[function(require,module,exports){
+},{"../components":236,"../context":246,"../models":257}],244:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.history = exports.expectations = void 0;
+exports.history = exports.settings = exports.expectations = void 0;
 var expectations_1 = require("./expectations");
 Object.defineProperty(exports, "expectations", { enumerable: true, get: function () { return __importDefault(expectations_1).default; } });
+var settings_1 = require("./settings");
+Object.defineProperty(exports, "settings", { enumerable: true, get: function () { return __importDefault(settings_1).default; } });
 var history_1 = require("./history");
 Object.defineProperty(exports, "history", { enumerable: true, get: function () { return __importDefault(history_1).default; } });
 
-},{"./expectations":240,"./history":241}],243:[function(require,module,exports){
+},{"./expectations":242,"./history":243,"./settings":245}],245:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const models_1 = require("../models");
+const context_1 = __importDefault(require("../context"));
+const container = models_1.Container
+    .build(document.querySelector('section#settings'))
+    .on('select', async () => {
+    context_1.default.shared.settings.refresh();
+})
+    .on('initialize', () => {
+    context_1.default.shared.settings.resetFilters();
+    context_1.default.shared.settings.refresh();
+})
+    .once('initialize', () => {
+    container.append(context_1.default.shared.settings);
+});
+exports.default = container;
+
+},{"../context":246,"../models":257}],246:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_client_1 = require("socket.io-client");
 const models_1 = require("./models");
 const common_1 = require("../../utils/common");
-const ws = (0, socket_io_client_1.io)(location.origin);
+const io = (0, socket_io_client_1.io)(location.origin);
 class Context {
     constructor() {
         this.config = (0, common_1.cast)({
-            gui: {
-                title: 'Mock server',
-                route: 'about:blank',
-            },
             history: {
                 limit: 100,
             },
         });
         this.instances = {
-            ws,
+            io,
         };
         this.services = {
-            ws: {
-                exec: (path, body) => new Promise((resolve) => ws.emit(path, body, resolve)),
-                subscribe: (channel, handler) => ws.on(channel, handler)
+            io: {
+                exec: (path, body) => new Promise((resolve) => io.emit(path, body, resolve)),
+                subscribe: (channel, handler) => io.on(channel, handler)
             },
         };
         this.storage = models_1.DynamicStorage.build('void', document.body);
@@ -20230,7 +20395,7 @@ class Context {
 }
 exports.default = new Context();
 
-},{"../../utils/common":256,"./models":254,"socket.io-client":221}],244:[function(require,module,exports){
+},{"../../utils/common":259,"./models":257,"socket.io-client":221}],247:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toLocaleTime = exports.compare = void 0;
@@ -20252,7 +20417,7 @@ exports.compare = (0, utils_1.buildHandlebarsHelper)((context) => (arg1, operato
 });
 exports.toLocaleTime = (0, utils_1.buildHandlebarsHelper)(() => (timestamp) => new Date(timestamp).toLocaleTimeString());
 
-},{"./utils":248}],245:[function(require,module,exports){
+},{"./utils":251}],248:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20270,13 +20435,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -20291,7 +20466,7 @@ exports.default = {
     },
 };
 
-},{"./helpers":244,"./partials":247,"handlebars":60}],246:[function(require,module,exports){
+},{"./helpers":247,"./partials":250,"handlebars":60}],249:[function(require,module,exports){
 module.exports = `
   {{#compare format 'neq' 'short'}}
     <button class="activity">
@@ -20307,10 +20482,11 @@ module.exports = `
     </span>
   {{/compare}}
 
-  <span class="name">{{name}}</span>
+  <span class="name"><b>{{group}}</b> {{name}}</span>
 
   {{#compare format 'neq' 'short'}}
     {{#compare meta.tags.length 'gt' 0}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/compare}}
+    {{#each transports}}<span class="transport">{{this}}</span>{{/each}}
 
     {{#each meta.tags}}
       {{#compare @index 'lte' 5}}
@@ -20331,13 +20507,13 @@ module.exports = `
   {{#if schema.forward.url}}<span class="forward">{{schema.forward.url}}</span>{{/if}}
 `
 
-},{}],247:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.expectationMeta = void 0;
 exports.expectationMeta = require('./expectation-meta.hbs');
 
-},{"./expectation-meta.hbs":246}],248:[function(require,module,exports){
+},{"./expectation-meta.hbs":249}],251:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildHandlebarsHelper = void 0;
@@ -20348,7 +20524,7 @@ const buildHandlebarsHelper = (handler) => {
 };
 exports.buildHandlebarsHelper = buildHandlebarsHelper;
 
-},{}],249:[function(require,module,exports){
+},{}],252:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Button = void 0;
@@ -20381,7 +20557,7 @@ class Button {
 }
 exports.Button = Button;
 
-},{}],250:[function(require,module,exports){
+},{}],253:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = void 0;
@@ -20437,7 +20613,7 @@ class Component {
 }
 exports.Component = Component;
 
-},{}],251:[function(require,module,exports){
+},{}],254:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20456,7 +20632,13 @@ class Container extends component_1.Component {
     }
     initialize() {
         this.storage.sync();
-        return this.emit('intialize', this);
+        return this.emit('initialize', this);
+    }
+    refresh() {
+        return this.emit('refresh', this);
+    }
+    select() {
+        return this.emit('select', this);
     }
     on(event, handler) {
         this.events.on(event, handler);
@@ -20476,7 +20658,7 @@ class Container extends component_1.Component {
 }
 exports.Container = Container;
 
-},{"./component":250,"./dynamic-storage":252,"events":27}],252:[function(require,module,exports){
+},{"./component":253,"./dynamic-storage":255,"events":27}],255:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20511,7 +20693,7 @@ class DynamicStorage {
 }
 exports.DynamicStorage = DynamicStorage;
 
-},{"../utils":255,"./form":253,"lodash/set":213}],253:[function(require,module,exports){
+},{"../utils":258,"./form":256,"lodash/set":213}],256:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20567,7 +20749,7 @@ class Form extends component_1.Component {
 }
 exports.Form = Form;
 
-},{"../utils":255,"./component":250,"lodash/set":213}],254:[function(require,module,exports){
+},{"../utils":258,"./component":253,"lodash/set":213}],257:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20590,7 +20772,7 @@ __exportStar(require("./container"), exports);
 __exportStar(require("./button"), exports);
 __exportStar(require("./form"), exports);
 
-},{"./button":249,"./component":250,"./container":251,"./dynamic-storage":252,"./form":253}],255:[function(require,module,exports){
+},{"./button":252,"./component":253,"./container":254,"./dynamic-storage":255,"./form":256}],258:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20609,10 +20791,10 @@ exports.convertObjectToKeyValueCouples = convertObjectToKeyValueCouples;
 const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
 exports.buildCounter = buildCounter;
 
-},{"lodash/isObject":201}],256:[function(require,module,exports){
+},{"lodash/isObject":201}],259:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.flattenArrayed = exports.cast = exports.wait = void 0;
+exports.buildCounter = exports.flattenArrayed = exports.cast = exports.wait = void 0;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 exports.wait = wait;
 const cast = (payload) => payload;
@@ -20627,15 +20809,27 @@ const flattenArrayed = (payload) => {
     return [[payload]];
 };
 exports.flattenArrayed = flattenArrayed;
+/**
+ * @example
+ * ```ts
+ * const counter = buildCounter(5);
+ *
+ * counter() // 6
+ * counter() // 7
+ * counter(2) // 9
+ * ```
+ */
+const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
+exports.buildCounter = buildCounter;
 
-},{}],257:[function(require,module,exports){
+},{}],260:[function(require,module,exports){
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 var _unset2 = _interopRequireDefault(require("lodash/unset"));
 var _omit2 = _interopRequireDefault(require("lodash/omit"));
 var _set2 = _interopRequireDefault(require("lodash/set"));
-var _components = require("./components");
+var components = _interopRequireWildcard(require("./components"));
 var containers = _interopRequireWildcard(require("./containers"));
 var _handlebars = _interopRequireDefault(require("./handlebars"));
 var _context2 = _interopRequireDefault(require("./context"));
@@ -20646,13 +20840,17 @@ function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyri
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 _handlebars["default"].init();
-var loader = _components.LoaderComponent.build().show();
+var loader = components.LoaderComponent.build().show();
 var switchButtonIdToContainerElementMap = {
   'switch-to-expectations-container': containers.expectations,
+  'switch-to-settings-container': containers.settings.hide(),
   'switch-to-history-container': containers.history.hide()
 };
 _context2["default"].switchStorage(containers.expectations.storage).share({
-  popups: _components.PopupsComponent.build()
+  containers: containers,
+  groups: new Set(),
+  popups: components.PopupsComponent.build(),
+  settings: components.SettingsComponent.build()
 });
 document.body.append(_context2["default"].shared.popups.element);
 document.body.append(loader.element);
@@ -20671,9 +20869,9 @@ document.querySelector('div#container-select').addEventListener('click', functio
   });
   var container = switchButtonIdToContainerElementMap[event.target.id];
   _context2["default"].switchStorage(container.storage);
-  container.show();
+  container.show().select();
 });
-_context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+_context2["default"].instances.io.on('connect', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
   var _yield$context$servic, data;
   return _regeneratorRuntime().wrap(function _callee$(_context) {
     while (1) {
@@ -20681,10 +20879,10 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
         case 0:
           console.log('WebSocket has connected');
           _context.next = 3;
-          return _context2["default"].services.ws.exec('ping');
+          return _context2["default"].services.io.exec('ping');
         case 3:
           _context.next = 5;
-          return _context2["default"].services.ws.exec('config:get');
+          return _context2["default"].services.io.exec('config:get');
         case 5:
           _yield$context$servic = _context.sent;
           data = _yield$context$servic.data;
@@ -20693,8 +20891,7 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
             return container.initialize();
           });
           loader.hide();
-          document.title = _context2["default"].config.gui.title;
-        case 11:
+        case 10:
         case "end":
           return _context.stop();
       }
@@ -20702,4 +20899,4 @@ _context2["default"].instances.ws.on('connect', /*#__PURE__*/_asyncToGenerator( 
   }, _callee);
 })));
 
-},{"./components":236,"./containers":242,"./context":243,"./handlebars":245,"lodash/omit":211,"lodash/set":213,"lodash/unset":217}]},{},[257]);
+},{"./components":236,"./containers":244,"./context":246,"./handlebars":248,"lodash/omit":211,"lodash/set":213,"lodash/unset":217}]},{},[260]);

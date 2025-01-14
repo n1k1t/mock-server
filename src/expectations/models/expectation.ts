@@ -4,31 +4,32 @@ import { v4 as genUid } from 'uuid';
 import { ValueError } from '@n1k1t/typebox/errors';
 import _ from 'lodash';
 
-import { TRequestProtocol } from '../../types';
 import {
   IExpectationMeta,
-  IExpectationOperatorContext,
-  IExpectationOperatorContextInput,
+  IExpectationSchemaContext,
+  IExpectationSchemaInput,
   IExpectationSchema,
-  TExpectationType,
 } from '../types';
 
 import * as operators from '../operators';
 
-export type TBuildExpectationConfiguration<TContext extends IExpectationOperatorContext<any>> =
-  Pick<Expectation<TContext>, 'schema'> & Partial<Pick<Expectation<TContext>, 'name' | 'isEnabled' | 'type'>>;
-
 export class Expectation<
-  TInput extends IExpectationOperatorContextInput = {},
-  TContext extends IExpectationOperatorContext<TInput> = IExpectationOperatorContext<TInput>
+  TInput extends IExpectationSchemaInput = {},
+  TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
 > {
-  public TSchema!: IExpectationSchema<TContext>;
-  public TPlain!: Pick<Expectation<TInput, TContext>, 'schema' | 'type' | 'id' | 'isEnabled' | 'meta' | 'name'>;
+  public TPlain!: Pick<
+    Expectation<TInput, TContext>,
+    'schema' | 'id' | 'group' | 'isEnabled' | 'meta' | 'name' | 'transports'
+  >;
 
-  public id: string = genUid();
-  public name: string = generateAnimalName().split(' ').map(_.capitalize).join('');
+  public id: string = this.configuration.id ?? genUid();
+  public name: string = this.configuration.name ?? generateAnimalName().split(' ').map(_.capitalize).join('');
+  public group: string = this.configuration.group ?? 'unknown';
 
-  public isEnabled: boolean = true;
+  public transports?: TContext['transport'][] = this.configuration.transports;
+
+  public schema = <IExpectationSchema<TContext>>this.configuration.schema;
+  public isEnabled: boolean = this.configuration.isEnabled ?? true;
 
   public request = this.schema.request
     ? new operators.root<TContext>(operators, this.schema.request)
@@ -47,7 +48,11 @@ export class Expectation<
     return this.schema.forward;
   }
 
-  constructor(public type: TExpectationType, public schema: IExpectationSchema<TContext>) {}
+  constructor(
+    public configuration: Pick<Expectation<TContext>, 'schema'> & Partial<
+      Pick<Expectation<TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports'>
+    >
+  ) {}
 
   public increaseExecutionsCounter(): this {
     this.meta.executionsCount += 1;
@@ -61,22 +66,18 @@ export class Expectation<
   public toPlain(): Expectation<TInput, TContext>['TPlain'] {
     return {
       id: this.id,
-      type: this.type,
+      group: this.group,
 
       name: this.name,
       schema: this.schema,
+      transports: this.transports,
 
       meta: this.meta,
       isEnabled: this.isEnabled,
     };
   }
 
-  static build<TContext extends IExpectationOperatorContext<any>>(
-    configuration: TBuildExpectationConfiguration<TContext>
-  ) {
-    return Object.assign(
-      new Expectation(configuration.type ?? 'HTTP', configuration.schema),
-      _.omit(configuration, ['schema', 'type'])
-    );
+  static build<TContext extends IExpectationSchemaContext>(configuration: Expectation<TContext>['configuration']) {
+    return new Expectation(configuration);
   }
 }

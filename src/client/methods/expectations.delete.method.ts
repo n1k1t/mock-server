@@ -3,15 +3,20 @@ import { ClientMethod } from '../models';
 import { TEndpoints } from '../types';
 import { cast } from '../../utils';
 
+import config from '../../config';
+
 export default ClientMethod
-  .build<TEndpoints['deleteExpectation']['result'], TEndpoints['deleteExpectation']['body']>()
-  .provide('remote', (instance) => async (body) => {
+  .build<{
+    incoming: TEndpoints['deleteExpectation']['incoming']['data'];
+    outgoing: TEndpoints['deleteExpectation']['outgoing']['data'];
+  }>()
+  .register('remote', (instance) => async (body) => {
     await instance
-      .request<TEndpoints['deleteExpectation']['response']>({
+      .request<TEndpoints['deleteExpectation']['outgoing']>({
         data: body,
 
         ...cast<TEndpoints['deleteExpectation']['location']>({
-          url: '/_mock/expectations',
+          url: `${config.get('routes').internal.root}/expectations`,
           method: 'DELETE',
         }),
       })
@@ -19,10 +24,10 @@ export default ClientMethod
 
     return null;
   })
-  .provide('onsite', (context) => async (body) => {
+  .register('onsite', (provider) => async (body) => {
     body?.ids
-      ? body.ids.forEach((id) => context.storages.expectations.delete(id))
-      : context.storages.expectations.clear();
+      ? body.ids.forEach((id) => provider.storages.expectations.delete(id))
+      : provider.storages.expectations.clear();
 
     return null;
   });

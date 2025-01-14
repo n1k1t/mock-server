@@ -65,11 +65,17 @@ section {
 div.container {
   max-width: 1300px;
   margin: auto;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 5px;
+  padding: 10px;
   margin-top: 20px;
   overflow: hidden;
   position: relative;
+}
+
+*.panel {
+  border-radius: 5px;
+  padding: 10px;
+  background-color: rgba(#fff, .05);
 }
 
 div.empty {

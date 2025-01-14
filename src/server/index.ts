@@ -1,110 +1,140 @@
-import { IncomingMessage, ServerResponse, createServer } from 'http';
+import { Redis, RedisOptions } from 'ioredis';
+import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
 import { Server } from 'socket.io';
 import _ from 'lodash';
 
-import { HttpRequestContext, Middleware, ServerContext, WsRequestContext } from './models';
-import { metaStorage } from '../meta';
+import { buildSocketIoExchange, Provider, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
+import { IServerContext, TDefaultServerContext } from './types';
 import { Logger } from '../logger';
-import { routes } from './router';
+import {
+  buildHttpListener,
+  buildWsListener,
+  HttpTransport,
+  InternalHttpTransport,
+  InternalSocketIoTransport,
+  WsTransport,
+} from './transports';
 
 import config from '../config';
-import * as middlewares from './middlewares';
 
-export { serializePayload, parsePayload } from './models';
+export * from './transports';
+export * from './models';
+export * from './types';
 
 const logger = Logger.build('Server');
 
-const middlewaresToUse: Middleware<any, any>['TCompiled'][] = [
-  middlewares.publicMiddleware,
-  middlewares.internalMiddleware,
-  middlewares.matchExpectationMiddleware,
-  middlewares.manipulateExpectationMiddleware,
-  middlewares.historyMiddleware,
-  middlewares.delayMiddleware,
-  middlewares.destroyMiddleware,
-  middlewares.forwardMiddleware,
-  middlewares.replyMiddleware,
-];
+export interface IMockServerConfiguration {
+  port: number;
+  host: string;
 
-const handleHttpRequest = async (context: HttpRequestContext) => {
-  for (const middleware of middlewaresToUse) {
-    if (context.completed || context.response.closed) {
-      break;
-    }
-    if (!middleware.required.every((key) => key in context.shared)) {
-      logger.warn(`Middleware [${middleware.name}] has skiped`);
-      continue;
-    }
+  containers?: {
+    /**
+     * Seconds
+     */
+    expiredCleaningInterval?: number;
+  };
 
-    await middleware.exec(context).catch((error) => {
-      logger.error(`Got error while middleware [${middleware.name}] execution`, error?.stack ?? error);
-      context.complete();
-    });
+  transports?: Partial<Record<TDefaultServerContext['transport'], Transport>> & Record<string, Transport>;
+  databases?: {
+    redis?: RedisOptions;
+  };
+}
+
+export class MockServer<
+  TConfiguration extends IMockServerConfiguration = IMockServerConfiguration,
+  TContext extends IServerContext<any> = IServerContext<{
+    transport: TDefaultServerContext['transport'] | Extract<keyof TConfiguration['transports'], string>;
+
+    event: TDefaultServerContext['event'] | {
+      [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['event'];
+    }[keyof TConfiguration['transports']];
+
+    flag: TDefaultServerContext['flag'] | {
+      [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['flag'];
+    }[keyof TConfiguration['transports']];
+  }>
+> {
+  public TContext!: TContext;
+  public authority = `http://${this.configuration.host}:${this.configuration.port}`;
+
+  public databases: Provider['databases'] = {
+    redis: this.configuration.databases?.redis ? new Redis(this.configuration.databases?.redis) : null,
+  };
+
+  public exchanges: Provider['exchanges'] = {
+    io: buildSocketIoExchange({ emit: () => false }),
+  };
+
+  public providers = new ProvidersStorage<TContext>(this);
+  public router = Router.build<TContext>(this);
+
+  public http = createServer(buildHttpListener(this.router));
+  public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
+  public io = new Server(this.http);
+
+  public transports = new TransportsStorage<TContext>()
+    .register('http', new HttpTransport())
+    .register('ws', new WsTransport());
+
+  private internal = {
+    transports: {
+      http: new InternalHttpTransport(this),
+      io: new InternalSocketIoTransport(this),
+    },
+  };
+
+  constructor(public configuration: TConfiguration) {
+    this.databases.redis?.on('reconnecting', () => logger.info('Redis is reconnecting'));
+    this.databases.redis?.on('connect', () => logger.info('Redis has connected'));
+    this.databases.redis?.on('close', () => logger.info('Redis has closed'));
+    this.databases.redis?.on('error', (error) => logger.info('Got redis error', error?.stack ?? error));
   }
-};
 
-const httpRequestListener = (server: ServerContext) =>
-  async (request: IncomingMessage, response: ServerResponse) => {
-    const context = await HttpRequestContext.build(server, request, response);
+  public get client() {
+    return this.providers.default.client;
+  }
 
-    logger.info('Incoming request', `[${context.incoming.method} ${context.incoming.path}]`);
-
-    await metaStorage
-      .wrap(context.meta, () => handleHttpRequest(context))
-      .catch((error) => {
-        logger.error('Get error while handling incoming request', error?.stack ?? error);
-        response.end();
+  public unbindExpiredContainers() {
+    for (const provider of this.providers.values()) {
+      provider.storages.containers.getExpired().forEach((container) => {
+        container.unbind();
+        logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
       });
+    }
   }
 
-export class MockServer {
-  public authority = `http://${this.options.host}:${this.options.port}`;
-  public context = ServerContext.build();
-
-  constructor(public options: {
-    port: number;
-    host: string;
-  }) {}
-
-  get client() {
-    return this.context.client;
-  }
-
-  static async start(options: MockServer['options']) {
-    const server = new MockServer(options);
-
-    const http = createServer(httpRequestListener(server.context));
-    const ws = new Server(http);
-
-    ws.on('connection', (socket) =>
-      Object.values(routes.ws).forEach((route) =>
-        socket.on(route.ws.path, (...args) =>
-          route.handler?.(
-            WsRequestContext.build(server.context, {
-              callback: _.last(args),
-              body: _.first(args)
-            })
-        ))
-      )
-    );
-
-    server.context.assignWsExchange(ws);
+  static async start<
+    TConfiguration extends IMockServerConfiguration,
+    TContext extends MockServer<TConfiguration>['TContext'] = MockServer<TConfiguration>['TContext']
+  >(configuration: TConfiguration) {
+    const routes = config.get('routes');
+    const server = new MockServer<TConfiguration>(configuration);
 
     await new Promise<void>((resolve) =>
-      http.listen(options.port, options.host, () => {
+      server.http.listen(configuration.port, configuration.host, () => {
         logger.info(`Server has started on [${server.authority}]`);
-        logger.info(`GUI is available on [${server.authority}/_mock/gui]`);
+        logger.info(`GUI is available on [${server.authority}${routes.internal.root}${routes.internal.gui}]`);
 
         resolve();
       })
     );
 
-    setInterval(() => {
-      server.context.storages.containers.getExpired().forEach((container) => {
-        container.unbind();
-        logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
-      });
-    }, config.get('containers').garbageInterval * 1000);
+    Object
+      .entries(configuration.transports ?? {})
+      .forEach(([type, transport]) => server.transports.register(<TContext['transport']>type, transport));
+
+    server.router.register(`${routes.internal.root}/**`, {
+      provider: server.providers.default,
+      transports: <Record<TContext['transport'], Transport>>{
+        http: server.internal.transports.http,
+      },
+    });
+
+    setInterval(
+      () => server.unbindExpiredContainers(),
+      (configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
+    );
 
     return server;
   }

@@ -8,14 +8,14 @@ import { ExpectationOperator } from '../models/operator';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
-  IExpectationOperatorContext,
-  IExpectationOperatorExecUtils,
+  IExpectationSchemaContext,
+  IExpectationExecUtils,
   TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
 export default class HasExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<
@@ -45,7 +45,7 @@ export default class HasExpectationOperator<
 
       $exec?: string | TFunction<boolean, [
         CompileExpectationOperatorValue<TContext, K, TValue>,
-        IExpectationOperatorExecUtils<TContext>
+        IExpectationExecUtils<TContext>
       ]>;
     };
   }[TLocation]
@@ -138,6 +138,8 @@ export default class HasExpectationOperator<
         if (this.compiled.exec) {
           return this.compiled.exec('match', context, payload.value) === true;
         }
+
+        return false;
       }
 
       case 'number': {
@@ -159,6 +161,8 @@ export default class HasExpectationOperator<
         if (this.compiled.exec) {
           return this.compiled.exec('match', context, payload.value) === true;
         }
+
+        return false;
       }
 
       case 'object': {

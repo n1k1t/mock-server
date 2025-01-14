@@ -7,14 +7,14 @@ import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
-  IExpectationOperatorContext,
-  IExpectationOperatorExecUtils,
+  IExpectationSchemaContext,
+  IExpectationExecUtils,
   TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
 export default class SetExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<
@@ -26,7 +26,7 @@ export default class SetExpectationOperator<
       $value?: CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>;
       $exec?: string | TFunction<CompileExpectationOperatorValueWithPredicate<TContext, K, TValue>, [
         CompileExpectationOperatorValue<TContext, K, TValue>,
-        IExpectationOperatorExecUtils<TContext>
+        IExpectationExecUtils<TContext>
       ]>;
 
       $path?: string;

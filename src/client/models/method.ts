@@ -1,41 +1,50 @@
 import type { AxiosInstance } from 'axios';
 
-import type { ServerContext } from '../../server/models';
+import type { TFunction } from '../../types';
+import type { Provider } from '../../server/models';
+
 import { cast } from '../../utils';
 
-type THandler<TContext, TResult, TBody> = (context: TContext) => (body: TBody) => Promise<TResult>;
+type THandler<TContext, TSchema extends IClientMethodSchema> = TFunction<
+  TFunction<Promise<TSchema['outgoing']>, [TSchema['incoming']]>,
+  [TContext]
+>;
 
-export interface IClientMethodHandlers<TResult = void, TBody = void> {
-  remote: THandler<AxiosInstance, TResult, TBody>;
-  onsite: THandler<ServerContext, TResult, TBody>;
+export interface IClientMethodSchema {
+  incoming?: unknown;
+  outgoing?: unknown;
+};
+
+export interface IClientMethodHandlers<TSchema extends IClientMethodSchema> {
+  remote: THandler<AxiosInstance, TSchema>;
+  onsite: THandler<Provider, TSchema>;
 }
 
-export class ClientMethod<TResult = void, TBody = void> {
-  public TResult!: TResult;
-  public TBody!: TBody;
+export class ClientMethod<TSchema extends IClientMethodSchema> {
+  public TSchema!: TSchema;
 
-  private handlers = cast<IClientMethodHandlers<TResult, TBody>>({
+  private handlers = cast<IClientMethodHandlers<TSchema>>({
     remote: () => () => Promise.reject(new Error('Not implemented')),
     onsite: () => () => Promise.reject(new Error('Not implemented')),
   });
 
-  public provide<K extends keyof IClientMethodHandlers>(
+  public register<K extends keyof IClientMethodHandlers<any>>(
     type: K,
-    handler: IClientMethodHandlers<TResult, TBody>[K]
+    handler: IClientMethodHandlers<TSchema>[K]
   ) {
     this.handlers[type] = handler;
     return this;
   }
 
-  public compile<K extends keyof IClientMethodHandlers>(
+  public compile<K extends keyof IClientMethodHandlers<any>>(
     type: K,
-    context: Parameters<IClientMethodHandlers<TResult, TBody>[K]>[0]
+    context: Parameters<IClientMethodHandlers<TSchema>[K]>[0]
   ) {
-    const handler: THandler<any, TResult, TBody> = this.handlers[type];
+    const handler: THandler<any, any> = this.handlers[type];
     return handler(context);
   }
 
-  static build<TResult = void, TBody = void>() {
-    return new ClientMethod<TResult, TBody>();
+  static build<TSchema extends IClientMethodSchema>() {
+    return new ClientMethod<TSchema>();
   }
 }

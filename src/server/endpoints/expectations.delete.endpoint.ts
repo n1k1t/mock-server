@@ -1,9 +1,13 @@
 import { Endpoint } from '../models';
 
 export default Endpoint
-  .build<null, { body: void | { ids?: string[] } }>()
-  .bindToHttp(<const>{ method: 'DELETE', path: '/_mock/expectations' })
-  .assignHandler(async ({ reply, incoming, server }) => {
-    await server.client.deleteExpectations(incoming.body);
+  .build<{
+    incoming: { data: void | { ids?: string[] } };
+    outgoing: null;
+  }>()
+  .bindToHttp(<const>{ method: 'DELETE', path: '/expectations' })
+  .assignHandler(async ({ reply, incoming, provider }) => {
+    await provider.client.deleteExpectations(incoming.data);
     reply.ok(null);
-  });
+  })
+  .compile();

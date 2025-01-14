@@ -1,8 +1,8 @@
 import type { TFunction } from '../../types';
 import type {
   ExtractExpectationContextValue,
-  IExpectationOperatorContext,
-  IExpectationOperatorContextInput,
+  IExpectationSchemaContext,
+  IExpectationSchemaInput,
   TExpectationOperatorLocation,
   TExpectationOperatorObjectLocation,
 } from '../../expectations';
@@ -19,8 +19,8 @@ import type SetExpectationOperator from '../../expectations/operators/set.operat
 import type SwitchExpectationOperator from '../../expectations/operators/switch.operator';
 
 export interface ICompiledExpectationOperators<
-  TInput extends IExpectationOperatorContextInput,
-  TContext extends IExpectationOperatorContext<TInput> = IExpectationOperatorContext<TInput>
+  TInput extends IExpectationSchemaInput,
+  TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
 > {
   not<S extends NotExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $not: S };
   and<S extends AndExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $and: S };
@@ -57,7 +57,7 @@ export interface ICompiledExpectationOperators<
   has<
     K extends TExpectationOperatorLocation,
     S extends HasExpectationOperator<TContext, K>['TSchema']
-  >(location: K, command: Omit<S, '$location'>): {
+  >(location: K, command?: Omit<S, '$location'>): {
     $has: S & { $location: K };
   };
 
@@ -121,8 +121,8 @@ export interface ICompiledExpectationOperators<
 }
 
 export const compileExpectationOperators = <
-  TInput extends IExpectationOperatorContextInput,
-  TContext extends IExpectationOperatorContext<TInput> = IExpectationOperatorContext<TInput>
+  TInput extends IExpectationSchemaInput,
+  TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
 >() => ({
   not: (command) => ({ $not: command }),
   and: (command) => ({ $and: command }),
@@ -152,7 +152,7 @@ export const compileExpectationOperators = <
 
   has: <K extends TExpectationOperatorLocation>(
     $location: K,
-    predicate: object | '$path' | '$jsonPath',
+    predicate?: object | '$path' | '$jsonPath',
     value?: unknown,
     command?: object
   ) => ({

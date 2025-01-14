@@ -4,7 +4,9 @@ import { Component } from './component';
 import { TFunction } from '../../../types';
 
 interface IContainerEvents {
-  intialize: [Container];
+  initialize: [Container];
+  refresh: [Container];
+  select: [Container];
 }
 
 export class Container extends Component {
@@ -17,7 +19,15 @@ export class Container extends Component {
 
   public initialize() {
     this.storage.sync();
-    return this.emit('intialize', this);
+    return this.emit('initialize', this);
+  }
+
+  public refresh() {
+    return this.emit('refresh', this);
+  }
+
+  public select() {
+    return this.emit('select', this);
   }
 
   public on<K extends keyof IContainerEvents>(event: K, handler: TFunction<unknown, IContainerEvents[K]>) {

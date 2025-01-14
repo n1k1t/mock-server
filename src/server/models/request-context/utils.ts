@@ -1,11 +1,12 @@
+import { IncomingMessage, ServerResponse } from 'http';
 import { parse as parseQueryString } from 'querystring';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { parse as parseUrl } from 'url';
-import { IncomingMessage } from 'http';
+import bodyParser from 'body-parser';
 import _ from 'lodash';
 
 import { IRequestContextIncoming } from './types';
-import { TRequestPayloadType } from '../../../types';
+import { TRequestPayloadType } from '../../types';
 import { parseJsonSafe } from '../../../utils';
 
 const xmlParser = new XMLParser({
@@ -27,7 +28,7 @@ const parseQuerySearch = (queryString: string): Record<string, unknown> =>
   }, {});
 
 
-export const extractPayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType => {
+export const extractPayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType | null => {
   const contentTypeKey = Object.keys(headers).find((key) => key.toLowerCase() === 'content-type');
   const contextType = _.flatten([_.get(headers, contentTypeKey ?? '', '')]).join(',').toLowerCase();
 
@@ -38,7 +39,7 @@ export const extractPayloadType = (headers: IncomingMessage['headers']): TReques
     return 'xml'
   }
 
-  return 'plain';
+  return null;
 }
 
 export const parsePayload = (type: TRequestPayloadType, raw: string): object | undefined => {
@@ -64,13 +65,29 @@ export const serializePayload = (type: TRequestPayloadType, payload: object | nu
   return '';
 }
 
-export const extractHttpIncommingParameters = (
-  request: IncomingMessage & { parsed: { raw: string, type?: TRequestPayloadType, payload?: object } }
-): IRequestContextIncoming => {
+export const extractHttpIncommingContext = async (request: IncomingMessage): Promise<IRequestContextIncoming> => {
   const { pathname, query: rawQuery } = parseUrl(request.url ?? '');
 
-  const type = request.parsed.type ?? extractPayloadType(request.headers);
+  const type = extractPayloadType(request.headers) ?? 'plain';
   const query = parseQuerySearch(rawQuery ?? '');
+
+  const headers = Object
+    .entries(request.headers)
+    .map(([name, values]) => [name.toLowerCase(), _.flatten([values]).map((value) => String(value)).sort().join(',')])
+    .reduce((acc, [name, value]) => _.set(acc, name, value), {});
+
+  const dataRaw = await new Promise<string | null>((resolve, reject) =>
+    bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) => {
+      if (error) {
+        return reject(error);
+      }
+
+      const body = _.get(request, 'body');
+      return resolve(Buffer.isBuffer(body) ? body.toString() : null);
+    })
+  );
+
+  const data = dataRaw ? parsePayload(type, dataRaw) : undefined;
 
   return {
     type,
@@ -78,17 +95,10 @@ export const extractHttpIncommingParameters = (
     method: String(request.method ?? 'GET').toUpperCase(),
     path: pathname ?? '/',
 
+    headers,
     query,
 
-    bodyRaw: request.parsed.raw,
-    body: 'payload' in request.parsed ? request.parsed.payload : parsePayload(type, request.parsed.raw),
-
-    headers: Object
-      .entries(request.headers)
-      .map(([name, values]) => [
-        name.toLowerCase(),
-        _.flatten([values]).map((value) => String(value)).sort().join(',')
-      ])
-      .reduce((acc, [name, value]) => _.set(acc, name, value), {}),
-  }
+    data,
+    dataRaw: dataRaw ?? undefined,
+  };
 }

@@ -263,30 +263,30 @@ describe('Expectations.Operators.Has', () => {
     });
   });
 
-  describe('incoming.body', () => {
+  describe('incoming.data', () => {
     it('should match by schema using match', () => {
       const operator = new operators.$has<any>(operators, {
-        $location: 'incoming.body',
+        $location: 'incoming.data',
         $match: { foo: { bar: 1 } },
       });
 
-      expect(operator.match({ incoming: { body: { foo: { bar: 1 } } } })).toBeTruthy();
-      expect(operator.match({ incoming: { body: { foo: { bar: 2 } } } })).toBeFalsy();
-      expect(operator.match({ incoming: { body: {} } })).toBeFalsy();
+      expect(operator.match({ incoming: { data: { foo: { bar: 1 } } } })).toBeTruthy();
+      expect(operator.match({ incoming: { data: { foo: { bar: 2 } } } })).toBeFalsy();
+      expect(operator.match({ incoming: { data: {} } })).toBeFalsy();
     });
 
     it('should match by schema using matchAnyOf', () => {
       const operator = new operators.$has<any>(operators, {
-        $location: 'incoming.body',
+        $location: 'incoming.data',
         $matchAnyOf: [{ foo: { bar: 1 } }, { baz: 2 }],
       });
 
-      expect(operator.match({ incoming: { body: { foo: { bar: 1 } } } })).toBeTruthy();
-      expect(operator.match({ incoming: { body: { baz: 2 } } })).toBeTruthy();
+      expect(operator.match({ incoming: { data: { foo: { bar: 1 } } } })).toBeTruthy();
+      expect(operator.match({ incoming: { data: { baz: 2 } } })).toBeTruthy();
 
-      expect(operator.match({ incoming: { body: { foo: { bar: 2 } } } })).toBeFalsy();
-      expect(operator.match({ incoming: { body: { baz: 1 } } })).toBeFalsy();
-      expect(operator.match({ incoming: { body: {} } })).toBeFalsy();
+      expect(operator.match({ incoming: { data: { foo: { bar: 2 } } } })).toBeFalsy();
+      expect(operator.match({ incoming: { data: { baz: 1 } } })).toBeFalsy();
+      expect(operator.match({ incoming: { data: {} } })).toBeFalsy();
     });
   });
 

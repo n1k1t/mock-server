@@ -35,14 +35,14 @@ describe('Expectations.Operators.Merge', () => {
 
   it('should manipulate by schema using jsonPath', () => {
     const operator = new operators.$merge(operators, {
-      $location: 'incoming.body',
+      $location: 'incoming.data',
       $jsonPath: '$.foo[*]',
       $value: { test: true },
     });
 
     const context = operator.manipulate<any>(buildExpectationContext());
 
-    expect(context.incoming.body.foo[0].test).toBeTruthy();
-    expect(context.incoming.body.foo[1].test).toBeTruthy();
+    expect(context.incoming.data.foo[0].test).toBeTruthy();
+    expect(context.incoming.data.foo[1].test).toBeTruthy();
   });
 });

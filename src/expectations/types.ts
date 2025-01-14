@@ -1,10 +1,12 @@
 import type { AxiosProxyConfig } from 'axios';
+import type { Observable } from 'rxjs';
 import type { faker } from '@faker-js/faker';
 import type dayjs from 'dayjs';
+import type * as rxjs from 'rxjs';
 import type _ from 'lodash';
 
-import type { ConvertTupleToUnion, ExtractObjectValueByPath, PartialDeep, TRequestProtocol } from '../types';
-import type { Container, ContainersStorage, RequestContextSnapshot } from '../server/models';
+import type { Container, IRequestContextIncoming, IRequestContextOutgoing, RequestContextSnapshot } from '../server/models';
+import type { ConvertTupleToUnion, ExtractObjectValueByPath } from '../types';
 import type { MetaContext } from '../meta';
 import type { Logger } from '../logger';
 
@@ -20,9 +22,6 @@ import type MergeExpectationOperator from './operators/merge.operator';
 import type RemoveExpectationOperator from './operators/remove.operator';
 import type ExecExpectationOperator from './operators/exec.operator';
 import type SwitchExpectationOperator from './operators/switch.operator';
-
-export type TExpectationType = ConvertTupleToUnion<typeof LExpectationType>;
-export const LExpectationType = <const>['HTTP'];
 
 export type TExpectationFlatOperator = ConvertTupleToUnion<typeof LExpectationFlatOperator>;
 export const LExpectationFlatOperator = <const>['$set', '$remove', '$merge', '$exec', '$has'];
@@ -43,30 +42,38 @@ export type TExpectationContextLocation = 'request' | 'response';
 
 export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
 export const LExpectationOperatorLocation = <const>[
+  'transport',
+  'event',
+  'flags',
+
   'container',
   'cache',
   'state',
   'seed',
-
   'error',
   'delay',
 
   'path',
   'method',
-  'incoming.body',
-  'incoming.bodyRaw',
+
+  'incoming.data',
+  'incoming.dataRaw',
   'incoming.query',
   'incoming.headers',
-  'outgoing.status',
-  'outgoing.headers',
+  'incoming.stream',
+
   'outgoing.data',
   'outgoing.dataRaw',
+  'outgoing.status',
+  'outgoing.headers',
+  'outgoing.stream',
 ];
 
 export type TExpectationOperatorObjectLocation =
   | 'cache'
   | 'state'
-  | 'incoming.body'
+  | 'flags'
+  | 'incoming.data'
   | 'incoming.headers'
   | 'incoming.query'
   | 'outgoing.data'
@@ -74,27 +81,46 @@ export type TExpectationOperatorObjectLocation =
 
 export type TExpectationOperators = Omit<typeof operators, 'root'>;
 
-export interface IExpectationOperatorContextInput extends PartialDeep<
-  Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'state'>
-> {
+export interface IExpectationSchemaInput {
+  state?: Record<string, any>;
+
+  incoming?: Pick<IRequestContextIncoming, 'query' | 'data'>;
+  outgoing?: Pick<IRequestContextOutgoing, 'data'>;
+
   container?: object;
+  transport?: any;
+  event?: any;
+  flag?: any;
 }
 
-export interface IExpectationOperatorContext<TInput extends IExpectationOperatorContextInput = {}> {
-  storage: ContainersStorage<NonNullable<TInput['container']>>;
+type ExtractData<T extends IExpectationSchemaInput['incoming'] | IExpectationSchemaInput['outgoing']> =
+  'data' extends keyof T ? T['data'] : any;
+
+export interface IExpectationSchemaContext<TInput extends IExpectationSchemaInput = {}> {
+  transport: TInput['transport'];
+  event: TInput['event'];
+  flags: Partial<Record<TInput['flag'], boolean>>;
+
+  state: TInput['state'] extends object ? TInput['state'] : Record<string, any>;
+  storage: RequestContextSnapshot['storage'];
   cache: TInput extends object ? RequestContextSnapshot['cache'] : any;
-  state: TInput['state'];
 
   container?: Container<NonNullable<TInput['container']>>;
   seed?: RequestContextSnapshot['seed'];
 
-  incoming: TInput['incoming'] extends undefined
-    ? RequestContextSnapshot['incoming']
-    : RequestContextSnapshot['incoming'] & TInput['incoming'];
+  incoming: TInput['incoming'] extends object
+    ? Omit<IRequestContextIncoming, 'stream'> & TInput['incoming'] & {
+      data?: ExtractData<TInput['incoming']>;
+      stream?: Observable<ExtractData<TInput['incoming']>>;
+    }
+    : IRequestContextIncoming;
 
-  outgoing: TInput['outgoing'] extends undefined
-    ? RequestContextSnapshot['outgoing']
-    : NonNullable<RequestContextSnapshot['outgoing']> & TInput['outgoing'];
+  outgoing: TInput['outgoing'] extends object
+    ? IRequestContextOutgoing & TInput['outgoing'] & {
+      data?: ExtractData<TInput['outgoing']>;
+      stream?: Observable<ExtractData<TInput['outgoing']>>;
+    }
+    : IRequestContextOutgoing;
 };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
@@ -111,11 +137,11 @@ export type ExtractExpectationContextValueByLocation<
   TContext extends object,
   TLocation extends TExpectationOperatorLocation,
   T = ExtractObjectValueByPath<TContext, ConvertExpectationLocationToContextPath<TLocation>>,
-  U = ExtractObjectValueByPath<IExpectationOperatorContext, ConvertExpectationLocationToContextPath<TLocation>>,
+  U = ExtractObjectValueByPath<IExpectationSchemaContext, ConvertExpectationLocationToContextPath<TLocation>>,
 > = Exclude<T, never> extends never ? Exclude<U, never> extends never ? any : U : T;
 
 export type ExtractExpectationContextValue<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation,
   TPath extends string | void = void,
   T = ExtractExpectationContextValueByLocation<TContext, TLocation>,
@@ -123,21 +149,21 @@ export type ExtractExpectationContextValue<
 > = Exclude<U, never> extends never ? any : U;
 
 export type CompileExpectationOperatorValue<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation,
   TProvided = void,
   T = ExtractExpectationContextValue<TContext, TLocation>
 > = Exclude<TProvided, void> extends never ? T : TProvided;
 
 export type CompileExpectationOperatorValueWithPredicate<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation,
   TProvided = void,
   T = CompileExpectationOperatorValue<TContext, TLocation, TProvided>
 > = T extends object ? (T | object) : T;
 
 export interface IExpectationOperatorsSchema<
-  TContext extends IExpectationOperatorContext<any> = IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext = IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > {
@@ -156,41 +182,41 @@ export interface IExpectationOperatorsSchema<
   $exec?: ExecExpectationOperator<TContext>['TSchema'];
 };
 
-export interface IExpectationSchema<TContext extends IExpectationOperatorContext<any> = IExpectationOperatorContext<any>> {
+export interface IExpectationSchemaForward {
+  url?: string;
+  baseUrl?: string;
+  timeout?: number;
+
+  cache?: Pick<RequestContextSnapshot['cache'], 'key' | 'prefix' | 'ttl'> & {
+    storage?: 'redis';
+  };
+
+  options?: {
+    host?: 'origin';
+  };
+
+  proxy?: AxiosProxyConfig;
+}
+
+export interface IExpectationSchema<TContext extends IExpectationSchemaContext = IExpectationSchemaContext> {
   request?: IExpectationOperatorsSchema<TContext>;
   response?: IExpectationOperatorsSchema<TContext>;
-
-  forward?: {
-    url?: string;
-    baseUrl?: string;
-    timeout?: number;
-
-    cache?: Pick<RequestContextSnapshot['cache'], 'key' | 'prefix' | 'ttl'> & {
-      storage?: 'redis';
-    };
-
-    options?: {
-      host?: 'origin';
-    };
-
-    proxy?: AxiosProxyConfig & {
-      protocol: TRequestProtocol;
-    };
-  };
+  forward?: IExpectationSchemaForward;
 };
 
-export type IExpectationOperatorExecMode = 'match' | 'manipulate';
+export type IExpectationExecMode = 'match' | 'manipulate';
 
-export interface IExpectationOperatorExecUtils<T extends IExpectationOperatorContext<any>> {
+export interface IExpectationExecUtils<T extends IExpectationSchemaContext> {
   context: T;
   logger: Logger;
 
-  mode: IExpectationOperatorExecMode;
+  mode: IExpectationExecMode;
   meta: MetaContext;
 
   T: <T = any>(payload: unknown) => T;
 
   _: typeof _;
   d: typeof dayjs;
+  rx: typeof rxjs;
   faker: typeof faker;
 }

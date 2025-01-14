@@ -1,10 +1,11 @@
 import _ from 'lodash';
 
-import config from '../../config';
+import config, { Config } from '../../config';
 import { Endpoint } from '../models';
 
 export default Endpoint
-  .build<typeof config['storage']>()
-  .bindToHttp(<const>{ method: 'GET', path: '/_mock/config' })
-  .bindToWs(<const>{ path: 'config:get' })
-  .assignHandler(async ({ reply }) => reply.ok(config.storage));
+  .build<{ outgoing: Pick<Config['storage'], 'history'> }>()
+  .bindToHttp(<const>{ method: 'GET', path: `/config` })
+  .bindToIo(<const>{ path: 'config:get' })
+  .assignHandler(async ({ reply }) => reply.ok(_.pick(config.storage, ['history'])))
+  .compile();

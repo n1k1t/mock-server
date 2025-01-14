@@ -28,13 +28,13 @@ describe('Expectations.Operators.Remove', () => {
 
   it('should manipulate by schema using jsonPath', () => {
     const operator = new operators.$remove(operators, {
-      $location: 'incoming.body',
+      $location: 'incoming.data',
       $jsonPath: '$.foo[*].bar,baz',
     });
 
     const context = operator.manipulate<any>(buildExpectationContext());
 
-    expect(context.incoming.body.foo[0].bar).toBeUndefined();
-    expect(context.incoming.body.foo[1].baz).toBeUndefined();
+    expect(context.incoming.data.foo[0].bar).toBeUndefined();
+    expect(context.incoming.data.foo[1].baz).toBeUndefined();
   });
 });

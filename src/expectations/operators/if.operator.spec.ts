@@ -60,8 +60,8 @@ describe('Expectations.Operators.If', () => {
 
         $then: {
           $or: [
-            { $has: { $location: 'incoming.body', $path: 'foo.1.test.0', $regExp: /^2/ } },
-            { $has: { $location: 'incoming.body', $path: 'foo.1.baz.0', $regExp: /^2/ } },
+            { $has: { $location: 'incoming.data', $path: 'foo.1.test.0', $regExp: /^2/ } },
+            { $has: { $location: 'incoming.data', $path: 'foo.1.baz.0', $regExp: /^2/ } },
           ],
         },
       });
@@ -80,7 +80,7 @@ describe('Expectations.Operators.If', () => {
         },
 
         $else: {
-          $has: { $location: 'incoming.body', $path: 'foo.1.test.0', $regExp: /^2/ },
+          $has: { $location: 'incoming.data', $path: 'foo.1.test.0', $regExp: /^2/ },
         },
       });
 

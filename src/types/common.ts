@@ -76,11 +76,11 @@ export type ExtractClassMethodContext<T extends Constructable<object>, K extends
   ? [R0, R1]
   : never;
 
-export type MergeObjectsCouple<T1 extends object, T2 extends object> = keyof T2 extends never
+export type MergeObjects<T1 extends object, T2 extends object> = keyof T2 extends never
   ? T1
   : Omit<T1, keyof T2> & T2;
 
-export type MergeClassesCouple<
+export type MergeClasses<
   T1 extends Constructable<object>,
   T2 extends Constructable<object>,
 > = keyof InstanceType<T2> extends never
@@ -94,7 +94,7 @@ export type MergeClassesTuple<
 > = T extends readonly [infer R0, ...infer RN]
   ? R0 extends Constructable<object>
     ? RN extends readonly Constructable<object>[]
-      ? MergeClassesCouple<R0, MergeClassesTuple<RN>>
+      ? MergeClasses<R0, MergeClassesTuple<RN>>
       : R0
     : Constructable<{}>
   : Constructable<{}>;

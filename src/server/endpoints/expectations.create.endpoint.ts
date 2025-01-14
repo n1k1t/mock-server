@@ -1,9 +1,20 @@
-import { Expectation, TBuildExpectationConfiguration } from '../../expectations';
+import { Expectation } from '../../expectations';
 import { Endpoint } from '../models';
 
 export default Endpoint
-  .build<Expectation['TPlain'], { body: TBuildExpectationConfiguration<any> }>()
-  .bindToHttp(<const>{ method: 'POST', path: '/_mock/expectations' })
+  .build<{
+    incoming: { data: Expectation<any>['configuration'] };
+    outgoing: Expectation['TPlain'];
+  }>()
+  .bindToHttp(<const>{ method: 'POST', path: '/expectations' })
   .assignHandler(async ({ reply, incoming, server }) => {
-    reply.ok(await server.client.createExpectation(incoming.body));
-  });
+    const group = incoming.data.group ?? 'default';
+    const provider = group === 'default' ? server.providers.default : server.providers.get(group);
+
+    if (!provider) {
+      return reply.notFound();
+    }
+
+    reply.ok(await provider.client.createExpectation(incoming.data))
+  })
+  .compile();

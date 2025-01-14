@@ -13,10 +13,11 @@ module.exports = `
     </span>
   {{/compare}}
 
-  <span class="name">{{name}}</span>
+  <span class="name"><b>{{group}}</b> {{name}}</span>
 
   {{#compare format 'neq' 'short'}}
     {{#compare meta.tags.length 'gt' 0}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/compare}}
+    {{#each transports}}<span class="transport">{{this}}</span>{{/each}}
 
     {{#each meta.tags}}
       {{#compare @index 'lte' 5}}

@@ -34,7 +34,6 @@ Mock, match, modify and manipulate a HTTP request/response payload using flexibl
     - [Configuration](#configuration)
     - [Logger](#logger)
     - [Meta](#meta)
-    - [Plugins](#plugins)
 
 # Basics
 
@@ -167,8 +166,8 @@ await server.client.createExpectation({
 | | path | `path` | `string` | | Incoming request path |
 | | method | `method` | `string` | | Incoming request method in **uppercase** |
 | | headers | `incoming.headers` | `object` | | Incoming request headers with keys in **lowercase** |
-| | bodyRaw | `incoming.bodyRaw` | `string` | | Incoming request source body |
-| | body | `incoming.body` | `object` | * | Incoming request parsed body |
+| | dataRaw | `incoming.dataRaw` | `string` | | Incoming request source data |
+| | data | `incoming.data` | `object` | * | Incoming request parsed data |
 | | query | `incoming.query` | `object` | * | Incoming request query search parameters |
 | | delay | `delay` | `number` | * | Delay that can be applied with [operators](#operators) |
 | | error | `error` | `string` | * | Error that can be applied with [operators](#operators) |
@@ -302,7 +301,7 @@ await server.client.createExpectation({
   schema: {
     request: {
       $set: {
-        $location: 'incoming.body',
+        $location: 'incoming.data',
         $path: 'foo',
         $exec: (payload, { _ }) => _.clamp(payload, 0, 10),
       },
@@ -319,7 +318,7 @@ curl -H "Content-type: application/json" -X POST --location "localhost:8080/_moc
   "schema": {
     "request": {
       "\$set": {
-        "\$location": "incoming.body",
+        "\$location": "incoming.data",
         "\$path": "foo",
         "\$exec": "_.clamp(payload, 0, 10)"
       }
@@ -348,7 +347,7 @@ await server.client.createExpectation({
   schema: {
     request: {
       $merge: {
-        $location: 'incoming.body',
+        $location: 'incoming.data',
         $value: { has_mocked: true },
       },
     },
@@ -364,7 +363,7 @@ curl -H "Content-type: application/json" -X POST --location "localhost:8080/_moc
   "schema": {
     "request": {
       "\$merge": {
-        "\$location": "incoming.body",
+        "\$location": "incoming.data",
         "\$value": {"has_mocked": true}
       }
     }
@@ -723,7 +722,7 @@ Storage is a temporary storage that provides an access to read/write [containers
 | register | `(configuration: Container) => Container` | Registers a container in storage (overrides if existent) |
 | provide | `(configuration: Container) => Container` | Finds or registers a container in storage |
 
-As a temporary storage it has a job to garbage an expired containers. Use `containers.garbageInterval` to setup an interval of clearance in [configuration](#configuration)
+As a temporary storage it has a job to garbage an expired containers. Use `containers.expiredCleaningInterval` to setup an interval of clearance in [configuration](#configuration)
 
 > **!NOTE** See example of usage in [containers](#containers) section below
 
@@ -779,7 +778,7 @@ To work with cache the mock server uses [ioredis](https://www.npmjs.com/package/
 2. Preparing [request schema](#schema) in expectation...
 3. Setting up cache configuration from [context](#context) or [forward.cache](#forwarding)...
 4. If `cache.isEnabled` is equals `true` the mock server checks a cache using provided configuration
-5. If `key` was not provided a key for cache will calculated with `path`, `method`, `body` and `query` property values using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm
+5. If `key` was not provided a key for cache will calculated with `path`, `method`, `data` and `query` property values using [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) algorithm
 6. If cache was found then step `7` is skipping
 7. Forwarding a request....
 8. Preparing [response schema](#schema) in expectation...
@@ -1158,7 +1157,7 @@ config.merge({
   },
 
   containers: {
-    garbageInterval: 60 * 60, // Containers clearance interval in seconds (default: 1h)
+    expiredCleaningInterval: 60 * 60, // Expired containers cleaning interval in seconds (default: 1h)
   },
 });
 ```
@@ -1236,118 +1235,4 @@ await server.client.createExpectation({
     },
   },
 });
-```
-
-## Plugins
-
-> **!NOTE** Configuration must be provided in the same script like mock server
-
-| Plugin | Description |
-|--|--|
-| [`incoming.body`](#incomingbody) | Describes how to handle incoming body |
-| [`outgoing.response`](#outgoingresponse) | Describes how to reply |
-| [`forward.request`](#forwardrequest) | Describes how provide an [axios](https://www.npmjs.com/package/axios) request config to forward a request |
-| [`forward.response`](#forwardresponse) | Describes how to parse [axios](https://www.npmjs.com/package/axios) response of a forwarded request |
-
-### incoming.body
-
-`INPUT`
-
-| Argument | Type | Description |
-|--|--|--|
-| request | `http.IncomingMessage` | Raw HTTP request |
-
-`OUTPUT`
-
-| Property | Type | Optional | Description |
-|--|--|--|--|
-| raw | `string` | | Serialized incoming request body |
-| type | `xml ∣ json ∣ plain` | * | A type of `payload` |
-| payload | `object` | * | A payload object |
-
-**Example**
-
-```ts
-server.context.plugins.register('incoming.body', async (request) => {
-  let raw = '';
-
-  request.on('data', chunk => raw += chunk);
-  await new Promise(resolve => request.on('end', resolve));
-
-  return { raw };
-});
-```
-
-### outgoing.response
-
-`INPUT`
-
-| Argument | Type | Description |
-|--|--|--|
-| response | `http.ServerResponse` | Raw HTTP response |
-| context | `object` | A request [context](#context) |
-
-`OUTPUT`
-
-| Type | Description |
-|--|--|
-| `unknown` | Result is not handing |
-
-**Example**
-
-```ts
-server.context.plugins.register('outgoing.response', (response, context) => {
-  context.response.writeHead(context.outgoing.status ?? 200, context.outgoing.headers);
-  context.response.write(context.outgoing.dataRaw);
-  context.response.end();
-});
-```
-
-### forward.request
-
-`INPUT`
-
-| Argument | Type | Description |
-|--|--|--|
-| config | `AxiosRequestConfig` | An [axios](https://www.npmjs.com/package/axios) request config |
-| context | `object` | A request [context](#context) |
-
-`OUTPUT`
-
-| Type | Description |
-|--|--|
-| `AxiosRequestConfig` | An [axios](https://www.npmjs.com/package/axios) request config |
-
-**Example**
-
-```ts
-server.context.plugins.register('forward.request', (config) => ({
-  ...config,
-  url: config.url.replace('/api_v1', '/api_v2'),
-}));
-```
-
-### forward.response
-
-`INPUT`
-
-| Argument | Type | Description |
-|--|--|--|
-| config | `AxiosResponse` | An [axios](https://www.npmjs.com/package/axios) response |
-| context | `object` | A request [context](#context) |
-
-`OUTPUT`
-
-| Property | Type | Optional | Description |
-|--|--|--|--|
-| raw | `string` | | Serialized incoming request body |
-| type | `xml ∣ json ∣ plain` | * | A type of `payload` |
-| payload | `object` | * | A payload object |
-
-**Example**
-
-```ts
-server.context.plugins.register('forward.response', async (response: AxiosResponse<Buffer>) => ({
-  raw: response.data.toString(),
-}));
 ```

@@ -1,48 +1,71 @@
-import type { HttpRequestContext, IRequestContextIncoming, WsRequestContext } from './request-context';
-import type { OmitPartial, TFunction } from '../../types';
-import type { IBaseRouteResponse } from './reply';
+import type { InternalHttpRequestContext, InternalSocketIoRequestContext } from '../transports';
+import type { SetRequiredKeys, TFunction } from '../../types';
+
+export interface IEndpointResponse<T> {
+  status: 'OK' | 'INTERNAL_ERROR' | 'VALIDATION_ERROR' | 'NOT_FOUND';
+  data: T;
+}
+
+export interface IEndpointInput {
+  incoming?: {
+    query?: any;
+    data?: any;
+  };
+
+  outgoing?: any;
+}
+
+export interface IEndpointSchema<TInput extends IEndpointInput> {
+  incoming: SetRequiredKeys<{
+    data?: NonNullable<TInput['incoming']>['data'];
+    query?: NonNullable<TInput['incoming']>['query'];
+  }, Extract<keyof NonNullable<TInput['incoming']>, 'query' | 'data'>>;
+
+  outgoing: IEndpointResponse<TInput['outgoing']>;
+}
 
 export class Endpoint<
-  TResponse = unknown,
-  TRequest extends Partial<Pick<IRequestContextIncoming, 'body' | 'query'>> = {}
+  TInput extends IEndpointInput = {},
+  TSchema extends IEndpointSchema<TInput> = IEndpointSchema<TInput>
 > {
-  public TResponse!: IBaseRouteResponse<TResponse>;
-  public TParameters!: {
-    body: 'body' extends keyof TRequest ? TRequest['body'] : (void | undefined);
-    query: 'query' extends keyof TRequest ? TRequest['query'] : (void | undefined);
-  };
+  public TSchema!: TSchema;
+  public TCompiled!: SetRequiredKeys<Endpoint<TInput, TSchema>, 'handler'>;
 
-  public handler?: TFunction<unknown, [
-    (HttpRequestContext<TResponse> | WsRequestContext<TResponse>) & {
-      incoming: OmitPartial<Endpoint<TResponse, TRequest>['TParameters']>;
+  public handler?: TFunction<any, [
+    (InternalHttpRequestContext<TSchema['outgoing']['data']> | InternalSocketIoRequestContext<TSchema['outgoing']['data']>) & {
+      incoming: TSchema['incoming'];
     }
   ]>;
-
-  public ws?: {
-    path: string;
-  };
 
   public http?: {
     method: string;
     path: string;
   };
 
-  public bindToHttp<This extends NonNullable<Endpoint<TResponse, TRequest>['http']>>(http: This) {
+  public io?: {
+    path: string;
+  };
+
+  public bindToHttp<This extends NonNullable<Endpoint<TInput, TSchema>['http']>>(http: This) {
     return Object.assign(this, { http });
   }
 
-  public bindToWs<Q extends NonNullable<Endpoint<TResponse, TRequest>['ws']>>(ws: Q) {
-    return Object.assign(this, { ws });
+  public bindToIo<Q extends NonNullable<Endpoint<TInput, TSchema>['io']>>(io: Q) {
+    return Object.assign(this, { io });
   }
 
-  public assignHandler<Q extends NonNullable<Endpoint<TResponse, TRequest>['handler']>>(handler: Q) {
+  public assignHandler<Q extends NonNullable<Endpoint<TInput, TSchema>['handler']>>(handler: Q) {
     return Object.assign(this, { handler });
   }
 
+  public compile<This extends Endpoint<TInput, TSchema>['TCompiled']>(this: This) {
+    return this;
+  }
+
   static build<
-    TResponse = unknown,
-    TRequest extends Partial<Pick<IRequestContextIncoming, 'body' | 'query'>> = {}
+    TInput extends IEndpointInput = {},
+    TSchema extends IEndpointSchema<TInput> = IEndpointSchema<TInput>
   >() {
-    return new Endpoint<TResponse, TRequest>();
+    return new Endpoint<TInput, TSchema>();
   }
 }

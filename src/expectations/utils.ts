@@ -4,7 +4,7 @@ import {
   IExpectationSchema,
   LExpectationFlatOperator,
   TExpectationFlatOperator,
-  IExpectationOperatorContext,
+  IExpectationSchemaContext,
   TExpectationOperatorLocation,
 } from './types';
 
@@ -16,21 +16,21 @@ type TExtractedContext =
 
 export const checkIsLocationInContext = (
   location: TExpectationOperatorLocation,
-  context: IExpectationOperatorContext<any>
+  context: IExpectationSchemaContext
 ): boolean => {
   switch(location) {
     case 'delay':
     case 'error':
     case 'method':
-    case 'path': return _.has(context.incoming, location);
+    case 'path': return context.incoming[location] !== undefined;
 
-    default: return _.has(context, location);
+    default: return _.get(context, location) !== undefined;
   }
 }
 
 export const extractContextByLocation = (
   location: TExpectationOperatorLocation,
-  context: IExpectationOperatorContext<any>
+  context: IExpectationSchemaContext
 ): TExtractedContext | null => {
   switch(location) {
     case 'path': return {
@@ -47,18 +47,18 @@ export const extractContextByLocation = (
       value: context.incoming?.method,
     };
 
-    case 'incoming.body': return {
-      key: 'incoming.body',
+    case 'incoming.data': return {
+      key: 'incoming.data',
       type: 'object',
       parent: context,
-      value: context.incoming?.body,
+      value: context.incoming?.data,
     };
 
-    case 'incoming.bodyRaw': return {
-      key: 'incoming.bodyRaw',
+    case 'incoming.dataRaw': return {
+      key: 'incoming.dataRaw',
       type: 'string',
       parent: context,
-      value: context.incoming?.bodyRaw,
+      value: context.incoming?.dataRaw,
     };
 
     case 'incoming.query': return {
@@ -73,6 +73,13 @@ export const extractContextByLocation = (
       type: 'object',
       parent: context,
       value: context.incoming?.headers,
+    };
+
+    case 'incoming.stream': return {
+      key: 'incoming.stream',
+      type: 'object',
+      parent: context,
+      value: context.incoming.stream,
     };
 
     case 'outgoing.data': return {
@@ -101,6 +108,13 @@ export const extractContextByLocation = (
       type: 'number',
       parent: context,
       value: context.outgoing?.status,
+    };
+
+    case 'outgoing.stream': return {
+      key: 'outgoing.stream',
+      type: 'object',
+      parent: context,
+      value: context.outgoing.stream,
     };
 
     case 'delay': return {
@@ -143,7 +157,28 @@ export const extractContextByLocation = (
       type: 'object',
       parent: context,
       value: context.container,
-    }
+    };
+
+    case 'transport': return {
+      key: 'transport',
+      type: 'string',
+      parent: context,
+      value: <string>context.transport,
+    };
+
+    case 'event': return {
+      key: 'event',
+      type: 'string',
+      parent: context,
+      value: <string>context.event,
+    };
+
+    case 'flags': return {
+      key: 'flags',
+      type: 'object',
+      parent: context,
+      value: context.flags,
+    };
 
     default: return null;
   }

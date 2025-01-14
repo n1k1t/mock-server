@@ -4,15 +4,20 @@ import { ClientMethod } from '../models';
 import { TEndpoints } from '../types';
 import { cast } from '../../utils';
 
+import config from '../../config';
+
 export default ClientMethod
-  .build<TEndpoints['createExpectation']['result'], TEndpoints['createExpectation']['body']>()
-  .provide('remote', (instance) => async (body) => {
+  .build<{
+    incoming: TEndpoints['createExpectation']['incoming']['data'];
+    outgoing: TEndpoints['createExpectation']['outgoing']['data'];
+  }>()
+  .register('remote', (instance) => async (body) => {
     const response = await instance
-      .request<TEndpoints['createExpectation']['response']>({
+      .request<TEndpoints['createExpectation']['outgoing']>({
         data: prepareExpectationBodyToRequest(body),
 
         ...cast<TEndpoints['createExpectation']['location']>({
-          url: '/_mock/expectations',
+          url: `${config.get('routes').internal.root}/expectations`,
           method: 'POST',
         }),
       })
@@ -20,12 +25,15 @@ export default ClientMethod
 
     return response.data.data;
   })
-  .provide('onsite', (context) => async (body) => {
-    const result = context.storages.expectations.register(body);
+  .register('onsite', (provider) => async (body) => {
+    const result = provider.storages.expectations.register(Object.assign(body, {
+      group: provider.group,
+    }));
+
     if (result.status === 'ERROR') {
       throw new ValidationError({}, result.reasons);
     }
 
-    context.exchanges.ws.publish('expectation:added', result.expectation.toPlain());
+    provider.exchanges.io.publish('expectation:added', result.expectation.toPlain());
     return result.expectation.toPlain();
   });

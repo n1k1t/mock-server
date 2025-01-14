@@ -1,10 +1,8 @@
-import type { RedisOptions } from 'ioredis';
-
 import merge from 'deepmerge';
 import path from 'path';
 
-import type { TLoggerLevel } from '../logger';
 import type { PartialDeep, SetRequiredKeys } from '../types';
+import type { TLoggerLevel } from '../logger';
 
 import { cast } from '../utils';
 
@@ -12,34 +10,28 @@ const checkIsTypeScriptRuntime = (): boolean => path.parse(__filename).ext === '
 const getPathToRoot = (): string => path.resolve(__dirname, checkIsTypeScriptRuntime() ? '' : '../', '../../');
 
 export class Config {
-  public storage = merge({
+  public storage = merge(<const>{
     statics: {
       public: {
         dir: path.resolve(getPathToRoot(), 'public'),
       },
     },
 
-    gui: {
-      title: 'Mock server',
-      route: '/_mock/gui',
+    routes: {
+      internal: {
+        root: '/_mock',
+        gui: '/gui',
+      },
     },
 
     history: {
       limit: 100,
     },
 
-    containers: {
-      /**
-       * Seconds
-       */
-      garbageInterval: 60 * 60,
-    },
-
     logger: {
       level: cast<TLoggerLevel>('D'),
     },
 
-    redis: cast<RedisOptions | undefined>(undefined),
   }, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));
 
   public get<K extends keyof Config['storage']>(key: K): Config['storage'][K] {

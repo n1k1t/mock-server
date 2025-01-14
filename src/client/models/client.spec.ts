@@ -40,6 +40,8 @@ const buildClient = () => new Client({
       Object.assign(Expectation.build({ ...set, schema: set.schema ?? {} }).toPlain(), { id })
     )
   ),
+
+  updateExpectationsGroup: () => Promise.resolve([]),
 });
 
 describe('Client.Models.Client', () => {
@@ -73,7 +75,7 @@ describe('Client.Models.Client', () => {
               { $has: { $location: 'incoming.query', $valueAnyOf: [{ foo: 'a' }, { foo: 'b' }] } },
               { $has: { $location: 'incoming.query', $match: { foo: 'a' } } },
               { $has: { $location: 'incoming.query', $matchAnyOf: [{ foo: 'a' }, { foo: 'b' }] } },
-              { $has: { $location: 'incoming.query', $exec: (payload, { T }) => T(payload)?.foo === 'a' } },
+              { $has: { $location: 'incoming.query', $exec: (payload) => payload?.foo === 'a' } },
 
               { $has: { $location: 'incoming.query', $path: 'foo', $value: 'a' } },
               { $has: { $location: 'incoming.query', $path: 'foo', $valueAnyOf: ['a', 'b'] } },
@@ -83,27 +85,27 @@ describe('Client.Models.Client', () => {
               { $has: { $location: 'incoming.query', $path: 'foo', $regExpAnyOf: [/a/i, /b/i] } },
               { $has: { $location: 'incoming.query', $path: 'foo', $exec: (payload) => payload === 'a' } },
 
-              { $has: { $location: 'incoming.body' } },
+              { $has: { $location: 'incoming.data' } },
 
-              { $has: { $location: 'incoming.body', $value: { foo: 'a', bar: ['a'] } } },
-              { $has: { $location: 'incoming.body', $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }] } },
-              { $has: { $location: 'incoming.body', $match: { foo: 'a', baz: { foo: 1 } } } },
-              { $has: { $location: 'incoming.body', $matchAnyOf: [{ baz: {} }, { bar: [] }] } },
-              { $has: { $location: 'incoming.body', $exec: (payload, { T }) => T(payload)?.baz?.foo === 1 } },
+              { $has: { $location: 'incoming.data', $value: { foo: 'a', bar: ['a'] } } },
+              { $has: { $location: 'incoming.data', $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }] } },
+              { $has: { $location: 'incoming.data', $match: { foo: 'a', baz: { foo: 1 } } } },
+              { $has: { $location: 'incoming.data', $matchAnyOf: [{ baz: {} }, { bar: [] }] } },
+              { $has: { $location: 'incoming.data', $exec: (payload) => payload?.baz?.foo === 1 } },
 
-              { $has: { $location: 'incoming.body', $path: 'baz', $value: { foo: 1, bar: 1 } } },
-              { $has: { $location: 'incoming.body', $path: 'baz', $valueAnyOf: [{ foo: 1 }, { bar: 1 }] } },
-              { $has: { $location: 'incoming.body', $path: 'baz', $match: { foo: 1 } } },
-              { $has: { $location: 'incoming.body', $path: 'baz', $matchAnyOf: [{}, { foo: '1' }] } },
-              { $has: { $location: 'incoming.body', $path: 'baz', $exec: (payload, { T }) => T(payload)?.foo === 1 } },
+              { $has: { $location: 'incoming.data', $path: 'baz', $value: { foo: 1, bar: 1 } } },
+              { $has: { $location: 'incoming.data', $path: 'baz', $valueAnyOf: [{ foo: 1 }, { bar: 1 }] } },
+              { $has: { $location: 'incoming.data', $path: 'baz', $match: { foo: 1 } } },
+              { $has: { $location: 'incoming.data', $path: 'baz', $matchAnyOf: [{}, { foo: '1' }] } },
+              { $has: { $location: 'incoming.data', $path: 'baz', $exec: (payload) => payload?.foo === 1 } },
 
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $value: [1] } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $valueAnyOf: [[1], [1, 2]] } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $match: '*' } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $matchAnyOf: ['1', '2'] } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $regExp: /1/ } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $regExpAnyOf: [/1/, /2/] } },
-              { $has: { $location: 'incoming.body', $path: 'baz.baz', $exec: (payload) => payload === 1 } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $value: [1] } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $valueAnyOf: [[1], [1, 2]] } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $match: '*' } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $matchAnyOf: ['1', '2'] } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $regExp: /1/ } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $regExpAnyOf: [/1/, /2/] } },
+              { $has: { $location: 'incoming.data', $path: 'baz.baz', $exec: (payload) => payload === 1 } },
             ],
           },
 
@@ -151,7 +153,7 @@ describe('Client.Models.Client', () => {
                     'a': {
                       $and: [{
                         $exec: ({ context }) => {
-                          if (context.incoming.body?.foo === 'a') {
+                          if (context.incoming.data?.foo === 'a') {
                             context.outgoing!.status = 200;
                           }
                         },
@@ -207,31 +209,31 @@ describe('Client.Models.Client', () => {
             $.has('incoming.query', '$path', 'foo', { $regExpAnyOf: [/a/i, /b/i] }),
             $.has('incoming.query', '$path', 'foo', { $exec: (payload) => payload === 'a' }),
 
-            $.has('incoming.body', {}),
+            $.has('incoming.data', {}),
 
-            $.has('incoming.body', { $value: { foo: 'a', bar: ['a'] } }),
-            $.has('incoming.body', { $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }] }),
-            $.has('incoming.body', { $match: { foo: 'a', baz: { foo: 1 } } }),
-            $.has('incoming.body', { $matchAnyOf: [{ baz: {} }, { bar: [] }] }),
-            $.has('incoming.body', { $exec: (payload) => payload?.baz?.foo === 1 }),
+            $.has('incoming.data', { $value: { foo: 'a', bar: ['a'] } }),
+            $.has('incoming.data', { $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }] }),
+            $.has('incoming.data', { $match: { foo: 'a', baz: { foo: 1 } } }),
+            $.has('incoming.data', { $matchAnyOf: [{ baz: {} }, { bar: [] }] }),
+            $.has('incoming.data', { $exec: (payload) => payload?.baz?.foo === 1 }),
 
-            $.has('incoming.body', '$path', 'baz', { $value: { foo: 1, bar: 1 } }),
-            $.has('incoming.body', '$path', 'baz', { $valueAnyOf: [{ foo: 1 }, { foo: 1, bar: 1 }] }),
-            $.has('incoming.body', '$path', 'baz', { $match: { foo: 1 } }),
-            $.has('incoming.body', '$path', 'baz', { $matchAnyOf: [{}, { foo: 1 }] }),
-            $.has('incoming.body', '$path', 'baz', { $exec: (payload) => payload?.foo === 1 }),
+            $.has('incoming.data', '$path', 'baz', { $value: { foo: 1, bar: 1 } }),
+            $.has('incoming.data', '$path', 'baz', { $valueAnyOf: [{ foo: 1 }, { foo: 1, bar: 1 }] }),
+            $.has('incoming.data', '$path', 'baz', { $match: { foo: 1 } }),
+            $.has('incoming.data', '$path', 'baz', { $matchAnyOf: [{}, { foo: 1 }] }),
+            $.has('incoming.data', '$path', 'baz', { $exec: (payload) => payload?.foo === 1 }),
 
-            $.has('incoming.body', '$jsonPath', '123.123.213', {
+            $.has('incoming.data', '$jsonPath', '123.123.213', {
               $match: {},
             }),
 
-            $.has('incoming.body', '$path', 'baz.baz', { $value: [1] }),
-            $.has('incoming.body', '$path', 'baz.baz', { $valueAnyOf: [[1], [1, 2]] }),
-            $.has('incoming.body', '$path', 'baz.baz.0', { $match: '*' }),
-            $.has('incoming.body', '$path', 'baz.baz.0', { $matchAnyOf: ['1', '2'] }),
-            $.has('incoming.body', '$path', 'baz.baz', { $regExp: /1/ }),
-            $.has('incoming.body', '$path', 'baz.baz', { $regExpAnyOf: [/1/, /2/] }),
-            $.has('incoming.body', '$path', 'baz.baz', { $exec: (payload) => payload?.[0] === 1 }),
+            $.has('incoming.data', '$path', 'baz.baz', { $value: [1] }),
+            $.has('incoming.data', '$path', 'baz.baz', { $valueAnyOf: [[1], [1, 2]] }),
+            $.has('incoming.data', '$path', 'baz.baz.0', { $match: '*' }),
+            $.has('incoming.data', '$path', 'baz.baz.0', { $matchAnyOf: ['1', '2'] }),
+            $.has('incoming.data', '$path', 'baz.baz', { $regExp: /1/ }),
+            $.has('incoming.data', '$path', 'baz.baz', { $regExpAnyOf: [/1/, /2/] }),
+            $.has('incoming.data', '$path', 'baz.baz', { $exec: (payload) => payload?.[0] === 1 }),
 
             $.switch('incoming.query', '$path', 'foo', {
               $cases: {
@@ -254,7 +256,7 @@ describe('Client.Models.Client', () => {
               $default: $.set('outgoing.data', { $value: {} }),
             }),
 
-            $.switch('incoming.body', '$path', 'baz.bar', {
+            $.switch('incoming.data', '$path', 'baz.bar', {
               $cases: {
                 1: $.and([
                   $.merge('outgoing.data', { $value: {} }),
@@ -263,7 +265,7 @@ describe('Client.Models.Client', () => {
               },
             }),
 
-            $.switch('incoming.body', '$exec', (payload) => payload.baz.bar, {
+            $.switch('incoming.data', '$exec', (payload) => payload.baz.bar, {
               $cases: {
                 1: $.and([]),
               },
@@ -273,7 +275,7 @@ describe('Client.Models.Client', () => {
               $cases: {
                 'a': $.and([
                   $.exec(({ context }) => {
-                    if (context.incoming.body.foo === 'a') {
+                    if (context.incoming.data.foo === 'a') {
                       context.outgoing!.status = 200;
                     }
                   }),

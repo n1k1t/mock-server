@@ -1,7 +1,7 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { Logger } from '../../logger';
 import {
-  IExpectationOperatorContext,
+  IExpectationSchemaContext,
   IExpectationOperatorsSchema,
   TExpectationMetaTag,
   TExpectationOperatorLocation,
@@ -10,7 +10,7 @@ import {
 const logger = Logger.build('Expectations.Operators.Root');
 
 export default class RootExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

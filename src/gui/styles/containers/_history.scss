@@ -5,7 +5,7 @@ section#history {
     &:hover div.meta {
       cursor: pointer;
 
-      span.time, span.status, span.name {
+      span.time, span.transport, span.status, span.name {
         background-color: rgba(#fff, .15);
       }
     }

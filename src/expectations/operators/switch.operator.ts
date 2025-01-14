@@ -5,8 +5,8 @@ import { extractContextByLocation } from '../utils';
 import { TFunction } from '../../types';
 import {
   CompileExpectationOperatorValue,
-  IExpectationOperatorContext,
-  IExpectationOperatorExecUtils,
+  IExpectationSchemaContext,
+  IExpectationExecUtils,
   IExpectationOperatorsSchema,
   LExpectationMetaTagLocation,
   TExpectationMetaTag,
@@ -15,7 +15,7 @@ import {
 } from '../types';
 
 export default class SwitchExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TPickLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TPickValue = void,
   TForwardLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
@@ -40,7 +40,7 @@ export default class SwitchExpectationOperator<
 
       $exec?: string | TFunction<unknown, [
         CompileExpectationOperatorValue<TContext, K, TPickValue>,
-        IExpectationOperatorExecUtils<TContext>
+        IExpectationExecUtils<TContext>
       ]>;
     }
   }[TPickLocation]

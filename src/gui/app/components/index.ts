@@ -1,4 +1,5 @@
 export * from './expectation.component';
+export * from './settings.component';
 export * from './history.component';
 export * from './curtain.component';
 export * from './loader.component';

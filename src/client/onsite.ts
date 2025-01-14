@@ -1,21 +1,29 @@
 import _ from 'lodash';
 
-import type { ServerContext } from '../server/models';
-import type { TMethodsSchema } from './types';
+import type { TEndpoints, TMethodsSchema } from './types';
+import type { Provider, IServerContext } from '../server';
+import type { Expectation } from '../expectations';
+
 import { Client } from './models';
 
 import * as methods from './methods';
 
-export class OnsiteClient extends Client {
-  constructor(context: ServerContext) {
+export class OnsiteClient<TContext extends IServerContext<any> = IServerContext<any>> extends Client<TContext> {
+  constructor(provider: Provider<any>) {
     super(
       Object
         .entries(methods)
-        .reduce((acc, [name, method]) => _.set(acc, name, method.compile('onsite', context)), <TMethodsSchema>{})
+        .reduce((acc, [name, method]) => _.set(acc, name, method.compile('onsite', provider)), <TMethodsSchema>{})
     );
   }
 
-  static build(context: ServerContext) {
-    return new OnsiteClient(context);
+  public async updateExpectationsGroup(
+    body: TEndpoints['updateExpectationsGroup']['incoming']['data']['set']
+  ): Promise<Expectation['TPlain'][]> {
+    return this.methods.updateExpectationsGroup({ set: body });
+  }
+
+  static build<TContext extends IServerContext<any>>(provider: Provider<any>) {
+    return new OnsiteClient<TContext>(provider);
   }
 }

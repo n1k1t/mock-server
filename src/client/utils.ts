@@ -2,8 +2,8 @@ import { AxiosError } from 'axios';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import type { IRequestConfiguration } from './errors/types';
-import type { IBaseRouteResponse } from '../server/models';
+import type { IRequestConfiguration } from './errors';
+import type { IEndpointResponse } from '../server';
 
 import { ConnectionError, InternalServerError, ValidationError } from './errors';
 import { serializeRegExp } from '../utils';
@@ -15,7 +15,7 @@ import {
 
 const clone = rfdc();
 
-export const handleRequestError = (error: AxiosError<IBaseRouteResponse<any>>) => {
+export const handleRequestError = (error: AxiosError<IEndpointResponse<any>>) => {
   const configuration: IRequestConfiguration = {
     baseURL: error.config.baseURL,
     method: error.config.method,
@@ -38,7 +38,7 @@ export const handleRequestError = (error: AxiosError<IBaseRouteResponse<any>>) =
   throw new InternalServerError(configuration, error.message);
 }
 
-export const prepareExpectationBodyToRequest = <T extends Partial<Expectation['TPlain']>>(body: T): T => {
+export const prepareExpectationBodyToRequest = <T extends Partial<Expectation<any>['TPlain']>>(body: T): T => {
   const cloned = clone(body.schema ?? {});
 
   Object

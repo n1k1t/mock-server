@@ -15,8 +15,8 @@ export class Container<TPayload extends object = object> {
 
   public payload = this.provided.payload;
 
-  public prefix = this.provided.prefix ?? '';
-  public key = this.prefix + this.provided.key;
+  public prefix = this.provided.prefix;
+  public key = (this.prefix ?? '') + this.provided.key;
 
   constructor(
     public provided: {

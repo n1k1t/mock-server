@@ -1,13 +1,13 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import {
-  IExpectationOperatorContext,
+  IExpectationSchemaContext,
   IExpectationOperatorsSchema,
   TExpectationMetaTag,
   TExpectationOperatorLocation,
 } from '../types';
 
 export default class NotExpectationOperator<
-  TContext extends IExpectationOperatorContext<any>,
+  TContext extends IExpectationSchemaContext,
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > extends ExpectationOperator<

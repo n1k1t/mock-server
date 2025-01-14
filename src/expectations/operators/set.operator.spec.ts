@@ -23,17 +23,17 @@ describe('Expectations.Operators.Set', () => {
     expect(context.incoming.headers.a.b.c.d).toEqual('test');
   });
 
-  it('should manipulate by schema in incoming.body using jsonPath', () => {
+  it('should manipulate by schema in incoming.data using jsonPath', () => {
     const operator = new operators.$set(operators, {
-      $location: 'incoming.body',
+      $location: 'incoming.data',
       $jsonPath: '$.foo[*].bar,baz',
       $value: { test: true },
     });
 
     const context = operator.manipulate<any>(buildExpectationContext());
 
-    expect(context.incoming.body.foo[0].bar.test).toBeTruthy();
-    expect(context.incoming.body.foo[1].baz.test).toBeTruthy();
+    expect(context.incoming.data.foo[0].bar.test).toBeTruthy();
+    expect(context.incoming.data.foo[1].baz.test).toBeTruthy();
   });
 
   it('should manipulate by schema in incoming.query', () => {

@@ -1,14 +1,15 @@
-import { History } from '../history';
-import { Endpoint } from '../models';
+import { History, Endpoint } from '../models';
 
 export default Endpoint
-  .build<History['TPlain'][]>()
-  .bindToHttp(<const>{ method: 'GET', path: '/_mock/history' })
-  .bindToWs(<const>{ path: 'history:get' })
-  .assignHandler(({ reply, server }) =>
-    reply.ok(
-      [...server.storages.history.values()]
-        .sort((a, b) => b.meta.requestedAt - a.meta.requestedAt)
-        .map((history) => history.toPlain())
-    )
-  );
+  .build<{ outgoing: History['TPlain'][] }>()
+  .bindToHttp(<const>{ method: 'GET', path: '/history' })
+  .bindToIo(<const>{ path: 'history:get-list' })
+  .assignHandler(({ reply, server }) => {
+    const history = [...server.providers.values()].reduce<History[]>(
+      (acc, provider) => acc.concat([...provider.storages.history.values()]),
+      []
+    );
+
+    reply.ok(history.sort((a, b) => b.meta.requestedAt - a.meta.requestedAt).map((history) => history.toPlain()));
+  })
+  .compile();

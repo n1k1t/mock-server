@@ -1,52 +1,53 @@
-import { io } from 'socket.io-client';
+import { io as connectIo } from 'socket.io-client';
 
-import type { IWsExchangeEventToPayloadMap } from '../../server/ws-exchange';
-import type { PopupsComponent } from './components';
+import type { ISocketIoExchangeEventToPayloadMap } from '../../server';
+import type { PopupsComponent, SettingsComponent } from './components';
 import type { TEndpoints } from '../../client';
 import type { Config } from '../../config/model';
+
+import type * as containers from './containers';
 
 import { DynamicStorage } from './models';
 import { cast } from '../../utils/common';
 
-type ExtractWsEndpointPath<K extends keyof TEndpoints> = NonNullable<TEndpoints[K]['ws']> extends { path: infer R }
+type ExtractWsEndpointPath<K extends keyof TEndpoints> = NonNullable<TEndpoints[K]['io']> extends { path: infer R }
   ? R extends string ? R : never
   : never;
 
 type TWsEndpoints = { [K in keyof TEndpoints as ExtractWsEndpointPath<K>]-?: TEndpoints[K] };
 
 interface IContextShared {
+  containers: typeof containers;
+  groups: Set<string>;
+
   popups: PopupsComponent;
+  settings: SettingsComponent;
 }
 
-const ws = io(location.origin);
+const io = connectIo(location.origin);
 
 class Context {
-  public config = cast<Pick<Config['storage'], 'gui' | 'history'>>({
-    gui: {
-      title: 'Mock server',
-      route: 'about:blank',
-    },
-
+  public config = cast<Pick<Config['storage'], 'history'>>({
     history: {
       limit: 100,
     },
   });
 
   public instances = {
-    ws,
+    io,
   };
 
   public services = {
-    ws: {
+    io: {
       exec: <K extends keyof TWsEndpoints & string>(
         path: K,
-        body?: TWsEndpoints[K]['body']
-      ): Promise<TWsEndpoints[K]['response']> => new Promise((resolve) => ws.emit(path, body, resolve)),
+        body?: TWsEndpoints[K]['incoming']['data']
+      ): Promise<TWsEndpoints[K]['outgoing']> => new Promise((resolve) => io.emit(path, body, resolve)),
 
       subscribe: <
-        K extends keyof IWsExchangeEventToPayloadMap,
-        T extends IWsExchangeEventToPayloadMap[K]
-      >(channel: K, handler: (payload: T) => unknown) => ws.on(<string>channel, handler)
+        K extends keyof ISocketIoExchangeEventToPayloadMap,
+        T extends ISocketIoExchangeEventToPayloadMap[K]
+      >(channel: K, handler: (payload: T) => unknown) => io.on(<string>channel, handler)
     },
   };
 

@@ -1,44 +1,43 @@
+import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import type { IRequestContextCache, IRequestContextIncoming, IRequestContextOutgoing } from './types';
 import type { Container, ContainersStorage } from '../containers';
-import type { HttpRequestContext } from './http';
+import type { IServerContext } from '../../types';
+import type {
+  IRequestContextCacheConfiguration,
+  IRequestContextIncoming,
+  IRequestContextOutgoing,
+  IRequestContextMessage,
+  IRequestContextForwarded,
+} from './types';
 
-const buildEmptyOutgoing = (incoming: IRequestContextIncoming): IRequestContextOutgoing => ({
-  type: incoming.type,
-  status: 200,
+const clone = rfdc();
 
-  data: incoming.type === 'plain' ? '' : {},
-  dataRaw: '',
+export class RequestContextSnapshot<TContext extends IServerContext<any> = IServerContext<any>> {
+  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage'> & {
+    transport: TContext['transport'];
 
-  headers: {
-    'content-type': incoming.type === 'json'
-      ? 'application/json'
-      : incoming.type === 'xml'
-      ? 'application/xml'
-      : incoming.headers['content-type'] ?? 'text/plain',
-  },
-});
-
-export class RequestContextSnapshot {
-  public TPlain!: Omit<RequestContextSnapshot['provided'], 'container' | 'storage'> & {
     container?: Container['TPlain'];
     error?: RequestContextSnapshot['error'];
-  }
+  };
 
-  public storage: ContainersStorage<any> = this.provided.storage;
-  public cache: IRequestContextCache = this.provided.cache;
-  public state: Record<string, any> = this.provided.state;
+  public transport: TContext['transport'] = this.configuration.transport;
+  public event: TContext['event'] = this.configuration.event;
+  public flags: Partial<Record<TContext['flag'], boolean>> = this.configuration.flags;
 
-  public forwarded?: Pick<HttpRequestContext, 'incoming' | 'outgoing'> = this.provided.forwarded;
+  public storage: ContainersStorage = this.configuration.storage;
 
-  public incoming: HttpRequestContext['incoming'] = this.provided.incoming;
-  public outgoing: NonNullable<HttpRequestContext['outgoing']> = this.provided.outgoing ?? buildEmptyOutgoing(
-    this.provided.incoming
-  );
+  public cache: IRequestContextCacheConfiguration = this.configuration.cache ?? { isEnabled: false };
+  public state: object = this.configuration.state ?? {};
 
-  public container?: Container<any> = this.provided.container;
-  public seed?: number = this.provided.seed;
+  public incoming: IRequestContextIncoming = this.configuration.incoming;
+  public outgoing: IRequestContextOutgoing = this.configuration.outgoing;
+
+  public forwarded?: IRequestContextForwarded = this.configuration.forwarded;
+  public messages?: IRequestContextMessage[] = this.configuration.messages;
+
+  public container?: Container<any> = this.configuration.container;
+  public seed?: number = this.configuration.seed;
 
   public error?: {
     code?: string;
@@ -47,45 +46,60 @@ export class RequestContextSnapshot {
   };
 
   constructor(
-    private provided:
-      & Partial<Pick<RequestContextSnapshot, 'outgoing'>>
-      & Pick<RequestContextSnapshot, 'state' | 'seed' | 'container' | 'incoming' | 'forwarded' | 'storage' | 'error' | 'cache'>
+    private configuration:
+      & Pick<TContext, 'transport' | 'event'>
+      & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'event' | 'storage' | 'flags'>
+      & Partial<Pick<RequestContextSnapshot, 'messages' | 'state' | 'seed' | 'container' | 'forwarded' | 'error' | 'cache'>>
   ) {}
 
-  public assign(payload: Partial<RequestContextSnapshot['provided']>) {
+  public assign<T extends Partial<RequestContextSnapshot['configuration']>>(payload: T) {
     return Object.assign(this, payload);
   }
 
-  public pick<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Pick<RequestContextSnapshot, K> {
+  public pick<K extends keyof RequestContextSnapshot['configuration']>(keys: K[]): Pick<RequestContextSnapshot, K> {
     return _.pick(this, keys);
   }
 
-  public omit<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Omit<RequestContextSnapshot, K> {
+  public omit<K extends keyof RequestContextSnapshot['configuration']>(keys: K[]): Omit<RequestContextSnapshot, K> {
     return <Omit<RequestContextSnapshot, K>>_.omit(this, keys);
   }
 
-  public unset<K extends keyof RequestContextSnapshot['provided']>(keys: K[]): Omit<RequestContextSnapshot, K> {
+  public unset<K extends keyof RequestContextSnapshot['configuration']>(keys: K[]): Omit<RequestContextSnapshot, K> {
     keys.forEach((key) => _.unset(this, key));
-    return this;
+    return <Omit<RequestContextSnapshot, K>>this;
+  }
+
+  public clone(): this {
+    return <this>RequestContextSnapshot.build({
+      ..._.omit(this, ['incoming', 'outgoing']),
+
+      incoming: Object.assign(clone(_.omit(this.incoming, ['stream'])), _.pick(this.incoming, ['stream'])),
+      outgoing: Object.assign(clone(_.omit(this.outgoing, ['stream'])), _.pick(this.outgoing, ['stream'])),
+    });
   }
 
   public toPlain(): RequestContextSnapshot['TPlain'] {
     return {
+      transport: this.transport,
+      event: this.event,
+      flags: this.flags,
+
       state: this.state,
       cache: this.cache,
 
       seed: this.seed,
       container: this.container?.toPlain(),
 
-      incoming: this.incoming,
-      outgoing: this.outgoing,
+      incoming: _.omit(this.incoming, ['stream']),
+      outgoing: _.omit(this.outgoing, ['stream']),
+      messages: this.messages,
 
       forwarded: this.forwarded,
       error: this.error,
     };
   }
 
-  static build(provided: RequestContextSnapshot['provided']) {
-    return new RequestContextSnapshot(provided);
+  static build<TContext extends IServerContext<any>>(configuration: RequestContextSnapshot<TContext>['configuration']) {
+    return new RequestContextSnapshot<TContext>(configuration);
   }
 }
