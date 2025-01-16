@@ -48,7 +48,7 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     };
 
     context.response.writeHead(outgoing.status);
-    context.response.write(outgoing.dataRaw);
+    context.response.write(outgoing.dataRaw ?? '');
     context.response.end();
 
     return outgoing;

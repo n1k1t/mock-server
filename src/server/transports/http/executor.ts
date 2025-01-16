@@ -84,16 +84,19 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   }
 
   public async reply(context: HttpRequestContext, outgoing: IRequestContextOutgoing) {
-    outgoing.headers = Object.assign(_.omit(outgoing.headers, ['transfer-encoding']), {
-      'content-type': outgoing.headers['content-type'] ?? (
-        outgoing.type === 'json' ? 'application/json' : outgoing.type === 'xml' ? 'application/xml' : undefined
-      ),
+    outgoing.headers = _.omitBy(
+      Object.assign(_.omit(outgoing.headers, ['transfer-encoding']), {
+        'content-type': outgoing.headers['content-type'] ?? (
+          outgoing.type === 'json' ? 'application/json' : outgoing.type === 'xml' ? 'application/xml' : undefined
+        ),
 
-      ...(outgoing.dataRaw && { 'content-length': String(Buffer.from(outgoing.dataRaw).length) }),
-    });
+        ...(outgoing.dataRaw && { 'content-length': String(Buffer.from(outgoing.dataRaw).length) }),
+      }),
+      _.isNil
+    );
 
     context.response.writeHead(outgoing.status, 'OK', outgoing.headers);
-    context.response.write(outgoing.dataRaw);
+    context.response.write(outgoing.dataRaw ?? '');
     context.response.end();
 
     return outgoing;
