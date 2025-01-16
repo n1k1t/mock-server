@@ -15,7 +15,7 @@ export class InternalSocketIoExecutor extends Executor<InternalSocketIoRequestCo
     );
 
   public async exec(context: InternalSocketIoRequestContext) {
-    await this.endpoints[context.incoming.path].handler?.(context);
+    await this.endpoints[context.incoming.path]?.handler?.(context);
     return context.complete();
   }
 

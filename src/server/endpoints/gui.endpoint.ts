@@ -18,27 +18,23 @@ export default Endpoint
     const statics = config.get('statics');
 
     if (!context.incoming.path.includes(routes.internal.gui)) {
-      const outgoing: IRequestContextOutgoing = { type: 'plain', status: 404, headers: {} };
-
-      context.response.writeHead(outgoing.status).end();
-      return context.assign({ outgoing });
+      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
     }
 
     const root = routes.internal.root + routes.internal.gui;
     const parsed = path.parse(context.incoming.path.replace(root, ''));
 
     if (!parsed.dir) {
-      const outgoing: IRequestContextOutgoing = {
-        type: 'plain',
-        status: 301,
+      return context.assign({
+        outgoing: {
+          type: 'plain',
+          status: 301,
 
-        headers: {
-          Location: path.join(root, '/'),
+          headers: {
+            Location: path.join(root, '/'),
+          },
         },
-      };
-
-      context.response.writeHead(outgoing.status, undefined, outgoing.headers);
-      return context.assign({ outgoing });
+      });
     }
 
     if (parsed.dir === '/' && !parsed.ext) {
@@ -51,22 +47,19 @@ export default Endpoint
         },
       };
 
-      context.response.writeHead(outgoing.status, undefined, outgoing.headers);
+      context.response.writeHead(outgoing.status, outgoing.headers);
       createReadStream(path.join(statics.public.dir, '/index.html')).pipe(context.response);
 
-      return context.assign({ outgoing });
+      return context.assign({ outgoing }).complete();
     }
 
     const stats = await fs.stat(path.join(statics.public.dir, parsed.dir, parsed.base)).catch(() => null);
 
     if (!stats) {
-      const outgoing: IRequestContextOutgoing = { type: 'plain', status: 404, headers: {} };
-
-      context.response.writeHead(outgoing.status).end();
-      return context.assign({ outgoing });
+      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
     }
 
     createReadStream(path.join(statics.public.dir, parsed.dir, parsed.base)).pipe(context.response);
-    return context.assign({ outgoing: { type: 'plain', status: 200, headers: {} } });
+    return context.assign({ outgoing: { type: 'plain', status: 200, headers: {} } }).complete();
   })
   .compile();

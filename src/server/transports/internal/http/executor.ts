@@ -21,12 +21,13 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     const path = `${context.incoming.method}:${context.incoming.path.replace(routes.internal.root, '')}`;
     const endpoint = this.router[path] ?? (path.includes(routes.internal.gui) ? endpoints.gui : null);
 
-    if (endpoint) {
-      await endpoint.handler(context);
-      return context.complete();
+    await endpoint?.handler?.(context);
+
+    if (context.hasStatus('completed')) {
+      return context;
     }
 
-    const outgoing = await this.reply(context);
+    const outgoing = await this.reply(context, context.outgoing);
     return context.assign({ outgoing }).complete();
   }
 
@@ -38,8 +39,8 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     return null;
   }
 
-  public async reply(context: InternalHttpRequestContext) {
-     const outgoing: IRequestContextOutgoing = {
+  public async reply(context: InternalHttpRequestContext, outgoing?: IRequestContextOutgoing) {
+     const result = outgoing ?? {
       type: 'plain',
       status: 404,
 
@@ -47,10 +48,10 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
       dataRaw: 'Internal route was not found',
     };
 
-    context.response.writeHead(outgoing.status);
-    context.response.write(outgoing.dataRaw ?? '');
+    context.response.writeHead(result.status, result.headers);
+    context.response.write(result.dataRaw ?? '');
     context.response.end();
 
-    return outgoing;
+    return result;
   }
 }

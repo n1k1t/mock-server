@@ -95,7 +95,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       _.isNil
     );
 
-    context.response.writeHead(outgoing.status, 'OK', outgoing.headers);
+    context.response.writeHead(outgoing.status, outgoing.headers);
     context.response.write(outgoing.dataRaw ?? '');
     context.response.end();
 

@@ -31,7 +31,6 @@ export class Config {
     logger: {
       level: cast<TLoggerLevel>('D'),
     },
-
   }, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));
 
   public get<K extends keyof Config['storage']>(key: K): Config['storage'][K] {
