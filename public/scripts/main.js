@@ -20363,8 +20363,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_client_1 = require("socket.io-client");
 const models_1 = require("./models");
 const common_1 = require("../../utils/common");
-const path = location.pathname.split('/').slice(0, -3).join('/');
-const io = (0, socket_io_client_1.io)(`${location.origin}${path.length ? '/' : ''}${path}`);
+const io = (0, socket_io_client_1.io)({
+    path: `${location.pathname.split('/').slice(0, -3).join('/')}/socket.io/`
+});
 class Context {
     constructor() {
         this.config = (0, common_1.cast)({
