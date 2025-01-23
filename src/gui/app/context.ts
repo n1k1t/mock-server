@@ -24,7 +24,8 @@ interface IContextShared {
   settings: SettingsComponent;
 }
 
-const io = connectIo(location.origin);
+const path = location.pathname.split('/').slice(0, -3).join('/');
+const io = connectIo(`${location.origin}${path.length ? '/' : ''}${path}`);
 
 class Context {
   public config = cast<Pick<Config['storage'], 'history'>>({

@@ -7,5 +7,6 @@ export { default as updateExpectation } from './expectations.update.endpoint';
 export { default as getHistoryList } from './history.get-list.endpoint';
 
 export { default as getConfig } from './config.get.endpoint';
+export { default as stats } from './stats.endpoint';
 export { default as ping } from './ping.endpoint';
 export { default as gui } from './gui.endpoint';
