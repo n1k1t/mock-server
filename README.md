@@ -769,7 +769,25 @@ await client.createExpectation<{
 
 > **!NOTE** Cache is usable **only** to store a payload of forwarded requests
 
-To work with cache the mock server uses [ioredis](https://www.npmjs.com/package/ioredis) package. To configure it use `cache` in [configuration](#configuration)
+To work with cache the mock server uses [ioredis](https://www.npmjs.com/package/ioredis) package
+
+To configure it use `database.redis` configuration on the mock server start options
+
+**Example**
+
+```ts
+const server = await MockServer.start({
+  host: 'localhost',
+  port: 8080,
+
+  databases: {
+    redis: {
+      host: 'localhost',
+      port: 6379,
+    },
+  },
+});
+```
 
 **How it works in steps?**
 
@@ -1144,12 +1162,6 @@ import { config } from '@n1k1t/mock-server';
 config.merge({
   logger: {
     level: 'D', // Logger level (default: D)
-  },
-
-  redis: <ioredis.RedisOptions>{...}, // IO Redis configuration
-
-  gui: {
-    title: 'My app', // Title for a GUI application page (default: Mock server)
   },
 
   history: {
