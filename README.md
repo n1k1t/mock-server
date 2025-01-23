@@ -94,7 +94,7 @@ MockServer.start({ host: 'localhost', port: 8080 });
 
 The mock server provides built-in web panel to track everything that is going through. There are two tabs `Expectations` and `History`
 
-By default it can be found on `/_mock/gui` of a host of mock server. Example: `localhost:8080/_mock/gui`
+By default it can be found on `/_system/gui` of a host of mock server. Example: `localhost:8080/_system/gui`
 
 Also it provides convenient util to navigate through payload of expectations and requests payload
 
@@ -268,7 +268,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -313,7 +313,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -358,7 +358,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -395,7 +395,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -432,7 +432,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -467,7 +467,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -505,7 +505,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -540,7 +540,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -578,7 +578,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -629,7 +629,7 @@ await server.client.createExpectation({
 **Example using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -946,7 +946,7 @@ The `HTTP API` and `RemoteClient` have some usage restrictions like:
 
 ## Ping
 
-`INPUT` → `GET /_mock/ping`
+`INPUT` → `GET /_system/ping`
 
 `OUTPUT`
 
@@ -957,7 +957,7 @@ The `HTTP API` and `RemoteClient` have some usage restrictions like:
 **Using cURL**
 
 ```bash
-curl -H "Content-type: application/json" --location "localhost:8080/_mock/ping"
+curl -H "Content-type: application/json" --location "localhost:8080/_system/ping"
 ```
 
 **Using application lib on server side**
@@ -980,7 +980,7 @@ await client.ping();
 
 ## Create expectation
 
-`INPUT` → `POST /_mock/expectations`
+`INPUT` → `POST /_system/expectations`
 
 | Property | Nested | Type | Optional | Description |
 |--|--|--|--|--|
@@ -998,7 +998,7 @@ await client.ping();
 **Using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X POST --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X POST --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "schema": {
     "request": {
@@ -1054,7 +1054,7 @@ console.log('Mock expectation has created', expectation.id);
 
 ## Update expectation
 
-`INPUT` → `PUT /_mock/expectations`
+`INPUT` → `PUT /_system/expectations`
 
 | Property | Nested | Type | Optional | Description |
 |--|--|--|--|--|
@@ -1074,7 +1074,7 @@ console.log('Mock expectation has created', expectation.id);
 **Using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X PUT --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X PUT --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "id": "...",
   "set": {"name": "The expectation"}
@@ -1112,7 +1112,7 @@ console.log('Mock expectation has updated', expectation);
 
 ## Delete expectation
 
-`INPUT` → `DELETE /_mock/expectations`
+`INPUT` → `DELETE /_system/expectations`
 
 | Property | Nested | Type | Optional | Description |
 |--|--|--|--|--|
@@ -1121,7 +1121,7 @@ console.log('Mock expectation has updated', expectation);
 **Using cURL**
 
 ```bash
-curl -H "Content-type: application/json" -X DELETE --location "localhost:8080/_mock/expectations" --data-binary @- << EOF
+curl -H "Content-type: application/json" -X DELETE --location "localhost:8080/_system/expectations" --data-binary @- << EOF
 {
   "ids": ["..."]
 }

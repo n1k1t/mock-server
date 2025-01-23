@@ -19,7 +19,7 @@ export class Config {
 
     routes: {
       internal: {
-        root: '/_mock',
+        root: '/_system',
         gui: '/gui',
       },
     },
