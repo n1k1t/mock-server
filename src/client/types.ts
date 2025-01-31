@@ -5,8 +5,7 @@ import type * as endpoints from '../server/endpoints';
 import type * as methods from './methods';
 
 export interface IRemoteClientConnectOptions {
-  host: string;
-  port: number;
+  baseUrl?: string;
   timeout?: number;
 }
 

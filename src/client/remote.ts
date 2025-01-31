@@ -14,7 +14,7 @@ export class RemoteClient<TContext extends IServerContext<any>> extends Client<T
 
   constructor(public options: IRemoteClientConnectOptions) {
     const instance = axios.create({
-      baseURL: `http://${options.host}:${options.port}`,
+      baseURL: options.baseUrl,
       timeout: options.timeout ?? 1000 * 10,
     });
 
