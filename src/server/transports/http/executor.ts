@@ -135,7 +135,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       headers: Object.assign(incoming.headers, {
         connection: 'close',
 
-        ...(configuration.options?.host === 'origin' && { host: url.host }),
+        ...(configuration.options?.overrideHost !== false && { host: url.host }),
         ...(incoming.dataRaw && { 'content-length': String(Buffer.from(incoming.dataRaw).length) }),
       }),
 

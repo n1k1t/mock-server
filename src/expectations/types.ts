@@ -191,7 +191,10 @@ export interface IExpectationSchemaForward {
   };
 
   options?: {
-    host?: 'origin';
+    /**
+     * Rewrites the `Host` header by forwarding url. Default is `true`
+     */
+    overrideHost?: boolean;
   };
 
   proxy?: {
