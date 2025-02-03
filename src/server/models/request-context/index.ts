@@ -68,6 +68,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
       outgoing: this.outgoing ?? { type: this.incoming.type, status: 0, headers: {} },
 
       storage: this.provider.storages.containers,
+      cache: { isEnabled: this.provider.databases.redis !== null },
     });
 
     snapshot.incoming.stream = this.streams.incoming.asObservable();
@@ -89,7 +90,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
    * Compiles cache configuration using own snapshot and expectation
    */
   public compileCacheConfiguration(): TRequestContextCacheConfigurationCompiled {
-    if (!this.snapshot.cache.isEnabled && !this.expectation?.forward?.cache) {
+    if (!this.snapshot.cache.isEnabled || !this.expectation?.forward?.cache) {
       return { isEnabled: false };
     }
 
