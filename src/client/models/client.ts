@@ -44,22 +44,18 @@ export class Client<TContext extends IServerContext<any>> {
     return this.methods.deleteExpectations;
   }
 
-  public createExpectation(
-    configuration: Expectation<IAnyExpectationInput<TContext>>['configuration']
-  ): ReturnType<TMethodsSchema['createExpectation']>;
-
   public createExpectation<TInput extends IExpectationSchemaInput>(
     handler: TFunction<TExpectationAnyConfiguration<TContext>, [IExpectationHandlerContext<TContext, TInput>]>
   ): ReturnType<TMethodsSchema['createExpectation']>;
 
   public createExpectation(
-    predicate:
-      | Expectation<IAnyExpectationInput<any>>['configuration']
-      | TFunction<TExpectationAnyConfiguration<any>, [IExpectationHandlerContext<any, any>]>
-  ): ReturnType<TMethodsSchema['createExpectation']> {
+    configuration: Expectation<IAnyExpectationInput<TContext>>['configuration']
+  ): ReturnType<TMethodsSchema['createExpectation']>;
+
+  public createExpectation(predicate: unknown): ReturnType<TMethodsSchema['createExpectation']> {
     return typeof predicate === 'function'
       ? this.methods.createExpectation(predicate(this.compileHandlerUtils()))
-      : this.methods.createExpectation(predicate);
+      : this.methods.createExpectation(<Expectation<IAnyExpectationInput<TContext>>['configuration']>predicate);
   }
 
   public updateExpectation(
@@ -72,16 +68,10 @@ export class Client<TContext extends IServerContext<any>> {
     ]>
   ): ReturnType<TMethodsSchema['updateExpectation']>
 
-  public updateExpectation(
-    predicate:
-      | { id: string, set: Partial<Expectation<IAnyExpectationInput<any>>['configuration']> }
-      | TFunction<{ id: string, set: Partial<TExpectationAnyConfiguration<any>> }, [
-        IExpectationHandlerContext<any, any>
-      ]>
-  ): ReturnType<TMethodsSchema['updateExpectation']> {
+  public updateExpectation(predicate: unknown): ReturnType<TMethodsSchema['updateExpectation']> {
     return typeof predicate === 'function'
       ? this.methods.updateExpectation(predicate(this.compileHandlerUtils()))
-      : this.methods.updateExpectation(predicate);
+      : this.methods.updateExpectation(<{ id: string, set: Partial<TExpectationAnyConfiguration<TContext>> }>predicate);
   }
 
   private compileHandlerUtils<

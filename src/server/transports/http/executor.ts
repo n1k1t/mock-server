@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import _ from 'lodash';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
@@ -50,12 +51,26 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     incoming: IRequestContextIncoming,
     configuration: IExpectationSchemaForward
   ) {
+    const options = await this
+      .compileForwardingConfiguration(context, incoming, configuration)
+      .catch((error) => {
+        context.snapshot.assign({
+          error: { code: 'UNKNOWN', message: error?.message ?? 'Unknown' },
+          outgoing: { type: 'plain', status: 502, headers: {} },
+        });
+
+        logger.error('Got error while execution [compileForwardingConfiguration] method', error?.stack ?? error);
+        throw error;
+      });
+
     const response = await axios
-      .request(this.compileForwardingConfiguration(context, incoming, configuration))
+      .request(options)
       .catch((error: AxiosError) => {
         if (!error.response) {
-          context.snapshot.assign({ error: _.pick(error, ['message', 'code']) });
-          context.complete();
+          context.snapshot.assign({
+            error: _.pick(error, ['message', 'code']),
+            outgoing: { type: 'plain', status: 502, headers: {} },
+          });
 
           logger.error('Got error while forwaring', error?.stack ?? error);
           throw error;
@@ -105,12 +120,13 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   /**
    * Compiles Axios request configuration to forward
    */
-  protected compileForwardingConfiguration(
+  protected async compileForwardingConfiguration(
     context: HttpRequestContext,
     incoming: IRequestContextIncoming,
     configuration: IExpectationSchemaForward
-  ): AxiosRequestConfig {
+  ): Promise<AxiosRequestConfig> {
     const url = new URL(configuration.url ?? incoming.path, configuration.baseUrl);
+    const isSecured = url.protocol.includes('https');
 
     return {
       timeout: configuration.timeout ?? 30000,
@@ -130,7 +146,10 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       params: context.incoming.query,
       responseType: 'arraybuffer',
 
-      ...(configuration.proxy && { proxy: configuration.proxy }),
+      ...((configuration.proxy && !isSecured) && { proxy: configuration.proxy }),
+      ...((configuration.proxy && isSecured) && {
+        httpsAgent: new HttpsProxyAgent(`http://${configuration.proxy.host}:${configuration.proxy.port}`),
+      }),
     };
   }
 }

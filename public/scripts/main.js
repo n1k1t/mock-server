@@ -19938,6 +19938,7 @@ class HistoryComponent extends models_1.Component {
             ...(history.snapshot.seed && { seed: history.snapshot.seed }),
             ...(history.snapshot.container && { container: history.snapshot.container }),
             incoming: history.snapshot.incoming,
+            ...(history.snapshot.error && { error: history.snapshot.error }),
             ...(history.status === 'completed' && { outgoing: history.snapshot.outgoing }),
             ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
             ...(history.snapshot.messages?.length && { messages: history.snapshot.messages }),

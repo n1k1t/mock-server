@@ -1,6 +1,6 @@
 {
   "name": "@n1k1t/mock-server",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "Powerful util to setup mocks over HTTP APIs",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -55,20 +55,21 @@
     "ts-jest": "29.1.1",
     "ts-node": "10.9.2",
     "tsify": "5.0.4",
-    "typescript": "^5.7.2"
+    "typescript": "5.7.2"
   },
   "dependencies": {
     "@faker-js/faker": "9.2.0",
     "@n1k1t/typebox": "0.31.14",
-    "@types/ws": "^8.5.13",
+    "@types/ws": "8.5.13",
     "axios": "0.27.2",
-    "body-parser": "^1.20.3",
+    "body-parser": "1.20.3",
     "colors": "1.4.0",
     "commander": "9.4.0",
     "dayjs": "1.11.13",
     "deepmerge": "4.3.1",
     "fast-xml-parser": "4.5.0",
     "http-proxy": "1.18.1",
+    "https-proxy-agent": "7.0.6",
     "ioredis": "5.4.1",
     "jsonpath-plus": "7.2.0",
     "lodash": "4.17.21",
@@ -77,10 +78,10 @@
     "random-animal-name": "0.1.1",
     "reflect-metadata": "0.2.1",
     "rfdc": "1.3.0",
-    "rxjs": "^7.8.1",
+    "rxjs": "7.8.1",
     "socket.io": "4.5.3",
     "socket.io-client": "4.5.4",
     "uuid": "9.0.0",
-    "ws": "^8.18.0"
+    "ws": "8.18.0"
   }
 }

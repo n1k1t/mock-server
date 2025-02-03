@@ -136,7 +136,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     }
 
     if (this.history?.hasStatus('pending')) {
-      this.history.actualizeSnapshot(this.snapshot).complete();
+      this.history.actualizeSnapshot(this.snapshot.assign({ outgoing: this.outgoing })).complete();
       this.provider.exchanges.io.publish('history:updated', this.history.toPlain());
     }
 
