@@ -116,17 +116,40 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         return null;
       });
 
-      context.snapshot.assign({ forwarded: forwarded ?? undefined });
+      if (forwarded) {
+        context.snapshot.assign({
+          outgoing: forwarded.outgoing ?? context.snapshot.outgoing,
 
-      if (forwarded && context.history?.hasStatus('pending')) {
+          forwarded: {
+            isCached: forwarded.isCached,
+            messages: clone(forwarded.messages),
+
+            incoming: Object.assign(
+              clone(_.omit(forwarded.incoming, ['stream'])),
+              _.pick(forwarded.incoming, ['stream'])
+            ),
+
+            ...(forwarded.outgoing && {
+              outgoing: Object.assign(
+                clone(_.omit(forwarded.outgoing, ['stream'])),
+                _.pick(forwarded.outgoing, ['stream'])
+              ),
+            }),
+          }
+        });
+      }
+
+      if (context.snapshot.forwarded && context.history?.hasStatus('pending')) {
         context.history.snapshot.assign({
           cache: context.snapshot.cache,
 
           forwarded: {
-            isCached: forwarded.isCached,
-            incoming: clone(_.omit(forwarded.incoming, ['stream'])),
+            isCached: context.snapshot.forwarded.isCached,
+            incoming: _.omit(context.snapshot.forwarded.incoming, ['stream']),
 
-            ...(forwarded.outgoing && { outgoing: clone(_.omit(forwarded.outgoing, ['stream'])) }),
+            ...(context.snapshot.forwarded.outgoing && {
+              outgoing: _.omit(context.snapshot.forwarded.outgoing, ['stream'])
+            }),
           },
         });
 
@@ -217,13 +240,9 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
   }
 
   private async handleReplying(context: TRequestContext): Promise<IRequestContextOutgoing | null> {
-    const provided = context.snapshot.forwarded?.outgoing
-      ? context.snapshot.forwarded.outgoing
-      : context.snapshot.outgoing;
-
     const snapshot = context.expectation?.response
-      ? context.expectation.response.manipulate(context.snapshot.assign({ outgoing: provided }))
-      : context.snapshot.assign({ outgoing: provided });
+      ? context.expectation.response.manipulate(context.snapshot)
+      : context.snapshot;
 
     const type = extractPayloadType(snapshot.outgoing.headers) ?? snapshot.incoming.type;
 
