@@ -12,18 +12,18 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: TEndpoints['updateExpectation']['incoming']['data'];
-    outgoing: TEndpoints['updateExpectation']['outgoing']['data'] | null;
+    incoming: TEndpoints['expectationUpdate']['incoming']['data'];
+    outgoing: TEndpoints['expectationUpdate']['outgoing']['data'] | null;
   }>()
   .register('remote', (instance) => async (body) => {
     const response = await instance
-      .request<TEndpoints['updateExpectation']['outgoing']>({
+      .request<TEndpoints['expectationUpdate']['outgoing']>({
         data: {
           id: body.id,
           body: prepareExpectationBodyToRequest(body.set),
         },
 
-        ...cast<TEndpoints['updateExpectation']['location']>({
+        ...cast<TEndpoints['expectationUpdate']['location']>({
           url: `${config.get('routes').internal.root}/expectations`,
           method: 'PUT',
         }),

@@ -32,7 +32,10 @@ export class HttpRequestContext extends RequestContext<IServerContext<{
     public response: ServerResponse
   ) {
     super(provider, { transport: 'http', event: 'connection' });
-    logger.info('Incoming HTTP request', `[${incoming.method} ${incoming.path}]`);
+
+    metaStorage.wrap(this.meta, () => {
+      logger.info('Incoming HTTP request', `[${incoming.method} ${incoming.path}]`);
+    });
   }
 
   public complete(): this {

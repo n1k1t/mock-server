@@ -7,15 +7,15 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: TEndpoints['updateExpectationsGroup']['incoming']['data'];
-    outgoing: TEndpoints['updateExpectationsGroup']['outgoing']['data'];
+    incoming: TEndpoints['expectationsGroupUpdate']['incoming']['data'];
+    outgoing: TEndpoints['expectationsGroupUpdate']['outgoing']['data'];
   }>()
   .register('remote', (instance) => async (body) => {
     const response = await instance
-      .request<TEndpoints['updateExpectationsGroup']['outgoing']>({
+      .request<TEndpoints['expectationsGroupUpdate']['outgoing']>({
         data: body,
 
-        ...cast<TEndpoints['updateExpectationsGroup']['location']>({
+        ...cast<TEndpoints['expectationsGroupUpdate']['location']>({
           url: `${config.get('routes').internal.root}/expectations/group`,
           method: 'PUT',
         }),

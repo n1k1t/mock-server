@@ -114,3 +114,63 @@ div.curtain {
 
   & > * { cursor: auto }
 }
+
+div.input {
+  display: inline-block;
+  position: relative;
+  background-color: lighten($color: $color-dark, $amount: 10);
+
+  padding: 5px 10px;
+  border-radius: 10px;
+
+  input {
+    border: none;
+    background-color: transparent;
+    color: #fff;
+    padding: 0;
+    width: 100%;
+
+    &[type="checkbox"] {
+      margin: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+  }
+
+  select {
+    position: relative;
+    width: calc(100% + 3px);
+    border: none;
+    background-color: transparent;
+    left: -3px;
+    cursor: pointer;
+  }
+
+  textarea {
+    width: 100%;
+    min-width: inherit;
+    max-width: inherit;
+    border: none;
+    background-color: transparent;
+  }
+
+  &:before {
+    content: attr(title);
+    display: block;
+    color: rgba(#fff, .4);
+    font-size: 12px;
+  }
+
+  &.required:after {
+    content: '*';
+    position: absolute;
+    top: 3px;
+    left: 10px;
+    font-size: 20px;
+    color: $color-red;
+  }
+
+  &.required:before {
+    margin-left: 12px;
+  }
+}

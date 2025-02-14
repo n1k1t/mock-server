@@ -1,9 +1,9 @@
 import generateAnimalName from 'random-animal-name';
-import { AxiosProxyConfig } from 'axios';
 import { v4 as genUid } from 'uuid';
 import { ValueError } from '@n1k1t/typebox/errors';
 import _ from 'lodash';
 
+import { serializeExpectationSchema } from '../utils';
 import {
   IExpectationMeta,
   IExpectationSchemaContext,
@@ -40,7 +40,7 @@ export class Expectation<
     : null;
 
   public meta: IExpectationMeta = {
-    executionsCount: 0,
+    executionsCount: this.configuration.meta?.executionsCount ?? 0,
     tags: (this.request?.tags ?? []).concat(this.response?.tags ?? []),
   };
 
@@ -48,9 +48,16 @@ export class Expectation<
     return this.schema.forward;
   }
 
+  private serialized = {
+    schema: {
+      request: this.schema.request ? serializeExpectationSchema(this.schema.request) : undefined,
+      response: this.schema.response ? serializeExpectationSchema(this.schema.response) : undefined,
+    },
+  };
+
   constructor(
     public configuration: Pick<Expectation<TContext>, 'schema'> & Partial<
-      Pick<Expectation<TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports'>
+      Pick<Expectation<TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports' | 'meta'>
     >
   ) {}
 
@@ -69,11 +76,17 @@ export class Expectation<
       group: this.group,
 
       name: this.name,
-      schema: this.schema,
       transports: this.transports,
 
       meta: this.meta,
       isEnabled: this.isEnabled,
+
+      schema: {
+        ...this.schema,
+
+        request: this.serialized.schema.request,
+        response: this.serialized.schema.response,
+      },
     };
   }
 

@@ -13,38 +13,38 @@ const render = hbs.compile(template);
 export class HistoryComponent extends Component {
   public isExpanded: boolean = false;
 
-  constructor(public history: History['TPlain']) {
+  constructor(public data: History['TPlain']) {
     super();
-    this.refresh(history);
+    this.refresh(data);
   }
 
-  public refresh(history: History['TPlain']) {
-    this.clear().append(render(history));
+  public refresh(data: History['TPlain']) {
+    this.clear().append(render(data));
 
-    const pre = this.element.querySelector('div.history > pre')!;
+    const pre = this.element.querySelector('pre')!;
     const formatted = {
-      event: history.snapshot.event,
+      event: data.snapshot.event,
 
-      ...(Object.keys(history.snapshot.flags).length && { flags: history.snapshot.flags }),
-      ...(history.expectation && {
+      ...(Object.keys(data.snapshot.flags).length && { flags: data.snapshot.flags }),
+      ...(data.expectation && {
         expectation: {
-          id: history.expectation.id,
-          group: history.expectation.group,
+          id: data.expectation.id,
+          group: data.expectation.group,
 
-          ...(history.expectation.schema.forward && { forward: history.expectation.schema.forward }),
+          ...(data.expectation.schema.forward && { forward: data.expectation.schema.forward }),
         },
       }),
 
-      ...(history.snapshot.cache?.isEnabled && { cache: history.snapshot.cache }),
-      ...(history.snapshot.seed && { seed: history.snapshot.seed }),
-      ...(history.snapshot.container && { container: history.snapshot.container }),
+      ...(data.snapshot.cache?.isEnabled && { cache: data.snapshot.cache }),
+      ...(data.snapshot.seed && { seed: data.snapshot.seed }),
+      ...(data.snapshot.container && { container: data.snapshot.container }),
 
-      incoming: history.snapshot.incoming,
+      incoming: data.snapshot.incoming,
 
-      ...(history.snapshot.error && { error: history.snapshot.error }),
-      ...(history.status === 'completed' && { outgoing: history.snapshot.outgoing }),
-      ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
-      ...(history.snapshot.messages?.length && { messages: history.snapshot.messages }),
+      ...(data.snapshot.error && { error: data.snapshot.error }),
+      ...(data.status === 'completed' && { outgoing: data.snapshot.outgoing }),
+      ...(data.snapshot.forwarded && { forwarded: data.snapshot.forwarded }),
+      ...(data.snapshot.messages?.length && { messages: data.snapshot.messages }),
     };
 
     if (this.isExpanded) {
@@ -66,6 +66,29 @@ export class HistoryComponent extends Component {
       pre.classList.toggle('hidden');
       this.isExpanded = !this.isExpanded;
     });
+  }
+
+  public match(query: string): boolean {
+    const light = [
+      this.data.group,
+      this.data.expectation?.name,
+      this.data.snapshot.incoming.path,
+      this.data.snapshot.incoming.method,
+      this.data.snapshot.incoming.dataRaw,
+      this.data.snapshot.incoming.error,
+      String(this.data.snapshot.outgoing.status),
+      String(this.data.snapshot.seed ?? ''),
+      this.data.snapshot.outgoing.dataRaw,
+    ].some((value) => value?.includes(query));
+
+    return light || [
+      this.data.snapshot.incoming.query,
+      this.data.snapshot.incoming.headers,
+      this.data.snapshot.outgoing.headers,
+      this.data.snapshot.container,
+      this.data.snapshot.state,
+      this.data.snapshot.cache,
+    ].some((value) => JSON.stringify(value)?.includes(query))
   }
 
   static build(history: History['TPlain']) {

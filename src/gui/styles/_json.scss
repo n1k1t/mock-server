@@ -1,5 +1,5 @@
-@import 'constants';
 @import '../../../../json-formatter/src/theme';
+@import 'constants';
 
 .json-formatter-custom.json-formatter-row {
   @include jsonFormatterTheme(

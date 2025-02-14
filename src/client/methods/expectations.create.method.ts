@@ -8,15 +8,15 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: TEndpoints['createExpectation']['incoming']['data'];
-    outgoing: TEndpoints['createExpectation']['outgoing']['data'];
+    incoming: TEndpoints['expectationsCreate']['incoming']['data'];
+    outgoing: TEndpoints['expectationsCreate']['outgoing']['data'];
   }>()
   .register('remote', (instance) => async (body) => {
     const response = await instance
-      .request<TEndpoints['createExpectation']['outgoing']>({
+      .request<TEndpoints['expectationsCreate']['outgoing']>({
         data: prepareExpectationBodyToRequest(body),
 
-        ...cast<TEndpoints['createExpectation']['location']>({
+        ...cast<TEndpoints['expectationsCreate']['location']>({
           url: `${config.get('routes').internal.root}/expectations`,
           method: 'POST',
         }),

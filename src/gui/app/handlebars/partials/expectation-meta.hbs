@@ -33,7 +33,12 @@ module.exports = `
     {{/each}}
   {{/compare}}
 
-  {{#if schema.forward}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/if}}
-  {{#if schema.forward.baseUrl}}<span class="forward">{{schema.forward.baseUrl}}</span>{{/if}}
-  {{#if schema.forward.url}}<span class="forward">{{schema.forward.url}}</span>{{/if}}
+  {{#with schema.forward}}
+    <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+
+    {{#if baseUrl}}<span class="forward">{{baseUrl}}</span>{{/if}}
+    {{#if url}}<span class="forward">{{url}}</span>{{/if}}
+
+    {{#if ../isCached}}<span class="cache"><i class="fas fa-database"></i></span>{{/if}}
+  {{/with}}
 `

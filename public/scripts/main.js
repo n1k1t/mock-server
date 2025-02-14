@@ -2763,7 +2763,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":7,"_process":219}],7:[function(require,module,exports){
+},{"./common":7,"_process":224}],7:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3039,7 +3039,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":218}],8:[function(require,module,exports){
+},{"ms":223}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasCORS = void 0;
@@ -13657,7 +13657,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":137,"./_root":178}],74:[function(require,module,exports){
+},{"./_getNative":138,"./_root":179}],74:[function(require,module,exports){
 var hashClear = require('./_hashClear'),
     hashDelete = require('./_hashDelete'),
     hashGet = require('./_hashGet'),
@@ -13691,7 +13691,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":145,"./_hashDelete":146,"./_hashGet":147,"./_hashHas":148,"./_hashSet":149}],75:[function(require,module,exports){
+},{"./_hashClear":146,"./_hashDelete":147,"./_hashGet":148,"./_hashHas":149,"./_hashSet":150}],75:[function(require,module,exports){
 var listCacheClear = require('./_listCacheClear'),
     listCacheDelete = require('./_listCacheDelete'),
     listCacheGet = require('./_listCacheGet'),
@@ -13725,7 +13725,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":159,"./_listCacheDelete":160,"./_listCacheGet":161,"./_listCacheHas":162,"./_listCacheSet":163}],76:[function(require,module,exports){
+},{"./_listCacheClear":160,"./_listCacheDelete":161,"./_listCacheGet":162,"./_listCacheHas":163,"./_listCacheSet":164}],76:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
 
@@ -13734,7 +13734,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":137,"./_root":178}],77:[function(require,module,exports){
+},{"./_getNative":138,"./_root":179}],77:[function(require,module,exports){
 var mapCacheClear = require('./_mapCacheClear'),
     mapCacheDelete = require('./_mapCacheDelete'),
     mapCacheGet = require('./_mapCacheGet'),
@@ -13768,7 +13768,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":164,"./_mapCacheDelete":165,"./_mapCacheGet":166,"./_mapCacheHas":167,"./_mapCacheSet":168}],78:[function(require,module,exports){
+},{"./_mapCacheClear":165,"./_mapCacheDelete":166,"./_mapCacheGet":167,"./_mapCacheHas":168,"./_mapCacheSet":169}],78:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
 
@@ -13777,7 +13777,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":137,"./_root":178}],79:[function(require,module,exports){
+},{"./_getNative":138,"./_root":179}],79:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
 
@@ -13786,7 +13786,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":137,"./_root":178}],80:[function(require,module,exports){
+},{"./_getNative":138,"./_root":179}],80:[function(require,module,exports){
 var ListCache = require('./_ListCache'),
     stackClear = require('./_stackClear'),
     stackDelete = require('./_stackDelete'),
@@ -13815,7 +13815,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":75,"./_stackClear":181,"./_stackDelete":182,"./_stackGet":183,"./_stackHas":184,"./_stackSet":185}],81:[function(require,module,exports){
+},{"./_ListCache":75,"./_stackClear":182,"./_stackDelete":183,"./_stackGet":184,"./_stackHas":185,"./_stackSet":186}],81:[function(require,module,exports){
 var root = require('./_root');
 
 /** Built-in value references. */
@@ -13823,7 +13823,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":178}],82:[function(require,module,exports){
+},{"./_root":179}],82:[function(require,module,exports){
 var root = require('./_root');
 
 /** Built-in value references. */
@@ -13831,7 +13831,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":178}],83:[function(require,module,exports){
+},{"./_root":179}],83:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
 
@@ -13840,7 +13840,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":137,"./_root":178}],84:[function(require,module,exports){
+},{"./_getNative":138,"./_root":179}],84:[function(require,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -13965,7 +13965,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":114,"./_isIndex":154,"./isArguments":194,"./isArray":195,"./isBuffer":197,"./isTypedArray":206}],88:[function(require,module,exports){
+},{"./_baseTimes":114,"./_isIndex":155,"./isArguments":197,"./isArray":198,"./isBuffer":200,"./isTypedArray":209}],88:[function(require,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -14040,7 +14040,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":94,"./eq":190}],91:[function(require,module,exports){
+},{"./_baseAssignValue":94,"./eq":193}],91:[function(require,module,exports){
 var eq = require('./eq');
 
 /**
@@ -14063,7 +14063,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":190}],92:[function(require,module,exports){
+},{"./eq":193}],92:[function(require,module,exports){
 var copyObject = require('./_copyObject'),
     keys = require('./keys');
 
@@ -14082,7 +14082,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":126,"./keys":207}],93:[function(require,module,exports){
+},{"./_copyObject":127,"./keys":210}],93:[function(require,module,exports){
 var copyObject = require('./_copyObject'),
     keysIn = require('./keysIn');
 
@@ -14101,7 +14101,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":126,"./keysIn":208}],94:[function(require,module,exports){
+},{"./_copyObject":127,"./keysIn":211}],94:[function(require,module,exports){
 var defineProperty = require('./_defineProperty');
 
 /**
@@ -14128,7 +14128,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":131}],95:[function(require,module,exports){
+},{"./_defineProperty":132}],95:[function(require,module,exports){
 var Stack = require('./_Stack'),
     arrayEach = require('./_arrayEach'),
     assignValue = require('./_assignValue'),
@@ -14296,7 +14296,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":80,"./_arrayEach":85,"./_assignValue":90,"./_baseAssign":92,"./_baseAssignIn":93,"./_cloneBuffer":120,"./_copyArray":125,"./_copySymbols":127,"./_copySymbolsIn":128,"./_getAllKeys":134,"./_getAllKeysIn":135,"./_getTag":142,"./_initCloneArray":150,"./_initCloneByTag":151,"./_initCloneObject":152,"./isArray":195,"./isBuffer":197,"./isMap":200,"./isObject":201,"./isSet":204,"./keys":207,"./keysIn":208}],96:[function(require,module,exports){
+},{"./_Stack":80,"./_arrayEach":85,"./_assignValue":90,"./_baseAssign":92,"./_baseAssignIn":93,"./_cloneBuffer":121,"./_copyArray":126,"./_copySymbols":128,"./_copySymbolsIn":129,"./_getAllKeys":135,"./_getAllKeysIn":136,"./_getTag":143,"./_initCloneArray":151,"./_initCloneByTag":152,"./_initCloneObject":153,"./isArray":198,"./isBuffer":200,"./isMap":203,"./isObject":204,"./isSet":207,"./keys":210,"./keysIn":211}],96:[function(require,module,exports){
 var isObject = require('./isObject');
 
 /** Built-in value references. */
@@ -14328,7 +14328,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":201}],97:[function(require,module,exports){
+},{"./isObject":204}],97:[function(require,module,exports){
 var arrayPush = require('./_arrayPush'),
     isFlattenable = require('./_isFlattenable');
 
@@ -14368,7 +14368,7 @@ function baseFlatten(array, depth, predicate, isStrict, result) {
 
 module.exports = baseFlatten;
 
-},{"./_arrayPush":89,"./_isFlattenable":153}],98:[function(require,module,exports){
+},{"./_arrayPush":89,"./_isFlattenable":154}],98:[function(require,module,exports){
 var castPath = require('./_castPath'),
     toKey = require('./_toKey');
 
@@ -14394,7 +14394,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":118,"./_toKey":187}],99:[function(require,module,exports){
+},{"./_castPath":119,"./_toKey":188}],99:[function(require,module,exports){
 var arrayPush = require('./_arrayPush'),
     isArray = require('./isArray');
 
@@ -14416,7 +14416,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":89,"./isArray":195}],100:[function(require,module,exports){
+},{"./_arrayPush":89,"./isArray":198}],100:[function(require,module,exports){
 var Symbol = require('./_Symbol'),
     getRawTag = require('./_getRawTag'),
     objectToString = require('./_objectToString');
@@ -14446,7 +14446,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":81,"./_getRawTag":139,"./_objectToString":174}],101:[function(require,module,exports){
+},{"./_Symbol":81,"./_getRawTag":140,"./_objectToString":175}],101:[function(require,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -14481,7 +14481,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":100,"./isObjectLike":202}],103:[function(require,module,exports){
+},{"./_baseGetTag":100,"./isObjectLike":205}],103:[function(require,module,exports){
 var getTag = require('./_getTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -14501,7 +14501,7 @@ function baseIsMap(value) {
 
 module.exports = baseIsMap;
 
-},{"./_getTag":142,"./isObjectLike":202}],104:[function(require,module,exports){
+},{"./_getTag":143,"./isObjectLike":205}],104:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isMasked = require('./_isMasked'),
     isObject = require('./isObject'),
@@ -14550,7 +14550,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":157,"./_toSource":188,"./isFunction":198,"./isObject":201}],105:[function(require,module,exports){
+},{"./_isMasked":158,"./_toSource":189,"./isFunction":201,"./isObject":204}],105:[function(require,module,exports){
 var getTag = require('./_getTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -14570,7 +14570,7 @@ function baseIsSet(value) {
 
 module.exports = baseIsSet;
 
-},{"./_getTag":142,"./isObjectLike":202}],106:[function(require,module,exports){
+},{"./_getTag":143,"./isObjectLike":205}],106:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isLength = require('./isLength'),
     isObjectLike = require('./isObjectLike');
@@ -14632,7 +14632,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":100,"./isLength":199,"./isObjectLike":202}],107:[function(require,module,exports){
+},{"./_baseGetTag":100,"./isLength":202,"./isObjectLike":205}],107:[function(require,module,exports){
 var isPrototype = require('./_isPrototype'),
     nativeKeys = require('./_nativeKeys');
 
@@ -14664,7 +14664,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":158,"./_nativeKeys":171}],108:[function(require,module,exports){
+},{"./_isPrototype":159,"./_nativeKeys":172}],108:[function(require,module,exports){
 var isObject = require('./isObject'),
     isPrototype = require('./_isPrototype'),
     nativeKeysIn = require('./_nativeKeysIn');
@@ -14699,7 +14699,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":158,"./_nativeKeysIn":172,"./isObject":201}],109:[function(require,module,exports){
+},{"./_isPrototype":159,"./_nativeKeysIn":173,"./isObject":204}],109:[function(require,module,exports){
 var basePickBy = require('./_basePickBy'),
     hasIn = require('./hasIn');
 
@@ -14720,7 +14720,7 @@ function basePick(object, paths) {
 
 module.exports = basePick;
 
-},{"./_basePickBy":110,"./hasIn":192}],110:[function(require,module,exports){
+},{"./_basePickBy":110,"./hasIn":195}],110:[function(require,module,exports){
 var baseGet = require('./_baseGet'),
     baseSet = require('./_baseSet'),
     castPath = require('./_castPath');
@@ -14752,7 +14752,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":98,"./_baseSet":111,"./_castPath":118}],111:[function(require,module,exports){
+},{"./_baseGet":98,"./_baseSet":111,"./_castPath":119}],111:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     castPath = require('./_castPath'),
     isIndex = require('./_isIndex'),
@@ -14805,7 +14805,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":90,"./_castPath":118,"./_isIndex":154,"./_toKey":187,"./isObject":201}],112:[function(require,module,exports){
+},{"./_assignValue":90,"./_castPath":119,"./_isIndex":155,"./_toKey":188,"./isObject":204}],112:[function(require,module,exports){
 var constant = require('./constant'),
     defineProperty = require('./_defineProperty'),
     identity = require('./identity');
@@ -14829,7 +14829,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":131,"./constant":189,"./identity":193}],113:[function(require,module,exports){
+},{"./_defineProperty":132,"./constant":191,"./identity":196}],113:[function(require,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -14923,7 +14923,28 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":81,"./_arrayMap":88,"./isArray":195,"./isSymbol":205}],116:[function(require,module,exports){
+},{"./_Symbol":81,"./_arrayMap":88,"./isArray":198,"./isSymbol":208}],116:[function(require,module,exports){
+var trimmedEndIndex = require('./_trimmedEndIndex');
+
+/** Used to match leading whitespace. */
+var reTrimStart = /^\s+/;
+
+/**
+ * The base implementation of `_.trim`.
+ *
+ * @private
+ * @param {string} string The string to trim.
+ * @returns {string} Returns the trimmed string.
+ */
+function baseTrim(string) {
+  return string
+    ? string.slice(0, trimmedEndIndex(string) + 1).replace(reTrimStart, '')
+    : string;
+}
+
+module.exports = baseTrim;
+
+},{"./_trimmedEndIndex":190}],117:[function(require,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -14939,7 +14960,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 var castPath = require('./_castPath'),
     last = require('./last'),
     parent = require('./_parent'),
@@ -14961,7 +14982,7 @@ function baseUnset(object, path) {
 
 module.exports = baseUnset;
 
-},{"./_castPath":118,"./_parent":177,"./_toKey":187,"./last":209}],118:[function(require,module,exports){
+},{"./_castPath":119,"./_parent":178,"./_toKey":188,"./last":212}],119:[function(require,module,exports){
 var isArray = require('./isArray'),
     isKey = require('./_isKey'),
     stringToPath = require('./_stringToPath'),
@@ -14984,7 +15005,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":155,"./_stringToPath":186,"./isArray":195,"./toString":216}],119:[function(require,module,exports){
+},{"./_isKey":156,"./_stringToPath":187,"./isArray":198,"./toString":221}],120:[function(require,module,exports){
 var Uint8Array = require('./_Uint8Array');
 
 /**
@@ -15002,7 +15023,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":82}],120:[function(require,module,exports){
+},{"./_Uint8Array":82}],121:[function(require,module,exports){
 var root = require('./_root');
 
 /** Detect free variable `exports`. */
@@ -15039,7 +15060,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":178}],121:[function(require,module,exports){
+},{"./_root":179}],122:[function(require,module,exports){
 var cloneArrayBuffer = require('./_cloneArrayBuffer');
 
 /**
@@ -15057,7 +15078,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":119}],122:[function(require,module,exports){
+},{"./_cloneArrayBuffer":120}],123:[function(require,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -15076,7 +15097,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 var Symbol = require('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -15096,7 +15117,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":81}],124:[function(require,module,exports){
+},{"./_Symbol":81}],125:[function(require,module,exports){
 var cloneArrayBuffer = require('./_cloneArrayBuffer');
 
 /**
@@ -15114,7 +15135,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":119}],125:[function(require,module,exports){
+},{"./_cloneArrayBuffer":120}],126:[function(require,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -15136,7 +15157,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     baseAssignValue = require('./_baseAssignValue');
 
@@ -15178,7 +15199,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":90,"./_baseAssignValue":94}],127:[function(require,module,exports){
+},{"./_assignValue":90,"./_baseAssignValue":94}],128:[function(require,module,exports){
 var copyObject = require('./_copyObject'),
     getSymbols = require('./_getSymbols');
 
@@ -15196,7 +15217,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":126,"./_getSymbols":140}],128:[function(require,module,exports){
+},{"./_copyObject":127,"./_getSymbols":141}],129:[function(require,module,exports){
 var copyObject = require('./_copyObject'),
     getSymbolsIn = require('./_getSymbolsIn');
 
@@ -15214,7 +15235,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":126,"./_getSymbolsIn":141}],129:[function(require,module,exports){
+},{"./_copyObject":127,"./_getSymbolsIn":142}],130:[function(require,module,exports){
 var root = require('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -15222,7 +15243,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":178}],130:[function(require,module,exports){
+},{"./_root":179}],131:[function(require,module,exports){
 var isPlainObject = require('./isPlainObject');
 
 /**
@@ -15240,7 +15261,7 @@ function customOmitClone(value) {
 
 module.exports = customOmitClone;
 
-},{"./isPlainObject":203}],131:[function(require,module,exports){
+},{"./isPlainObject":206}],132:[function(require,module,exports){
 var getNative = require('./_getNative');
 
 var defineProperty = (function() {
@@ -15253,7 +15274,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":137}],132:[function(require,module,exports){
+},{"./_getNative":138}],133:[function(require,module,exports){
 var flatten = require('./flatten'),
     overRest = require('./_overRest'),
     setToString = require('./_setToString');
@@ -15271,7 +15292,7 @@ function flatRest(func) {
 
 module.exports = flatRest;
 
-},{"./_overRest":176,"./_setToString":179,"./flatten":191}],133:[function(require,module,exports){
+},{"./_overRest":177,"./_setToString":180,"./flatten":194}],134:[function(require,module,exports){
 (function (global){(function (){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -15279,7 +15300,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 var baseGetAllKeys = require('./_baseGetAllKeys'),
     getSymbols = require('./_getSymbols'),
     keys = require('./keys');
@@ -15297,7 +15318,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":99,"./_getSymbols":140,"./keys":207}],135:[function(require,module,exports){
+},{"./_baseGetAllKeys":99,"./_getSymbols":141,"./keys":210}],136:[function(require,module,exports){
 var baseGetAllKeys = require('./_baseGetAllKeys'),
     getSymbolsIn = require('./_getSymbolsIn'),
     keysIn = require('./keysIn');
@@ -15316,7 +15337,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":99,"./_getSymbolsIn":141,"./keysIn":208}],136:[function(require,module,exports){
+},{"./_baseGetAllKeys":99,"./_getSymbolsIn":142,"./keysIn":211}],137:[function(require,module,exports){
 var isKeyable = require('./_isKeyable');
 
 /**
@@ -15336,7 +15357,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":156}],137:[function(require,module,exports){
+},{"./_isKeyable":157}],138:[function(require,module,exports){
 var baseIsNative = require('./_baseIsNative'),
     getValue = require('./_getValue');
 
@@ -15355,7 +15376,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":104,"./_getValue":143}],138:[function(require,module,exports){
+},{"./_baseIsNative":104,"./_getValue":144}],139:[function(require,module,exports){
 var overArg = require('./_overArg');
 
 /** Built-in value references. */
@@ -15363,7 +15384,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":175}],139:[function(require,module,exports){
+},{"./_overArg":176}],140:[function(require,module,exports){
 var Symbol = require('./_Symbol');
 
 /** Used for built-in method references. */
@@ -15411,7 +15432,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":81}],140:[function(require,module,exports){
+},{"./_Symbol":81}],141:[function(require,module,exports){
 var arrayFilter = require('./_arrayFilter'),
     stubArray = require('./stubArray');
 
@@ -15443,7 +15464,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":86,"./stubArray":214}],141:[function(require,module,exports){
+},{"./_arrayFilter":86,"./stubArray":218}],142:[function(require,module,exports){
 var arrayPush = require('./_arrayPush'),
     getPrototype = require('./_getPrototype'),
     getSymbols = require('./_getSymbols'),
@@ -15470,7 +15491,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":89,"./_getPrototype":138,"./_getSymbols":140,"./stubArray":214}],142:[function(require,module,exports){
+},{"./_arrayPush":89,"./_getPrototype":139,"./_getSymbols":141,"./stubArray":218}],143:[function(require,module,exports){
 var DataView = require('./_DataView'),
     Map = require('./_Map'),
     Promise = require('./_Promise'),
@@ -15530,7 +15551,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":73,"./_Map":76,"./_Promise":78,"./_Set":79,"./_WeakMap":83,"./_baseGetTag":100,"./_toSource":188}],143:[function(require,module,exports){
+},{"./_DataView":73,"./_Map":76,"./_Promise":78,"./_Set":79,"./_WeakMap":83,"./_baseGetTag":100,"./_toSource":189}],144:[function(require,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -15545,7 +15566,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 var castPath = require('./_castPath'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray'),
@@ -15586,7 +15607,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":118,"./_isIndex":154,"./_toKey":187,"./isArguments":194,"./isArray":195,"./isLength":199}],145:[function(require,module,exports){
+},{"./_castPath":119,"./_isIndex":155,"./_toKey":188,"./isArguments":197,"./isArray":198,"./isLength":202}],146:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /**
@@ -15603,7 +15624,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":170}],146:[function(require,module,exports){
+},{"./_nativeCreate":171}],147:[function(require,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -15622,7 +15643,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -15654,7 +15675,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":170}],148:[function(require,module,exports){
+},{"./_nativeCreate":171}],149:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -15679,7 +15700,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":170}],149:[function(require,module,exports){
+},{"./_nativeCreate":171}],150:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -15704,7 +15725,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":170}],150:[function(require,module,exports){
+},{"./_nativeCreate":171}],151:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -15732,7 +15753,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 var cloneArrayBuffer = require('./_cloneArrayBuffer'),
     cloneDataView = require('./_cloneDataView'),
     cloneRegExp = require('./_cloneRegExp'),
@@ -15811,7 +15832,7 @@ function initCloneByTag(object, tag, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":119,"./_cloneDataView":121,"./_cloneRegExp":122,"./_cloneSymbol":123,"./_cloneTypedArray":124}],152:[function(require,module,exports){
+},{"./_cloneArrayBuffer":120,"./_cloneDataView":122,"./_cloneRegExp":123,"./_cloneSymbol":124,"./_cloneTypedArray":125}],153:[function(require,module,exports){
 var baseCreate = require('./_baseCreate'),
     getPrototype = require('./_getPrototype'),
     isPrototype = require('./_isPrototype');
@@ -15831,7 +15852,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":96,"./_getPrototype":138,"./_isPrototype":158}],153:[function(require,module,exports){
+},{"./_baseCreate":96,"./_getPrototype":139,"./_isPrototype":159}],154:[function(require,module,exports){
 var Symbol = require('./_Symbol'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray');
@@ -15853,7 +15874,7 @@ function isFlattenable(value) {
 
 module.exports = isFlattenable;
 
-},{"./_Symbol":81,"./isArguments":194,"./isArray":195}],154:[function(require,module,exports){
+},{"./_Symbol":81,"./isArguments":197,"./isArray":198}],155:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -15880,7 +15901,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],155:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 var isArray = require('./isArray'),
     isSymbol = require('./isSymbol');
 
@@ -15911,7 +15932,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":195,"./isSymbol":205}],156:[function(require,module,exports){
+},{"./isArray":198,"./isSymbol":208}],157:[function(require,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -15928,7 +15949,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 var coreJsData = require('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -15950,7 +15971,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":129}],158:[function(require,module,exports){
+},{"./_coreJsData":130}],159:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -15970,7 +15991,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],159:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -15985,7 +16006,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],160:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -16022,7 +16043,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":91}],161:[function(require,module,exports){
+},{"./_assocIndexOf":91}],162:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16043,7 +16064,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":91}],162:[function(require,module,exports){
+},{"./_assocIndexOf":91}],163:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16061,7 +16082,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":91}],163:[function(require,module,exports){
+},{"./_assocIndexOf":91}],164:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16089,7 +16110,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":91}],164:[function(require,module,exports){
+},{"./_assocIndexOf":91}],165:[function(require,module,exports){
 var Hash = require('./_Hash'),
     ListCache = require('./_ListCache'),
     Map = require('./_Map');
@@ -16112,7 +16133,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":74,"./_ListCache":75,"./_Map":76}],165:[function(require,module,exports){
+},{"./_Hash":74,"./_ListCache":75,"./_Map":76}],166:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16132,7 +16153,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":136}],166:[function(require,module,exports){
+},{"./_getMapData":137}],167:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16150,7 +16171,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":136}],167:[function(require,module,exports){
+},{"./_getMapData":137}],168:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16168,7 +16189,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":136}],168:[function(require,module,exports){
+},{"./_getMapData":137}],169:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16192,7 +16213,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":136}],169:[function(require,module,exports){
+},{"./_getMapData":137}],170:[function(require,module,exports){
 var memoize = require('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -16220,7 +16241,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":210}],170:[function(require,module,exports){
+},{"./memoize":213}],171:[function(require,module,exports){
 var getNative = require('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -16228,7 +16249,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":137}],171:[function(require,module,exports){
+},{"./_getNative":138}],172:[function(require,module,exports){
 var overArg = require('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -16236,7 +16257,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":175}],172:[function(require,module,exports){
+},{"./_overArg":176}],173:[function(require,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -16258,7 +16279,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],173:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 var freeGlobal = require('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -16290,7 +16311,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":133}],174:[function(require,module,exports){
+},{"./_freeGlobal":134}],175:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -16314,7 +16335,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -16331,7 +16352,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],176:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 var apply = require('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -16369,7 +16390,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":84}],177:[function(require,module,exports){
+},{"./_apply":84}],178:[function(require,module,exports){
 var baseGet = require('./_baseGet'),
     baseSlice = require('./_baseSlice');
 
@@ -16387,7 +16408,7 @@ function parent(object, path) {
 
 module.exports = parent;
 
-},{"./_baseGet":98,"./_baseSlice":113}],178:[function(require,module,exports){
+},{"./_baseGet":98,"./_baseSlice":113}],179:[function(require,module,exports){
 var freeGlobal = require('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -16398,7 +16419,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":133}],179:[function(require,module,exports){
+},{"./_freeGlobal":134}],180:[function(require,module,exports){
 var baseSetToString = require('./_baseSetToString'),
     shortOut = require('./_shortOut');
 
@@ -16414,7 +16435,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":112,"./_shortOut":180}],180:[function(require,module,exports){
+},{"./_baseSetToString":112,"./_shortOut":181}],181:[function(require,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -16453,7 +16474,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],181:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 var ListCache = require('./_ListCache');
 
 /**
@@ -16470,7 +16491,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":75}],182:[function(require,module,exports){
+},{"./_ListCache":75}],183:[function(require,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -16490,7 +16511,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],183:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -16506,7 +16527,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],184:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -16522,7 +16543,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],185:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 var ListCache = require('./_ListCache'),
     Map = require('./_Map'),
     MapCache = require('./_MapCache');
@@ -16558,7 +16579,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":75,"./_Map":76,"./_MapCache":77}],186:[function(require,module,exports){
+},{"./_ListCache":75,"./_Map":76,"./_MapCache":77}],187:[function(require,module,exports){
 var memoizeCapped = require('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -16587,7 +16608,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":169}],187:[function(require,module,exports){
+},{"./_memoizeCapped":170}],188:[function(require,module,exports){
 var isSymbol = require('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -16610,7 +16631,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":205}],188:[function(require,module,exports){
+},{"./isSymbol":208}],189:[function(require,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -16638,7 +16659,28 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],189:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
+/** Used to match a single whitespace character. */
+var reWhitespace = /\s/;
+
+/**
+ * Used by `_.trim` and `_.trimEnd` to get the index of the last non-whitespace
+ * character of `string`.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {number} Returns the index of the last non-whitespace character.
+ */
+function trimmedEndIndex(string) {
+  var index = string.length;
+
+  while (index-- && reWhitespace.test(string.charAt(index))) {}
+  return index;
+}
+
+module.exports = trimmedEndIndex;
+
+},{}],191:[function(require,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -16666,7 +16708,200 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],190:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
+var isObject = require('./isObject'),
+    now = require('./now'),
+    toNumber = require('./toNumber');
+
+/** Error message constants. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max,
+    nativeMin = Math.min;
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
+ * Provide `options` to indicate whether `func` should be invoked on the
+ * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
+ * with the last arguments provided to the debounced function. Subsequent
+ * calls to the debounced function return the result of the last `func`
+ * invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is
+ * invoked on the trailing edge of the timeout only if the debounced function
+ * is invoked more than once during the `wait` timeout.
+ *
+ * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
+ * until to the next tick, similar to `setTimeout` with a timeout of `0`.
+ *
+ * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
+ * for details over the differences between `_.debounce` and `_.throttle`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to debounce.
+ * @param {number} [wait=0] The number of milliseconds to delay.
+ * @param {Object} [options={}] The options object.
+ * @param {boolean} [options.leading=false]
+ *  Specify invoking on the leading edge of the timeout.
+ * @param {number} [options.maxWait]
+ *  The maximum time `func` is allowed to be delayed before it's invoked.
+ * @param {boolean} [options.trailing=true]
+ *  Specify invoking on the trailing edge of the timeout.
+ * @returns {Function} Returns the new debounced function.
+ * @example
+ *
+ * // Avoid costly calculations while the window size is in flux.
+ * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ *
+ * // Invoke `sendMail` when clicked, debouncing subsequent calls.
+ * jQuery(element).on('click', _.debounce(sendMail, 300, {
+ *   'leading': true,
+ *   'trailing': false
+ * }));
+ *
+ * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
+ * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
+ * var source = new EventSource('/stream');
+ * jQuery(source).on('message', debounced);
+ *
+ * // Cancel the trailing debounced invocation.
+ * jQuery(window).on('popstate', debounced.cancel);
+ */
+function debounce(func, wait, options) {
+  var lastArgs,
+      lastThis,
+      maxWait,
+      result,
+      timerId,
+      lastCallTime,
+      lastInvokeTime = 0,
+      leading = false,
+      maxing = false,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  wait = toNumber(wait) || 0;
+  if (isObject(options)) {
+    leading = !!options.leading;
+    maxing = 'maxWait' in options;
+    maxWait = maxing ? nativeMax(toNumber(options.maxWait) || 0, wait) : maxWait;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+
+  function invokeFunc(time) {
+    var args = lastArgs,
+        thisArg = lastThis;
+
+    lastArgs = lastThis = undefined;
+    lastInvokeTime = time;
+    result = func.apply(thisArg, args);
+    return result;
+  }
+
+  function leadingEdge(time) {
+    // Reset any `maxWait` timer.
+    lastInvokeTime = time;
+    // Start the timer for the trailing edge.
+    timerId = setTimeout(timerExpired, wait);
+    // Invoke the leading edge.
+    return leading ? invokeFunc(time) : result;
+  }
+
+  function remainingWait(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime,
+        timeWaiting = wait - timeSinceLastCall;
+
+    return maxing
+      ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke)
+      : timeWaiting;
+  }
+
+  function shouldInvoke(time) {
+    var timeSinceLastCall = time - lastCallTime,
+        timeSinceLastInvoke = time - lastInvokeTime;
+
+    // Either this is the first call, activity has stopped and we're at the
+    // trailing edge, the system time has gone backwards and we're treating
+    // it as the trailing edge, or we've hit the `maxWait` limit.
+    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
+      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
+  }
+
+  function timerExpired() {
+    var time = now();
+    if (shouldInvoke(time)) {
+      return trailingEdge(time);
+    }
+    // Restart the timer.
+    timerId = setTimeout(timerExpired, remainingWait(time));
+  }
+
+  function trailingEdge(time) {
+    timerId = undefined;
+
+    // Only invoke if we have `lastArgs` which means `func` has been
+    // debounced at least once.
+    if (trailing && lastArgs) {
+      return invokeFunc(time);
+    }
+    lastArgs = lastThis = undefined;
+    return result;
+  }
+
+  function cancel() {
+    if (timerId !== undefined) {
+      clearTimeout(timerId);
+    }
+    lastInvokeTime = 0;
+    lastArgs = lastCallTime = lastThis = timerId = undefined;
+  }
+
+  function flush() {
+    return timerId === undefined ? result : trailingEdge(now());
+  }
+
+  function debounced() {
+    var time = now(),
+        isInvoking = shouldInvoke(time);
+
+    lastArgs = arguments;
+    lastThis = this;
+    lastCallTime = time;
+
+    if (isInvoking) {
+      if (timerId === undefined) {
+        return leadingEdge(lastCallTime);
+      }
+      if (maxing) {
+        // Handle invocations in a tight loop.
+        clearTimeout(timerId);
+        timerId = setTimeout(timerExpired, wait);
+        return invokeFunc(lastCallTime);
+      }
+    }
+    if (timerId === undefined) {
+      timerId = setTimeout(timerExpired, wait);
+    }
+    return result;
+  }
+  debounced.cancel = cancel;
+  debounced.flush = flush;
+  return debounced;
+}
+
+module.exports = debounce;
+
+},{"./isObject":204,"./now":214,"./toNumber":220}],193:[function(require,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -16705,7 +16940,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],191:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 var baseFlatten = require('./_baseFlatten');
 
 /**
@@ -16729,7 +16964,7 @@ function flatten(array) {
 
 module.exports = flatten;
 
-},{"./_baseFlatten":97}],192:[function(require,module,exports){
+},{"./_baseFlatten":97}],195:[function(require,module,exports){
 var baseHasIn = require('./_baseHasIn'),
     hasPath = require('./_hasPath');
 
@@ -16765,7 +17000,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":101,"./_hasPath":144}],193:[function(require,module,exports){
+},{"./_baseHasIn":101,"./_hasPath":145}],196:[function(require,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -16788,7 +17023,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],194:[function(require,module,exports){
+},{}],197:[function(require,module,exports){
 var baseIsArguments = require('./_baseIsArguments'),
     isObjectLike = require('./isObjectLike');
 
@@ -16826,7 +17061,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":102,"./isObjectLike":202}],195:[function(require,module,exports){
+},{"./_baseIsArguments":102,"./isObjectLike":205}],198:[function(require,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -16854,7 +17089,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],196:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isLength = require('./isLength');
 
@@ -16889,7 +17124,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":198,"./isLength":199}],197:[function(require,module,exports){
+},{"./isFunction":201,"./isLength":202}],200:[function(require,module,exports){
 var root = require('./_root'),
     stubFalse = require('./stubFalse');
 
@@ -16929,7 +17164,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":178,"./stubFalse":215}],198:[function(require,module,exports){
+},{"./_root":179,"./stubFalse":219}],201:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObject = require('./isObject');
 
@@ -16968,7 +17203,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":100,"./isObject":201}],199:[function(require,module,exports){
+},{"./_baseGetTag":100,"./isObject":204}],202:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -17005,7 +17240,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],200:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 var baseIsMap = require('./_baseIsMap'),
     baseUnary = require('./_baseUnary'),
     nodeUtil = require('./_nodeUtil');
@@ -17034,7 +17269,7 @@ var isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap;
 
 module.exports = isMap;
 
-},{"./_baseIsMap":103,"./_baseUnary":116,"./_nodeUtil":173}],201:[function(require,module,exports){
+},{"./_baseIsMap":103,"./_baseUnary":117,"./_nodeUtil":174}],204:[function(require,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -17067,7 +17302,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],202:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -17098,7 +17333,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],203:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     getPrototype = require('./_getPrototype'),
     isObjectLike = require('./isObjectLike');
@@ -17162,7 +17397,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":100,"./_getPrototype":138,"./isObjectLike":202}],204:[function(require,module,exports){
+},{"./_baseGetTag":100,"./_getPrototype":139,"./isObjectLike":205}],207:[function(require,module,exports){
 var baseIsSet = require('./_baseIsSet'),
     baseUnary = require('./_baseUnary'),
     nodeUtil = require('./_nodeUtil');
@@ -17191,7 +17426,7 @@ var isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet;
 
 module.exports = isSet;
 
-},{"./_baseIsSet":105,"./_baseUnary":116,"./_nodeUtil":173}],205:[function(require,module,exports){
+},{"./_baseIsSet":105,"./_baseUnary":117,"./_nodeUtil":174}],208:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -17222,7 +17457,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":100,"./isObjectLike":202}],206:[function(require,module,exports){
+},{"./_baseGetTag":100,"./isObjectLike":205}],209:[function(require,module,exports){
 var baseIsTypedArray = require('./_baseIsTypedArray'),
     baseUnary = require('./_baseUnary'),
     nodeUtil = require('./_nodeUtil');
@@ -17251,7 +17486,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":106,"./_baseUnary":116,"./_nodeUtil":173}],207:[function(require,module,exports){
+},{"./_baseIsTypedArray":106,"./_baseUnary":117,"./_nodeUtil":174}],210:[function(require,module,exports){
 var arrayLikeKeys = require('./_arrayLikeKeys'),
     baseKeys = require('./_baseKeys'),
     isArrayLike = require('./isArrayLike');
@@ -17290,7 +17525,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":87,"./_baseKeys":107,"./isArrayLike":196}],208:[function(require,module,exports){
+},{"./_arrayLikeKeys":87,"./_baseKeys":107,"./isArrayLike":199}],211:[function(require,module,exports){
 var arrayLikeKeys = require('./_arrayLikeKeys'),
     baseKeysIn = require('./_baseKeysIn'),
     isArrayLike = require('./isArrayLike');
@@ -17324,7 +17559,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":87,"./_baseKeysIn":108,"./isArrayLike":196}],209:[function(require,module,exports){
+},{"./_arrayLikeKeys":87,"./_baseKeysIn":108,"./isArrayLike":199}],212:[function(require,module,exports){
 /**
  * Gets the last element of `array`.
  *
@@ -17346,7 +17581,7 @@ function last(array) {
 
 module.exports = last;
 
-},{}],210:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 var MapCache = require('./_MapCache');
 
 /** Error message constants. */
@@ -17421,7 +17656,32 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":77}],211:[function(require,module,exports){
+},{"./_MapCache":77}],214:[function(require,module,exports){
+var root = require('./_root');
+
+/**
+ * Gets the timestamp of the number of milliseconds that have elapsed since
+ * the Unix epoch (1 January 1970 00:00:00 UTC).
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Date
+ * @returns {number} Returns the timestamp.
+ * @example
+ *
+ * _.defer(function(stamp) {
+ *   console.log(_.now() - stamp);
+ * }, _.now());
+ * // => Logs the number of milliseconds it took for the deferred invocation.
+ */
+var now = function() {
+  return root.Date.now();
+};
+
+module.exports = now;
+
+},{"./_root":179}],215:[function(require,module,exports){
 var arrayMap = require('./_arrayMap'),
     baseClone = require('./_baseClone'),
     baseUnset = require('./_baseUnset'),
@@ -17480,7 +17740,7 @@ var omit = flatRest(function(object, paths) {
 
 module.exports = omit;
 
-},{"./_arrayMap":88,"./_baseClone":95,"./_baseUnset":117,"./_castPath":118,"./_copyObject":126,"./_customOmitClone":130,"./_flatRest":132,"./_getAllKeysIn":135}],212:[function(require,module,exports){
+},{"./_arrayMap":88,"./_baseClone":95,"./_baseUnset":118,"./_castPath":119,"./_copyObject":127,"./_customOmitClone":131,"./_flatRest":133,"./_getAllKeysIn":136}],216:[function(require,module,exports){
 var basePick = require('./_basePick'),
     flatRest = require('./_flatRest');
 
@@ -17507,7 +17767,7 @@ var pick = flatRest(function(object, paths) {
 
 module.exports = pick;
 
-},{"./_basePick":109,"./_flatRest":132}],213:[function(require,module,exports){
+},{"./_basePick":109,"./_flatRest":133}],217:[function(require,module,exports){
 var baseSet = require('./_baseSet');
 
 /**
@@ -17544,7 +17804,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":111}],214:[function(require,module,exports){
+},{"./_baseSet":111}],218:[function(require,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -17569,7 +17829,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],215:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 /**
  * This method returns `false`.
  *
@@ -17589,7 +17849,73 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],216:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
+var baseTrim = require('./_baseTrim'),
+    isObject = require('./isObject'),
+    isSymbol = require('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var NAN = 0 / 0;
+
+/** Used to detect bad signed hexadecimal string values. */
+var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+/** Used to detect binary string values. */
+var reIsBinary = /^0b[01]+$/i;
+
+/** Used to detect octal string values. */
+var reIsOctal = /^0o[0-7]+$/i;
+
+/** Built-in method references without a dependency on `root`. */
+var freeParseInt = parseInt;
+
+/**
+ * Converts `value` to a number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {number} Returns the number.
+ * @example
+ *
+ * _.toNumber(3.2);
+ * // => 3.2
+ *
+ * _.toNumber(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toNumber(Infinity);
+ * // => Infinity
+ *
+ * _.toNumber('3.2');
+ * // => 3.2
+ */
+function toNumber(value) {
+  if (typeof value == 'number') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return NAN;
+  }
+  if (isObject(value)) {
+    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+    value = isObject(other) ? (other + '') : other;
+  }
+  if (typeof value != 'string') {
+    return value === 0 ? value : +value;
+  }
+  value = baseTrim(value);
+  var isBinary = reIsBinary.test(value);
+  return (isBinary || reIsOctal.test(value))
+    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
+    : (reIsBadHex.test(value) ? NAN : +value);
+}
+
+module.exports = toNumber;
+
+},{"./_baseTrim":116,"./isObject":204,"./isSymbol":208}],221:[function(require,module,exports){
 var baseToString = require('./_baseToString');
 
 /**
@@ -17619,7 +17945,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":115}],217:[function(require,module,exports){
+},{"./_baseToString":115}],222:[function(require,module,exports){
 var baseUnset = require('./_baseUnset');
 
 /**
@@ -17655,7 +17981,7 @@ function unset(object, path) {
 
 module.exports = unset;
 
-},{"./_baseUnset":117}],218:[function(require,module,exports){
+},{"./_baseUnset":118}],223:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -17819,7 +18145,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],219:[function(require,module,exports){
+},{}],224:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -18005,7 +18331,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],220:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 "use strict";
 /**
  * Initialize backoff timer with `opts`.
@@ -18077,7 +18403,7 @@ Backoff.prototype.setJitter = function (jitter) {
     this.jitter = jitter;
 };
 
-},{}],221:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -18148,7 +18474,7 @@ Object.defineProperty(exports, "protocol", { enumerable: true, get: function () 
 
 module.exports = lookup;
 
-},{"./manager.js":222,"./socket.js":224,"./url.js":225,"debug":6,"socket.io-parser":227}],222:[function(require,module,exports){
+},{"./manager.js":227,"./socket.js":229,"./url.js":230,"debug":6,"socket.io-parser":232}],227:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -18553,7 +18879,7 @@ class Manager extends component_emitter_1.Emitter {
 }
 exports.Manager = Manager;
 
-},{"./contrib/backo2.js":220,"./on.js":223,"./socket.js":224,"@socket.io/component-emitter":2,"debug":6,"engine.io-client":13,"socket.io-parser":227}],223:[function(require,module,exports){
+},{"./contrib/backo2.js":225,"./on.js":228,"./socket.js":229,"@socket.io/component-emitter":2,"debug":6,"engine.io-client":13,"socket.io-parser":232}],228:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -18565,7 +18891,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],224:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19293,7 +19619,7 @@ class Socket extends component_emitter_1.Emitter {
 }
 exports.Socket = Socket;
 
-},{"./on.js":223,"@socket.io/component-emitter":2,"debug":6,"socket.io-parser":227}],225:[function(require,module,exports){
+},{"./on.js":228,"@socket.io/component-emitter":2,"debug":6,"socket.io-parser":232}],230:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19365,7 +19691,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":6,"engine.io-client":13}],226:[function(require,module,exports){
+},{"debug":6,"engine.io-client":13}],231:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -19455,7 +19781,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary.js":228}],227:[function(require,module,exports){
+},{"./is-binary.js":233}],232:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -19755,7 +20081,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary.js":226,"./is-binary.js":228,"@socket.io/component-emitter":2,"debug":6}],228:[function(require,module,exports){
+},{"./binary.js":231,"./is-binary.js":233,"@socket.io/component-emitter":2,"debug":6}],233:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -19812,7 +20138,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],229:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CurtainComponent = void 0;
@@ -19831,7 +20157,7 @@ class CurtainComponent extends models_1.Component {
 }
 exports.CurtainComponent = CurtainComponent;
 
-},{"../models":257}],230:[function(require,module,exports){
+},{"../models":264}],235:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19849,7 +20175,7 @@ class EmptyComponent extends models_1.Component {
 }
 exports.EmptyComponent = EmptyComponent;
 
-},{"../../models":257,"./template.hbs":231,"handlebars":60}],231:[function(require,module,exports){
+},{"../../models":264,"./template.hbs":236,"handlebars":60}],236:[function(require,module,exports){
 module.exports = `
   <div class="empty">
     <i class="fas fa-hourglass-start"></i>
@@ -19857,7 +20183,7 @@ module.exports = `
   </div>
 `
 
-},{}],232:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19872,20 +20198,44 @@ const context_1 = __importDefault(require("../../context"));
 const template = require('./template.hbs');
 const render = handlebars_1.default.compile(template);
 class ExpectationComponent extends models_1.Component {
-    constructor(expectation) {
+    constructor(data) {
         super();
-        this.expectation = expectation;
-        this.refresh(expectation);
+        this.data = data;
+        this.isExpanded = false;
+        this.refresh(data);
     }
-    refresh(expectation) {
-        this.clear().append(render(expectation));
-        const json = new json_formatter_1.default((0, pick_1.default)(expectation, ['id', 'type', 'transports', 'schema']), 2, {
+    refresh(data) {
+        this.clear().append(render(data));
+        const pre = this.element.querySelector('pre');
+        const json = new json_formatter_1.default((0, pick_1.default)(data, ['id', 'type', 'transports', 'schema']), 3, {
             theme: 'custom',
             afterCopyHandler: () => context_1.default.shared.popups.push('Copied', { icon: 'fas fa-clone', level: 'info' }),
         });
-        this.element.querySelector('pre')?.appendChild(json.render());
-        this.element.querySelector('button.activity')?.addEventListener('click', () => context_1.default.services.io.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } }));
-        return Object.assign(this, { expectation });
+        pre.appendChild(json.render());
+        if (this.isExpanded) {
+            pre.classList.remove('hidden');
+        }
+        this.element.querySelector('button.activity')?.addEventListener('click', () => context_1.default.services.io.exec('expectations:update', { id: data.id, set: { isEnabled: !data.isEnabled } }));
+        this.element.querySelector('div.meta').addEventListener('click', (event) => {
+            if (event.target.nodeName === 'BUTTON') {
+                return null;
+            }
+            if (event.composedPath().some((element) => element?.classList?.contains('meta')) === false) {
+                return null;
+            }
+            pre.classList.toggle('hidden');
+            this.isExpanded = !this.isExpanded;
+        });
+        return Object.assign(this, { expectation: data });
+    }
+    match(query) {
+        return [
+            this.data.group,
+            this.data.name,
+            this.data.meta.tags.join(),
+            this.data.schema.forward?.baseUrl,
+            this.data.schema.forward?.url,
+        ].some((value) => value?.includes(query));
     }
     static build(expectation) {
         return new ExpectationComponent(expectation);
@@ -19893,15 +20243,15 @@ class ExpectationComponent extends models_1.Component {
 }
 exports.ExpectationComponent = ExpectationComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":246,"../../models":257,"./template.hbs":233,"handlebars":60,"lodash/pick":212}],233:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":253,"../../models":264,"./template.hbs":238,"handlebars":60,"lodash/pick":216}],238:[function(require,module,exports){
 module.exports = `
   <div class="container expectation" id="{{id}}">
     <div class="meta">{{> expectationMeta this}}</div>
-    <pre class="panel"></pre>
+    <pre class="panel hidden"></pre>
   </div>
 `
 
-},{}],234:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19915,33 +20265,33 @@ const context_1 = __importDefault(require("../../context"));
 const template = require('./template.hbs');
 const render = handlebars_1.default.compile(template);
 class HistoryComponent extends models_1.Component {
-    constructor(history) {
+    constructor(data) {
         super();
-        this.history = history;
+        this.data = data;
         this.isExpanded = false;
-        this.refresh(history);
+        this.refresh(data);
     }
-    refresh(history) {
-        this.clear().append(render(history));
-        const pre = this.element.querySelector('div.history > pre');
+    refresh(data) {
+        this.clear().append(render(data));
+        const pre = this.element.querySelector('pre');
         const formatted = {
-            event: history.snapshot.event,
-            ...(Object.keys(history.snapshot.flags).length && { flags: history.snapshot.flags }),
-            ...(history.expectation && {
+            event: data.snapshot.event,
+            ...(Object.keys(data.snapshot.flags).length && { flags: data.snapshot.flags }),
+            ...(data.expectation && {
                 expectation: {
-                    id: history.expectation.id,
-                    group: history.expectation.group,
-                    ...(history.expectation.schema.forward && { forward: history.expectation.schema.forward }),
+                    id: data.expectation.id,
+                    group: data.expectation.group,
+                    ...(data.expectation.schema.forward && { forward: data.expectation.schema.forward }),
                 },
             }),
-            ...(history.snapshot.cache?.isEnabled && { cache: history.snapshot.cache }),
-            ...(history.snapshot.seed && { seed: history.snapshot.seed }),
-            ...(history.snapshot.container && { container: history.snapshot.container }),
-            incoming: history.snapshot.incoming,
-            ...(history.snapshot.error && { error: history.snapshot.error }),
-            ...(history.status === 'completed' && { outgoing: history.snapshot.outgoing }),
-            ...(history.snapshot.forwarded && { forwarded: history.snapshot.forwarded }),
-            ...(history.snapshot.messages?.length && { messages: history.snapshot.messages }),
+            ...(data.snapshot.cache?.isEnabled && { cache: data.snapshot.cache }),
+            ...(data.snapshot.seed && { seed: data.snapshot.seed }),
+            ...(data.snapshot.container && { container: data.snapshot.container }),
+            incoming: data.snapshot.incoming,
+            ...(data.snapshot.error && { error: data.snapshot.error }),
+            ...(data.status === 'completed' && { outgoing: data.snapshot.outgoing }),
+            ...(data.snapshot.forwarded && { forwarded: data.snapshot.forwarded }),
+            ...(data.snapshot.messages?.length && { messages: data.snapshot.messages }),
         };
         if (this.isExpanded) {
             pre.classList.remove('hidden');
@@ -19959,13 +20309,34 @@ class HistoryComponent extends models_1.Component {
             this.isExpanded = !this.isExpanded;
         });
     }
+    match(query) {
+        const light = [
+            this.data.group,
+            this.data.expectation?.name,
+            this.data.snapshot.incoming.path,
+            this.data.snapshot.incoming.method,
+            this.data.snapshot.incoming.dataRaw,
+            this.data.snapshot.incoming.error,
+            String(this.data.snapshot.outgoing.status),
+            String(this.data.snapshot.seed ?? ''),
+            this.data.snapshot.outgoing.dataRaw,
+        ].some((value) => value?.includes(query));
+        return light || [
+            this.data.snapshot.incoming.query,
+            this.data.snapshot.incoming.headers,
+            this.data.snapshot.outgoing.headers,
+            this.data.snapshot.container,
+            this.data.snapshot.state,
+            this.data.snapshot.cache,
+        ].some((value) => JSON.stringify(value)?.includes(query));
+    }
     static build(history) {
         return new HistoryComponent(history);
     }
 }
 exports.HistoryComponent = HistoryComponent;
 
-},{"../../../../../../json-formatter":1,"../../context":246,"../../models":257,"./template.hbs":235,"handlebars":60}],235:[function(require,module,exports){
+},{"../../../../../../json-formatter":1,"../../context":253,"../../models":264,"./template.hbs":240,"handlebars":60}],240:[function(require,module,exports){
 module.exports = `
   <div class="container history" id="{{id}}">
     <div class="meta">
@@ -20001,9 +20372,7 @@ module.exports = `
 
       {{#if expectation}}
         {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
-        {{#if snapshot.forwarded.isCached}}<span class="cache">Cached</span>{{/if}}
-
-        <div class="segment">{{>expectationMeta expectation format='short'}}</div>
+        <div class="segment">{{>expectationMeta expectation format='short' isCached=snapshot.forwarded.isCached}}</div>
       {{else}}
         <span class="handled-with red">Nowhere</span>
       {{/if}}
@@ -20033,7 +20402,7 @@ module.exports = `
   </div>
 `
 
-},{}],236:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20056,9 +20425,10 @@ __exportStar(require("./history.component"), exports);
 __exportStar(require("./curtain.component"), exports);
 __exportStar(require("./loader.component"), exports);
 __exportStar(require("./popups.component"), exports);
+__exportStar(require("./search.component"), exports);
 __exportStar(require("./empty.component"), exports);
 
-},{"./curtain.component":229,"./empty.component":230,"./expectation.component":232,"./history.component":234,"./loader.component":237,"./popups.component":238,"./settings.component":240}],237:[function(require,module,exports){
+},{"./curtain.component":234,"./empty.component":235,"./expectation.component":237,"./history.component":239,"./loader.component":242,"./popups.component":243,"./search.component":245,"./settings.component":247}],242:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoaderComponent = void 0;
@@ -20074,7 +20444,7 @@ class LoaderComponent extends curtain_component_1.CurtainComponent {
 }
 exports.LoaderComponent = LoaderComponent;
 
-},{"./curtain.component":229}],238:[function(require,module,exports){
+},{"./curtain.component":234}],243:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20101,7 +20471,7 @@ class PopupsComponent extends models_1.Component {
 }
 exports.PopupsComponent = PopupsComponent;
 
-},{"../../models":257,"./template.hbs":239,"handlebars":60}],239:[function(require,module,exports){
+},{"../../models":264,"./template.hbs":244,"handlebars":60}],244:[function(require,module,exports){
 module.exports = `
   <div class="popup-message {{level}}">
     <i class="{{icon}}"></i>
@@ -20109,7 +20479,65 @@ module.exports = `
   </div>
 `
 
-},{}],240:[function(require,module,exports){
+},{}],245:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SearchComponent = void 0;
+const events_1 = require("events");
+const debounce_1 = __importDefault(require("lodash/debounce"));
+const handlebars_1 = __importDefault(require("handlebars"));
+const models_1 = require("../../models");
+const template = require('./template.hbs');
+const render = handlebars_1.default.compile(template);
+class SearchComponent extends models_1.Component {
+    constructor(options) {
+        super(render({ title: options?.title ?? 'Type something' }));
+        this.options = options;
+        this.events = new events_1.EventEmitter();
+        this.input = this.element.querySelector('input');
+        this.button = this.element.querySelector('button');
+        this.button.classList.add('hidden');
+        this.button.addEventListener('click', () => this.clear());
+        this.on('input', () => this.button.classList.remove('hidden'));
+        this.input.addEventListener('keydown', (0, debounce_1.default)(() => this.input.value ? this.emit('input', this.input.value) : this.clear(), 350));
+    }
+    clear() {
+        this.input.value = '';
+        this.button.classList.add('hidden');
+        this.emit('clear');
+        return this;
+    }
+    on(event, handler) {
+        this.events.on(event, handler);
+        return this;
+    }
+    once(event, handler) {
+        this.events.once(event, handler);
+        return this;
+    }
+    emit(event, ...args) {
+        this.events.emit(event, ...args);
+        return this;
+    }
+    static build(options) {
+        return new SearchComponent(options);
+    }
+}
+exports.SearchComponent = SearchComponent;
+
+},{"../../models":264,"./template.hbs":246,"events":27,"handlebars":60,"lodash/debounce":192}],246:[function(require,module,exports){
+module.exports = `
+  <div class="search">
+    <i class="fas fa-search"></i>
+    <div class="input" title="{{title}}"><input data-key="search" type="text"></div>
+    <button><i class="far fa-times-circle"></i></button>
+  </div>
+`
+
+},{}],247:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20173,7 +20601,7 @@ class SettingsComponent extends models_1.Component {
 }
 exports.SettingsComponent = SettingsComponent;
 
-},{"../../../../utils/common":259,"../../context":246,"../../models":257,"./template.hbs":241,"handlebars":60}],241:[function(require,module,exports){
+},{"../../../../utils/common":266,"../../context":253,"../../models":264,"./template.hbs":248,"handlebars":60}],248:[function(require,module,exports){
 module.exports = `
   <div class="settings">
     <div id="groups-filter" class="container">
@@ -20191,7 +20619,7 @@ module.exports = `
   </div>
 `
 
-},{}],242:[function(require,module,exports){
+},{}],249:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20199,63 +20627,77 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const components_1 = require("../components");
 const models_1 = require("../models");
+const common_1 = require("../../../utils/common");
 const context_1 = __importDefault(require("../context"));
 const empty = components_1.EmptyComponent.build();
 const storage = new Map();
-const container = models_1.Container
-    .build(document.querySelector('section#expectations'))
-    .on('select', () => {
-    if (context_1.default.shared.settings.filters.groups) {
-        empty.hide();
-        const components = [...storage.values()].map((component) => context_1.default.shared.settings.filters.groups.has(component.expectation.group)
-            ? component.show()
-            : component.hide());
-        if (components.every((component) => component.isHidden)) {
-            empty.show();
-        }
-    }
+const state = { search: (0, common_1.cast)(null) };
+const search = components_1.SearchComponent
+    .build({ title: 'Search expectations' })
+    .on('clear', () => {
+    state.search = null;
+    refresh();
 })
-    .on('initialize', async () => {
-    container.clear().append(empty);
+    .on('input', (value) => {
+    state.search = value;
+    refresh();
+});
+const filter = (expectations) => {
+    let filtred = expectations;
+    if (context_1.default.shared.settings.filters.groups) {
+        filtred = filtred.filter((expectation) => context_1.default.shared.settings.filters.groups.has(expectation.data.group));
+    }
+    if (state.search) {
+        filtred = filtred.filter((expectation) => expectation.match(state.search));
+    }
+    return filtred;
+};
+const refresh = (expectations = [...storage.values()]) => {
+    const hidden = expectations.map((expectation) => expectation.hide());
+    const shown = filter(hidden).map((expectation) => expectation.show());
+    shown.length ? empty.hide() : empty.show();
+};
+exports.default = models_1.Container
+    .build(document.querySelector('section#expectations'))
+    .on('select', () => refresh())
+    .on('initialize', async (container) => {
     context_1.default.shared.groups.clear();
+    container.content.clear();
     storage.clear();
     const { data } = await context_1.default.services.io.exec('expectations:get-list');
     data.forEach((expectation) => {
         const component = components_1.ExpectationComponent.build(expectation);
         storage.set(expectation.id, component);
         context_1.default.shared.groups.add(expectation.group);
-        container.append(component);
+        container.content.append(component);
     });
-    storage.size ? empty.hide() : empty.show();
+    refresh();
 })
-    .once('initialize', () => {
-    context_1.default.services.io.subscribe('expectation:added', (expectation) => {
-        const component = components_1.ExpectationComponent.build(expectation);
-        storage.set(expectation.id, component);
-        context_1.default.shared.groups.add(expectation.group);
-        container.append(component);
-        !(context_1.default.shared.settings.filters.groups?.has(expectation.group) ?? true)
-            ? component.hide()
-            : empty.hide();
+    .once('initialize', (container) => {
+    container.prepend(empty);
+    container.prepend(search);
+    context_1.default.services.io.subscribe('expectation:added', (data) => {
+        const expectation = components_1.ExpectationComponent.build(data);
+        storage.set(data.id, expectation);
+        context_1.default.shared.groups.add(data.group);
+        container.content.append(expectation);
+        refresh([expectation]);
     });
-    context_1.default.services.io.subscribe('expectation:updated', (expectation) => {
-        const component = storage.get(expectation.id) ?? components_1.ExpectationComponent.build(expectation);
-        if (storage.has(expectation.id)) {
-            component.refresh(expectation);
+    context_1.default.services.io.subscribe('expectation:updated', (data) => {
+        const expectation = storage.get(data.id) ?? components_1.ExpectationComponent.build(data);
+        if (storage.has(data.id)) {
+            expectation.refresh(data);
         }
-        if (!container.element.querySelector(`div.expectation[id="${expectation.id}"]`)) {
-            container.append(component);
+        if (!container.content.element.querySelector(`div.expectation[id="${data.id}"]`)) {
+            container.content.append(expectation);
+            refresh([expectation]);
         }
-        storage.set(expectation.id, component);
-        context_1.default.shared.groups.add(expectation.group);
-        !(context_1.default.shared.settings.filters.groups?.has(expectation.group) ?? true)
-            ? component.hide()
-            : empty.hide();
+        storage.set(data.id, expectation);
+        context_1.default.shared.groups.add(data.group);
     });
 });
-exports.default = container;
 
-},{"../components":236,"../context":246,"../models":257}],243:[function(require,module,exports){
+},{"../../../utils/common":266,"../components":241,"../context":253,"../models":264}],250:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20263,66 +20705,80 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const components_1 = require("../components");
 const models_1 = require("../models");
+const common_1 = require("../../../utils/common");
 const context_1 = __importDefault(require("../context"));
 const empty = components_1.EmptyComponent.build();
 const storage = new Map();
-const ids = [];
-const container = models_1.Container
-    .build(document.querySelector('section#history'))
-    .on('select', () => {
-    if (context_1.default.shared.settings.filters.groups) {
-        empty.hide();
-        const components = [...storage.values()].map((component) => context_1.default.shared.settings.filters.groups.has(component.history.group)
-            ? component.show()
-            : component.hide());
-        if (components.every((component) => component.isHidden)) {
-            empty.show();
-        }
-    }
+const stack = [];
+const state = { search: (0, common_1.cast)(null) };
+const search = components_1.SearchComponent
+    .build({ title: 'Search history' })
+    .on('clear', () => {
+    state.search = null;
+    refresh();
 })
-    .on('initialize', async () => {
-    container.clear().append(empty);
+    .on('input', (value) => {
+    state.search = value;
+    refresh();
+});
+const filter = (history) => {
+    let filtred = history;
+    if (context_1.default.shared.settings.filters.groups) {
+        filtred = filtred.filter((history) => context_1.default.shared.settings.filters.groups.has(history.data.group));
+    }
+    if (state.search) {
+        filtred = filtred.filter((history) => history.match(state.search));
+    }
+    return filtred;
+};
+const refresh = (history = [...storage.values()]) => {
+    const hidden = history.map((history) => history.hide());
+    const shown = filter(hidden).map((history) => history.show());
+    shown.length ? empty.hide() : empty.show();
+};
+exports.default = models_1.Container
+    .build(document.querySelector('section#history'))
+    .on('select', () => refresh())
+    .on('initialize', async (container) => {
+    container.content.clear();
     storage.clear();
-    ids.splice(0, ids.length);
+    stack.splice(0, stack.length);
     const { data } = await context_1.default.services.io.exec('history:get-list');
     data.forEach((history) => {
         const component = components_1.HistoryComponent.build(history);
         storage.set(history.id, component);
-        ids.push(history.id);
-        container.append(component);
+        stack.push(history.id);
+        container.content.append(component);
     });
-    storage.size ? empty.hide() : empty.show();
+    refresh();
 })
-    .once('initialize', () => {
-    context_1.default.services.io.subscribe('history:added', (history) => {
-        const component = components_1.HistoryComponent.build(history);
-        storage.set(history.id, component);
-        ids.push(history.id);
-        if (ids.length > context_1.default.config.history.limit * context_1.default.shared.groups.size) {
-            const id = ids.shift();
-            storage.get(id)?.remove();
+    .once('initialize', (container) => {
+    container.prepend(empty);
+    container.prepend(search);
+    context_1.default.services.io.subscribe('history:added', (data) => {
+        const history = components_1.HistoryComponent.build(data);
+        storage.set(data.id, history);
+        stack.push(data.id);
+        if (stack.length > context_1.default.config.history.limit * context_1.default.shared.groups.size) {
+            const id = stack.shift();
+            storage.get(id)?.delete();
             storage.delete(id);
         }
-        container.prepend(component);
-        !(context_1.default.shared.settings.filters.groups?.has(history.group) ?? true)
-            ? component.hide()
-            : empty.hide();
+        container.content.prepend(history);
+        refresh([history]);
     });
-    context_1.default.services.io.subscribe('history:updated', (history) => {
-        const component = storage.get(history.id) ?? components_1.HistoryComponent.build(history);
-        storage.has(history.id) ? component.refresh(history) : ids.push(history.id);
-        storage.set(history.id, component);
-        if (!container.element.querySelector(`div.history[id="${history.id}"]`)) {
-            container.prepend(component);
+    context_1.default.services.io.subscribe('history:updated', (data) => {
+        const history = storage.get(data.id) ?? components_1.HistoryComponent.build(data);
+        storage.has(data.id) ? history.refresh(data) : stack.push(data.id);
+        storage.set(data.id, history);
+        if (!container.element.querySelector(`div.history[id="${data.id}"]`)) {
+            container.content.prepend(history);
+            refresh([history]);
         }
-        !(context_1.default.shared.settings.filters.groups?.has(history.group) ?? true)
-            ? component.hide()
-            : empty.hide();
     });
 });
-exports.default = container;
 
-},{"../components":236,"../context":246,"../models":257}],244:[function(require,module,exports){
+},{"../../../utils/common":266,"../components":241,"../context":253,"../models":264}],251:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20336,7 +20792,7 @@ Object.defineProperty(exports, "settings", { enumerable: true, get: function () 
 var history_1 = require("./history");
 Object.defineProperty(exports, "history", { enumerable: true, get: function () { return __importDefault(history_1).default; } });
 
-},{"./expectations":242,"./history":243,"./settings":245}],245:[function(require,module,exports){
+},{"./expectations":249,"./history":250,"./settings":252}],252:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20344,7 +20800,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const context_1 = __importDefault(require("../context"));
-const container = models_1.Container
+exports.default = models_1.Container
     .build(document.querySelector('section#settings'))
     .on('select', async () => {
     context_1.default.shared.settings.refresh();
@@ -20353,12 +20809,11 @@ const container = models_1.Container
     context_1.default.shared.settings.resetFilters();
     context_1.default.shared.settings.refresh();
 })
-    .once('initialize', () => {
+    .once('initialize', (container) => {
     container.append(context_1.default.shared.settings);
 });
-exports.default = container;
 
-},{"../context":246,"../models":257}],246:[function(require,module,exports){
+},{"../context":253,"../models":264}],253:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_client_1 = require("socket.io-client");
@@ -20398,7 +20853,7 @@ class Context {
 }
 exports.default = new Context();
 
-},{"../../utils/common":259,"./models":257,"socket.io-client":221}],247:[function(require,module,exports){
+},{"../../utils/common":266,"./models":264,"socket.io-client":226}],254:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toLocaleTime = exports.compare = void 0;
@@ -20420,7 +20875,7 @@ exports.compare = (0, utils_1.buildHandlebarsHelper)((context) => (arg1, operato
 });
 exports.toLocaleTime = (0, utils_1.buildHandlebarsHelper)(() => (timestamp) => new Date(timestamp).toLocaleTimeString());
 
-},{"./utils":251}],248:[function(require,module,exports){
+},{"./utils":258}],255:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20469,7 +20924,7 @@ exports.default = {
     },
 };
 
-},{"./helpers":247,"./partials":250,"handlebars":60}],249:[function(require,module,exports){
+},{"./helpers":254,"./partials":257,"handlebars":60}],256:[function(require,module,exports){
 module.exports = `
   {{#compare format 'neq' 'short'}}
     <button class="activity">
@@ -20505,18 +20960,23 @@ module.exports = `
     {{/each}}
   {{/compare}}
 
-  {{#if schema.forward}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/if}}
-  {{#if schema.forward.baseUrl}}<span class="forward">{{schema.forward.baseUrl}}</span>{{/if}}
-  {{#if schema.forward.url}}<span class="forward">{{schema.forward.url}}</span>{{/if}}
+  {{#with schema.forward}}
+    <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+
+    {{#if baseUrl}}<span class="forward">{{baseUrl}}</span>{{/if}}
+    {{#if url}}<span class="forward">{{url}}</span>{{/if}}
+
+    {{#if ../isCached}}<span class="cache"><i class="fas fa-database"></i></span>{{/if}}
+  {{/with}}
 `
 
-},{}],250:[function(require,module,exports){
+},{}],257:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.expectationMeta = void 0;
 exports.expectationMeta = require('./expectation-meta.hbs');
 
-},{"./expectation-meta.hbs":249}],251:[function(require,module,exports){
+},{"./expectation-meta.hbs":256}],258:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildHandlebarsHelper = void 0;
@@ -20527,7 +20987,7 @@ const buildHandlebarsHelper = (handler) => {
 };
 exports.buildHandlebarsHelper = buildHandlebarsHelper;
 
-},{}],252:[function(require,module,exports){
+},{}],259:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Button = void 0;
@@ -20560,7 +21020,7 @@ class Button {
 }
 exports.Button = Button;
 
-},{}],253:[function(require,module,exports){
+},{}],260:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = void 0;
@@ -20606,7 +21066,7 @@ class Component {
         this.element.innerHTML = '';
         return this;
     }
-    remove() {
+    delete() {
         this.element.remove();
         return this;
     }
@@ -20616,7 +21076,7 @@ class Component {
 }
 exports.Component = Component;
 
-},{}],254:[function(require,module,exports){
+},{}],261:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20630,7 +21090,8 @@ class Container extends component_1.Component {
     constructor(element) {
         super();
         this.element = element;
-        this.storage = dynamic_storage_1.DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div#config'));
+        this.storage = dynamic_storage_1.DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.config'));
+        this.content = new component_1.Component(this.element.querySelector('div.content'));
         this.events = new events_1.default();
     }
     initialize() {
@@ -20661,7 +21122,7 @@ class Container extends component_1.Component {
 }
 exports.Container = Container;
 
-},{"./component":253,"./dynamic-storage":255,"events":27}],255:[function(require,module,exports){
+},{"./component":260,"./dynamic-storage":262,"events":27}],262:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20696,7 +21157,7 @@ class DynamicStorage {
 }
 exports.DynamicStorage = DynamicStorage;
 
-},{"../utils":258,"./form":256,"lodash/set":213}],256:[function(require,module,exports){
+},{"../utils":265,"./form":263,"lodash/set":217}],263:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20752,7 +21213,7 @@ class Form extends component_1.Component {
 }
 exports.Form = Form;
 
-},{"../utils":258,"./component":253,"lodash/set":213}],257:[function(require,module,exports){
+},{"../utils":265,"./component":260,"lodash/set":217}],264:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20775,7 +21236,7 @@ __exportStar(require("./container"), exports);
 __exportStar(require("./button"), exports);
 __exportStar(require("./form"), exports);
 
-},{"./button":252,"./component":253,"./container":254,"./dynamic-storage":255,"./form":256}],258:[function(require,module,exports){
+},{"./button":259,"./component":260,"./container":261,"./dynamic-storage":262,"./form":263}],265:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20794,7 +21255,7 @@ exports.convertObjectToKeyValueCouples = convertObjectToKeyValueCouples;
 const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
 exports.buildCounter = buildCounter;
 
-},{"lodash/isObject":201}],259:[function(require,module,exports){
+},{"lodash/isObject":204}],266:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCounter = exports.flattenArrayed = exports.cast = exports.wait = void 0;
@@ -20825,7 +21286,7 @@ exports.flattenArrayed = flattenArrayed;
 const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
 exports.buildCounter = buildCounter;
 
-},{}],260:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -20902,4 +21363,4 @@ _context2["default"].instances.io.on('connect', /*#__PURE__*/_asyncToGenerator( 
   }, _callee);
 })));
 
-},{"./components":236,"./containers":244,"./context":246,"./handlebars":248,"lodash/omit":211,"lodash/set":213,"lodash/unset":217}]},{},[260]);
+},{"./components":241,"./containers":251,"./context":253,"./handlebars":255,"lodash/omit":215,"lodash/set":217,"lodash/unset":222}]},{},[267]);

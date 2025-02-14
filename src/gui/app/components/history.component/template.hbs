@@ -33,9 +33,7 @@ module.exports = `
 
       {{#if expectation}}
         {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
-        {{#if snapshot.forwarded.isCached}}<span class="cache">Cached</span>{{/if}}
-
-        <div class="segment">{{>expectationMeta expectation format='short'}}</div>
+        <div class="segment">{{>expectationMeta expectation format='short' isCached=snapshot.forwarded.isCached}}</div>
       {{else}}
         <span class="handled-with red">Nowhere</span>
       {{/if}}

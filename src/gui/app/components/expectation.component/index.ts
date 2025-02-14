@@ -11,25 +11,55 @@ const template = require('./template.hbs');
 const render = hbs.compile(template);
 
 export class ExpectationComponent extends Component {
-  constructor(public expectation: Expectation['TPlain']) {
+  public isExpanded: boolean = false;
+
+  constructor(public data: Expectation['TPlain']) {
     super();
-    this.refresh(expectation);
+    this.refresh(data);
   }
 
-  public refresh(expectation: Expectation['TPlain']) {
-    this.clear().append(render(expectation));
+  public refresh(data: Expectation['TPlain']) {
+    this.clear().append(render(data));
 
-    const json = new JsonFormatHighlight(_pick(expectation, ['id', 'type', 'transports', 'schema']), 2, {
+    const pre = this.element.querySelector('pre')!;
+    const json = new JsonFormatHighlight(_pick(data, ['id', 'type', 'transports', 'schema']), 3, {
       theme: 'custom',
       afterCopyHandler: () => context.shared.popups.push('Copied', { icon: 'fas fa-clone', level: 'info' }),
     });
 
-    this.element.querySelector('pre')?.appendChild(json.render());
+    pre.appendChild(json.render());
+
+    if (this.isExpanded) {
+      pre.classList.remove('hidden');
+    }
+
     this.element.querySelector('button.activity')?.addEventListener('click', () =>
-      context.services.io.exec('expectations:update', { id: expectation.id, set: { isEnabled: !expectation.isEnabled } })
+      context.services.io.exec('expectations:update', { id: data.id, set: { isEnabled: !data.isEnabled } })
     );
 
-    return Object.assign(this, { expectation });
+    this.element.querySelector('div.meta')!.addEventListener('click', (event) => {
+      if ((<Element>event.target).nodeName === 'BUTTON') {
+        return null;
+      }
+      if (event.composedPath().some((element) => (<Element>element)?.classList?.contains('meta')) === false) {
+        return null;
+      }
+
+      pre.classList.toggle('hidden');
+      this.isExpanded = !this.isExpanded;
+    });
+
+    return Object.assign(this, { expectation: data });
+  }
+
+  public match(query: string): boolean {
+    return [
+      this.data.group,
+      this.data.name,
+      this.data.meta.tags.join(),
+      this.data.schema.forward?.baseUrl,
+      this.data.schema.forward?.url,
+    ].some((value) => value?.includes(query));
   }
 
   static build(expectation: Expectation['TPlain']) {

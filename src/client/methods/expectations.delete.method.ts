@@ -7,15 +7,15 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: TEndpoints['deleteExpectation']['incoming']['data'];
-    outgoing: TEndpoints['deleteExpectation']['outgoing']['data'];
+    incoming: TEndpoints['expectationsDelete']['incoming']['data'];
+    outgoing: TEndpoints['expectationsDelete']['outgoing']['data'];
   }>()
   .register('remote', (instance) => async (body) => {
     await instance
-      .request<TEndpoints['deleteExpectation']['outgoing']>({
+      .request<TEndpoints['expectationsDelete']['outgoing']>({
         data: body,
 
-        ...cast<TEndpoints['deleteExpectation']['location']>({
+        ...cast<TEndpoints['expectationsDelete']['location']>({
           url: `${config.get('routes').internal.root}/expectations`,
           method: 'DELETE',
         }),

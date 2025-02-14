@@ -59,7 +59,9 @@ export class MockServer<
   public authority = `http://${this.configuration.host}:${this.configuration.port}`;
 
   public databases: Provider['databases'] = {
-    redis: this.configuration.databases?.redis ? new Redis(this.configuration.databases?.redis) : null,
+    redis: this.configuration.databases?.redis
+      ? new Redis({ keyPrefix: 'mock:', ...this.configuration.databases?.redis })
+      : null,
   };
 
   public exchanges: Provider['exchanges'] = {

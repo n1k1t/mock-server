@@ -4,6 +4,7 @@ import { IncomingMessage } from 'http';
 import { extractHttpIncommingContext, IRequestContextIncoming, parsePayload, Provider, RequestContext } from '../../models';
 import { IServerContext } from '../../types';
 import { parseJsonSafe } from '../../../utils';
+import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Transports.Ws.Context');
@@ -24,20 +25,22 @@ export class WsRequestContext extends RequestContext<IServerContext<{
   ) {
     super(provider, { event, transport: 'ws' });
 
-    event === 'message'
-      ? logger.info(`Incoming WS ${event} [${incoming.path}] got message`, incoming.data)
-      : logger.info(`Incoming WS ${event} [${incoming.path}]`);
+    metaStorage.wrap(this.meta, () => {
+      event === 'message'
+        ? logger.info(`Incoming WS ${event} [${incoming.path}] got message`, incoming.data)
+        : logger.info(`Incoming WS ${event} [${incoming.path}]`);
 
-    if (event === 'connection') {
-      this.streams.incoming.subscribe({
+      if (event === 'connection') {
+        this.streams.incoming.subscribe({
+          error: () => null,
+          next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] got message`, data),
+        });
+      }
+
+      this.streams.outgoing.subscribe({
         error: () => null,
-        next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] got message`, data),
+        next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] has sent`, data),
       });
-    }
-
-    this.streams.outgoing.subscribe({
-      error: () => null,
-      next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] has sent`, data),
     });
   }
 

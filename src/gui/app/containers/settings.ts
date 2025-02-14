@@ -1,7 +1,7 @@
 import { Container } from '../models';
 import context from '../context';
 
-const container = Container
+export default Container
   .build(document.querySelector('section#settings')!)
   .on('select', async () => {
     context.shared.settings.refresh();
@@ -10,8 +10,6 @@ const container = Container
     context.shared.settings.resetFilters();
     context.shared.settings.refresh();
   })
-  .once('initialize', () => {
+  .once('initialize', (container) => {
     container.append(context.shared.settings);
   });
-
-export default container;

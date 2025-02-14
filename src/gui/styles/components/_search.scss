@@ -1,0 +1,45 @@
+@import '../constants';
+
+div.search {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 10px;
+  width: 410px;
+  padding: 2px 10px;
+  margin: auto;
+  margin-bottom: 50px;
+  background-color: rgba(#fff, .05);
+  opacity: .4;
+  transition-duration: .1s;
+
+  & > i {
+    width: 20px;
+    margin: 0 15px;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+
+  button {
+    display: inline-block !important;
+    background-color: transparent;
+    font-size: 20px;
+    padding: 10px 15px;
+    margin: 0;
+    color: rgba(#fff, .2);
+
+    i { margin: 0 }
+    &:hover { color: #fff }
+  }
+
+  div.input {
+    background-color: transparent;
+    width: 380px;
+
+    &:before {
+      text-align: center;
+    }
+  }
+}

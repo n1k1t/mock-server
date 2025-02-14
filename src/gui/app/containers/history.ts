@@ -1,38 +1,57 @@
 import _unset from 'lodash/unset';
 import _set from 'lodash/set';
 
-import { EmptyComponent, HistoryComponent } from '../components';
+import { EmptyComponent, HistoryComponent, SearchComponent } from '../components';
 import { Container } from '../models';
+import { cast } from '../../../utils/common';
 
 import context from '../context';
 
 const empty = EmptyComponent.build();
 
 const storage = new Map<string, HistoryComponent>();
-const ids: string[] = [];
+const stack: string[] = [];
+const state = { search: cast<null | string>(null) };
 
-const container = Container
-  .build(document.querySelector('section#history')!)
-  .on('select', () => {
-    if (context.shared.settings.filters.groups) {
-      empty.hide();
-
-      const components = [...storage.values()].map((component) =>
-        context.shared.settings.filters.groups!.has(component.history.group)
-          ? component.show()
-          : component.hide()
-      );
-
-      if (components.every((component) => component.isHidden)) {
-        empty.show();
-      }
-    }
+const search = SearchComponent
+  .build({ title: 'Search history' })
+  .on('clear', () => {
+    state.search = null;
+    refresh();
   })
-  .on('initialize', async () => {
-    container.clear().append(empty);
+  .on('input', (value) => {
+    state.search = value;
+    refresh();
+  });
+
+const filter = (history: HistoryComponent[]): HistoryComponent[] => {
+  let filtred = history;
+
+  if (context.shared.settings.filters.groups) {
+    filtred = filtred.filter((history) => context.shared.settings.filters.groups!.has(history.data.group));
+  }
+  if (state.search) {
+    filtred = filtred.filter((history) => history.match(state.search!));
+  }
+
+  return filtred;
+}
+
+const refresh = (history: HistoryComponent[] = [...storage.values()]) => {
+  const hidden = history.map((history) => history.hide());
+  const shown = filter(hidden).map((history) => history.show());
+
+  shown.length ? empty.hide() : empty.show();
+}
+
+export default Container
+  .build(document.querySelector('section#history')!)
+  .on('select', () => refresh())
+  .on('initialize', async (container) => {
+    container.content.clear();
 
     storage.clear();
-    ids.splice(0, ids.length);
+    stack.splice(0, stack.length);
 
     const { data } = await context.services.io.exec('history:get-list');
 
@@ -40,48 +59,43 @@ const container = Container
       const component = HistoryComponent.build(history);
 
       storage.set(history.id, component);
-      ids.push(history.id);
+      stack.push(history.id);
 
-      container.append(component);
+      container.content.append(component);
     });
 
-    storage.size ? empty.hide() : empty.show();
+    refresh();
   })
-  .once('initialize', () => {
-    context.services.io.subscribe('history:added', (history) => {
-      const component = HistoryComponent.build(history);
+  .once('initialize', (container) => {
+    container.prepend(empty);
+    container.prepend(search);
 
-      storage.set(history.id, component);
-      ids.push(history.id);
+    context.services.io.subscribe('history:added', (data) => {
+      const history = HistoryComponent.build(data);
 
-      if (ids.length > context.config.history.limit * context.shared.groups.size) {
-        const id = ids.shift()!;
+      storage.set(data.id, history);
+      stack.push(data.id);
 
-        storage.get(id)?.remove();
+      if (stack.length > context.config.history.limit * context.shared.groups.size) {
+        const id = stack.shift()!;
+
+        storage.get(id)?.delete();
         storage.delete(id);
       }
 
-      container.prepend(component);
-
-      !(context.shared.settings.filters.groups?.has(history.group) ?? true)
-        ? component.hide()
-        : empty.hide();
+      container.content.prepend(history);
+      refresh([history]);
     });
 
-    context.services.io.subscribe('history:updated', (history) => {
-      const component = storage.get(history.id) ?? HistoryComponent.build(history);
+    context.services.io.subscribe('history:updated', (data) => {
+      const history = storage.get(data.id) ?? HistoryComponent.build(data);
 
-      storage.has(history.id) ? component.refresh(history) : ids.push(history.id);
-      storage.set(history.id, component);
+      storage.has(data.id) ? history.refresh(data) : stack.push(data.id);
+      storage.set(data.id, history);
 
-      if (!container.element.querySelector(`div.history[id="${history.id}"]`)) {
-        container.prepend(component);
+      if (!container.element.querySelector(`div.history[id="${data.id}"]`)) {
+        container.content.prepend(history);
+        refresh([history]);
       }
-
-      !(context.shared.settings.filters.groups?.has(history.group) ?? true)
-        ? component.hide()
-        : empty.hide();
     });
   });
-
-export default container;

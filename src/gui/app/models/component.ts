@@ -51,7 +51,7 @@ export class Component {
     return this;
   }
 
-  public remove() {
+  public delete() {
     this.element.remove();
     return this;
   }
