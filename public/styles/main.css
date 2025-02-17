@@ -777,7 +777,7 @@ div.container div.meta span.seed {
   color: #1e1e1e;
 }
 div.container div.meta span.cache {
-  background-color: #7b7bff;
+  background-color: #e1e1ff;
   color: #1e1e1e;
 }
 div.container.history:hover div.meta, div.container.expectation:hover div.meta {

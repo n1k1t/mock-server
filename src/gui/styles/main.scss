@@ -163,7 +163,7 @@ div.container {
     }
 
     span.cache {
-      background-color: $color-purple;
+      background-color: lighten($color-purple, 20);
       color: $color-dark;
     }
   }
