@@ -42,27 +42,27 @@ export const extractPayloadType = (headers: IncomingMessage['headers']): TReques
   return null;
 }
 
-export const parsePayload = (type: TRequestPayloadType, raw: string): object | undefined => {
+export const parsePayload = (type: TRequestPayloadType, payload: Buffer): object | undefined => {
   if (type === 'json') {
-    const parsed = parseJsonSafe(raw);
+    const parsed = parseJsonSafe(payload.toString());
     return parsed.status === 'OK' ? parsed.result : undefined;
   }
   if (type === 'xml') {
-    return xmlParser.parse(raw) ?? undefined;
+    return xmlParser.parse(payload) ?? undefined;
   }
 
   return undefined;
 }
 
-export const serializePayload = (type: TRequestPayloadType, payload: object | null): string => {
+export const serializePayload = (type: TRequestPayloadType, payload: object | null): Buffer | undefined => {
   if (type === 'json') {
-    return JSON.stringify(payload);
+    return Buffer.from(JSON.stringify(payload));
   }
   if (type === 'xml') {
-    return xmlBuilder.build(payload ?? {});
+    return Buffer.from(xmlBuilder.build(payload ?? {}));
   }
 
-  return '';
+  return undefined;
 }
 
 export const extractHttpIncommingContext = async (request: IncomingMessage): Promise<IRequestContextIncoming> => {
@@ -76,18 +76,13 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
     .map(([name, values]) => [name.toLowerCase(), _.flatten([values]).map((value) => String(value)).sort().join(',')])
     .reduce((acc, [name, value]) => _.set(acc, name, value), {});
 
-  const dataRaw = await new Promise<string | null>((resolve, reject) =>
-    bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) => {
-      if (error) {
-        return reject(error);
-      }
-
-      const body = _.get(request, 'body');
-      return resolve(Buffer.isBuffer(body) ? body.toString() : null);
-    })
+  const dataRaw = await new Promise<Buffer | null>((resolve, reject) =>
+    bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) =>
+      error
+        ? reject(error)
+        : resolve(Buffer.isBuffer(_.get(request, 'body')) ? _.get(request, 'body') : null)
+    )
   );
-
-  const data = dataRaw ? parsePayload(type, dataRaw) : undefined;
 
   return {
     type,
@@ -98,7 +93,7 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
     headers,
     query,
 
-    data,
+    data: dataRaw ? parsePayload(type, dataRaw) : undefined,
     dataRaw: dataRaw ?? undefined,
   };
 }

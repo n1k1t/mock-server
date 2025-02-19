@@ -51,7 +51,7 @@ export default Endpoint
   .assignHandler(async ({ incoming, reply, server }) =>
     reply.ok({
       redis: server.databases.redis
-        ? await deleteRedisKeys(server.databases.redis, incoming.query.prefix).catch(() => undefined)
+        ? await deleteRedisKeys(server.databases.redis, incoming.query?.prefix).catch(() => undefined)
         : undefined,
     })
   )

@@ -1,7 +1,7 @@
-import { Executor, ExecutorManualError, IRequestContextIncoming, IRequestContextOutgoing } from '../../models';
-import { Expectation, IExpectationSchemaForward } from '../../../expectations';
+import { Executor, ExecutorManualError, IRequestContextOutgoing } from '../../models';
 import { WsRequestContext } from './context';
 import { parseJsonSafe } from '../../../utils';
+import { Expectation } from '../../../expectations';
 import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Transports.Ws.Executor');
@@ -39,11 +39,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
     }
   }
 
-  public async forward(
-    context: WsRequestContext,
-    incoming: IRequestContextIncoming,
-    configuration: IExpectationSchemaForward
-  ) {
+  public async forward() {
     return null;
   }
 

@@ -68,6 +68,7 @@ export default class SetExpectationOperator<
 
     switch(payload.type) {
       case 'number':
+      case 'buffer':
       case 'string': {
         _.set(
           payload.parent,

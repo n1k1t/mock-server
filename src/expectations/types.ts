@@ -4,7 +4,7 @@ import type dayjs from 'dayjs';
 import type * as rxjs from 'rxjs';
 import type _ from 'lodash';
 
-import type { Container, IRequestContextIncoming, IRequestContextOutgoing, RequestContextSnapshot } from '../server/models';
+import type { Container, ContainersStorage, IRequestContextIncoming, IRequestContextOutgoing, RequestContextSnapshot } from '../server/models';
 import type { ConvertTupleToUnion, ExtractObjectValueByPath } from '../types';
 import type { MetaContext } from '../meta';
 import type { Logger } from '../logger';
@@ -86,7 +86,7 @@ export interface IExpectationSchemaInput {
   incoming?: Pick<IRequestContextIncoming, 'query' | 'data'>;
   outgoing?: Pick<IRequestContextOutgoing, 'data'>;
 
-  container?: object;
+  container?: any;
   transport?: any;
   event?: any;
   flag?: any;
@@ -101,7 +101,7 @@ export interface IExpectationSchemaContext<TInput extends IExpectationSchemaInpu
   flags: Partial<Record<TInput['flag'], boolean>>;
 
   state: TInput['state'] extends object ? TInput['state'] : Record<string, any>;
-  storage: RequestContextSnapshot['storage'];
+  storage: ContainersStorage<TInput['container']>;
   cache: TInput extends object ? RequestContextSnapshot['cache'] : any;
 
   container?: Container<NonNullable<TInput['container']>>;

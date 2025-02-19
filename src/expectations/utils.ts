@@ -15,6 +15,7 @@ type TBaseExtractedContext = { parent: object, key: string };
 type TExtractedContext =
   | (TBaseExtractedContext & { value?: unknown, type: 'object' })
   | (TBaseExtractedContext & { value?: string, type: 'string' })
+  | (TBaseExtractedContext & { value?: Buffer, type: 'buffer' })
   | (TBaseExtractedContext & { value?: number, type: 'number' });
 
 const clone = rfdc();
@@ -61,7 +62,7 @@ export const extractContextByLocation = (
 
     case 'incoming.dataRaw': return {
       key: 'incoming.dataRaw',
-      type: 'string',
+      type: 'buffer',
       parent: context,
       value: context.incoming?.dataRaw,
     };
@@ -96,7 +97,7 @@ export const extractContextByLocation = (
 
     case 'outgoing.dataRaw': return {
       key: 'outgoing.dataRaw',
-      type: 'string',
+      type: 'buffer',
       parent: context,
       value: context.outgoing?.dataRaw,
     };

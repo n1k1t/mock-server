@@ -7,7 +7,7 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: TEndpoints['expectationsGroupUpdate']['incoming']['data'];
+    incoming: NonNullable<TEndpoints['expectationsGroupUpdate']['incoming']['data']>;
     outgoing: TEndpoints['expectationsGroupUpdate']['outgoing']['data'];
   }>()
   .register('remote', (instance) => async (body) => {

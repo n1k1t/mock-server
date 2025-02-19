@@ -6,8 +6,8 @@ import _ from 'lodash';
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
 import { ExecutorManualError } from './errors';
+import { cast, wait } from '../../../utils';
 import { Logger } from '../../../logger';
-import { wait } from '../../../utils';
 import {
   parsePayload,
   RequestContext,
@@ -206,20 +206,30 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         })
         : null;
 
-      const parsed = <IRequestContextCache | null>(unziped ? parsePayload('json', unziped.toString()) : null);
+      const parsed = <IRequestContextCache | null>(unziped ? parsePayload('json', unziped) : null);
 
       if (parsed) {
         logger.info(`Got cache [${snapshot.cache.key}]`);
 
-        parsed.outgoing.stream = from(parsed.messages?.map((message) => message.data) ?? []);
-        return Object.assign(snapshot.pick(['incoming']), parsed, { isCached: true });
+        if (parsed.messages?.length) {
+          parsed.outgoing.stream = from(parsed.messages.map((message) => message.data) ?? []);
+        }
+
+        return Object.assign(snapshot.pick(['incoming']), parsed, {
+          isCached: true,
+          outgoing: Object.assign(parsed.outgoing, {
+            ...(parsed.outgoing.dataRaw && { dataRaw: Buffer.from(parsed.outgoing.dataRaw, 'base64') }),
+          }),
+        });
       }
     }
 
     const type = extractPayloadType(snapshot.incoming.headers) ?? 'plain';
-
-    const data = snapshot.incoming.data === undefined ? snapshot.incoming.dataRaw : snapshot.incoming.data;
-    const dataRaw = data === undefined ? undefined : typeof data === 'object' ? serializePayload(type, data) : String(data);
+    const dataRaw = snapshot.incoming.data === undefined
+      ? snapshot.incoming.dataRaw
+      : typeof snapshot.incoming.data === 'object'
+        ? serializePayload(type, snapshot.incoming.data)
+        : Buffer.from(String(snapshot.incoming.data));
 
     const forwarded = await this
       .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), context.expectation.forward)
@@ -244,10 +254,12 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
-    const type = extractPayloadType(snapshot.outgoing.headers) ?? snapshot.incoming.type;
-
-    const data = snapshot.outgoing.data === undefined ? snapshot.outgoing.dataRaw : snapshot.outgoing.data;
-    const dataRaw = data === undefined ? undefined : typeof data === 'object' ? serializePayload(type, data) : String(data);
+    const type = extractPayloadType(snapshot.outgoing.headers) ?? snapshot.outgoing.type;
+    const dataRaw = snapshot.outgoing.data === undefined
+      ? snapshot.outgoing.dataRaw
+      : typeof snapshot.outgoing.data === 'object'
+        ? serializePayload(type, snapshot.outgoing.data)
+        : Buffer.from(String(snapshot.outgoing.data));
 
     const outgoing = await this
       .reply(context, Object.assign(snapshot.outgoing, { type, dataRaw }))
@@ -263,21 +275,27 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       && typeof snapshot.cache.key === 'string';
 
     if (shouldBeCached) {
-      const payload: IRequestContextCache = {
-        outgoing: snapshot.forwarded!.outgoing!,
+      const serialized = serializePayload('json', cast<IRequestContextCache>({
         messages: snapshot.forwarded!.messages?.filter((message) => message.location === 'outgoing'),
-      };
+        outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['dataRaw']), {
+          dataRaw: snapshot.forwarded!.outgoing?.dataRaw?.toString('base64'),
+        }),
+      }));
 
-      const serialized = await gzip(serializePayload('json', payload)).catch((error) => {
+      if (!serialized) {
+        return outgoing;
+      }
+
+      const zipped = await gzip(serialized).catch((error) => {
         logger.error('Got error while zip payload', error?.stack ?? error);
         return null;
       });
 
-      if (serialized) {
+      if (zipped) {
         await context.provider.databases.redis!.setex(
           <string>snapshot.cache.key,
           snapshot.cache.ttl!,
-          serialized.toString('base64')
+          zipped.toString('base64')
         )
           .then(() => logger.info(`Wrote cache [${snapshot.cache.key}] for [${snapshot.cache.ttl}] seconds`))
           .catch((error) => logger.error('Got error while redis set', error?.stack ?? error));

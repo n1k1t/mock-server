@@ -27,7 +27,7 @@ export const buildExpectationContext = (): IExpectationSchemaContext => ({
       },
     },
 
-    dataRaw: '{"foo": [{"bar": 1}, {"baz": ["2"]}]}',
+    dataRaw: Buffer.from('{"foo": [{"bar": 1}, {"baz": ["2"]}]}'),
     data: {
       foo: [
         { bar: 1 },
@@ -45,7 +45,7 @@ export const buildExpectationContext = (): IExpectationSchemaContext => ({
     type: 'json',
     status: 200,
 
-    dataRaw: '{"foo": {"bar": {"baz": true}}}',
+    dataRaw: Buffer.from('{"foo": {"bar": {"baz": true}}}'),
     data: {
       foo: {
         bar: {

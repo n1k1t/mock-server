@@ -12,10 +12,10 @@ export interface IContainerConfiguration<T extends object> {
   prefix?: string;
 }
 
-export class ContainersStorage {
-  private storage = new Map<string, Container>();
+export class ContainersStorage<T extends object = object> {
+  private storage = new Map<string, Container<T>>();
 
-  public register<T extends object>(configuration: IContainerConfiguration<T>): Container<T> {
+  public register(configuration: IContainerConfiguration<T>): Container<T> {
     const key = compileContainerLink(configuration.key);
     const container = Container.build({
       key,
@@ -37,11 +37,11 @@ export class ContainersStorage {
     return container;
   }
 
-  public provide<T extends object>(configuration: IContainerConfiguration<T>): Container<T> {
+  public provide(configuration: IContainerConfiguration<T>): Container<T> {
     return this.find(configuration.key) ?? this.register(configuration);
   }
 
-  public find<T extends object>(key: string | object): Container<T> | undefined {
+  public find(key: string | object): Container<T> | undefined {
     return <Container<T>>this.storage.get(compileContainerLink(key));
   }
 

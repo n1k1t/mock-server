@@ -165,6 +165,14 @@ export default class HasExpectationOperator<
         return false;
       }
 
+      case 'buffer': {
+        if (this.compiled.exec) {
+          return this.compiled.exec('match', context, payload.value) === true;
+        }
+
+        return false;
+      }
+
       case 'object': {
         if (this.command.$path && !_.has(payload.value, this.command.$path)) {
           return false;

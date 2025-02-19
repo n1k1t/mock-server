@@ -2,7 +2,9 @@ import type { InternalHttpRequestContext, InternalSocketIoRequestContext } from 
 import type { SetRequiredKeys, TFunction } from '../../types';
 
 export interface IEndpointResponse<T> {
-  status: 'OK' | 'INTERNAL_ERROR' | 'VALIDATION_ERROR' | 'NOT_FOUND';
+  code: 'OK' | 'INTERNAL_ERROR' | 'VALIDATION_ERROR' | 'NOT_FOUND';
+  timestamp: number;
+
   data: T;
 }
 
@@ -16,10 +18,10 @@ export interface IEndpointInput {
 }
 
 export interface IEndpointSchema<TInput extends IEndpointInput> {
-  incoming: SetRequiredKeys<{
+  incoming: {
     data?: NonNullable<TInput['incoming']>['data'];
     query?: NonNullable<TInput['incoming']>['query'];
-  }, Extract<keyof NonNullable<TInput['incoming']>, 'query' | 'data'>>;
+  };
 
   outgoing: IEndpointResponse<TInput['outgoing']>;
 }

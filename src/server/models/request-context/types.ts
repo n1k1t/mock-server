@@ -13,7 +13,7 @@ export interface IRequestContextIncoming {
   stream?: Observable<unknown>;
 
   data?: unknown;
-  dataRaw?: string;
+  dataRaw?: Buffer;
 
   delay?: number;
   error?: 'ECONNABORTED';
@@ -25,7 +25,7 @@ export interface IRequestContextOutgoing {
   headers: Record<string, string>;
 
   data?: unknown;
-  dataRaw?: string;
+  dataRaw?: Buffer;
 
   stream?: Observable<unknown>;
 }
@@ -47,7 +47,7 @@ export interface IRequestContextForwarded {
 }
 
 export interface IRequestContextCache {
-  outgoing: IRequestContextOutgoing;
+  outgoing: Omit<IRequestContextOutgoing, 'dataRaw'> & { dataRaw?: string };
   messages?: Pick<IRequestContextMessage, 'location' | 'data'>[];
 }
 

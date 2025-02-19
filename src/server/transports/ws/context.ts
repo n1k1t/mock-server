@@ -74,10 +74,10 @@ export class WsRequestContext extends RequestContext<IServerContext<{
   ) {
     const incoming = await extractHttpIncommingContext(request);
 
-    incoming.dataRaw = message?.toString();
+    incoming.dataRaw = message ? Buffer.from(message.toString()) : undefined;
     incoming.data = incoming.dataRaw
       ? incoming.type === 'plain'
-        ? parseJsonSafe(incoming.dataRaw).result
+        ? parseJsonSafe(incoming.dataRaw.toString()).result
         : parsePayload(incoming.type, incoming.dataRaw)
       : undefined;
 

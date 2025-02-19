@@ -14,8 +14,26 @@ import type {
 const clone = rfdc();
 
 export class RequestContextSnapshot<TContext extends IServerContext<any> = IServerContext<any>> {
-  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage'> & {
+  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage' | 'forwarded'> & {
     transport: TContext['transport'];
+
+    incoming: {
+      dataRaw?: string;
+    };
+
+    outgoing: {
+      dataRaw?: string;
+    };
+
+    forwarded?: Omit<IRequestContextForwarded, 'incoming' | 'outgoing'> & {
+      incoming: Omit<IRequestContextIncoming, 'dataRaw'> & {
+        dataRaw?: string;
+      };
+
+      outgoing?: Omit<IRequestContextOutgoing, 'dataRaw'> & {
+        dataRaw?: string;
+      };
+    }
 
     container?: Container['TPlain'];
     error?: RequestContextSnapshot['error'];
@@ -73,8 +91,15 @@ export class RequestContextSnapshot<TContext extends IServerContext<any> = IServ
     return <this>RequestContextSnapshot.build({
       ..._.omit(this, ['incoming', 'outgoing']),
 
-      incoming: Object.assign(clone(_.omit(this.incoming, ['stream'])), _.pick(this.incoming, ['stream'])),
-      outgoing: Object.assign(clone(_.omit(this.outgoing, ['stream'])), _.pick(this.outgoing, ['stream'])),
+      incoming: Object.assign(clone(_.omit(this.incoming, ['stream', 'dataRaw'])), {
+        stream: this.incoming.stream,
+        dataRaw: this.incoming.dataRaw?.subarray(),
+      }),
+
+      outgoing: Object.assign(clone(_.omit(this.outgoing, ['stream', 'dataRaw'])), {
+        stream: this.outgoing.stream,
+        dataRaw: this.outgoing.dataRaw?.subarray(),
+      }),
     });
   }
 
@@ -90,11 +115,29 @@ export class RequestContextSnapshot<TContext extends IServerContext<any> = IServ
       seed: this.seed,
       container: this.container?.toPlain(),
 
-      incoming: _.omit(this.incoming, ['stream']),
-      outgoing: _.omit(this.outgoing, ['stream']),
-      messages: this.messages,
+      incoming: Object.assign(_.omit(this.incoming, ['stream']), {
+        dataRaw: this.incoming.dataRaw?.toString(),
+      }),
 
-      forwarded: this.forwarded,
+      outgoing: Object.assign(_.omit(this.outgoing, ['stream']), {
+        dataRaw: this.outgoing.dataRaw?.toString(),
+      }),
+
+      ...(this.forwarded && {
+        forwarded: Object.assign(_.omit(this.forwarded, ['incoming', 'outgoing']), {
+          incoming: Object.assign(_.omit(this.forwarded.incoming, ['dataRaw']), {
+            dataRaw: this.forwarded.incoming.dataRaw?.toString(),
+          }),
+
+          ...(this.forwarded.outgoing && {
+            outgoing: Object.assign(_.omit(this.forwarded.outgoing, ['dataRaw']), {
+              dataRaw: this.forwarded.outgoing.dataRaw?.toString(),
+            }),
+          }),
+        }),
+      }),
+
+      messages: this.messages,
       error: this.error,
     };
   }

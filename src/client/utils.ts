@@ -19,7 +19,7 @@ export const handleRequestError = (error: AxiosError<IEndpointResponse<any>>) =>
     throw new ConnectionError(configuration);
   }
 
-  switch(error.response?.data.status) {
+  switch(error.response?.data.code) {
     case 'INTERNAL_ERROR': {
       throw new InternalServerError(configuration, error.response?.data.data?.message);
     }

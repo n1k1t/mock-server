@@ -48,7 +48,7 @@ export default Endpoint
   .assignHandler(async ({ incoming, reply, server }) =>
     reply.ok({
       redis: server.databases.redis
-        ? await calculateRedisUsage(server.databases.redis, incoming.data.prefix).catch(() => undefined)
+        ? await calculateRedisUsage(server.databases.redis, incoming.data?.prefix).catch(() => undefined)
         : undefined,
     })
   )

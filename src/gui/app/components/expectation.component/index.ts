@@ -56,9 +56,9 @@ export class ExpectationComponent extends Component {
     return [
       this.data.group,
       this.data.name,
-      this.data.meta.tags.join(),
       this.data.schema.forward?.baseUrl,
       this.data.schema.forward?.url,
+      this.data.meta.tags.map(({ value }) => value).join(),
     ].some((value) => value?.includes(query));
   }
 

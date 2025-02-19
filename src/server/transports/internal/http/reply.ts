@@ -1,7 +1,7 @@
 import type { InternalHttpRequestContext } from './context';
 
-import { IEndpointResponse, IRequestContextOutgoing, Reply } from '../../../models';
-import { cast } from '../../../../utils';
+import { IRequestContextOutgoing, Reply } from '../../../models';
+import { buildEndpointResponse } from '../utils';
 
 const headers = {
   'Content-type': 'application/json',
@@ -15,7 +15,7 @@ export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRe
       type: 'plain',
       status: 200,
 
-      dataRaw: JSON.stringify(cast<IEndpointResponse<unknown>>({ status: 'OK', data: payload })),
+      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('OK', payload))),
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers);
@@ -32,9 +32,7 @@ export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRe
       type: 'plain',
       status: 500,
 
-      dataRaw: JSON.stringify(
-        cast<IEndpointResponse<{ message: string }>>({ status: 'INTERNAL_ERROR', data: { message } })
-      ),
+      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('INTERNAL_ERROR', { message }))),
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)
@@ -44,16 +42,14 @@ export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRe
     this.context.assign({ outgoing }).complete();
   }
 
-  public validationError(reasons: unknown[]) {
+  public validationError(reasons: unknown[] = ['Payload is not valid']) {
     const outgoing: IRequestContextOutgoing = {
       headers,
 
       type: 'plain',
       status: 400,
 
-      dataRaw: JSON.stringify(
-        cast<IEndpointResponse<{ reasons: unknown[] }>>({ status: 'VALIDATION_ERROR', data: { reasons } })
-      ),
+      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('VALIDATION_ERROR', { reasons }))),
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)
@@ -70,7 +66,7 @@ export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRe
       type: 'plain',
       status: 404,
 
-      dataRaw: JSON.stringify(cast<IEndpointResponse<null>>({ status: 'NOT_FOUND', data: null })),
+      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('NOT_FOUND', null))),
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)

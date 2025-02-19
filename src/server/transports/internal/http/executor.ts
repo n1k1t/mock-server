@@ -45,7 +45,7 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
       status: 404,
 
       headers: {},
-      dataRaw: 'Internal route was not found',
+      data: 'Internal route was not found',
     };
 
     context.response.writeHead(result.status, result.headers);

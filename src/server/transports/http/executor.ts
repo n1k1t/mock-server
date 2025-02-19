@@ -38,7 +38,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         type: 'plain',
         status: 404,
 
-        dataRaw: 'Expectation was not found',
+        dataRaw: Buffer.from('Expectation was not found'),
         headers: {},
       });
 
@@ -64,8 +64,8 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       });
 
     const response = await axios
-      .request(options)
-      .catch((error: AxiosError) => {
+      .request<Buffer>(options)
+      .catch((error: AxiosError<Buffer>) => {
         if (!error.response) {
           context.snapshot.assign({
             error: _.pick(error, ['message', 'code']),
@@ -79,10 +79,8 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         return error.response;
       });
 
-    const dataRaw = response.data.toString();
-
     const type = extractPayloadType(response.headers) ?? 'plain';
-    const data = parsePayload(type, dataRaw);
+    const data = parsePayload(type, response.data);
 
     return {
       incoming,
@@ -93,7 +91,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         headers: response.headers,
 
         data,
-        dataRaw,
+        dataRaw: response.data,
       },
     };
   }
@@ -105,7 +103,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
           outgoing.type === 'json' ? 'application/json' : outgoing.type === 'xml' ? 'application/xml' : undefined
         ),
 
-        ...(outgoing.dataRaw && { 'content-length': String(Buffer.from(outgoing.dataRaw).length) }),
+        ...(outgoing.dataRaw && { 'content-length': String(outgoing.dataRaw.length) }),
       }),
       _.isNil
     );
@@ -136,7 +134,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         connection: 'close',
 
         ...(configuration.options?.overrideHost !== false && { host: url.host }),
-        ...(incoming.dataRaw && { 'content-length': String(Buffer.from(incoming.dataRaw).length) }),
+        ...(incoming.dataRaw && { 'content-length': String(incoming.dataRaw.length) }),
       }),
 
       ...(configuration.url && { url: configuration.url }),

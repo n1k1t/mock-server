@@ -8,6 +8,10 @@ export default Endpoint
   }>()
   .bindToHttp(<const>{ method: 'POST', path: '/expectations' })
   .assignHandler(async ({ reply, incoming, server }) => {
+    if (!incoming.data) {
+      return reply.validationError();
+    }
+
     const group = incoming.data.group ?? 'default';
     const provider = group === 'default' ? server.providers.default : server.providers.get(group);
 
