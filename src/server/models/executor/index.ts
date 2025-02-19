@@ -207,6 +207,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         : null;
 
       const parsed = <IRequestContextCache | null>(unziped ? parsePayload('json', unziped) : null);
+      const dataRaw = parsed?.outgoing.dataRaw ? Buffer.from(parsed?.outgoing.dataRaw, 'base64') : undefined;
 
       if (parsed) {
         logger.info(`Got cache [${snapshot.cache.key}]`);
@@ -215,10 +216,13 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           parsed.outgoing.stream = from(parsed.messages.map((message) => message.data) ?? []);
         }
 
-        return Object.assign(snapshot.pick(['incoming']), parsed, {
+        return Object.assign(snapshot.pick(['incoming']), {
           isCached: true,
-          outgoing: Object.assign(parsed.outgoing, {
-            ...(parsed.outgoing.dataRaw && { dataRaw: Buffer.from(parsed.outgoing.dataRaw, 'base64') }),
+          messages: parsed.messages,
+
+          outgoing: Object.assign(_.omit(parsed.outgoing, ['dataRaw']), {
+            data: dataRaw ? parsePayload(parsed.outgoing.type, dataRaw) : undefined,
+            dataRaw,
           }),
         });
       }
@@ -277,7 +281,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     if (shouldBeCached) {
       const serialized = serializePayload('json', cast<IRequestContextCache>({
         messages: snapshot.forwarded!.messages?.filter((message) => message.location === 'outgoing'),
-        outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['dataRaw']), {
+        outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['data']), {
           dataRaw: snapshot.forwarded!.outgoing?.dataRaw?.toString('base64'),
         }),
       }));
