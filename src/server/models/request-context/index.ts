@@ -95,16 +95,11 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     }
 
     const payload = this.snapshot.cache.key ?? _.pick(this.snapshot.incoming, ['path', 'method', 'data', 'query']);
-    const prefix = this.expectation?.forward?.cache?.prefix ?? this.snapshot.cache.prefix;
+    const prefix = this.snapshot.cache.prefix ?? this.expectation?.forward?.cache?.prefix;
     const key = typeof payload === 'object' ? Value.Hash(payload).toString() : String(payload);
+    const ttl = this.snapshot.cache.ttl ?? this.expectation.forward.cache.ttl ?? 3600;
 
-    return {
-      prefix,
-      key: `${prefix ?? ''}${key}`,
-
-      isEnabled: true,
-      ttl: this.snapshot.cache.ttl ?? 3600,
-    };
+    return { prefix, ttl, key: `${prefix ?? ''}${key}`, isEnabled: true };
   }
 
   /**
