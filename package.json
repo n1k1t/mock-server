@@ -12,9 +12,9 @@
     "build": "rm -rf lib && npx tsc",
     "build:check": "npx tsc --noEmit",
     "prepare": "husky",
-    "preversion": "npm run build",
+    "preversion": "npm run build:check && npm test",
     "version": "git add -A .",
-    "postversion": "git push && git push --tags"
+    "postversion": "npm run build && git push && git push --tags"
   },
   "jest": {
     "preset": "ts-jest",
