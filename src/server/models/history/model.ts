@@ -7,7 +7,7 @@ import type { Expectation } from '../../../expectations';
 import { buildCounter, cast } from '../../../utils';
 
 export class History {
-  public TPlain!: Pick<History, 'id' | 'status' | 'meta' | 'group'> & {
+  public TPlain!: Pick<History, 'id' | 'status' | 'group' | 'timestamp' | 'duration'> & {
     snapshot: RequestContextSnapshot['TPlain'];
     expectation?: Expectation<any>['TPlain'];
   };
@@ -21,28 +21,23 @@ export class History {
   public status = cast<'unregistred' | 'registred' | 'pending' | 'completed'>('unregistred');
   public expectation?: Expectation<any>;
 
-  public meta = {
-    requestedAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  public timestamp: number = this.configuration.timestamp ?? Date.now();
+  public duration: number = 0;
 
-  constructor(private configuration: Pick<History, 'group' | 'snapshot'>) {}
+  constructor(private configuration: Pick<History, 'group' | 'snapshot'> & Partial<Pick<History, 'timestamp'>>) {}
 
   public pushMessage(location: IRequestContextMessage['location'], data: unknown): this {
     this.snapshot.messages.push({ location, data, id: this.messagesCounter(), timestamp: Date.now() });
-    return this;
+    return this.mark();
   }
 
   public actualizeSnapshot(snapshot: RequestContextSnapshot): this {
     this.snapshot.assign(snapshot.omit(['incoming', 'forwarded', 'messages']));
-    return this;
+    return this.mark();
   }
 
   public switchStatus(status: History['status']): this {
-    this.meta.updatedAt = Date.now();
-    this.status = status;
-
-    return this;
+    return Object.assign(this.mark(), { status });
   }
 
   public hasStatus(status: History['status']): boolean {
@@ -50,27 +45,30 @@ export class History {
   }
 
   public complete(): this {
-    this.meta.updatedAt = Date.now();
-    this.status = 'completed';
-
     if (this.snapshot.container) {
       this.snapshot.container = this.snapshot.container.clone();
     }
 
-    return this;
+    return this.switchStatus('completed');
   }
 
   public assign<T extends Partial<Pick<History, 'expectation'>>>(payload: T) {
-    this.meta.updatedAt = Date.now();
-    return Object.assign(this, payload);
+    return Object.assign(this.mark(), payload);
+  }
+
+  /** Updates duration property base on timestamp */
+  public mark() {
+    return this.hasStatus('completed') ? this : Object.assign(this, { duration: Date.now() - this.timestamp });
   }
 
   public toPlain(): History['TPlain'] {
     return {
       id: this.id,
-      group: this.group,
 
-      meta: this.meta,
+      timestamp: this.timestamp,
+      duration: this.duration,
+
+      group: this.group,
       status: this.status,
 
       snapshot: this.snapshot.toPlain(),

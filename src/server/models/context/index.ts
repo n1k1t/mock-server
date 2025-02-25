@@ -61,6 +61,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
   public compileSnapshot(): RequestContextSnapshot<TContext> {
     const snapshot = RequestContextSnapshot.build<IServerContext<any>>({
       transport: this.transport,
+
       event: this.event,
       flags: this.flags,
 
@@ -82,6 +83,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
    */
   public compileHistory(): History {
     return this.provider.storages.history.register({
+      timestamp: this.timestamp,
       snapshot: this.compileSnapshot().assign({ messages: [] }).clone(),
     });
   }

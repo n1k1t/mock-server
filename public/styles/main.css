@@ -1,15 +1,20 @@
 @charset "UTF-8";
-@keyframes pending {
-  0% {
-    content: "\f251";
-  }
-  33% {
-    content: "\f252";
-  }
-  66% {
-    content: "\f253";
-  }
+.hidden {
+  visibility: hidden;
+  display: none !important;
 }
+
+.selected:after {
+  content: "";
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px #48d1cc;
+}
+
 html {
   background-color: #1e1e1e;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -80,41 +85,6 @@ div.container {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-div.empty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 50px;
-}
-div.empty i {
-  color: #ffd37b;
-  font-size: 50px;
-  margin-right: 30px;
-}
-div.empty i:before {
-  animation: pending 1s infinite;
-}
-div.empty p {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 25px;
-  font-weight: 300;
-}
-
-div.curtain {
-  cursor: pointer;
-  position: fixed;
-  overflow-y: auto;
-  top: 0;
-  left: 0;
-  height: calc(100% - 50px);
-  width: 100%;
-  padding-top: 50px;
-  background-color: rgba(30, 30, 30, 0.95);
-}
-div.curtain > * {
-  cursor: auto;
-}
-
 div.input {
   display: inline-block;
   position: relative;
@@ -167,320 +137,190 @@ div.input.required:before {
   margin-left: 12px;
 }
 
-.hidden {
-  visibility: hidden;
-  display: none !important;
-}
-
-.selected:after {
-  content: "";
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
+div.history div.meta, div.expectation div.meta {
   border-radius: inherit;
-  box-shadow: inset 0 0 0 3px #48d1cc;
-}
-
-body > header {
   display: flex;
-  justify-content: center;
-  position: relative;
+  flex-wrap: wrap;
 }
-body > header button {
-  text-decoration: none;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  vertical-align: top;
+div.history div.meta div.segment, div.expectation div.meta div.segment {
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
 }
-body > header button i {
-  margin-right: 10px;
-}
-body > header button.icon-only i {
-  margin-right: 0;
-  font-size: 16px;
-}
-body > header button.checked {
-  background-color: #ffd37b;
-  color: #1e1e1e;
-}
-body > header button:not(.checked) {
-  color: rgba(255, 255, 255, 0.5);
+div.history div.meta span, div.history div.meta button, div.expectation div.meta span, div.expectation div.meta button {
+  padding: 7px 15px;
+  display: inline-block;
   background-color: rgba(255, 255, 255, 0.05);
-}
-body > header hr {
-  position: relative;
-  width: 1px;
-  height: 25px;
-  border: none;
-  background-color: #ddd;
-  margin: 10px 10px;
-}
-body > header div.buttons-container#container-select button {
-  padding: 10px 20px;
-}
-
-.json-formatter-custom.json-formatter-row {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  border-radius: 5px;
+  margin-right: 5px;
+  margin-top: 0;
+  margin-bottom: 0;
   font-size: 14px;
 }
-.json-formatter-custom.json-formatter-row span {
+div.history div.meta button, div.expectation div.meta button {
+  min-width: 50px;
+  margin-left: 0;
+}
+div.history div.meta button i, div.expectation div.meta button i {
+  float: none;
+  margin-right: 0;
+}
+div.history div.meta b, div.expectation div.meta b {
+  font-weight: normal;
   position: relative;
   display: inline-block;
 }
-.json-formatter-custom.json-formatter-row:not(:last-child) {
-  margin-bottom: 2px;
-}
-.json-formatter-custom.json-formatter-row > span {
-  width: 100%;
-  overflow-y: auto;
-  border-radius: 5px;
-}
-.json-formatter-custom.json-formatter-row > span > span {
-  padding: 5px 0;
-}
-.json-formatter-custom.json-formatter-row, .json-formatter-custom.json-formatter-row a, .json-formatter-custom.json-formatter-row a:hover {
-  color: rgba(255, 255, 255, 0.2);
-  text-decoration: none;
-  font-weight: 300;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-row {
-  margin-left: 20px;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-row > span {
-  display: flex;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty {
-  opacity: 0.5;
-  margin-left: 1rem;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty:after {
-  display: none;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty.json-formatter-object:after {
-  content: "No properties";
-}
-.json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty.json-formatter-array:after {
-  content: "[]";
-}
-.json-formatter-custom.json-formatter-row .json-formatter-string, .json-formatter-custom.json-formatter-row .json-formatter-stringifiable {
+div.history div.meta b:after, div.expectation div.meta b:after {
+  content: "";
   display: inline-block;
-  color: white;
-  white-space: normal;
-  word-wrap: break-word;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
-  padding: 5px 10px;
-  min-height: 20px;
+  position: relative;
+  height: 14px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  top: 2px;
+  margin-left: 10px;
+  margin-right: 5px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-number {
-  color: #7bff7b;
+div.history div.meta span.arrow, div.expectation div.meta span.arrow {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 8px 10px;
+  padding-left: 12px;
+  margin-right: 5px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-boolean {
-  color: #ff7b7b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-null {
-  color: #EEC97D;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-undefined {
-  color: rgb(239, 143, 190);
-}
-.json-formatter-custom.json-formatter-row .json-formatter-function {
-  color: #FF20ED;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-date {
-  background-color: fade(rgba(255, 255, 255, 0.2), 5%);
-}
-.json-formatter-custom.json-formatter-row .json-formatter-url {
-  text-decoration: underline;
-  color: #027BFF;
-  cursor: pointer;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key {
-  color: #7ba7ff;
-  padding: 5px;
-  padding-right: 10px;
-  padding-left: 5px;
-  font-weight: 500;
-  vertical-align: top;
-  margin-bottom: 0;
-  min-height: 20px;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-2 {
-  color: #7ba7ff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-3 {
-  color: #7b7bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-4 {
-  color: #a77bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-5 {
-  color: #d37bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-6 {
-  color: #ff7bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-7 {
-  color: #ff7bd3;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-8 {
-  color: #ff7ba7;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-9 {
-  color: #ff7b7b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-10 {
-  color: #ffa77b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-11 {
-  color: #ffd37b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-12 {
-  color: #ffff7b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-13 {
-  color: #d3ff7b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-14 {
+div.history div.meta button.activity i.fa-plug, div.expectation div.meta button.activity i.fa-plug {
   color: #a7ff7b;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-15 {
-  color: #7bff7b;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-16 {
-  color: #7bffa7;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-17 {
-  color: #7bffd3;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-18 {
-  color: #7bffff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-19 {
-  color: #7bd3ff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-20 {
-  color: #7ba7ff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-21 {
-  color: #7b7bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-22 {
-  color: #a77bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-23 {
-  color: #d37bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-24 {
-  color: #ff7bff;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-25 {
-  color: #ff7bd3;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-26 {
-  color: #ff7ba7;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-27 {
+div.history div.meta button.activity i.fa-power-off, div.expectation div.meta button.activity i.fa-power-off {
   color: #ff7b7b;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-28 {
-  color: #ffa77b;
+div.history div.meta span.name, div.expectation div.meta span.name {
+  font-size: 12px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-key.level-29 {
+div.history div.meta span.name b, div.expectation div.meta span.name b {
   color: #ffd37b;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-value {
-  padding-right: 10px;
+div.history div.meta span.status, div.expectation div.meta span.status {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-value span {
-  display: flex;
+div.history div.meta span.status b, div.expectation div.meta span.status b {
+  min-width: 35px;
+  text-align: center;
+  font-size: 14px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-preview {
-  padding-left: 10px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  color: rgba(255, 255, 255, 0.3);
+div.history div.meta span.status.red b, div.expectation div.meta span.status.red b {
+  color: #ff7b7b;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-constructor-name,
-.json-formatter-custom.json-formatter-row .json-formatter-constructor-name + span > .json-formatter-number,
-.json-formatter-custom.json-formatter-row .json-formatter-bracket {
-  color: rgba(255, 255, 255, 0.2);
-  padding: 5px 0;
+div.history div.meta span.status.green b, div.expectation div.meta span.status.green b {
+  color: #a7ff7b;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-toggler-link {
-  cursor: pointer;
-  display: flex;
+div.history div.meta span.transport, div.expectation div.meta span.transport {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-toggler {
-  line-height: 1.2rem;
-  font-size: 0.7rem;
-  vertical-align: middle;
-  opacity: 0.2;
+div.history div.meta span.method, div.expectation div.meta span.method {
+  background-color: #ffd37b;
+  color: #1e1e1e;
+  font-weight: bold;
+}
+div.history div.meta span.path, div.expectation div.meta span.path {
+  background-color: #ffa77b;
+  color: #1e1e1e;
+}
+div.history div.meta span.time, div.expectation div.meta span.time {
+  width: 60px;
+  text-align: center;
+  font-size: 12px;
+}
+div.history div.meta span.calls-count, div.history div.meta span.name, div.history div.meta span.time, div.expectation div.meta span.calls-count, div.expectation div.meta span.name, div.expectation div.meta span.time {
+  color: rgba(255, 255, 255, 0.5);
+}
+div.history div.meta span.calls-count.active, div.history div.meta span.name.active, div.history div.meta span.time.active, div.expectation div.meta span.calls-count.active, div.expectation div.meta span.name.active, div.expectation div.meta span.time.active {
   color: #fff;
-  cursor: pointer;
-  padding-right: 7px;
-  padding-top: 5px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-toggler:after {
-  display: inline-block;
-  transition: transform 100ms ease-in;
-  content: "❯";
+div.history div.meta span.calls-count i, div.history div.meta span.name i, div.history div.meta span.time i, div.expectation div.meta span.calls-count i, div.expectation div.meta span.name i, div.expectation div.meta span.time i {
+  opacity: 0.2;
+  margin-right: 10px;
 }
-.json-formatter-custom.json-formatter-row > a > .json-formatter-preview-text {
-  opacity: 0;
-  transition: opacity 0.15s ease-in;
-  font-style: italic;
-  color: #7ba7ff;
+div.history div.meta span.calls-count, div.expectation div.meta span.calls-count {
+  min-width: 38px;
 }
-.json-formatter-custom.json-formatter-row:hover > a > .json-formatter-preview-text {
-  opacity: 0.6;
+div.history div.meta span.pending, div.expectation div.meta span.pending {
+  min-width: 35px;
+  text-align: center;
 }
-.json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-toggler {
-  opacity: 1;
+div.history div.meta span.pending i:before, div.expectation div.meta span.pending i:before {
+  animation: pending 1s infinite;
 }
-.json-formatter-custom.json-formatter-row.json-formatter-open > .json-formatter-toggler-link .json-formatter-toggler:after {
-  transform: rotate(90deg);
+div.history div.meta span.separator, div.history div.meta span.label, div.expectation div.meta span.separator, div.expectation div.meta span.label {
+  padding: 0 5px;
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+  margin-right: 0;
+  margin-bottom: 0;
 }
-.json-formatter-custom.json-formatter-row.json-formatter-open > .json-formatter-children:after {
-  display: inline-block;
+div.history div.meta span.label, div.expectation div.meta span.label {
+  padding-left: 0;
 }
-.json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-preview-text {
-  display: none;
-}
-.json-formatter-custom.json-formatter-row.json-formatter-open.json-formatter-empty:after {
-  display: block;
-}
-.json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-value .json-formatter-preview {
-  display: none;
-}
-.json-formatter-custom.json-formatter-row button.json-formatter-copy {
-  padding: 0;
-  border: none;
+div.history div.meta span.handled-with, div.expectation div.meta span.handled-with {
   background-color: transparent;
-  padding-right: 10px;
-  font-size: 15px;
-  color: #fff;
-  vertical-align: top;
+  color: rgba(255, 255, 255, 0.3);
+  margin-right: 0;
+  padding: 7px 5px;
+}
+div.history div.meta span.handled-with span.handler-name, div.expectation div.meta span.handled-with span.handler-name {
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  color: #ffd37b;
+}
+div.history div.meta span.handled-with span.handler-name.red, div.expectation div.meta span.handled-with span.handler-name.red {
+  color: #ff7b7b;
+}
+div.history div.meta span.error, div.expectation div.meta span.error {
+  background-color: #ff4848;
+}
+div.history div.meta span.forward, div.expectation div.meta span.forward {
+  background-color: #7b7bff;
+  font-size: 12px;
+}
+div.history div.meta span.seed, div.expectation div.meta span.seed {
+  background-color: #a7ff7b;
+  color: #1e1e1e;
+}
+div.history div.meta span.cache, div.expectation div.meta span.cache {
+  background-color: #e1e1ff;
+  color: #1e1e1e;
+}
+div.history:hover div.meta, div.expectation:hover div.meta {
   cursor: pointer;
-  opacity: 0;
-  max-height: 28px;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-toggler-link:hover button.json-formatter-copy {
-  opacity: 0.2;
+div.history:hover div.meta span.time, div.history:hover div.meta span.transport, div.history:hover div.meta span.status, div.history:hover div.meta span.name, div.expectation:hover div.meta span.time, div.expectation:hover div.meta span.transport, div.expectation:hover div.meta span.status, div.expectation:hover div.meta span.name {
+  background-color: rgba(255, 255, 255, 0.15);
 }
-.json-formatter-custom.json-formatter-row .json-formatter-toggler-link button.json-formatter-copy:hover {
-  opacity: 1;
+div.history.expectation div.meta span.status b:after, div.expectation.expectation div.meta span.status b:after {
+  display: none;
 }
-.json-formatter-custom.json-formatter-row .json-formatter-row span:hover button.json-formatter-copy {
-  opacity: 0.2;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-row span button.json-formatter-copy:hover {
-  opacity: 1;
-}
-.json-formatter-custom.json-formatter-row .json-formatter-string {
-  max-height: 60px;
+@media screen and (max-width: 1000px) {
+  div.history div.meta, div.expectation div.meta {
+    background-color: #262626;
+    padding: 5px;
+    padding-bottom: 0;
+    margin-bottom: 5px;
+  }
+  div.history div.meta div.segment:first-child, div.expectation div.meta div.segment:first-child {
+    width: 100%;
+  }
+  div.history div.meta span.arrow:nth-child(1), div.history div.meta span.arrow:nth-child(2), div.expectation div.meta span.arrow:nth-child(1), div.expectation div.meta span.arrow:nth-child(2) {
+    display: none;
+  }
+  div.history div.meta span, div.history div.meta button, div.expectation div.meta span, div.expectation div.meta button {
+    background-color: rgba(30, 30, 30, 0.5);
+  }
+  div.history:hover div.meta, div.expectation:hover div.meta {
+    background-color: #2b2b2b;
+  }
 }
 
 section#settings div.container p {
@@ -500,6 +340,401 @@ section#settings div.container div.panel button.checked {
 }
 section#settings div.container#groups-filter button.checked {
   pointer-events: all;
+}
+
+@keyframes rotating {
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+}
+section#analytics div.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 300px;
+  margin: auto;
+}
+section#analytics div.content i {
+  font-size: 100px;
+  color: #ffd37b;
+  animation: rotating 2s infinite;
+}
+section#analytics div.content p {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+div.viewer {
+  background-color: #262626;
+  margin-bottom: 20px;
+  margin-top: 0;
+  padding: 10px;
+  overflow: hidden;
+}
+div.viewer.hidden {
+  display: none;
+}
+div.viewer:not(:last-child) {
+  margin-bottom: 20px;
+}
+div.viewer .json-formatter-custom.json-formatter-row {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-size: 14px;
+}
+div.viewer .json-formatter-custom.json-formatter-row span {
+  position: relative;
+  display: inline-block;
+}
+div.viewer .json-formatter-custom.json-formatter-row:not(:last-child) {
+  margin-bottom: 2px;
+}
+div.viewer .json-formatter-custom.json-formatter-row > span {
+  width: 100%;
+  overflow-y: auto;
+  border-radius: 5px;
+}
+div.viewer .json-formatter-custom.json-formatter-row > span > span {
+  padding: 5px 0;
+}
+div.viewer .json-formatter-custom.json-formatter-row, div.viewer .json-formatter-custom.json-formatter-row a, div.viewer .json-formatter-custom.json-formatter-row a:hover {
+  color: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  font-weight: 300;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-row {
+  margin-left: 20px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-row > span {
+  display: flex;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty {
+  opacity: 0.5;
+  margin-left: 1rem;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty:after {
+  display: none;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty.json-formatter-object:after {
+  content: "No properties";
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-children.json-formatter-empty.json-formatter-array:after {
+  content: "[]";
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-string, div.viewer .json-formatter-custom.json-formatter-row .json-formatter-stringifiable {
+  display: inline-block;
+  color: white;
+  white-space: normal;
+  word-wrap: break-word;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  padding: 5px 10px;
+  min-height: 20px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-number {
+  color: #7bff7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-boolean {
+  color: #ff7b7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-null {
+  color: #EEC97D;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-undefined {
+  color: rgb(239, 143, 190);
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-function {
+  color: #FF20ED;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-date {
+  background-color: fade(rgba(255, 255, 255, 0.2), 5%);
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-url {
+  text-decoration: underline;
+  color: #027BFF;
+  cursor: pointer;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key {
+  color: #7ba7ff;
+  padding: 5px;
+  padding-right: 10px;
+  padding-left: 5px;
+  font-weight: 500;
+  vertical-align: top;
+  margin-bottom: 0;
+  min-height: 20px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-2 {
+  color: #7ba7ff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-3 {
+  color: #7b7bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-4 {
+  color: #a77bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-5 {
+  color: #d37bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-6 {
+  color: #ff7bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-7 {
+  color: #ff7bd3;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-8 {
+  color: #ff7ba7;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-9 {
+  color: #ff7b7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-10 {
+  color: #ffa77b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-11 {
+  color: #ffd37b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-12 {
+  color: #ffff7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-13 {
+  color: #d3ff7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-14 {
+  color: #a7ff7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-15 {
+  color: #7bff7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-16 {
+  color: #7bffa7;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-17 {
+  color: #7bffd3;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-18 {
+  color: #7bffff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-19 {
+  color: #7bd3ff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-20 {
+  color: #7ba7ff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-21 {
+  color: #7b7bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-22 {
+  color: #a77bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-23 {
+  color: #d37bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-24 {
+  color: #ff7bff;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-25 {
+  color: #ff7bd3;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-26 {
+  color: #ff7ba7;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-27 {
+  color: #ff7b7b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-28 {
+  color: #ffa77b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-key.level-29 {
+  color: #ffd37b;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-value {
+  padding-right: 10px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-value span {
+  display: flex;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-preview {
+  padding-left: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  color: rgba(255, 255, 255, 0.3);
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-constructor-name,
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-constructor-name + span > .json-formatter-number,
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-bracket {
+  color: rgba(255, 255, 255, 0.2);
+  padding: 5px 0;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-toggler-link {
+  cursor: pointer;
+  display: flex;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-toggler {
+  line-height: 1.2rem;
+  font-size: 0.7rem;
+  vertical-align: middle;
+  opacity: 0.2;
+  color: #fff;
+  cursor: pointer;
+  padding-right: 7px;
+  padding-top: 5px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-toggler:after {
+  display: inline-block;
+  transition: transform 100ms ease-in;
+  content: "❯";
+}
+div.viewer .json-formatter-custom.json-formatter-row > a > .json-formatter-preview-text {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+  font-style: italic;
+  color: #7ba7ff;
+}
+div.viewer .json-formatter-custom.json-formatter-row:hover > a > .json-formatter-preview-text {
+  opacity: 0.6;
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-toggler {
+  opacity: 1;
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open > .json-formatter-toggler-link .json-formatter-toggler:after {
+  transform: rotate(90deg);
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open > .json-formatter-children:after {
+  display: inline-block;
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-preview-text {
+  display: none;
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open.json-formatter-empty:after {
+  display: block;
+}
+div.viewer .json-formatter-custom.json-formatter-row.json-formatter-open > a > .json-formatter-value .json-formatter-preview {
+  display: none;
+}
+div.viewer .json-formatter-custom.json-formatter-row button.json-formatter-copy {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  padding-right: 10px;
+  font-size: 15px;
+  color: #fff;
+  vertical-align: top;
+  cursor: pointer;
+  opacity: 0;
+  max-height: 28px;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-toggler-link:hover button.json-formatter-copy {
+  opacity: 0.2;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-toggler-link button.json-formatter-copy:hover {
+  opacity: 1;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-row span:hover button.json-formatter-copy {
+  opacity: 0.2;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-row span button.json-formatter-copy:hover {
+  opacity: 1;
+}
+div.viewer .json-formatter-custom.json-formatter-row .json-formatter-string {
+  max-height: 60px;
+}
+
+div.search {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 10px;
+  width: 410px;
+  padding: 2px 10px;
+  margin: auto;
+  margin-bottom: 50px;
+  background-color: rgba(255, 255, 255, 0.05);
+  opacity: 0.4;
+  transition-duration: 0.1s;
+}
+div.search > i {
+  width: 20px;
+  margin: 0 15px;
+}
+div.search:hover {
+  opacity: 1;
+}
+div.search button {
+  display: inline-block !important;
+  background-color: transparent;
+  font-size: 20px;
+  padding: 10px 15px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.2);
+}
+div.search button i {
+  margin: 0;
+}
+div.search button:hover {
+  color: #fff;
+}
+div.search div.input {
+  background-color: transparent;
+  width: 380px;
+}
+div.search div.input:before {
+  text-align: center;
+}
+
+@keyframes popup {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  5% {
+    opacity: 1;
+    transform: none;
+  }
+  95% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+div.popups {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+}
+div.popups div.popup-message {
+  display: flex;
+  background-color: #ffd37b;
+  color: #1e1e1e;
+  padding: 10px 15px;
+  width: 240px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  align-items: center;
+  margin-top: 5px;
+  box-shadow: 0 5px 10px 10px rgba(0, 0, 0, 0.1);
+  animation: popup 3s ease-in-out forwards;
+}
+div.popups div.popup-message.error {
+  background-color: #ff7b7b;
+}
+div.popups div.popup-message.warning {
+  background-color: #e7ff7b;
+}
+div.popups div.popup-message span {
+  flex-basis: 90%;
+}
+div.popups div.popup-message i {
+  font-size: 25px;
+  margin-right: 10px;
+  margin-left: 5px;
 }
 
 @keyframes l43 {
@@ -553,247 +788,102 @@ div.curtain#loader > div {
   align-items: center;
 }
 
-@keyframes popup {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  20% {
-    opacity: 1;
-    transform: none;
-  }
-  80% {
-    opacity: 1;
-    transform: none;
-  }
-  100% {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-}
-div.popups {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-}
-div.popups div.popup-message {
-  display: flex;
-  background-color: #ffd37b;
-  color: #1e1e1e;
-  padding: 10px 30px;
-  width: 200px;
-  border-radius: 10px;
-  text-align: center;
-  align-items: center;
-  margin-top: 5px;
-  box-shadow: 0 5px 10px 10px rgba(0, 0, 0, 0.1);
-  animation: popup 1s ease-in-out forwards;
-}
-div.popups div.popup-message i {
-  font-size: 20px;
-}
-div.popups div.popup-message span {
-  flex-basis: 90%;
-}
-
-div.search {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  border-radius: 10px;
-  width: 410px;
-  padding: 2px 10px;
-  margin: auto;
-  margin-bottom: 50px;
-  background-color: rgba(255, 255, 255, 0.05);
-  opacity: 0.4;
-  transition-duration: 0.1s;
-}
-div.search > i {
-  width: 20px;
-  margin: 0 15px;
-}
-div.search:hover {
-  opacity: 1;
-}
-div.search button {
-  display: inline-block !important;
-  background-color: transparent;
-  font-size: 20px;
-  padding: 10px 15px;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.2);
-}
-div.search button i {
-  margin: 0;
-}
-div.search button:hover {
-  color: #fff;
-}
-div.search div.input {
-  background-color: transparent;
-  width: 380px;
-}
-div.search div.input:before {
-  text-align: center;
-}
-
-div.container {
+div.history {
   padding: 0 20px;
   margin-top: 0;
 }
-div.container div.meta {
+
+header {
   display: flex;
-  flex-wrap: wrap;
-  border-radius: inherit;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
-div.container div.meta div.segment {
-  display: inherit;
-  flex-wrap: inherit;
-}
-div.container div.meta span, div.container div.meta button {
-  padding: 7px 15px;
-  display: inline-block;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 5px;
-  margin-right: 5px;
-  margin-bottom: 5px;
+header button {
+  text-decoration: none;
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  vertical-align: top;
 }
-div.container div.meta button {
-  min-width: 50px;
-  margin-top: 0;
-  margin-left: 0;
+header button i {
+  margin-right: 10px;
 }
-div.container div.meta button i {
-  float: none;
+header button.icon-only i {
   margin-right: 0;
+  font-size: 16px;
 }
-div.container div.meta span.name b {
-  font-weight: normal;
-  color: #ffd37b;
-  position: relative;
-  display: inline-block;
-}
-div.container div.meta span.name b:after {
-  content: "";
-  display: inline-block;
-  position: relative;
-  height: 14px;
-  width: 1px;
-  background-color: rgba(255, 255, 255, 0.1);
-  top: 2px;
-  margin-left: 10px;
-  margin-right: 5px;
-}
-div.container div.meta span.arrow {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.3);
-  padding: 8px 10px;
-  padding-left: 12px;
-  margin-right: 5px;
-}
-div.container div.meta button.activity i.fa-plug {
-  color: #a7ff7b;
-}
-div.container div.meta button.activity i.fa-power-off {
-  color: #ff7b7b;
-}
-div.container div.meta span.status {
-  min-width: 35px;
-  text-align: center;
-}
-div.container div.meta span.status.red {
-  color: #ff7b7b;
-}
-div.container div.meta span.status.green {
-  color: #a7ff7b;
-}
-div.container div.meta span.transport {
-  color: rgba(255, 255, 255, 0.4);
-}
-div.container div.meta span.method {
+header button.checked {
   background-color: #ffd37b;
   color: #1e1e1e;
 }
-div.container div.meta span.path {
-  background-color: #ffa77b;
-  color: #1e1e1e;
-}
-div.container div.meta span.time {
-  width: 60px;
-  text-align: center;
-}
-div.container div.meta span.calls-count, div.container div.meta span.name, div.container div.meta span.time {
+header button:not(.checked) {
   color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.05);
 }
-div.container div.meta span.calls-count.active, div.container div.meta span.name.active, div.container div.meta span.time.active {
-  color: #fff;
+header hr {
+  position: relative;
+  width: 1px;
+  height: 25px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 10px 10px;
 }
-div.container div.meta span.calls-count i, div.container div.meta span.name i, div.container div.meta span.time i {
-  opacity: 0.2;
-  margin-right: 10px;
+header div#tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-div.container div.meta span.pending {
-  min-width: 35px;
-  text-align: center;
+header div#tabs button {
+  padding: 10px 20px;
 }
-div.container div.meta span.pending i:before {
+
+div.expectation {
+  padding: 0 20px;
+  margin-top: 0;
+}
+
+@keyframes pending {
+  0% {
+    content: "\f251";
+  }
+  33% {
+    content: "\f252";
+  }
+  66% {
+    content: "\f253";
+  }
+}
+div.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px;
+}
+div.empty i {
+  color: #ffd37b;
+  font-size: 50px;
+  margin-right: 30px;
+}
+div.empty i:before {
   animation: pending 1s infinite;
 }
-div.container div.meta span.separator, div.container div.meta span.label {
-  padding: 0 5px;
-  color: rgba(0, 0, 0, 0.3);
-  font-size: 12px;
-  margin-right: 0;
-  margin-bottom: 0;
-}
-div.container div.meta span.label {
-  padding-left: 0;
-}
-div.container div.meta span.handled-with {
-  background-color: transparent;
+div.empty p {
   color: rgba(255, 255, 255, 0.3);
-  margin-right: 0;
-  padding: 7px 5px;
+  font-size: 25px;
+  font-weight: 300;
 }
-div.container div.meta span.handled-with span.handler-name {
-  margin: 0;
-  padding: 0;
-  background-color: transparent;
-  color: #ffd37b;
-}
-div.container div.meta span.handled-with span.handler-name.red {
-  color: #ff7b7b;
-}
-div.container div.meta span.forward {
-  background-color: #7b7bff;
-}
-div.container div.meta span.error {
-  background-color: #ff4848;
-}
-div.container div.meta span.seed {
-  background-color: #a7ff7b;
-  color: #1e1e1e;
-}
-div.container div.meta span.cache {
-  background-color: #e1e1ff;
-  color: #1e1e1e;
-}
-div.container.history:hover div.meta, div.container.expectation:hover div.meta {
+
+div.curtain {
   cursor: pointer;
+  position: fixed;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
+  height: calc(100% - 50px);
+  width: 100%;
+  padding-top: 50px;
+  background-color: rgba(30, 30, 30, 0.95);
 }
-div.container.history:hover div.meta span.time, div.container.history:hover div.meta span.transport, div.container.history:hover div.meta span.status, div.container.history:hover div.meta span.name, div.container.expectation:hover div.meta span.time, div.container.expectation:hover div.meta span.transport, div.container.expectation:hover div.meta span.status, div.container.expectation:hover div.meta span.name {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-div.container pre {
-  margin: 0;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-div.container pre.hidden {
-  display: none;
-}
-div.container pre:not(:last-child) {
-  margin-bottom: 20px;
+div.curtain > * {
+  cursor: auto;
 }

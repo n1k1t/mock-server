@@ -1,23 +1,31 @@
 import EventEmitter from 'events';
 
 import { DynamicStorage } from './dynamic-storage';
-import { Component } from './component';
 import { TFunction } from '../../../types';
+import { Component } from './component';
 
 interface IEvents {
-  initialize: [Container];
-  refresh: [Container];
-  select: [Container];
+  initialize: [Section];
+  refresh: [Section];
+  select: [Section];
 }
 
-export class Container extends Component {
-  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.config')!);
+export class Section extends Component {
+  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage')!);
   public content = new Component(this.element.querySelector('div.content')!);
 
   public events = new EventEmitter();
+  public meta: {
+    name?: string;
+    icon?: string;
+  } = {};
 
   constructor(public element: Element) {
     super();
+  }
+
+  public assignMeta(meta: Section['meta']) {
+    return Object.assign(this, { meta });
   }
 
   public initialize() {
@@ -48,7 +56,7 @@ export class Container extends Component {
     return this;
   }
 
-  static build(element: Element) {
-    return new Container(element);
+  static build(predicate: Element | string) {
+    return new Section(typeof predicate === 'string' ? new Component(predicate).element : predicate);
   }
 }

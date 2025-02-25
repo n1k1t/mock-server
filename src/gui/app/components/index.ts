@@ -5,4 +5,5 @@ export * from './curtain.component';
 export * from './loader.component';
 export * from './popups.component';
 export * from './search.component';
+export * from './header.component';
 export * from './empty.component';

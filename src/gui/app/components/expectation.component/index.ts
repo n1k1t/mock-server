@@ -1,9 +1,10 @@
-import JsonFormatHighlight from '../../../../../../json-formatter';
-import hbs from 'handlebars';
 import _pick from 'lodash/pick';
+import hbs from 'handlebars';
 
 import type { Expectation } from '../../../../expectations';
-import { Component } from '../../models';
+
+import { Button, Component } from '../../models';
+import { ViewerComponent } from '../viewer.component';
 
 import context from '../../context';
 
@@ -11,45 +12,37 @@ const template = require('./template.hbs');
 const render = hbs.compile(template);
 
 export class ExpectationComponent extends Component {
-  public isExpanded: boolean = false;
+  public viewer = ViewerComponent.build({ depth: 3 }).hide();
 
   constructor(public data: Expectation['TPlain']) {
     super();
-    this.refresh(data);
+    this.refresh();
   }
 
-  public refresh(data: Expectation['TPlain']) {
-    this.clear().append(render(data));
+  public provide(data: Expectation['TPlain']) {
+    return Object.assign(this, { data });
+  }
 
-    const pre = this.element.querySelector('pre')!;
-    const json = new JsonFormatHighlight(_pick(data, ['id', 'type', 'transports', 'schema']), 3, {
-      theme: 'custom',
-      afterCopyHandler: () => context.shared.popups.push('Copied', { icon: 'fas fa-clone', level: 'info' }),
-    });
+  public refresh(): this {
+    this.replace(render(this.data)).append(this.viewer);
+    this.viewer.provide(_pick(this.data, ['id', 'type', 'transports', 'schema']));
 
-    pre.appendChild(json.render());
+    Button
+      .build(this.element.querySelector('button.activity')!)
+      .handle(() => context.services.io.exec('expectations:update', {
+        id: this.data.id,
+        set: { isEnabled: !this.data.isEnabled },
+      }));
 
-    if (this.isExpanded) {
-      pre.classList.remove('hidden');
-    }
-
-    this.element.querySelector('button.activity')?.addEventListener('click', () =>
-      context.services.io.exec('expectations:update', { id: data.id, set: { isEnabled: !data.isEnabled } })
+    this.element.querySelector('div.meta')!.addEventListener('click', (event) =>
+      event.composedPath().some((element) => (<Element>element)?.classList?.contains('meta'))
+        ? (<Element>event.target).nodeName !== 'BUTTON'
+          ? this.viewer.isHidden ? this.viewer.show() : this.viewer.hide()
+          : null
+        : null
     );
 
-    this.element.querySelector('div.meta')!.addEventListener('click', (event) => {
-      if ((<Element>event.target).nodeName === 'BUTTON') {
-        return null;
-      }
-      if (event.composedPath().some((element) => (<Element>element)?.classList?.contains('meta')) === false) {
-        return null;
-      }
-
-      pre.classList.toggle('hidden');
-      this.isExpanded = !this.isExpanded;
-    });
-
-    return Object.assign(this, { expectation: data });
+    return this;
   }
 
   public match(query: string): boolean {

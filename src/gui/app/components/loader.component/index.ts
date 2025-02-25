@@ -1,4 +1,4 @@
-import { CurtainComponent } from './curtain.component';
+import { CurtainComponent } from '../curtain.component';
 
 export class LoaderComponent extends CurtainComponent {
   constructor() {

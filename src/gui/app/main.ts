@@ -3,7 +3,7 @@ import _omit from 'lodash/omit';
 import _set from 'lodash/set';
 
 import * as components from './components';
-import * as containers from './containers';
+import * as sections from './sections';
 
 import handlebars from './handlebars';
 import context from './context';
@@ -11,43 +11,36 @@ import context from './context';
 handlebars.init();
 
 const loader = components.LoaderComponent.build().show();
-const switchButtonIdToContainerElementMap = {
-  'switch-to-expectations-container': containers.expectations,
-  'switch-to-settings-container': containers.settings.hide(),
-  'switch-to-history-container': containers.history.hide(),
-};
+const header = components.HeaderComponent
+  .build([
+    { type: 'section', entity: sections.settings.hide() },
+    { type: 'section', entity: sections.analytics.hide() },
+    { type: 'separator' },
+    { type: 'section', entity: sections.expectations },
+    { type: 'section', entity: sections.history.hide() },
+  ])
+  .on('select', (section) => {
+    Object.values(header.sections).forEach((nested) => nested.hide());
+
+    context.switchStorage(section.storage);
+    section.show().select();
+  });
 
 context
-  .switchStorage(containers.expectations.storage)
+  .switchStorage(sections.expectations.storage)
   .share({
-    containers,
+    sections,
 
     groups: new Set(),
     popups: components.PopupsComponent.build(),
     settings: components.SettingsComponent.build(),
   });
 
-document.body.append(context.shared.popups.element);
+document.body.prepend(header.element);
 document.body.append(loader.element);
+document.body.append(context.shared.popups.element);
 
-document.querySelector('div#container-select')!.addEventListener('click', (source) => {
-  const event = <Event & { target: Element }>source;
-  if (event.target?.nodeName !== 'BUTTON') {
-    return null;
-  }
-
-  event.target.parentNode?.querySelectorAll('button.checked').forEach((element) => element.classList.remove('checked'));
-  event.target.classList.add('checked');
-
-  Object.values(switchButtonIdToContainerElementMap).forEach((container) => container.hide());
-
-  const container = switchButtonIdToContainerElementMap[
-    <keyof typeof switchButtonIdToContainerElementMap>event.target.id
-  ];
-
-  context.switchStorage(container.storage);
-  container.show().select();
-});
+Object.values(sections).forEach((section) => document.body.append(section.element));
 
 context.instances.io.on('connect', async () => {
   console.log('WebSocket has connected');
@@ -57,7 +50,8 @@ context.instances.io.on('connect', async () => {
   const { data } = await context.services.io.exec('config:get');
 
   context.assignConfig(data);
-  Object.values(containers).forEach((container) => container.initialize());
+  context.shared.popups.push('Connected!');
 
+  Object.values(sections).forEach((container) => container.initialize());
   loader.hide();
 });

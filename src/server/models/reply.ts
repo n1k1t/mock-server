@@ -1,4 +1,4 @@
-import type { RequestContext } from './request-context';
+import type { RequestContext } from './context';
 
 export abstract class Reply<TContext extends RequestContext, TOutgoing = unknown> {
   constructor(public context: TContext) {}

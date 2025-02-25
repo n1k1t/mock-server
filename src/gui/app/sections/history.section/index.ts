@@ -1,15 +1,19 @@
 import _unset from 'lodash/unset';
 import _set from 'lodash/set';
+import hbs from 'handlebars';
 
-import { EmptyComponent, HistoryComponent, SearchComponent } from '../components';
-import { Container } from '../models';
-import { cast } from '../../../utils/common';
+import { EmptyComponent, HistoryComponent, SearchComponent } from '../../components';
+import { Section } from '../../models';
+import { cast } from '../../../../utils/common';
 
-import context from '../context';
+import context from '../../context';
+
+const template = require('./template.hbs');
+const render = hbs.compile(template);
 
 const empty = EmptyComponent.build();
-
 const storage = new Map<string, HistoryComponent>();
+
 const stack: string[] = [];
 const state = { search: cast<null | string>(null) };
 
@@ -24,8 +28,8 @@ const search = SearchComponent
     refresh();
   });
 
-const filter = (history: HistoryComponent[]): HistoryComponent[] => {
-  let filtred = history;
+const filter = (list: HistoryComponent[]): HistoryComponent[] => {
+  let filtred = list;
 
   if (context.shared.settings.filters.groups) {
     filtred = filtred.filter((history) => context.shared.settings.filters.groups!.has(history.data.group));
@@ -37,18 +41,20 @@ const filter = (history: HistoryComponent[]): HistoryComponent[] => {
   return filtred;
 }
 
-const refresh = (history: HistoryComponent[] = [...storage.values()]) => {
-  const hidden = history.map((history) => history.hide());
-  const shown = filter(hidden).map((history) => history.show());
+const refresh = (list: HistoryComponent[] = [...storage.values()]) => {
+  const shown = filter(list.map((history) => history.hide())).map((history) => history.show());
 
-  shown.length ? empty.hide() : empty.show();
+  if (list.length === storage.size) {
+    shown.length ? empty.hide() : empty.show();
+  }
 }
 
-export default Container
-  .build(document.querySelector('section#history')!)
+export default Section
+  .build(render({}))
+  .assignMeta({ name: 'History', icon: 'fas fa-history' })
   .on('select', () => refresh())
-  .on('initialize', async (container) => {
-    container.content.clear();
+  .on('initialize', async (section) => {
+    section.content.clear();
 
     storage.clear();
     stack.splice(0, stack.length);
@@ -61,14 +67,14 @@ export default Container
       storage.set(history.id, component);
       stack.push(history.id);
 
-      container.content.append(component);
+      section.content.append(component);
     });
 
     refresh();
   })
-  .once('initialize', (container) => {
-    container.prepend(empty);
-    container.prepend(search);
+  .once('initialize', (section) => {
+    section.prepend(empty);
+    section.prepend(search);
 
     context.services.io.subscribe('history:added', (data) => {
       const history = HistoryComponent.build(data);
@@ -83,18 +89,18 @@ export default Container
         storage.delete(id);
       }
 
-      container.content.prepend(history);
+      section.content.prepend(history);
       refresh([history]);
     });
 
     context.services.io.subscribe('history:updated', (data) => {
       const history = storage.get(data.id) ?? HistoryComponent.build(data);
 
-      storage.has(data.id) ? history.refresh(data) : stack.push(data.id);
+      storage.has(data.id) ? history.provide(data).refresh() : stack.push(data.id);
       storage.set(data.id, history);
 
-      if (!container.element.querySelector(`div.history[id="${data.id}"]`)) {
-        container.content.prepend(history);
+      if (!section.element.querySelector(`div.history[id="${data.id}"]`)) {
+        section.content.prepend(history);
         refresh([history]);
       }
     });

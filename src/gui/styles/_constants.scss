@@ -3,6 +3,9 @@ $font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
 $color-main: #ffd37b;
 $color-dark: #1e1e1e;
 
+$color-yellow: #e7ff7b;
 $color-purple: adjust-hue($color-main, 200);
 $color-green: adjust-hue($color-main, 60);
 $color-red: adjust-hue($color-main, -40);
+
+$screen-medium: 1000px;

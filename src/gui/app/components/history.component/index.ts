@@ -1,71 +1,61 @@
-import JsonFormatHighlight from '../../../../../../json-formatter';
 import _pick from 'lodash/pick';
 import hbs from 'handlebars';
 
 import type { History } from '../../../../server';
-import { Component } from '../../models';
 
-import context from '../../context';
+import { ViewerComponent } from '../viewer.component';
+import { Component } from '../../models';
 
 const template = require('./template.hbs');
 const render = hbs.compile(template);
 
 export class HistoryComponent extends Component {
-  public isExpanded: boolean = false;
+  public viewer = ViewerComponent.build({ depth: 2 }).hide();
 
   constructor(public data: History['TPlain']) {
     super();
-    this.refresh(data);
+    this.refresh();
   }
 
-  public refresh(data: History['TPlain']) {
-    this.clear().append(render(data));
+  public provide(data: History['TPlain']) {
+    return Object.assign(this, { data });
+  }
 
-    const pre = this.element.querySelector('pre')!;
-    const formatted = {
-      event: data.snapshot.event,
+  public refresh(): this {
+    this.replace(render(this.data)).append(this.viewer);
 
-      ...(Object.keys(data.snapshot.flags).length && { flags: data.snapshot.flags }),
-      ...(data.expectation && {
+    this.viewer.provide({
+      event: this.data.snapshot.event,
+
+      ...(Object.keys(this.data.snapshot.flags).length && { flags: this.data.snapshot.flags }),
+      ...(this.data.expectation && {
         expectation: {
-          id: data.expectation.id,
-          group: data.expectation.group,
+          id: this.data.expectation.id,
+          group: this.data.expectation.group,
 
-          ...(data.expectation.schema.forward && { forward: data.expectation.schema.forward }),
+          ...(this.data.expectation.schema.forward && { forward: this.data.expectation.schema.forward }),
         },
       }),
 
-      ...(data.snapshot.cache?.isEnabled && { cache: data.snapshot.cache }),
-      ...(data.snapshot.seed && { seed: data.snapshot.seed }),
-      ...(data.snapshot.container && { container: data.snapshot.container }),
+      ...(this.data.snapshot.cache?.isEnabled && { cache: this.data.snapshot.cache }),
+      ...(this.data.snapshot.seed && { seed: this.data.snapshot.seed }),
+      ...(this.data.snapshot.container && { container: this.data.snapshot.container }),
 
-      incoming: data.snapshot.incoming,
+      incoming: this.data.snapshot.incoming,
 
-      ...(data.snapshot.error && { error: data.snapshot.error }),
-      ...(data.status === 'completed' && { outgoing: data.snapshot.outgoing }),
-      ...(data.snapshot.forwarded && { forwarded: data.snapshot.forwarded }),
-      ...(data.snapshot.messages?.length && { messages: data.snapshot.messages }),
-    };
-
-    if (this.isExpanded) {
-      pre.classList.remove('hidden');
-    }
-
-    const json = new JsonFormatHighlight(formatted, 2, {
-      theme: 'custom',
-      afterCopyHandler: () => context.shared.popups.push('Copied!', { icon: 'fas fa-clone', level: 'info' }),
+      ...(this.data.snapshot.error && { error: this.data.snapshot.error }),
+      ...(this.data.status === 'completed' && { outgoing: this.data.snapshot.outgoing }),
+      ...(this.data.snapshot.forwarded && { forwarded: this.data.snapshot.forwarded }),
+      ...(this.data.snapshot.messages?.length && { messages: this.data.snapshot.messages }),
     });
 
-    pre.appendChild(json.render());
+    this.element.querySelector('div.meta')!.addEventListener('click', (event) =>
+      event.composedPath().some((element) => (<Element>element)?.classList?.contains('meta'))
+        ? this.viewer.isHidden ? this.viewer.show() : this.viewer.hide()
+        : null
+    );
 
-    this.element.querySelector('div.meta')!.addEventListener('click', (event) => {
-      if (event.composedPath().some((element) => (<Element>element)?.classList?.contains('meta')) === false) {
-        return null;
-      }
-
-      pre.classList.toggle('hidden');
-      this.isExpanded = !this.isExpanded;
-    });
+    return this;
   }
 
   public match(query: string): boolean {

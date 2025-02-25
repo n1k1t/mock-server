@@ -1,44 +1,51 @@
 module.exports = `
-  {{#compare format 'neq' 'short'}}
-    <button class="activity">
-      {{#if isEnabled}}
-        <i class="fas fa-plug"></i>
-      {{else}}
-        <i class="fas fa-power-off"></i>
-      {{/if}}
-    </button>
+  <div class="segment">
+    {{#compare format 'neq' 'short'}}
+      <button class="activity">
+        {{#if isEnabled}}
+          <i class="fas fa-plug"></i>
+        {{else}}
+          <i class="fas fa-power-off"></i>
+        {{/if}}
+      </button>
 
-    <span class="calls-count {{#compare meta.executionsCount 'gt' 0}}active{{/compare}}">
-      <i class="fas fa-undo-alt"></i>{{meta.executionsCount}}
-    </span>
-  {{/compare}}
+      <span class="calls-count {{#compare meta.executionsCount 'gt' 0}}active{{/compare}}">
+        <i class="fas fa-undo-alt"></i>{{meta.executionsCount}}
+      </span>
+    {{/compare}}
 
-  <span class="name"><b>{{group}}</b> {{name}}</span>
+    <span class="name"><b>{{group}}</b> {{name}}</span>
+  </div>
 
   {{#compare format 'neq' 'short'}}
     {{#compare meta.tags.length 'gt' 0}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/compare}}
-    {{#each transports}}<span class="transport">{{this}}</span>{{/each}}
 
-    {{#each meta.tags}}
-      {{#compare @index 'lte' 5}}
-        {{#if (compare location 'eq' 'outgoing.status')}}
-          <span class="status
-            {{#compare value 'lt' 400}}green{{/compare}}
-            {{#compare value 'gte' 400}}red{{/compare}}
-          ">{{value}}</span>
-        {{else}}
-          <span class="{{location}}">{{value}}</span>
-        {{/if}}
-      {{/compare}}
-    {{/each}}
+    <div class="segment">
+      {{#each transports}}<span class="transport">{{this}}</span>{{/each}}
+
+      {{#each meta.tags}}
+        {{#compare @index 'lte' 5}}
+          {{#if (compare location 'eq' 'outgoing.status')}}
+            <span class="status
+              {{#compare value 'lt' 400}}green{{/compare}}
+              {{#compare value 'gte' 400}}red{{/compare}}
+            "><b>{{value}}</b></span>
+          {{else}}
+            <span class="{{location}}">{{truncate value 45}}</span>
+          {{/if}}
+        {{/compare}}
+      {{/each}}
+    </div>
   {{/compare}}
 
   {{#with schema.forward}}
     <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
-    {{#if baseUrl}}<span class="forward">{{baseUrl}}</span>{{/if}}
-    {{#if url}}<span class="forward">{{url}}</span>{{/if}}
+    <div class="segment">
+      {{#if baseUrl}}<span class="forward">{{truncate baseUrl 45}}</span>{{/if}}
+      {{#if url}}<span class="forward">{{truncate url 45}}</span>{{/if}}
 
-    {{#if ../isCached}}<span class="cache"><i class="fas fa-database"></i></span>{{/if}}
+      {{#if ../isCached}}<span class="cache"><i class="fas fa-database"></i></span>{{/if}}
+    </div>
   {{/with}}
 `

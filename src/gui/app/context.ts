@@ -5,7 +5,7 @@ import type { PopupsComponent, SettingsComponent } from './components';
 import type { TEndpoints } from '../../client';
 import type { Config } from '../../config/model';
 
-import type * as containers from './containers';
+import type * as sections from './sections';
 
 import { DynamicStorage } from './models';
 import { cast } from '../../utils/common';
@@ -17,7 +17,7 @@ type ExtractWsEndpointPath<K extends keyof TEndpoints> = NonNullable<TEndpoints[
 type TWsEndpoints = { [K in keyof TEndpoints as ExtractWsEndpointPath<K>]-?: TEndpoints[K] };
 
 interface IContextShared {
-  containers: typeof containers;
+  sections: typeof sections;
   groups: Set<string>;
 
   popups: PopupsComponent;

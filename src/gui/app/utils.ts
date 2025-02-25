@@ -1,14 +1,13 @@
 import _isObject from 'lodash/isObject';
 
 export const convertObjectToKeyValueCouples =
-  (object: object, prefix: string = ''): [string, unknown][] =>
+  (object: object, paths: string[], prefix: string = ''): [string, unknown][] =>
     Object.entries(object).reduce<[string, unknown][]>((acc, [key, value]) => {
-      if (_isObject(value)) {
-        return acc.concat(exports.convertObjectToKeyValueCouples(value, `${prefix}${key}.`));
-      }
+      const path = `${prefix}${prefix ? '.' : ''}${key}`;
 
-      acc.push([`${prefix}${key}`, value]);
-      return acc;
+      return _isObject(value) && !paths.includes(path)
+        ? acc.concat(convertObjectToKeyValueCouples(value, paths, path))
+        : acc.concat([[path, value]]);
     }, []);
 
 export const buildCounter = (initial: number = 0, step: number = 1) => (value = step) => (initial += value);

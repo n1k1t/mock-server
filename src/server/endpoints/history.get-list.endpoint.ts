@@ -10,6 +10,6 @@ export default Endpoint
       []
     );
 
-    reply.ok(history.sort((a, b) => b.meta.requestedAt - a.meta.requestedAt).map((history) => history.toPlain()));
+    reply.ok(history.sort((a, b) => b.timestamp - a.timestamp).map((history) => history.toPlain()));
   })
   .compile();

@@ -1,0 +1,15 @@
+module.exports = `
+  <header>
+    <div id="tabs">
+      {{#each tabs}}
+        {{#compare type 'eq' 'separator'}}<hr>{{/compare}}
+
+        {{#compare type 'eq' 'section'}}
+          <button class="{{#unless entity.meta.name}}icon-only{{/unless}} {{#if isSelected}}checked{{/if}}" id="{{id}}">
+            <i class="{{entity.meta.icon}}"></i>{{entity.meta.name}}
+          </button>
+        {{/compare}}
+      {{/each}}
+    </div>
+  </header>
+`

@@ -3,11 +3,11 @@
     opacity: 0;
     transform: translateY(20px);
   }
-  20% {
+  5% {
     opacity: 1;
     transform: none;
   }
-  80% {
+  95% {
     opacity: 1;
     transform: none;
   }
@@ -21,21 +21,31 @@ div.popups {
   position: fixed;
   bottom: 20px;
   right: 20px;
+  z-index: +100;
 
   div.popup-message {
     display: flex;
     background-color: $color-main;
     color: $color-dark;
-    padding: 10px 30px;
-    width: 200px;
+    padding: 10px 15px;
+    width: 240px;
     border-radius: 10px;
+    font-size: 14px;
     text-align: center;
     align-items: center;
     margin-top: 5px;
     box-shadow: 0 5px 10px 10px rgba(#000, .1);
-    animation: popup 1s ease-in-out forwards;
+    animation: popup 3s ease-in-out forwards;
 
-    i { font-size: 20px; }
+    &.error { background-color: $color-red }
+    &.warning { background-color: $color-yellow }
+
     span { flex-basis: 90%; }
+
+    i {
+      font-size: 25px;
+      margin-right: 10px;
+      margin-left: 5px;
+    }
   }
 }

@@ -1,13 +1,13 @@
-import type { TFunction } from '../../../types';
+import { TFunction } from '../../../types';
 
 export class Button {
-  public handlers: TFunction<Promise<unknown>, [Event]>[] = [];
+  private handlers: TFunction<Promise<unknown>, [Event]>[] = [];
 
   constructor(public element: Element) {
     element.addEventListener('click', (event) => this.trigger(event));
   }
 
-  public use(handler: TFunction<undefined, [Event]>) {
+  public handle(handler: TFunction<Promise<unknown> | unknown, [Event]>) {
     this.handlers.push(async (event) => {
       this.element.classList.add('processed');
 

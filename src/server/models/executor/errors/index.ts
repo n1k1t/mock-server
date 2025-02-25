@@ -1,4 +1,4 @@
-import { IRequestContextIncoming } from '../../request-context';
+import { IRequestContextIncoming } from '../../context';
 
 export class ExecutorManualError extends Error {
   constructor(public code: Extract<IRequestContextIncoming['error'], string>) {

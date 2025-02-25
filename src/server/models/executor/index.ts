@@ -17,7 +17,7 @@ import {
   IRequestContextOutgoing,
   IRequestContextIncoming,
   IRequestContextForwarded,
-} from '../request-context';
+} from '../context';
 
 export * from './errors';
 

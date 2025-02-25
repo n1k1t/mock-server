@@ -1,11 +1,15 @@
-import { EmptyComponent, ExpectationComponent, SearchComponent } from '../components';
-import { Container } from '../models';
-import { cast } from '../../../utils/common';
+import hbs from 'handlebars';
 
-import context from '../context';
+import { EmptyComponent, ExpectationComponent, SearchComponent } from '../../components';
+import { Section } from '../../models';
+import { cast } from '../../../../utils/common';
+
+import context from '../../context';
+
+const template = require('./template.hbs');
+const render = hbs.compile(template);
 
 const empty = EmptyComponent.build();
-
 const storage = new Map<string, ExpectationComponent>();
 const state = { search: cast<null | string>(null) };
 
@@ -20,8 +24,8 @@ const search = SearchComponent
     refresh();
   });
 
-const filter = (expectations: ExpectationComponent[]): ExpectationComponent[] => {
-  let filtred = expectations;
+const filter = (list: ExpectationComponent[]): ExpectationComponent[] => {
+  let filtred = list;
 
   if (context.shared.settings.filters.groups) {
     filtred = filtred.filter((expectation) => context.shared.settings.filters.groups!.has(expectation.data.group));
@@ -33,19 +37,21 @@ const filter = (expectations: ExpectationComponent[]): ExpectationComponent[] =>
   return filtred;
 }
 
-const refresh = (expectations: ExpectationComponent[] = [...storage.values()]) => {
-  const hidden = expectations.map((expectation) => expectation.hide());
-  const shown = filter(hidden).map((expectation) => expectation.show());
+const refresh = (list: ExpectationComponent[] = [...storage.values()]) => {
+  const shown = filter(list.map((expectation) => expectation.hide())).map((expectation) => expectation.show());
 
-  shown.length ? empty.hide() : empty.show();
+  if (list.length === storage.size) {
+    shown.length ? empty.hide() : empty.show();
+  }
 }
 
-export default Container
-  .build(document.querySelector('section#expectations')!)
+export default Section
+  .build(render({}))
+  .assignMeta({ name: 'Expectations', icon: 'fas fa-magic' })
   .on('select', () => refresh())
-  .on('initialize', async (container) => {
+  .on('initialize', async (section) => {
     context.shared.groups.clear();
-    container.content.clear();
+    section.content.clear();
 
     storage.clear();
 
@@ -57,14 +63,14 @@ export default Container
       storage.set(expectation.id, component);
 
       context.shared.groups.add(expectation.group);
-      container.content.append(component);
+      section.content.append(component);
     });
 
     refresh();
   })
-  .once('initialize', (container) => {
-    container.prepend(empty);
-    container.prepend(search);
+  .once('initialize', (section) => {
+    section.prepend(empty);
+    section.prepend(search);
 
     context.services.io.subscribe('expectation:added', (data) => {
       const expectation = ExpectationComponent.build(data);
@@ -72,7 +78,7 @@ export default Container
       storage.set(data.id, expectation);
       context.shared.groups.add(data.group);
 
-      container.content.append(expectation);
+      section.content.append(expectation);
       refresh([expectation]);
     });
 
@@ -80,10 +86,10 @@ export default Container
       const expectation = storage.get(data.id) ?? ExpectationComponent.build(data);
 
       if (storage.has(data.id)) {
-        expectation.refresh(data);
+        expectation.provide(data).refresh();
       }
-      if (!container.content.element.querySelector(`div.expectation[id="${data.id}"]`)) {
-        container.content.append(expectation);
+      if (!section.content.element.querySelector(`div.expectation[id="${data.id}"]`)) {
+        section.content.append(expectation);
         refresh([expectation])
       }
 

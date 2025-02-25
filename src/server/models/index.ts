@@ -1,4 +1,3 @@
-export * from './request-context';
 export * from './containers';
 export * from './transports';
 export * from './providers';
@@ -6,5 +5,6 @@ export * from './exchanges';
 export * from './executor';
 export * from './endpoint';
 export * from './history';
+export * from './context';
 export * from './router';
 export * from './reply';

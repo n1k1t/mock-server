@@ -1,31 +1,33 @@
 import _set from 'lodash/set';
 
 import { convertObjectToKeyValueCouples } from '../utils';
+import { ClientStorage } from './client-storage';
 import { Form } from './form';
 
-export class DynamicStorage {
-  public form = Form.build(this.element);
+export class DynamicStorage<T extends object = object> {
+  public form = Form.build<T>(this.element);
+  public client = ClientStorage.build<[string, unknown][]>(this.key);
 
   constructor(public key: string, public element: Element) {}
 
-  public sync() {
-    const stored: [string, unknown][] = JSON.parse(localStorage.getItem(this.key) ?? '[]');
+  public sync(): this {
+    const stored: [string, unknown][] = this.client.extract() ?? [];
     this.form.assign(stored.reduce((acc, [path, value]) => _set(acc, path, value), {}));
 
     return this;
   }
 
-  public save() {
-    localStorage.setItem(this.key, JSON.stringify(convertObjectToKeyValueCouples(this.form.values)));
+  public save(): this {
+    this.client.store(convertObjectToKeyValueCouples(this.form.extract(), this.form.paths));
     return this;
   }
 
-  public clear() {
-    localStorage.removeItem(this.key);
+  public clear(): this {
+    this.client.clear();
     return this;
   }
 
-  static build(key: string, element: Element) {
-    return new DynamicStorage(key, element);
+  static build<T extends object>(key: string, element: Element) {
+    return new DynamicStorage<T>(key, element);
   }
 }

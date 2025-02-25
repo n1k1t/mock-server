@@ -1,4 +1,4 @@
-import { Component } from '../models';
+import { Component } from '../../models';
 
 interface ICurtainComponentOptions {
   isPreventedToManualClose?: boolean;

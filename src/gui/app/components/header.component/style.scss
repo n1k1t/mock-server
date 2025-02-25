@@ -1,6 +1,7 @@
-body > header {
+header {
   display: flex;
   justify-content: center;
+  align-items: center;
   position: relative;
 
   button {
@@ -32,11 +33,15 @@ body > header {
     width: 1px;
     height: 25px;
     border: none;
-    background-color: #ddd;
+    background-color: rgba(#fff, .1);
     margin: 10px 10px;
   }
 
-  div.buttons-container#container-select button {
-    padding: 10px 20px;
+  div#tabs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    button { padding: 10px 20px }
   }
 }

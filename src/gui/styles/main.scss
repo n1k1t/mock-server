@@ -1,29 +1,18 @@
 @import 'constants';
 @import 'elements';
-@import 'classes';
-@import 'header';
-@import 'json';
 
-@import 'containers/expectations';
-@import 'containers/settings';
-@import 'containers/history';
+@import '../app/**/*.scss';
 
-@import 'components/loader';
-@import 'components/popups';
-@import 'components/search';
-
-div.container {
-  padding: 0 20px;
-  margin-top: 0;
-
+div.history, div.expectation {
   div.meta {
+    border-radius: inherit;
     display: flex;
     flex-wrap: wrap;
-    border-radius: inherit;
 
     div.segment {
-      display: inherit;
-      flex-wrap: inherit;
+      display: inline-flex;
+      flex-wrap: wrap;
+      margin-bottom: 5px;
     }
 
     span, button {
@@ -32,13 +21,13 @@ div.container {
       background-color: rgba(#fff, .05);
       border-radius: 5px;
       margin-right: 5px;
-      margin-bottom: 5px;
+      margin-top: 0;
+      margin-bottom: 0;
       font-size: 14px;
     }
 
     button {
       min-width: 50px;
-      margin-top: 0;
       margin-left: 0;
 
       i {
@@ -47,9 +36,8 @@ div.container {
       }
     }
 
-    span.name b {
+    b {
       font-weight: normal;
-      color: $color-main;
       position: relative;
       display: inline-block;
 
@@ -79,21 +67,34 @@ div.container {
       &.fa-power-off { color: $color-red }
     }
 
-    span.status {
-      min-width: 35px;
-      text-align: center;
+    span.name {
+      font-size: 12px;
+      b { color: $color-main }
+    }
 
-      &.red { color: $color-red }
-      &.green { color: $color-green }
+    span.status {
+      color: rgba(#fff, .4);
+      font-size: 12px;
+
+      b {
+        min-width: 35px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      &.red b { color: $color-red }
+      &.green b { color: $color-green }
     }
 
     span.transport {
       color: rgba(#fff, .4);
+      font-size: 12px;
     }
 
     span.method {
       background-color: $color-main;
       color: $color-dark;
+      font-weight: bold;
     }
 
     span.path {
@@ -104,6 +105,7 @@ div.container {
     span.time {
       width: 60px;
       text-align: center;
+      font-size: 12px;
     }
 
     span.calls-count, span.name, span.time {
@@ -117,6 +119,10 @@ div.container {
         opacity: .2;
         margin-right: 10px;
       }
+    }
+
+    span.calls-count {
+      min-width: 38px;
     }
 
     span.pending {
@@ -154,8 +160,11 @@ div.container {
       }
     }
 
-    span.forward { background-color: $color-purple }
     span.error { background-color: darken($color-red, 10) }
+    span.forward {
+      background-color: $color-purple;
+      font-size: 12px;
+    }
 
     span.seed {
       background-color: $color-green;
@@ -168,26 +177,37 @@ div.container {
     }
   }
 
-  &.history, &.expectation {
-    &:hover div.meta {
-      cursor: pointer;
+  &:hover div.meta {
+    cursor: pointer;
 
-      span.time, span.transport, span.status, span.name {
-        background-color: rgba(#fff, .15);
-      }
+    span.time, span.transport, span.status, span.name {
+      background-color: rgba(#fff, .15);
     }
   }
 
-  pre {
-    margin: 0;
-    margin-bottom: 20px;
-    overflow: hidden;
-
-    &.hidden {
+  &.expectation div.meta {
+    span.status b:after {
       display: none;
     }
-    &:not(:last-child) {
-      margin-bottom: 20px;
+  }
+
+  @media screen and (max-width: $screen-medium) {
+    div.meta {
+      background-color: lighten($color-dark, 3);
+      padding: 5px;
+      padding-bottom: 0;
+      margin-bottom: 5px;
+
+      div.segment:first-child { width: 100%; }
+      span.arrow:nth-child(1), span.arrow:nth-child(2) { display: none }
+
+      span, button {
+        background-color: rgba($color-dark, .5);
+      }
+    }
+
+    &:hover div.meta {
+      background-color: lighten($color-dark, 5);
     }
   }
 }
