@@ -1,4 +1,5 @@
 import _isObject from 'lodash/isObject';
+import hash from 'fnv1a';
 
 export const convertObjectToKeyValueCouples =
   (object: object, paths: string[], prefix: string = ''): [string, unknown][] =>
@@ -11,3 +12,4 @@ export const convertObjectToKeyValueCouples =
     }, []);
 
 export const buildCounter = (initial: number = 0, step: number = 1) => (value = step) => (initial += value);
+export const calculateColor = (text: string) => `hsl(${Math.floor(hash(text)) / 5 % 360}, 100%, 74%)`;

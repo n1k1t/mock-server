@@ -92,7 +92,6 @@ div.history, div.expectation {
     }
 
     span.method {
-      background-color: $color-main;
       color: $color-dark;
       font-weight: bold;
     }
@@ -167,8 +166,8 @@ div.history, div.expectation {
     }
 
     span.seed {
-      background-color: $color-green;
-      color: $color-dark;
+      color: $color-green;
+      font-size: 12px;
     }
 
     span.cache {

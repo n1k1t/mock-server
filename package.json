@@ -56,6 +56,7 @@
     "@types/uuid": "8.3.4",
     "@types/ws": "8.5.13",
     "babelify": "10.0.0",
+    "fnv1a": "1.1.1",
     "husky": "9.1.7",
     "jest": "29.7.0",
     "jest-extended": "4.0.2",

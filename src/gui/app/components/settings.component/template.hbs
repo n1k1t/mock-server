@@ -7,7 +7,7 @@ module.exports = `
           <button id="all" class="{{#if groups.all.isEnabled}}checked{{/if}}">ALL</button>
 
           {{#each groups.segmented}}
-            <button id="{{name}}" class="{{#if isEnabled}}checked{{/if}}">{{name}}</button>
+            <button id="{{name}}" class="{{#if isEnabled}}checked{{/if}}" style="color: {{toColor name}};">{{name}}</button>
           {{/each}}
         </div>
       </div>

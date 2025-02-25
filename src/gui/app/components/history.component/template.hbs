@@ -25,7 +25,7 @@ module.exports = `
         {{/compare}}
 
         <span class="transport">{{snapshot.transport}}</span>
-        <span class="method">{{snapshot.incoming.method}}</span>
+        <span class="method" style="color: {{toColor snapshot.incoming.method}};">{{snapshot.incoming.method}}</span>
         <span class="path">{{truncate snapshot.incoming.path 45}}</span>
 
         {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}

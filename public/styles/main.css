@@ -220,7 +220,6 @@ div.history div.meta span.transport, div.expectation div.meta span.transport {
   font-size: 12px;
 }
 div.history div.meta span.method, div.expectation div.meta span.method {
-  background-color: #ffd37b;
   color: #1e1e1e;
   font-weight: bold;
 }
@@ -286,8 +285,8 @@ div.history div.meta span.forward, div.expectation div.meta span.forward {
   font-size: 12px;
 }
 div.history div.meta span.seed, div.expectation div.meta span.seed {
-  background-color: #a7ff7b;
-  color: #1e1e1e;
+  color: #a7ff7b;
+  font-size: 12px;
 }
 div.history div.meta span.cache, div.expectation div.meta span.cache {
   background-color: #e1e1ff;
@@ -334,9 +333,12 @@ section#settings div.container p i {
 section#settings div.container p span {
   color: rgba(255, 255, 255, 0.2);
 }
-section#settings div.container div.panel button.checked {
-  background-color: #ffd37b;
-  color: #1e1e1e;
+section#settings div.container div.panel button {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+section#settings div.container div.panel button:not(.checked) {
+  background-color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 section#settings div.container#groups-filter button.checked {
   pointer-events: all;

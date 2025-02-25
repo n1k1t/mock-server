@@ -14,7 +14,7 @@ module.exports = `
       </span>
     {{/compare}}
 
-    <span class="name"><b>{{group}}</b> {{name}}</span>
+    <span class="name"><b style="color: {{toColor group}};">{{group}}</b> {{name}}</span>
   </div>
 
   {{#compare format 'neq' 'short'}}
@@ -30,6 +30,8 @@ module.exports = `
               {{#compare value 'lt' 400}}green{{/compare}}
               {{#compare value 'gte' 400}}red{{/compare}}
             "><b>{{value}}</b></span>
+          {{else if (compare location 'eq' 'method')}}
+            <span class="method" style="color: {{toColor value}};">{{value}}</span>
           {{else}}
             <span class="{{location}}">{{truncate value 45}}</span>
           {{/if}}

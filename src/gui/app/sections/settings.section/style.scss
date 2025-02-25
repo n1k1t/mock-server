@@ -10,9 +10,13 @@ section#settings {
     }
 
     div.panel {
-      button.checked {
-        background-color: $color-main;
-        color: $color-dark;
+      button {
+        background-color: rgba(#fff, .1);
+      }
+
+      button:not(.checked) {
+        background-color: rgba(#fff, 0);
+        color: rgba(#fff, .4) !important;
       }
     }
 
