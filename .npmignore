@@ -4,6 +4,7 @@
 task-processor.ts
 tsconfig.json
 
+.vscode/
 src/
 test/
 coverage/
