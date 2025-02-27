@@ -1,9 +1,17 @@
 @keyframes rotating {
   0% {
     transform: scaleX(1);
+    color: $color-main;
+  }
+  15% {
+    color: lighten($color-dark, 10);
   }
   50% {
     transform: scaleX(-1);
+    color: $color-main;
+  }
+  65% {
+    color: lighten($color-dark, 10);
   }
 }
 

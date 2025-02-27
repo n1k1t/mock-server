@@ -137,6 +137,9 @@ div.input.required:before {
   margin-left: 12px;
 }
 
+div.history, div.expectation {
+  overflow: visible;
+}
 div.history div.meta, div.expectation div.meta {
   border-radius: inherit;
   display: flex;
@@ -147,9 +150,10 @@ div.history div.meta div.segment, div.expectation div.meta div.segment {
   flex-wrap: wrap;
   margin-bottom: 5px;
 }
-div.history div.meta span, div.history div.meta button, div.expectation div.meta span, div.expectation div.meta button {
+div.history div.meta span:not(.truncated, .short), div.history div.meta button, div.expectation div.meta span:not(.truncated, .short), div.expectation div.meta button {
   padding: 7px 15px;
   display: inline-block;
+  position: relative;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 5px;
   margin-right: 5px;
@@ -180,6 +184,28 @@ div.history div.meta b:after, div.expectation div.meta b:after {
   top: 2px;
   margin-left: 10px;
   margin-right: 5px;
+}
+div.history div.meta span span.truncated span.full, div.expectation div.meta span span.truncated span.full {
+  background-color: #383838;
+  transition-duration: 0.1s;
+  transform: translateY(10px);
+  visibility: hidden;
+  opacity: 0;
+  color: #fff;
+  position: absolute;
+  font-size: 12px;
+  bottom: 25px;
+  margin-bottom: 10px;
+  left: 0;
+  z-index: 1;
+}
+div.history div.meta span:hover span.truncated, div.expectation div.meta span:hover span.truncated {
+  padding-top: 10px;
+}
+div.history div.meta span:hover span.truncated span.full, div.expectation div.meta span:hover span.truncated span.full {
+  visibility: visible;
+  transform: none;
+  opacity: 1;
 }
 div.history div.meta span.arrow, div.expectation div.meta span.arrow {
   background: transparent;
@@ -295,7 +321,7 @@ div.history div.meta span.cache, div.expectation div.meta span.cache {
 div.history:hover div.meta, div.expectation:hover div.meta {
   cursor: pointer;
 }
-div.history:hover div.meta span.time, div.history:hover div.meta span.transport, div.history:hover div.meta span.status, div.history:hover div.meta span.name, div.expectation:hover div.meta span.time, div.expectation:hover div.meta span.transport, div.expectation:hover div.meta span.status, div.expectation:hover div.meta span.name {
+div.history:hover div.meta span.time, div.history:hover div.meta span.transport, div.history:hover div.meta span.status, div.history:hover div.meta span.name, div.history:hover div.meta span.method, div.history:hover div.meta span.seed, div.expectation:hover div.meta span.time, div.expectation:hover div.meta span.transport, div.expectation:hover div.meta span.status, div.expectation:hover div.meta span.name, div.expectation:hover div.meta span.method, div.expectation:hover div.meta span.seed {
   background-color: rgba(255, 255, 255, 0.15);
 }
 div.history.expectation div.meta span.status b:after, div.expectation.expectation div.meta span.status b:after {
@@ -347,9 +373,17 @@ section#settings div.container#groups-filter button.checked {
 @keyframes rotating {
   0% {
     transform: scaleX(1);
+    color: #ffd37b;
+  }
+  15% {
+    color: #383838;
   }
   50% {
     transform: scaleX(-1);
+    color: #ffd37b;
+  }
+  65% {
+    color: #383838;
   }
 }
 section#analytics div.content {

@@ -26,6 +26,7 @@ export class HistoryComponent extends Component {
 
     this.viewer.provide({
       event: this.data.snapshot.event,
+      transport: this.data.snapshot.transport,
 
       ...(Object.keys(this.data.snapshot.flags).length && { flags: this.data.snapshot.flags }),
       ...(this.data.expectation && {

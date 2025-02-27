@@ -4,6 +4,8 @@
 @import '../app/**/*.scss';
 
 div.history, div.expectation {
+  overflow: visible;
+
   div.meta {
     border-radius: inherit;
     display: flex;
@@ -15,9 +17,10 @@ div.history, div.expectation {
       margin-bottom: 5px;
     }
 
-    span, button {
+    span:not(.truncated, .short), button {
       padding: 7px 15px;
       display: inline-block;
+      position: relative;
       background-color: rgba(#fff, .05);
       border-radius: 5px;
       margin-right: 5px;
@@ -51,6 +54,33 @@ div.history, div.expectation {
         top: 2px;
         margin-left: 10px;
         margin-right: 5px;
+      }
+    }
+
+    span {
+      span.truncated span.full {
+        background-color: lighten($color-dark, 10);
+        transition-duration: .1s;
+        transform: translateY(10px);
+        visibility: hidden;
+        opacity: 0;
+        color: #fff;
+        position: absolute;
+        font-size: 12px;
+        bottom: 25px;
+        margin-bottom: 10px;
+        left: 0;
+        z-index: +1;
+      }
+
+      &:hover span.truncated {
+        padding-top: 10px;
+
+        span.full {
+          visibility: visible;
+          transform: none;
+          opacity: 1;
+        }
       }
     }
 
@@ -179,7 +209,7 @@ div.history, div.expectation {
   &:hover div.meta {
     cursor: pointer;
 
-    span.time, span.transport, span.status, span.name {
+    span.time, span.transport, span.status, span.name, span.method, span.seed {
       background-color: rgba(#fff, .15);
     }
   }

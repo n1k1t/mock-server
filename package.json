@@ -38,6 +38,7 @@
   "engines": {
     "node": ">=22.14.0"
   },
+  "homepage": "https://github.com/n1k1t/mock-server",
   "author": "n1k1t",
   "license": "ISC",
   "devDependencies": {

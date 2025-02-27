@@ -33,7 +33,7 @@ module.exports = `
           {{else if (compare location 'eq' 'method')}}
             <span class="method" style="color: {{toColor value}};">{{value}}</span>
           {{else}}
-            <span class="{{location}}">{{truncate value 45}}</span>
+            <span class="{{location}}">{{> truncated this length=45}}</span>
           {{/if}}
         {{/compare}}
       {{/each}}
@@ -44,8 +44,8 @@ module.exports = `
     <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
     <div class="segment">
-      {{#if baseUrl}}<span class="forward">{{truncate baseUrl 45}}</span>{{/if}}
-      {{#if url}}<span class="forward">{{truncate url 45}}</span>{{/if}}
+      {{#if baseUrl}}<span class="forward">{{> truncated value=baseUrl length=45}}</span>{{/if}}
+      {{#if url}}<span class="forward">{{> truncated value=url length=45}}</span>{{/if}}
 
       {{#if ../isCached}}<span class="cache"><i class="fas fa-database"></i></span>{{/if}}
     </div>

@@ -1,0 +1,10 @@
+module.exports = `
+  {{#if (compare value.length 'gt' length)}}
+    <span class="truncated">
+      <span class="full">{{value}}</span>
+      <span class="short">{{truncate value length}}</span>
+    </span>
+  {{else}}
+    {{value}}
+  {{/if}}
+`
