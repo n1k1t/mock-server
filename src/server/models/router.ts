@@ -19,6 +19,11 @@ export interface IRouteMatchResult<
 }
 
 export class Router<TContext extends IServerContext<any>> extends Map<string, IRouteContext<TContext['transport']>> {
+  public defaults = {
+    provider: this.server.providers.default,
+    transports: this.server.transports,
+  };
+
   constructor(private server: MockServer) {
     super();
   }
@@ -65,8 +70,8 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     }
 
     return {
-      provider: this.server.providers.default,
-      transport: <T>this.server.transports.get(transport),
+      provider: this.defaults.provider,
+      transport: <T>this.defaults.transports.get(transport),
     };
   }
 

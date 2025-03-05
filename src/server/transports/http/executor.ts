@@ -13,13 +13,14 @@ import {
   ExecutorManualError,
   IRequestContextOutgoing,
   IRequestContextIncoming,
+  IExecutorExecOptions,
 } from '../../models';
 
 const logger = Logger.build('Server.Transports.Http.Executor');
 
 export class HttpExecutor extends Executor<HttpRequestContext> {
-  public async exec(context: HttpRequestContext) {
-    await super.exec(context).catch((error) => {
+  public async exec(context: HttpRequestContext, options?: IExecutorExecOptions) {
+    await super.exec(context, options).catch((error) => {
       if (error instanceof ExecutorManualError) {
         return null;
       }
@@ -115,9 +116,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     return outgoing;
   }
 
-  /**
-   * Compiles Axios request configuration to forward
-   */
+  /** Compiles Axios request configuration to forward */
   protected async compileForwardingConfiguration(
     context: HttpRequestContext,
     incoming: IRequestContextIncoming,

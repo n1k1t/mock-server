@@ -29,9 +29,7 @@ export interface IMockServerConfiguration {
   host: string;
 
   containers?: {
-    /**
-     * Seconds `default: 1h`
-     */
+    /** Seconds `default: 1h` */
     expiredCleaningInterval?: number;
   };
 

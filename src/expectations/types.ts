@@ -191,9 +191,7 @@ export interface IExpectationSchemaForward {
   };
 
   options?: {
-    /**
-     * Rewrites the `Host` header by forwarding url. Default is `true`
-     */
+    /** Rewrites the `Host` header by forwarding url. Default is `true` */
     overrideHost?: boolean;
   };
 

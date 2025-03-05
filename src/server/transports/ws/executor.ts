@@ -1,4 +1,4 @@
-import { Executor, ExecutorManualError, IRequestContextOutgoing } from '../../models';
+import { Executor, ExecutorManualError, IExecutorExecOptions, IRequestContextOutgoing } from '../../models';
 import { WsRequestContext } from './context';
 import { parseJsonSafe } from '../../../utils';
 import { Expectation } from '../../../expectations';
@@ -7,7 +7,7 @@ import { Logger } from '../../../logger';
 const logger = Logger.build('Server.Transports.Ws.Executor');
 
 export class WsExecutor extends Executor<WsRequestContext> {
-  public async exec(context: WsRequestContext) {
+  public async exec(context: WsRequestContext, options?: IExecutorExecOptions) {
     context.socket.once('close', () => context.complete());
 
     if (context.event === 'connection') {
@@ -17,7 +17,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
       });
     }
 
-    await super.exec(context).catch((error) => {
+    await super.exec(context, options).catch((error) => {
       if (error instanceof ExecutorManualError && error.is('ECONNABORTED')) {
         return context.socket.close();
       }

@@ -27,7 +27,11 @@ export const buildWsListener = (router: Router<WsRequestContext['TContext']>) =>
     }
 
     const provided = await metaStorage
-      .wrap(context.meta, () => transport.executor.exec(context))
+      .wrap(context.meta, () => transport.executor.exec(context, {
+        spareExpectationsStorage: provider !== router.defaults.provider
+          ? router.defaults.provider.storages.expectations
+          : undefined,
+      }))
       .catch((error) => logger.error('Get error while [ws:connection] execution', error?.stack ?? error));
 
     if (!provided) {
@@ -44,10 +48,16 @@ export const buildWsListener = (router: Router<WsRequestContext['TContext']>) =>
           return socket.close(1011);
         }
 
-        metaStorage.wrap(context.meta, () => transport.executor.exec(context)).catch((error) => {
-          logger.error('Get error while handling incoming request', error?.stack ?? error);
-          socket.close(1011);
-        });
+        metaStorage
+          .wrap(context.meta, () => transport.executor.exec(context, {
+            spareExpectationsStorage: provider !== router.defaults.provider
+              ? router.defaults.provider.storages.expectations
+              : undefined,
+          }))
+          .catch((error) => {
+            logger.error('Get error while handling incoming request', error?.stack ?? error);
+            socket.close(1011);
+          });
       });
     }
   }

@@ -23,10 +23,16 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
       return response.end();
     }
 
-    metaStorage.wrap(context.meta, () => transport.executor.exec(context)).catch((error) => {
-      logger.error('Get error while [http] execution', error?.stack ?? error);
-      response.end();
-    });
+    metaStorage
+      .wrap(context.meta, () => transport.executor.exec(context, {
+        spareExpectationsStorage: provider !== router.defaults.provider
+          ? router.defaults.provider.storages.expectations
+          : undefined,
+      }))
+      .catch((error) => {
+        logger.error('Get error while [http] execution', error?.stack ?? error);
+        response.end();
+      });
   }
 
 export class HttpTransport extends Transport<HttpExecutor> {

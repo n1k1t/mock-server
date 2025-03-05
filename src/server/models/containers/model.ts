@@ -23,9 +23,7 @@ export class Container<TPayload extends object = object> {
       key: string;
       payload: TPayload;
 
-      /**
-       * Seconds
-       */
+      /** Seconds */
       ttl: number;
       timestamp: number;
 

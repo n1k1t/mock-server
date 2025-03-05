@@ -55,9 +55,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     return this.status === status;
   }
 
-  /**
-   * Compiles snapshot of own payload to work with expectations
-   */
+  /** Compiles snapshot of own payload to work with expectations */
   public compileSnapshot(): RequestContextSnapshot<TContext> {
     const snapshot = RequestContextSnapshot.build<IServerContext<any>>({
       transport: this.transport,
@@ -78,9 +76,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     return snapshot;
   };
 
-  /**
-   * Compiles history model with own snapshot for GUI
-   */
+  /** Compiles history model with own snapshot for GUI */
   public compileHistory(): History {
     return this.provider.storages.history.register({
       timestamp: this.timestamp,
@@ -88,9 +84,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     });
   }
 
-  /**
-   * Compiles cache configuration using own snapshot and expectation
-   */
+  /** Compiles cache configuration using own snapshot and expectation */
   public compileCacheConfiguration(): TRequestContextCacheConfigurationCompiled {
     if (!this.snapshot.cache.isEnabled || !this.expectation?.forward?.cache) {
       return { isEnabled: false };
@@ -104,23 +98,17 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     return { prefix, ttl, key: `${prefix ?? ''}${key}`, isEnabled: true };
   }
 
-  /**
-   * Provides payload parts into context
-   */
+  /** Provides payload parts into context */
   public assign<T extends Partial<Pick<RequestContext<any>, RequestContext<any>['TShared']>>>(payload: T) {
     return Object.assign(this, payload);
   }
 
-  /**
-   * Marks context as skipped to prevent further handling in executors
-   */
+  /** Marks context as skipped to prevent further handling in executors */
   public skip() {
     return this.switchStatus('skipped');
   }
 
-  /**
-   * Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history
-   */
+  /** Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history */
   public complete() {
     if (this.hasStatus('completed')) {
       return this;

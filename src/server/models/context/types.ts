@@ -56,9 +56,7 @@ export interface IRequestContextCacheConfiguration {
   prefix?: string;
   key?: string | object;
 
-  /**
-   * Seconds
-   */
+  /** Seconds */
   ttl?: number;
 }
 
