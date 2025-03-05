@@ -38,7 +38,12 @@ export default ClientMethod
       return null;
     }
 
-    const updated = Expectation.build(merge(found.toPlain(), body.set ?? {}, { arrayMerge: (target, source) => source }));
+    const updated = Expectation.build(
+      Object.assign(merge(found.configuration, body.set ?? {}, { arrayMerge: (target, source) => source }), {
+        meta: found.meta,
+        id: found.id,
+      })
+    );
 
     const errors = updated.validate();
     if (errors.length) {

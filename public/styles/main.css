@@ -340,9 +340,6 @@ div.history.expectation div.meta span.status b:after, div.expectation.expectatio
   div.history div.meta span.arrow:nth-child(1), div.history div.meta span.arrow:nth-child(2), div.expectation div.meta span.arrow:nth-child(1), div.expectation div.meta span.arrow:nth-child(2) {
     display: none;
   }
-  div.history div.meta span, div.history div.meta button, div.expectation div.meta span, div.expectation div.meta button {
-    background-color: rgba(30, 30, 30, 0.5);
-  }
   div.history:hover div.meta, div.expectation:hover div.meta {
     background-color: #2b2b2b;
   }

@@ -229,10 +229,6 @@ div.history, div.expectation {
 
       div.segment:first-child { width: 100%; }
       span.arrow:nth-child(1), span.arrow:nth-child(2) { display: none }
-
-      span, button {
-        background-color: rgba($color-dark, .5);
-      }
     }
 
     &:hover div.meta {
