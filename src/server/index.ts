@@ -67,15 +67,15 @@ export class MockServer<
   };
 
   public providers = new ProvidersStorage<TContext>(this);
+  public transports = new TransportsStorage<TContext>()
+    .register('http', new HttpTransport())
+    .register('ws', new WsTransport());
+
   public router = Router.build<TContext>(this);
 
   public http = createServer(buildHttpListener(this.router));
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
   public io = new Server(this.http);
-
-  public transports = new TransportsStorage<TContext>()
-    .register('http', new HttpTransport())
-    .register('ws', new WsTransport());
 
   private internal = {
     transports: {
