@@ -19,13 +19,15 @@ export interface IRouteMatchResult<
 }
 
 export class Router<TContext extends IServerContext<any>> extends Map<string, IRouteContext<TContext['transport']>> {
-  public defaults = {
-    provider: this.server.providers.default,
-    transports: this.server.transports,
-  };
-
   constructor(private server: MockServer) {
     super();
+  }
+
+  public get defaults() {
+    return {
+      provider: this.server.providers.default,
+      transports: this.server.transports,
+    };
   }
 
   public register(
