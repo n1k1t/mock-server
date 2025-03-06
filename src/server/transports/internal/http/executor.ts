@@ -8,12 +8,10 @@ import * as endpoints from '../../../endpoints';
 import config from '../../../../config';
 
 export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
-  public router = Object
-    .values(endpoints)
-    .reduce<Record<string, SetRequiredKeys<Endpoint['TCompiled'], 'http'>>>(
-      (acc, endpoint) => endpoint.http ? _.set(acc, `${endpoint.http.method}:${endpoint.http.path}`, endpoint) : acc,
-      {}
-    );
+  public router = Object.values(endpoints).reduce<Record<string, SetRequiredKeys<Endpoint['TCompiled'], 'http'>>>(
+    (acc, endpoint) => endpoint.http ? _.set(acc, `${endpoint.http.method}:${endpoint.http.path}`, endpoint) : acc,
+    {}
+  );
 
   public async exec(context: InternalHttpRequestContext) {
     const routes = config.get('routes');
@@ -31,8 +29,9 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     return context.assign({ outgoing }).complete();
   }
 
-  public async handleExpectationMatch() {
-    return null
+  public async match(context: InternalHttpRequestContext<unknown>) {
+    await this.exec(context);
+    return null;
   }
 
   public async forward() {

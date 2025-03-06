@@ -13,26 +13,35 @@ const logger = Logger.build('Server.Transports.Http');
 
 export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>) =>
   async (request: IncomingMessage, response: ServerResponse) => {
-    const { provider, transport } = router.match<HttpTransport>('http', request.url ?? '');
+    for (const { provider, transport } of router.match<HttpTransport>('http', request.url ?? '')) {
+      const context = await transport
+        .compileContext(provider, request, response)
+        .catch((error) => logger.error('Got error while context compilation', error?.stack ?? error));
 
-    const context = await transport
-      .compileContext(provider, request, response)
-      .catch((error) => logger.error('Got error while [http] context compilation', error?.stack ?? error));
+      if (!context) {
+        return response.destroy();
+      }
+      if (!context.hasStatus('handling')) {
+        break;
+      }
 
-    if (!context) {
-      return response.end();
+      const expectation = await metaStorage
+        .wrap(context.meta, () => transport.executor.match(context))
+        .catch((error) => logger.error('Got error while expectation matching', error?.stack ?? error));
+
+      if (!context.hasStatus('handling')) {
+        break;
+      }
+      if (!expectation) {
+        continue
+      }
+
+      await metaStorage
+        .wrap(context.meta, () => transport.executor.exec(context, { expectation }))
+        .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
+
+      break;
     }
-
-    metaStorage
-      .wrap(context.meta, () => transport.executor.exec(context, {
-        spareExpectationsStorage: provider !== router.defaults.provider
-          ? router.defaults.provider.storages.expectations
-          : undefined,
-      }))
-      .catch((error) => {
-        logger.error('Get error while [http] execution', error?.stack ?? error);
-        response.end();
-      });
   }
 
 export class HttpTransport extends Transport<HttpExecutor> {

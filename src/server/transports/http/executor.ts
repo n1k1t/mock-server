@@ -31,20 +31,24 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     return context.complete();
   }
 
-  public async handleExpectationMatch(context: HttpRequestContext, expectation: Expectation<any> | null) {
+  public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
+    const expectation = context.provider.storages.expectations.match(context.snapshot);
+
     if (!expectation) {
-      logger.warn('Expectation was not found');
+      context.assign({
+        outgoing: await this.reply(context, {
+          type: 'plain',
+          status: 404,
 
-      const outgoing = await this.reply(context, {
-        type: 'plain',
-        status: 404,
-
-        dataRaw: Buffer.from('Expectation was not found'),
-        headers: {},
+          dataRaw: Buffer.from('Expectation was not found'),
+          headers: {},
+        }),
       });
 
-      return context.assign({ outgoing });
+      return null;
     }
+
+    return expectation;
   }
 
   public async forward(

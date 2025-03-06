@@ -23,13 +23,6 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     super();
   }
 
-  public get defaults() {
-    return {
-      provider: this.server.providers.default,
-      transports: this.server.transports,
-    };
-  }
-
   public register(
     pattern: string,
     configuration: {
@@ -61,19 +54,22 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     });
   }
 
-  public match<T extends Transport>(transport: TContext['transport'], path: string): IRouteMatchResult<TContext['transport'], T> {
+  public *match<T extends Transport>(
+    transport: TContext['transport'],
+    path: string
+  ): Generator<IRouteMatchResult<TContext['transport'], T>> {
     for (const [pattern, route] of this.entries()) {
       if (minimatch(path, pattern)) {
-        return {
+        yield {
           provider: route.provider,
           transport: <T>route.transports[transport],
         };
       }
     }
 
-    return {
-      provider: this.defaults.provider,
-      transport: <T>this.defaults.transports.get(transport),
+    yield {
+      provider: this.server.providers.default,
+      transport: <T>this.server.transports.get(transport),
     };
   }
 

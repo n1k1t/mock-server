@@ -5,6 +5,8 @@ task-processor.ts
 tsconfig.json
 
 .vscode/
+.husky/
+bin/
 src/
 test/
 coverage/

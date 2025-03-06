@@ -3,7 +3,7 @@ import { from } from 'rxjs';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import type { Expectation, ExpectationsStorage, IExpectationSchemaForward } from '../../../expectations';
+import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
 import { ExecutorManualError } from './errors';
 import { cast, wait } from '../../../utils';
@@ -25,19 +25,12 @@ const clone = rfdc();
 const logger = Logger.build('Server.Models.Executor');
 
 export interface IExecutorExecOptions {
-  /** Alternative expectations storage that will be using when primary storage didnot found any expectations */
-  spareExpectationsStorage?: ExpectationsStorage;
+  expectation?: Expectation<any>;
 }
 
 export abstract class Executor<TRequestContext extends RequestContext = RequestContext> {
   public TRequestContext!: TRequestContext;
   public TContext!: TRequestContext['TContext'];
-
-  /** Uses to handle a request flow when expectation is matched or not */
-  public abstract handleExpectationMatch(
-    context: TRequestContext,
-    expectation: Expectation<any> | null
-  ): Promise<unknown>;
 
   /** Uses to handle request forwarding */
   public abstract forward(
@@ -52,19 +45,24 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     outgoing: IRequestContextOutgoing
   ): Promise<IRequestContextOutgoing | null>;
 
+  /** Matches expectation */
+  public async match(context: TRequestContext): Promise<Expectation<any> | null> {
+    return context.provider.storages.expectations.match(context.snapshot);
+  }
+
+  /** Prepares context right after expectation was manipulated */
+  public async prepare(context: TRequestContext): Promise<unknown> {
+    return context;
+  }
+
   /** Uses to handle whole request */
   public async exec(context: TRequestContext, options?: IExecutorExecOptions): Promise<TRequestContext> {
-    const expectation = await this.matchExpectation(context, options).catch((error) => {
+    const expectation = options?.expectation ? options.expectation : await this.match(context).catch((error) => {
       logger.error('Got error while execution [matchExpectation] method', error?.stack ?? error);
       return null;
     });
 
     if (!expectation) {
-      await this.handleExpectationMatch(context, null).catch((error) => logger.error(
-        'Got error while execution [handleExpectationMatch] method',
-        error?.stack ?? error
-      ));
-
       if (!context.outgoing) {
         context.provider.storages.history.unregister(context.history);
         return context;
@@ -77,6 +75,18 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       return context;
     }
 
+    context.assign({
+      snapshot: expectation.request.manipulate(context.snapshot),
+      expectation: expectation.increaseExecutionsCounter(),
+    });
+
+    await this
+      .prepare(context)
+      .catch((error) => logger.error('Got error while execution [prepare] method', error?.stack ?? error));
+
+    context.provider.exchanges.io.publish('expectation:updated', expectation.toPlain());
+    logger.info('Expectation has matched as', `"${expectation.name}" [${expectation.id}]`);
+
     if (context.history?.hasStatus('registred')) {
       context.history
         .switchStatus('pending')
@@ -85,11 +95,6 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
       context.provider.exchanges.io.publish('history:added', context.history.toPlain());
     }
-
-    await this.handleExpectationMatch(context, expectation).catch((error) => logger.error(
-      'Got error while execution [handleExpectationMatch] method',
-      error?.stack ?? error
-    ));
 
     if (!context.hasStatus('handling')) {
       return context;
@@ -164,28 +169,6 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     });
 
     return outgoing ? context.assign({ outgoing }) : context;
-  }
-
-  private async matchExpectation(
-    context: TRequestContext,
-    options?: IExecutorExecOptions
-  ): Promise<Expectation<any> | null> {
-    const expectation = context.provider.storages.expectations.match(context.snapshot)
-      ?? options?.spareExpectationsStorage?.match(context.snapshot);
-
-    if (!expectation) {
-      return null;
-    }
-
-    logger.info('Expectation has matched as', `"${expectation.name}" [${expectation.id}]`);
-
-    context.assign({
-      snapshot: expectation.request.manipulate(context.snapshot),
-      expectation: expectation.increaseExecutionsCounter(),
-    });
-
-    context.provider.exchanges.io.publish('expectation:updated', expectation.toPlain());
-    return expectation;
   }
 
   private async handleForwarding(context: TRequestContext): Promise<IRequestContextForwarded | null> {

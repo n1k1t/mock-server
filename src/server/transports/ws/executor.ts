@@ -1,7 +1,6 @@
 import { Executor, ExecutorManualError, IExecutorExecOptions, IRequestContextOutgoing } from '../../models';
 import { WsRequestContext } from './context';
 import { parseJsonSafe } from '../../../utils';
-import { Expectation } from '../../../expectations';
 import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Transports.Ws.Executor');
@@ -28,11 +27,18 @@ export class WsExecutor extends Executor<WsRequestContext> {
     return context.event === 'connection' ? context : context.complete();
   }
 
-  public async handleExpectationMatch(context: WsRequestContext, expectation: Expectation<any> | null) {
+  public async match(context: WsRequestContext) {
+    const expectation = context.provider.storages.expectations.match(context.snapshot);
+
     if (!expectation) {
-      return context.event === 'connection' ? context.skip() : logger.warn('Expectation was not found');
+      context.event === 'connection' ? context.skip() : logger.warn('Expectation was not found');
+      return null;
     }
 
+    return expectation;
+  }
+
+  public async prepare(context: WsRequestContext) {
     if (context.snapshot.flags.wsCloseConnection) {
       context.socket.close(context.snapshot.outgoing.status || 1000);
       return context.complete();

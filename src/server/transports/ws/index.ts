@@ -2,7 +2,7 @@
 import { WebSocket, RawData } from 'ws';
 import { IncomingMessage } from 'http';
 
-import { Provider, Router, Transport } from '../../models';
+import { IRouteMatchResult, Provider, Router, Transport } from '../../models';
 import { WsRequestContext } from './context';
 import { metaStorage } from '../../../meta';
 import { WsExecutor } from './executor';
@@ -10,56 +10,84 @@ import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Transports.Ws');
 
+const signals = {
+  close: Symbol('close'),
+  break: Symbol('break'),
+};
+
+const handle = async (
+  event: WsTransport['TContext']['event'],
+  socket: WebSocket,
+  request: IncomingMessage,
+  match: IRouteMatchResult<'ws', WsTransport>,
+  data?: RawData
+): Promise<void | null | symbol> => {
+  const context = await match.transport
+    .compileContext(match.provider, socket, request, event, data)
+    .catch((error) => logger.error(`Got error while [ws:${event}] context compilation`, error?.stack ?? error));
+
+  if (!context) {
+    return signals.close;
+  }
+  if (!context.hasStatus('handling')) {
+    return signals.break;
+  }
+
+  const expectation = await metaStorage
+    .wrap(context.meta, () => match.transport.executor.match(context))
+    .catch((error) => logger.error(`Got error while [ws:${event}] expectation matching`, error?.stack ?? error));
+
+  if (!context.hasStatus('handling')) {
+    return signals.break;
+  }
+  if (!expectation) {
+    return null;
+  }
+
+  await metaStorage
+    .wrap(context.meta, () => match.transport.executor.exec(context, { expectation }))
+    .catch((error) => logger.error(`Got error while [ws:${event}] execution`, error?.stack ?? error));
+
+  return signals.close;
+}
+
 export const buildWsListener = (router: Router<WsRequestContext['TContext']>) =>
   async (socket: WebSocket, request: IncomingMessage) => {
     if (request.url?.startsWith('/socket.io')) {
       return socket.terminate();
     }
 
-    const { provider, transport } = router.match<WsTransport>('ws', request.url ?? '');
+    const matches: IRouteMatchResult<'ws', WsTransport>[] = [];
 
-    const context = await transport
-      .compileContext(provider, socket, request, 'connection')
-      .catch((error) => logger.error('Got error while [ws:connection] context compilation', error?.stack ?? error));
+    for (const match of router.match<WsTransport>('ws', request.url ?? '')) {
+      matches.push(match);
 
-    if (!context) {
-      return socket.close(1011);
+      const signal = await handle('connection', socket, request, match);
+
+      if (signal === signals.close) {
+        return socket.close();
+      }
+      if (signal === signals.break) {
+        break;
+      }
     }
 
-    const provided = await metaStorage
-      .wrap(context.meta, () => transport.executor.exec(context, {
-        spareExpectationsStorage: provider !== router.defaults.provider
-          ? router.defaults.provider.storages.expectations
-          : undefined,
-      }))
-      .catch((error) => logger.error('Get error while [ws:connection] execution', error?.stack ?? error));
-
-    if (!provided) {
-      return socket.close(1011);
+    if (!matches.length || socket.readyState !== socket.OPEN) {
+      return socket.close();
     }
 
-    if (socket.readyState === socket.OPEN) {
-      socket.on('message', async (data) => {
-        const context = await transport
-          .compileContext(provider, socket, request, 'message', data)
-          .catch((error) => logger.error('Got error while [ws:message] context compilation', error?.stack ?? error));
+    socket.on('message', async (data) => {
+      for (const match of matches) {
+        const signal = await handle('message', socket, request, match, data);
 
-        if (!context) {
-          return socket.close(1011);
+        if (signal === signals.close) {
+          return socket.close();
         }
-
-        metaStorage
-          .wrap(context.meta, () => transport.executor.exec(context, {
-            spareExpectationsStorage: provider !== router.defaults.provider
-              ? router.defaults.provider.storages.expectations
-              : undefined,
-          }))
-          .catch((error) => {
-            logger.error('Get error while handling incoming request', error?.stack ?? error);
-            socket.close(1011);
-          });
-      });
-    }
+        if (signal === signals.break) {
+          break;
+        }
+      }
+    });
   }
 
 export class WsTransport extends Transport<WsExecutor> {
