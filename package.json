@@ -38,9 +38,26 @@
   "engines": {
     "node": ">=22.14.0"
   },
+  "keywords": [
+    "mock",
+    "mock-server",
+    "expectation",
+    "request",
+    "response",
+    "stub",
+    "cache",
+    "framework",
+    "web",
+    "http",
+    "rest",
+    "restful",
+    "router",
+    "app",
+    "api"
+  ],
   "homepage": "https://github.com/n1k1t/mock-server",
   "author": "n1k1t",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@babel/plugin-transform-typescript": "7.19.3",
     "@babel/preset-env": "7.19.4",
