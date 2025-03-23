@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import { DynamicStorage } from './dynamic-storage';
 import { TFunction } from '../../../types';
 import { Component } from './component';
+import { Button } from './button';
 
 interface IEvents {
   initialize: [Section];
@@ -11,17 +12,33 @@ interface IEvents {
 }
 
 export class Section extends Component {
-  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage')!);
   public content = new Component(this.element.querySelector('div.content')!);
 
-  public events = new EventEmitter();
-  public meta: {
-    name?: string;
-    icon?: string;
-  } = {};
+  public controls = {
+    main: new Component(this.element.querySelector('div.controls div.main')!),
+    additional: new Component(this.element.querySelector('div.controls div.additional')!),
+  };
+
+  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage')!);
+  public meta: { name?: string, icon?: string } = {};
+
+  private events = new EventEmitter();
 
   constructor(public element: Element) {
     super();
+
+    const expander = this.element.querySelector('div.controls button#expand');
+    if (expander) {
+      Button.build(expander).handle(() => {
+        if (this.controls.additional.isHidden) {
+          this.controls.additional.show();
+          return expander.classList.add('toggled');
+        }
+
+        this.controls.additional.hide();
+        return expander.classList.remove('toggled');
+      });
+    }
   }
 
   public assignMeta(meta: Section['meta']) {

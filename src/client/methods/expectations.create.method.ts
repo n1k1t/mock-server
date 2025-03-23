@@ -34,6 +34,6 @@ export default ClientMethod
       throw new ValidationError({}, result.reasons);
     }
 
-    provider.exchanges.io.publish('expectation:added', result.expectation.toPlain());
+    provider.server?.exchanges.io.publish('expectation:added', result.expectation.toPlain());
     return result.expectation.toPlain();
   });

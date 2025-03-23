@@ -73,7 +73,7 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     };
   }
 
-  static build<TContext extends IServerContext<any>>(server: MockServer) {
+  static build<TContext extends IServerContext<any>>(server: MockServer): Router<TContext> {
     return new Router<TContext>(server);
   }
 }

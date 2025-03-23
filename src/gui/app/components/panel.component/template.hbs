@@ -1,0 +1,11 @@
+module.exports = `
+  <div class="panel {{class}} {{#if width}}width-{{width}}{{else}}width-L{{/if}} {{#if height}}height-{{height}}{{else}}height-L{{/if}}">
+    <p class="title">
+      {{#if icon}}<i class="{{icon}}"></i>{{/if}}
+      <span class="title">{{{title}}}</span>
+      {{#if description}}<span class="description">{{{description}}}</span>{{/if}}
+    </p>
+
+    <div class="content"></div>
+  </div>
+`

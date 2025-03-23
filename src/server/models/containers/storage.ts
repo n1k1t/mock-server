@@ -13,6 +13,10 @@ export interface IContainerConfiguration<T extends object> {
 export class ContainersStorage<T extends object = object> {
   private storage = new Map<string, Container<T>>();
 
+  public get size(): number {
+    return this.storage.size;
+  }
+
   public register(configuration: IContainerConfiguration<T>): Container<T> {
     const key = compileContainerLink(configuration.key);
     const container = Container.build({

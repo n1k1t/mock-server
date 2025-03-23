@@ -13,17 +13,13 @@ export class ProvidersStorage<TContext extends IServerContext<any>> extends Map<
     super();
   }
 
-  public register(provider: Provider<TContext>) {
+  public register(provider: Provider<TContext>): this {
     if (this.has(provider.group)) {
       logger.info(`Provider group [${provider.group}] is already registred. Using existent...`);
       return this;
     }
 
     logger.info(`Provider group [${provider.group}] has registred`);
-
-    return this.set(provider.group, provider.assign({
-      databases: this.server.databases,
-      exchanges: this.server.exchanges,
-    }));
+    return this.set(provider.group, provider.assign({ server: this.server }));
   }
 }

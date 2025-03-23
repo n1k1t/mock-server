@@ -10,7 +10,7 @@ interface IRedisResult {
 
 const logger = Logger.build('Server.Endpoint.CacheUsage.Get');
 
-const calculateRedisUsage = (client: Redis, prefix?: string) => new Promise<IRedisResult>((resolve, reject) => {
+const deleteKeys = (client: Redis, prefix?: string) => new Promise<IRedisResult>((resolve, reject) => {
   const stream = client.scanStream({ match: `${client.options.keyPrefix ?? ''}${prefix ?? ''}*` });
   const result: IRedisResult = { count: 0 };
 
@@ -48,8 +48,7 @@ export default Endpoint
   .assignHandler(async ({ incoming, reply, server }) =>
     reply.ok({
       redis: server.databases.redis
-        ? await calculateRedisUsage(server.databases.redis, incoming.data?.prefix).catch(() => undefined)
+        ? await deleteKeys(server.databases.redis, incoming.data?.prefix).catch(() => undefined)
         : undefined,
     })
-  )
-  .compile();
+  );

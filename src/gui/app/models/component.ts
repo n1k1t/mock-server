@@ -1,9 +1,11 @@
+export type TElementPredicate = Component | Element | string;
+
 export class Component {
   public element: Element = document.createElement('div');
 
-  constructor(predicate?: Element | string) {
+  constructor(predicate?: TElementPredicate) {
     if (predicate) {
-      this.element = typeof predicate === 'string' ? this.compileHtmlStringToElement(predicate) : predicate;
+      this.element = this.compilePredicateToElement(predicate);
     }
   }
 
@@ -15,52 +17,33 @@ export class Component {
     return this.element.id;
   }
 
-  public assignId(id: string) {
+  public assignId(id: string): this {
     this.element.id = id;
     return this;
   }
 
-  public show() {
+  public show(): this {
     this.element.classList.remove('hidden');
     return this;
   }
 
-  public hide() {
+  public hide(): this {
     this.element.classList.add('hidden');
     return this;
   }
 
-  public append(predicate: Component | Element | string) {
-    this.element.append(
-      predicate instanceof Component
-        ? predicate.element
-        : typeof predicate === 'string'
-          ? this.compileHtmlStringToElement(predicate)
-          : predicate
-    );
-
+  public append(predicate: TElementPredicate): this {
+    this.element.append(this.compilePredicateToElement(predicate));
     return this;
   }
 
-  public prepend(predicate: Component | Element | string) {
-    this.element.prepend(
-      predicate instanceof Component
-        ? predicate.element
-        : typeof predicate === 'string'
-          ? this.compileHtmlStringToElement(predicate)
-          : predicate
-    );
-
+  public prepend(predicate: TElementPredicate): this {
+    this.element.prepend(this.compilePredicateToElement(predicate));
     return this;
   }
 
-  public replace(predicate: Component | Element | string) {
-    const element = predicate instanceof Component
-      ? predicate.element
-      : typeof predicate === 'string'
-        ? this.compileHtmlStringToElement(predicate)
-        : predicate;
-
+  public replace(predicate: TElementPredicate): this {
+    const element = this.compilePredicateToElement(predicate);
     this.element.after(element);
 
     if (this.isHidden) {
@@ -70,17 +53,23 @@ export class Component {
     return Object.assign(this.delete(), { element });
   }
 
-  public clear() {
+  public clear(): this {
     this.element.innerHTML = '';
     return this;
   }
 
-  public delete() {
+  public delete(): this {
     this.element.remove();
     return this;
   }
 
-  public compileHtmlStringToElement(content: string): Element {
+  protected compilePredicateToElement(predicate: TElementPredicate): Element {
+    return predicate instanceof Component
+      ? predicate.element
+      : typeof predicate === 'string' ? this.compileHtmlStringToElement(predicate) : predicate;
+  }
+
+  protected compileHtmlStringToElement(content: string): Element {
     return new DOMParser().parseFromString(content, 'text/html').body.firstElementChild!;
   }
 }

@@ -29,5 +29,4 @@ export default Endpoint
 
     const updated = await provider.client.updateExpectation(incoming.data);
     updated ? reply.ok(updated) : reply.notFound();
-  })
-  .compile();
+  });

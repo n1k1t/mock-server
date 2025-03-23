@@ -1,27 +1,24 @@
 section#settings {
-  div.container {
+  div.stats div.content {
+    flex-direction: column;
+
     p {
-      color: rgba(#fff, .4);
-      margin-left: 10px;
+      margin: 5px 0;
+      font-size: 14px;
+
+      span { color: rgba(#fff, .5) }
+
+      b {
+        margin-left: 10px;
+      }
+    }
+  }
+
+  div.cache div.content {
+    button {
+      background-color: $color-red;
+      color: $color-dark;
       margin-top: 0;
-
-      i { margin-right: 10px }
-      span { color: rgba(#fff, .2) }
-    }
-
-    div.panel {
-      button {
-        background-color: rgba(#fff, .1);
-      }
-
-      button:not(.checked) {
-        background-color: rgba(#fff, 0);
-        color: rgba(#fff, .4) !important;
-      }
-    }
-
-    &#groups-filter button.checked {
-      pointer-events: all;
     }
   }
 }

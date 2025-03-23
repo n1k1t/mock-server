@@ -9,5 +9,4 @@ export default Endpoint
   .assignHandler(async ({ reply, incoming, provider }) => {
     await provider.client.deleteExpectations(incoming.data);
     reply.ok(null);
-  })
-  .compile();
+  });

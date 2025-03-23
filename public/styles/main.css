@@ -29,6 +29,10 @@ body {
   padding-bottom: 100px;
 }
 
+div {
+  vertical-align: top;
+}
+
 button {
   position: relative;
   border: none;
@@ -44,6 +48,10 @@ button i {
   float: left;
   margin-right: 5px;
   pointer-events: none;
+}
+button.icon-only i {
+  margin-right: 0;
+  font-size: 16px;
 }
 button.checked {
   background-color: #aaa;
@@ -68,21 +76,52 @@ button.processed {
 section {
   margin-top: 50px;
 }
+section div.controls {
+  margin-bottom: 50px;
+}
+section div.controls div.main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+section div.controls div.main button#expand {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #ffd37b;
+  margin: 0;
+  margin-right: 5px;
+}
+section div.controls div.main button#expand i {
+  padding: 10px;
+}
+section div.controls div.main button#expand.toggled {
+  color: rgba(255, 255, 255, 0.5);
+  transform: rotate(180deg);
+}
+section div.controls div.main div.search {
+  margin: 0;
+}
+section div.controls div.additional {
+  width: calc(100% - 35px);
+}
+section div.controls div.additional div.panel div.panel {
+  padding: 0;
+  background-color: transparent;
+}
 
 div.container {
   max-width: 1300px;
   margin: auto;
   border-radius: 5px;
-  padding: 10px;
+  padding: 10px 20px;
   margin-top: 20px;
   overflow: hidden;
   position: relative;
 }
 
-*.panel {
-  border-radius: 5px;
-  padding: 10px;
-  background-color: rgba(255, 255, 255, 0.05);
+div.buttons {
+  display: flex;
+  align-items: center;
+  justify-self: center;
 }
 
 div.input {
@@ -91,6 +130,7 @@ div.input {
   background-color: #383838;
   padding: 5px 10px;
   border-radius: 10px;
+  margin-bottom: 5px;
 }
 div.input input {
   border: none;
@@ -135,6 +175,25 @@ div.input.required:after {
 }
 div.input.required:before {
   margin-left: 12px;
+}
+div.input.size-L {
+  max-width: 450px;
+  width: calc(90% - 20px);
+}
+div.input.size-M {
+  max-width: 250px;
+  width: calc(70% - 20px);
+}
+div.input.size-S {
+  max-width: 410px;
+  width: calc(33.33% - 25px);
+}
+div.input.size-XS {
+  max-width: 305px;
+  width: calc(25% - 25px);
+}
+div.input + button {
+  margin-left: 10px;
 }
 
 div.history, div.expectation {
@@ -257,6 +316,7 @@ div.history div.meta span.time, div.expectation div.meta span.time {
   width: 60px;
   text-align: center;
   font-size: 12px;
+  padding: 9px 15px;
 }
 div.history div.meta span.calls-count, div.history div.meta span.name, div.history div.meta span.time, div.expectation div.meta span.calls-count, div.expectation div.meta span.name, div.expectation div.meta span.time {
   color: rgba(255, 255, 255, 0.5);
@@ -329,75 +389,53 @@ div.history.expectation div.meta span.status b:after, div.expectation.expectatio
 }
 @media screen and (max-width: 1000px) {
   div.history div.meta, div.expectation div.meta {
-    background-color: #262626;
+    background-color: #232323;
     padding: 5px;
     padding-bottom: 0;
     margin-bottom: 5px;
   }
+  div.history div.meta span.arrow:nth-child(1), div.history div.meta span.arrow:nth-child(2), div.expectation div.meta span.arrow:nth-child(1), div.expectation div.meta span.arrow:nth-child(2) {
+    display: none;
+  }
   div.history div.meta div.segment:first-child, div.expectation div.meta div.segment:first-child {
     width: 100%;
   }
-  div.history div.meta span.arrow:nth-child(1), div.history div.meta span.arrow:nth-child(2), div.expectation div.meta span.arrow:nth-child(1), div.expectation div.meta span.arrow:nth-child(2) {
-    display: none;
+  div.history div.meta div.segment:first-child span:not(.path), div.expectation div.meta div.segment:first-child span:not(.path) {
+    background-color: transparent;
+  }
+  div.history div.meta div.segment:first-child span.time, div.expectation div.meta div.segment:first-child span.time {
+    padding: 9px 5px;
   }
   div.history:hover div.meta, div.expectation:hover div.meta {
     background-color: #2b2b2b;
   }
 }
 
-section#settings div.container p {
-  color: rgba(255, 255, 255, 0.4);
+section#settings div.stats div.content {
+  flex-direction: column;
+}
+section#settings div.stats div.content p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+section#settings div.stats div.content p span {
+  color: rgba(255, 255, 255, 0.5);
+}
+section#settings div.stats div.content p b {
   margin-left: 10px;
+}
+section#settings div.cache div.content button {
+  background-color: #ff7b7b;
+  color: #1e1e1e;
   margin-top: 0;
 }
-section#settings div.container p i {
-  margin-right: 10px;
-}
-section#settings div.container p span {
-  color: rgba(255, 255, 255, 0.2);
-}
-section#settings div.container div.panel button {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-section#settings div.container div.panel button:not(.checked) {
-  background-color: rgba(255, 255, 255, 0);
-  color: rgba(255, 255, 255, 0.4) !important;
-}
-section#settings div.container#groups-filter button.checked {
-  pointer-events: all;
-}
 
-@keyframes rotating {
-  0% {
-    transform: scaleX(1);
-    color: #ffd37b;
-  }
-  15% {
-    color: #383838;
-  }
-  50% {
-    transform: scaleX(-1);
-    color: #ffd37b;
-  }
-  65% {
-    color: #383838;
-  }
+section#history div.actions button {
+  background-color: #ffd37b;
+  color: #1e1e1e;
 }
-section#analytics div.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 300px;
-  margin: auto;
-}
-section#analytics div.content i {
-  font-size: 100px;
-  color: #ffd37b;
-  animation: rotating 2s infinite;
-}
-section#analytics div.content p {
-  color: rgba(255, 255, 255, 0.4);
+section#history div.actions button#clear {
+  background-color: #ff7b7b;
 }
 
 div.viewer {
@@ -692,7 +730,7 @@ div.search > i {
   width: 20px;
   margin: 0 15px;
 }
-div.search:hover {
+div.search:hover, div.search.filled {
   opacity: 1;
 }
 div.search button {
@@ -743,7 +781,7 @@ div.popups {
 }
 div.popups div.popup-message {
   display: flex;
-  background-color: #ffd37b;
+  background-color: #eaeaea;
   color: #1e1e1e;
   padding: 10px 15px;
   width: 240px;
@@ -759,7 +797,7 @@ div.popups div.popup-message.error {
   background-color: #ff7b7b;
 }
 div.popups div.popup-message.warning {
-  background-color: #e7ff7b;
+  background-color: #ffd37b;
 }
 div.popups div.popup-message span {
   flex-basis: 90%;
@@ -768,6 +806,65 @@ div.popups div.popup-message i {
   font-size: 25px;
   margin-right: 10px;
   margin-left: 5px;
+}
+
+div.panel {
+  display: inline-block;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  margin-right: 5px;
+  padding: 5px 10px;
+  background-color: #262626;
+}
+div.panel button {
+  flex-shrink: 0;
+}
+div.panel > p {
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 14px;
+}
+div.panel > p i {
+  margin-right: 10px;
+}
+div.panel > p i, div.panel > p span.title {
+  color: rgba(255, 255, 255, 0.5);
+}
+div.panel > p span.description {
+  margin-left: 10px;
+}
+div.panel > p span.description:before {
+  content: "—";
+  margin-right: 10px;
+}
+div.panel > div.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+div.panel.width-L {
+  max-width: 1300px;
+  width: 100%;
+}
+div.panel.width-M {
+  max-width: 630px;
+  width: calc(50% - 25px);
+}
+div.panel.width-S {
+  max-width: 410px;
+  width: calc(33.33% - 25px);
+}
+div.panel.width-XS {
+  max-width: 305px;
+  width: calc(25% - 25px);
+}
+div.panel.height-S > div.content {
+  min-height: 100px;
+}
+div.panel.height-XS > div.content {
+  min-height: 60px;
 }
 
 @keyframes l43 {
@@ -822,7 +919,8 @@ div.curtain#loader > div {
 }
 
 div.history {
-  padding: 0 20px;
+  padding-top: 0;
+  padding-bottom: 0;
   margin-top: 0;
 }
 
@@ -842,7 +940,6 @@ header button i {
   margin-right: 10px;
 }
 header button.icon-only i {
-  margin-right: 0;
   font-size: 16px;
 }
 header button.checked {
@@ -871,7 +968,8 @@ header div#tabs button {
 }
 
 div.expectation {
-  padding: 0 20px;
+  padding-top: 0;
+  padding-bottom: 0;
   margin-top: 0;
 }
 
@@ -919,4 +1017,26 @@ div.curtain {
 }
 div.curtain > * {
   cursor: auto;
+}
+
+div.checkbox-area div.buttons {
+  width: 100%;
+}
+div.checkbox-area button {
+  background-color: rgba(255, 255, 255, 0.05);
+  font-weight: normal;
+}
+div.checkbox-area button:not(.checked) {
+  background-color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+div.checkbox-area button.checked {
+  pointer-events: all;
+}
+
+div.chart div.source {
+  padding-top: 10px;
+}
+div.chart canvas {
+  margin-bottom: 5px;
 }

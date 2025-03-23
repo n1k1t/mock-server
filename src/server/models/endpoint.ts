@@ -60,14 +60,10 @@ export class Endpoint<
     return Object.assign(this, { handler });
   }
 
-  public compile<This extends Endpoint<TInput, TSchema>['TCompiled']>(this: This) {
-    return this;
-  }
-
   static build<
     TInput extends IEndpointInput = {},
     TSchema extends IEndpointSchema<TInput> = IEndpointSchema<TInput>
-  >() {
+  >(): Endpoint<TInput, TSchema> {
     return new Endpoint<TInput, TSchema>();
   }
 }

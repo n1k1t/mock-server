@@ -15,6 +15,7 @@ export default Endpoint
     outgoing: Expectation['TPlain'][];
   }>()
   .bindToHttp(<const>{ method: 'PUT', path: '/expectations/group' })
+  .bindToIo(<const>{ path: 'expectations:group:update' })
   .assignHandler(async ({ reply, incoming, server }) => {
     if (!incoming.data) {
       return reply.validationError();
@@ -28,5 +29,4 @@ export default Endpoint
     }
 
     reply.ok(await provider.client.updateExpectationsGroup(incoming.data.set));
-  })
-  .compile();
+  });

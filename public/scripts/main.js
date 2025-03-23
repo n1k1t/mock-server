@@ -365,6 +365,632 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 });
 
 },{}],2:[function(require,module,exports){
+/*!
+ * @kurkle/color v0.3.4
+ * https://github.com/kurkle/color#readme
+ * (c) 2024 Jukka Kurkela
+ * Released under the MIT License
+ */
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+typeof define === 'function' && define.amd ? define(factory) :
+(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global["@kurkle/color"] = factory());
+})(this, (function () { 'use strict';
+
+function round(v) {
+  return v + 0.5 | 0;
+}
+const lim = (v, l, h) => Math.max(Math.min(v, h), l);
+function p2b(v) {
+  return lim(round(v * 2.55), 0, 255);
+}
+function b2p(v) {
+  return lim(round(v / 2.55), 0, 100);
+}
+function n2b(v) {
+  return lim(round(v * 255), 0, 255);
+}
+function b2n(v) {
+  return lim(round(v / 2.55) / 100, 0, 1);
+}
+function n2p(v) {
+  return lim(round(v * 100), 0, 100);
+}
+
+const map$1 = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, A: 10, B: 11, C: 12, D: 13, E: 14, F: 15, a: 10, b: 11, c: 12, d: 13, e: 14, f: 15};
+const hex = [...'0123456789ABCDEF'];
+const h1 = b => hex[b & 0xF];
+const h2 = b => hex[(b & 0xF0) >> 4] + hex[b & 0xF];
+const eq = b => ((b & 0xF0) >> 4) === (b & 0xF);
+const isShort = v => eq(v.r) && eq(v.g) && eq(v.b) && eq(v.a);
+function hexParse(str) {
+  var len = str.length;
+  var ret;
+  if (str[0] === '#') {
+    if (len === 4 || len === 5) {
+      ret = {
+        r: 255 & map$1[str[1]] * 17,
+        g: 255 & map$1[str[2]] * 17,
+        b: 255 & map$1[str[3]] * 17,
+        a: len === 5 ? map$1[str[4]] * 17 : 255
+      };
+    } else if (len === 7 || len === 9) {
+      ret = {
+        r: map$1[str[1]] << 4 | map$1[str[2]],
+        g: map$1[str[3]] << 4 | map$1[str[4]],
+        b: map$1[str[5]] << 4 | map$1[str[6]],
+        a: len === 9 ? (map$1[str[7]] << 4 | map$1[str[8]]) : 255
+      };
+    }
+  }
+  return ret;
+}
+const alpha = (a, f) => a < 255 ? f(a) : '';
+function hexString(v) {
+  var f = isShort(v) ? h1 : h2;
+  return v
+    ? '#' + f(v.r) + f(v.g) + f(v.b) + alpha(v.a, f)
+    : undefined;
+}
+
+const HUE_RE = /^(hsla?|hwb|hsv)\(\s*([-+.e\d]+)(?:deg)?[\s,]+([-+.e\d]+)%[\s,]+([-+.e\d]+)%(?:[\s,]+([-+.e\d]+)(%)?)?\s*\)$/;
+function hsl2rgbn(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = (n, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+  return [f(0), f(8), f(4)];
+}
+function hsv2rgbn(h, s, v) {
+  const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+  return [f(5), f(3), f(1)];
+}
+function hwb2rgbn(h, w, b) {
+  const rgb = hsl2rgbn(h, 1, 0.5);
+  let i;
+  if (w + b > 1) {
+    i = 1 / (w + b);
+    w *= i;
+    b *= i;
+  }
+  for (i = 0; i < 3; i++) {
+    rgb[i] *= 1 - w - b;
+    rgb[i] += w;
+  }
+  return rgb;
+}
+function hueValue(r, g, b, d, max) {
+  if (r === max) {
+    return ((g - b) / d) + (g < b ? 6 : 0);
+  }
+  if (g === max) {
+    return (b - r) / d + 2;
+  }
+  return (r - g) / d + 4;
+}
+function rgb2hsl(v) {
+  const range = 255;
+  const r = v.r / range;
+  const g = v.g / range;
+  const b = v.b / range;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h, s, d;
+  if (max !== min) {
+    d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    h = hueValue(r, g, b, d, max);
+    h = h * 60 + 0.5;
+  }
+  return [h | 0, s || 0, l];
+}
+function calln(f, a, b, c) {
+  return (
+    Array.isArray(a)
+      ? f(a[0], a[1], a[2])
+      : f(a, b, c)
+  ).map(n2b);
+}
+function hsl2rgb(h, s, l) {
+  return calln(hsl2rgbn, h, s, l);
+}
+function hwb2rgb(h, w, b) {
+  return calln(hwb2rgbn, h, w, b);
+}
+function hsv2rgb(h, s, v) {
+  return calln(hsv2rgbn, h, s, v);
+}
+function hue(h) {
+  return (h % 360 + 360) % 360;
+}
+function hueParse(str) {
+  const m = HUE_RE.exec(str);
+  let a = 255;
+  let v;
+  if (!m) {
+    return;
+  }
+  if (m[5] !== v) {
+    a = m[6] ? p2b(+m[5]) : n2b(+m[5]);
+  }
+  const h = hue(+m[2]);
+  const p1 = +m[3] / 100;
+  const p2 = +m[4] / 100;
+  if (m[1] === 'hwb') {
+    v = hwb2rgb(h, p1, p2);
+  } else if (m[1] === 'hsv') {
+    v = hsv2rgb(h, p1, p2);
+  } else {
+    v = hsl2rgb(h, p1, p2);
+  }
+  return {
+    r: v[0],
+    g: v[1],
+    b: v[2],
+    a: a
+  };
+}
+function rotate(v, deg) {
+  var h = rgb2hsl(v);
+  h[0] = hue(h[0] + deg);
+  h = hsl2rgb(h);
+  v.r = h[0];
+  v.g = h[1];
+  v.b = h[2];
+}
+function hslString(v) {
+  if (!v) {
+    return;
+  }
+  const a = rgb2hsl(v);
+  const h = a[0];
+  const s = n2p(a[1]);
+  const l = n2p(a[2]);
+  return v.a < 255
+    ? `hsla(${h}, ${s}%, ${l}%, ${b2n(v.a)})`
+    : `hsl(${h}, ${s}%, ${l}%)`;
+}
+
+const map = {
+	x: 'dark',
+	Z: 'light',
+	Y: 're',
+	X: 'blu',
+	W: 'gr',
+	V: 'medium',
+	U: 'slate',
+	A: 'ee',
+	T: 'ol',
+	S: 'or',
+	B: 'ra',
+	C: 'lateg',
+	D: 'ights',
+	R: 'in',
+	Q: 'turquois',
+	E: 'hi',
+	P: 'ro',
+	O: 'al',
+	N: 'le',
+	M: 'de',
+	L: 'yello',
+	F: 'en',
+	K: 'ch',
+	G: 'arks',
+	H: 'ea',
+	I: 'ightg',
+	J: 'wh'
+};
+const names$1 = {
+	OiceXe: 'f0f8ff',
+	antiquewEte: 'faebd7',
+	aqua: 'ffff',
+	aquamarRe: '7fffd4',
+	azuY: 'f0ffff',
+	beige: 'f5f5dc',
+	bisque: 'ffe4c4',
+	black: '0',
+	blanKedOmond: 'ffebcd',
+	Xe: 'ff',
+	XeviTet: '8a2be2',
+	bPwn: 'a52a2a',
+	burlywood: 'deb887',
+	caMtXe: '5f9ea0',
+	KartYuse: '7fff00',
+	KocTate: 'd2691e',
+	cSO: 'ff7f50',
+	cSnflowerXe: '6495ed',
+	cSnsilk: 'fff8dc',
+	crimson: 'dc143c',
+	cyan: 'ffff',
+	xXe: '8b',
+	xcyan: '8b8b',
+	xgTMnPd: 'b8860b',
+	xWay: 'a9a9a9',
+	xgYF: '6400',
+	xgYy: 'a9a9a9',
+	xkhaki: 'bdb76b',
+	xmagFta: '8b008b',
+	xTivegYF: '556b2f',
+	xSange: 'ff8c00',
+	xScEd: '9932cc',
+	xYd: '8b0000',
+	xsOmon: 'e9967a',
+	xsHgYF: '8fbc8f',
+	xUXe: '483d8b',
+	xUWay: '2f4f4f',
+	xUgYy: '2f4f4f',
+	xQe: 'ced1',
+	xviTet: '9400d3',
+	dAppRk: 'ff1493',
+	dApskyXe: 'bfff',
+	dimWay: '696969',
+	dimgYy: '696969',
+	dodgerXe: '1e90ff',
+	fiYbrick: 'b22222',
+	flSOwEte: 'fffaf0',
+	foYstWAn: '228b22',
+	fuKsia: 'ff00ff',
+	gaRsbSo: 'dcdcdc',
+	ghostwEte: 'f8f8ff',
+	gTd: 'ffd700',
+	gTMnPd: 'daa520',
+	Way: '808080',
+	gYF: '8000',
+	gYFLw: 'adff2f',
+	gYy: '808080',
+	honeyMw: 'f0fff0',
+	hotpRk: 'ff69b4',
+	RdianYd: 'cd5c5c',
+	Rdigo: '4b0082',
+	ivSy: 'fffff0',
+	khaki: 'f0e68c',
+	lavFMr: 'e6e6fa',
+	lavFMrXsh: 'fff0f5',
+	lawngYF: '7cfc00',
+	NmoncEffon: 'fffacd',
+	ZXe: 'add8e6',
+	ZcSO: 'f08080',
+	Zcyan: 'e0ffff',
+	ZgTMnPdLw: 'fafad2',
+	ZWay: 'd3d3d3',
+	ZgYF: '90ee90',
+	ZgYy: 'd3d3d3',
+	ZpRk: 'ffb6c1',
+	ZsOmon: 'ffa07a',
+	ZsHgYF: '20b2aa',
+	ZskyXe: '87cefa',
+	ZUWay: '778899',
+	ZUgYy: '778899',
+	ZstAlXe: 'b0c4de',
+	ZLw: 'ffffe0',
+	lime: 'ff00',
+	limegYF: '32cd32',
+	lRF: 'faf0e6',
+	magFta: 'ff00ff',
+	maPon: '800000',
+	VaquamarRe: '66cdaa',
+	VXe: 'cd',
+	VScEd: 'ba55d3',
+	VpurpN: '9370db',
+	VsHgYF: '3cb371',
+	VUXe: '7b68ee',
+	VsprRggYF: 'fa9a',
+	VQe: '48d1cc',
+	VviTetYd: 'c71585',
+	midnightXe: '191970',
+	mRtcYam: 'f5fffa',
+	mistyPse: 'ffe4e1',
+	moccasR: 'ffe4b5',
+	navajowEte: 'ffdead',
+	navy: '80',
+	Tdlace: 'fdf5e6',
+	Tive: '808000',
+	TivedBb: '6b8e23',
+	Sange: 'ffa500',
+	SangeYd: 'ff4500',
+	ScEd: 'da70d6',
+	pOegTMnPd: 'eee8aa',
+	pOegYF: '98fb98',
+	pOeQe: 'afeeee',
+	pOeviTetYd: 'db7093',
+	papayawEp: 'ffefd5',
+	pHKpuff: 'ffdab9',
+	peru: 'cd853f',
+	pRk: 'ffc0cb',
+	plum: 'dda0dd',
+	powMrXe: 'b0e0e6',
+	purpN: '800080',
+	YbeccapurpN: '663399',
+	Yd: 'ff0000',
+	Psybrown: 'bc8f8f',
+	PyOXe: '4169e1',
+	saddNbPwn: '8b4513',
+	sOmon: 'fa8072',
+	sandybPwn: 'f4a460',
+	sHgYF: '2e8b57',
+	sHshell: 'fff5ee',
+	siFna: 'a0522d',
+	silver: 'c0c0c0',
+	skyXe: '87ceeb',
+	UXe: '6a5acd',
+	UWay: '708090',
+	UgYy: '708090',
+	snow: 'fffafa',
+	sprRggYF: 'ff7f',
+	stAlXe: '4682b4',
+	tan: 'd2b48c',
+	teO: '8080',
+	tEstN: 'd8bfd8',
+	tomato: 'ff6347',
+	Qe: '40e0d0',
+	viTet: 'ee82ee',
+	JHt: 'f5deb3',
+	wEte: 'ffffff',
+	wEtesmoke: 'f5f5f5',
+	Lw: 'ffff00',
+	LwgYF: '9acd32'
+};
+function unpack() {
+  const unpacked = {};
+  const keys = Object.keys(names$1);
+  const tkeys = Object.keys(map);
+  let i, j, k, ok, nk;
+  for (i = 0; i < keys.length; i++) {
+    ok = nk = keys[i];
+    for (j = 0; j < tkeys.length; j++) {
+      k = tkeys[j];
+      nk = nk.replace(k, map[k]);
+    }
+    k = parseInt(names$1[ok], 16);
+    unpacked[nk] = [k >> 16 & 0xFF, k >> 8 & 0xFF, k & 0xFF];
+  }
+  return unpacked;
+}
+
+let names;
+function nameParse(str) {
+  if (!names) {
+    names = unpack();
+    names.transparent = [0, 0, 0, 0];
+  }
+  const a = names[str.toLowerCase()];
+  return a && {
+    r: a[0],
+    g: a[1],
+    b: a[2],
+    a: a.length === 4 ? a[3] : 255
+  };
+}
+
+const RGB_RE = /^rgba?\(\s*([-+.\d]+)(%)?[\s,]+([-+.e\d]+)(%)?[\s,]+([-+.e\d]+)(%)?(?:[\s,/]+([-+.e\d]+)(%)?)?\s*\)$/;
+function rgbParse(str) {
+  const m = RGB_RE.exec(str);
+  let a = 255;
+  let r, g, b;
+  if (!m) {
+    return;
+  }
+  if (m[7] !== r) {
+    const v = +m[7];
+    a = m[8] ? p2b(v) : lim(v * 255, 0, 255);
+  }
+  r = +m[1];
+  g = +m[3];
+  b = +m[5];
+  r = 255 & (m[2] ? p2b(r) : lim(r, 0, 255));
+  g = 255 & (m[4] ? p2b(g) : lim(g, 0, 255));
+  b = 255 & (m[6] ? p2b(b) : lim(b, 0, 255));
+  return {
+    r: r,
+    g: g,
+    b: b,
+    a: a
+  };
+}
+function rgbString(v) {
+  return v && (
+    v.a < 255
+      ? `rgba(${v.r}, ${v.g}, ${v.b}, ${b2n(v.a)})`
+      : `rgb(${v.r}, ${v.g}, ${v.b})`
+  );
+}
+
+const to = v => v <= 0.0031308 ? v * 12.92 : Math.pow(v, 1.0 / 2.4) * 1.055 - 0.055;
+const from = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+function interpolate(rgb1, rgb2, t) {
+  const r = from(b2n(rgb1.r));
+  const g = from(b2n(rgb1.g));
+  const b = from(b2n(rgb1.b));
+  return {
+    r: n2b(to(r + t * (from(b2n(rgb2.r)) - r))),
+    g: n2b(to(g + t * (from(b2n(rgb2.g)) - g))),
+    b: n2b(to(b + t * (from(b2n(rgb2.b)) - b))),
+    a: rgb1.a + t * (rgb2.a - rgb1.a)
+  };
+}
+
+function modHSL(v, i, ratio) {
+  if (v) {
+    let tmp = rgb2hsl(v);
+    tmp[i] = Math.max(0, Math.min(tmp[i] + tmp[i] * ratio, i === 0 ? 360 : 1));
+    tmp = hsl2rgb(tmp);
+    v.r = tmp[0];
+    v.g = tmp[1];
+    v.b = tmp[2];
+  }
+}
+function clone(v, proto) {
+  return v ? Object.assign(proto || {}, v) : v;
+}
+function fromObject(input) {
+  var v = {r: 0, g: 0, b: 0, a: 255};
+  if (Array.isArray(input)) {
+    if (input.length >= 3) {
+      v = {r: input[0], g: input[1], b: input[2], a: 255};
+      if (input.length > 3) {
+        v.a = n2b(input[3]);
+      }
+    }
+  } else {
+    v = clone(input, {r: 0, g: 0, b: 0, a: 1});
+    v.a = n2b(v.a);
+  }
+  return v;
+}
+function functionParse(str) {
+  if (str.charAt(0) === 'r') {
+    return rgbParse(str);
+  }
+  return hueParse(str);
+}
+class Color {
+  constructor(input) {
+    if (input instanceof Color) {
+      return input;
+    }
+    const type = typeof input;
+    let v;
+    if (type === 'object') {
+      v = fromObject(input);
+    } else if (type === 'string') {
+      v = hexParse(input) || nameParse(input) || functionParse(input);
+    }
+    this._rgb = v;
+    this._valid = !!v;
+  }
+  get valid() {
+    return this._valid;
+  }
+  get rgb() {
+    var v = clone(this._rgb);
+    if (v) {
+      v.a = b2n(v.a);
+    }
+    return v;
+  }
+  set rgb(obj) {
+    this._rgb = fromObject(obj);
+  }
+  rgbString() {
+    return this._valid ? rgbString(this._rgb) : undefined;
+  }
+  hexString() {
+    return this._valid ? hexString(this._rgb) : undefined;
+  }
+  hslString() {
+    return this._valid ? hslString(this._rgb) : undefined;
+  }
+  mix(color, weight) {
+    if (color) {
+      const c1 = this.rgb;
+      const c2 = color.rgb;
+      let w2;
+      const p = weight === w2 ? 0.5 : weight;
+      const w = 2 * p - 1;
+      const a = c1.a - c2.a;
+      const w1 = ((w * a === -1 ? w : (w + a) / (1 + w * a)) + 1) / 2.0;
+      w2 = 1 - w1;
+      c1.r = 0xFF & w1 * c1.r + w2 * c2.r + 0.5;
+      c1.g = 0xFF & w1 * c1.g + w2 * c2.g + 0.5;
+      c1.b = 0xFF & w1 * c1.b + w2 * c2.b + 0.5;
+      c1.a = p * c1.a + (1 - p) * c2.a;
+      this.rgb = c1;
+    }
+    return this;
+  }
+  interpolate(color, t) {
+    if (color) {
+      this._rgb = interpolate(this._rgb, color._rgb, t);
+    }
+    return this;
+  }
+  clone() {
+    return new Color(this.rgb);
+  }
+  alpha(a) {
+    this._rgb.a = n2b(a);
+    return this;
+  }
+  clearer(ratio) {
+    const rgb = this._rgb;
+    rgb.a *= 1 - ratio;
+    return this;
+  }
+  greyscale() {
+    const rgb = this._rgb;
+    const val = round(rgb.r * 0.3 + rgb.g * 0.59 + rgb.b * 0.11);
+    rgb.r = rgb.g = rgb.b = val;
+    return this;
+  }
+  opaquer(ratio) {
+    const rgb = this._rgb;
+    rgb.a *= 1 + ratio;
+    return this;
+  }
+  negate() {
+    const v = this._rgb;
+    v.r = 255 - v.r;
+    v.g = 255 - v.g;
+    v.b = 255 - v.b;
+    return this;
+  }
+  lighten(ratio) {
+    modHSL(this._rgb, 2, ratio);
+    return this;
+  }
+  darken(ratio) {
+    modHSL(this._rgb, 2, -ratio);
+    return this;
+  }
+  saturate(ratio) {
+    modHSL(this._rgb, 1, ratio);
+    return this;
+  }
+  desaturate(ratio) {
+    modHSL(this._rgb, 1, -ratio);
+    return this;
+  }
+  rotate(deg) {
+    rotate(this._rgb, deg);
+    return this;
+  }
+}
+
+function index_esm(input) {
+  return new Color(input);
+}
+
+var color = /*#__PURE__*/Object.freeze({
+__proto__: null,
+Color: Color,
+b2n: b2n,
+b2p: b2p,
+default: index_esm,
+hexParse: hexParse,
+hexString: hexString,
+hsl2rgb: hsl2rgb,
+hslString: hslString,
+hsv2rgb: hsv2rgb,
+hueParse: hueParse,
+hwb2rgb: hwb2rgb,
+lim: lim,
+n2b: n2b,
+n2p: n2p,
+nameParse: nameParse,
+p2b: p2b,
+rgb2hsl: rgb2hsl,
+rgbParse: rgbParse,
+rgbString: rgbString,
+rotate: rotate,
+round: round
+});
+
+var index = Object.assign(index_esm, color);
+
+return index;
+
+}));
+
+},{}],3:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -542,7 +1168,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -694,9 +1320,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],4:[function(require,module,exports){
-
 },{}],5:[function(require,module,exports){
+
+},{}],6:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2477,7 +3103,14448 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":3,"buffer":5,"ieee754":73}],6:[function(require,module,exports){
+},{"base64-js":4,"buffer":6,"ieee754":79}],7:[function(require,module,exports){
+const chartjs = require('../dist/chart.cjs');
+const {Chart, registerables} = chartjs;
+
+Chart.register(...registerables);
+
+module.exports = Object.assign(Chart, chartjs);
+
+},{"../dist/chart.cjs":8}],8:[function(require,module,exports){
+/*!
+ * Chart.js v4.4.8
+ * https://www.chartjs.org
+ * (c) 2025 Chart.js Contributors
+ * Released under the MIT License
+ */
+'use strict';
+
+var helpers_segment = require('./chunks/helpers.segment.cjs');
+require('@kurkle/color');
+
+class Animator {
+    constructor(){
+        this._request = null;
+        this._charts = new Map();
+        this._running = false;
+        this._lastDate = undefined;
+    }
+ _notify(chart, anims, date, type) {
+        const callbacks = anims.listeners[type];
+        const numSteps = anims.duration;
+        callbacks.forEach((fn)=>fn({
+                chart,
+                initial: anims.initial,
+                numSteps,
+                currentStep: Math.min(date - anims.start, numSteps)
+            }));
+    }
+ _refresh() {
+        if (this._request) {
+            return;
+        }
+        this._running = true;
+        this._request = helpers_segment.requestAnimFrame.call(window, ()=>{
+            this._update();
+            this._request = null;
+            if (this._running) {
+                this._refresh();
+            }
+        });
+    }
+ _update(date = Date.now()) {
+        let remaining = 0;
+        this._charts.forEach((anims, chart)=>{
+            if (!anims.running || !anims.items.length) {
+                return;
+            }
+            const items = anims.items;
+            let i = items.length - 1;
+            let draw = false;
+            let item;
+            for(; i >= 0; --i){
+                item = items[i];
+                if (item._active) {
+                    if (item._total > anims.duration) {
+                        anims.duration = item._total;
+                    }
+                    item.tick(date);
+                    draw = true;
+                } else {
+                    items[i] = items[items.length - 1];
+                    items.pop();
+                }
+            }
+            if (draw) {
+                chart.draw();
+                this._notify(chart, anims, date, 'progress');
+            }
+            if (!items.length) {
+                anims.running = false;
+                this._notify(chart, anims, date, 'complete');
+                anims.initial = false;
+            }
+            remaining += items.length;
+        });
+        this._lastDate = date;
+        if (remaining === 0) {
+            this._running = false;
+        }
+    }
+ _getAnims(chart) {
+        const charts = this._charts;
+        let anims = charts.get(chart);
+        if (!anims) {
+            anims = {
+                running: false,
+                initial: true,
+                items: [],
+                listeners: {
+                    complete: [],
+                    progress: []
+                }
+            };
+            charts.set(chart, anims);
+        }
+        return anims;
+    }
+ listen(chart, event, cb) {
+        this._getAnims(chart).listeners[event].push(cb);
+    }
+ add(chart, items) {
+        if (!items || !items.length) {
+            return;
+        }
+        this._getAnims(chart).items.push(...items);
+    }
+ has(chart) {
+        return this._getAnims(chart).items.length > 0;
+    }
+ start(chart) {
+        const anims = this._charts.get(chart);
+        if (!anims) {
+            return;
+        }
+        anims.running = true;
+        anims.start = Date.now();
+        anims.duration = anims.items.reduce((acc, cur)=>Math.max(acc, cur._duration), 0);
+        this._refresh();
+    }
+    running(chart) {
+        if (!this._running) {
+            return false;
+        }
+        const anims = this._charts.get(chart);
+        if (!anims || !anims.running || !anims.items.length) {
+            return false;
+        }
+        return true;
+    }
+ stop(chart) {
+        const anims = this._charts.get(chart);
+        if (!anims || !anims.items.length) {
+            return;
+        }
+        const items = anims.items;
+        let i = items.length - 1;
+        for(; i >= 0; --i){
+            items[i].cancel();
+        }
+        anims.items = [];
+        this._notify(chart, anims, Date.now(), 'complete');
+    }
+ remove(chart) {
+        return this._charts.delete(chart);
+    }
+}
+var animator = /* #__PURE__ */ new Animator();
+
+const transparent = 'transparent';
+const interpolators = {
+    boolean (from, to, factor) {
+        return factor > 0.5 ? to : from;
+    },
+ color (from, to, factor) {
+        const c0 = helpers_segment.color(from || transparent);
+        const c1 = c0.valid && helpers_segment.color(to || transparent);
+        return c1 && c1.valid ? c1.mix(c0, factor).hexString() : to;
+    },
+    number (from, to, factor) {
+        return from + (to - from) * factor;
+    }
+};
+class Animation {
+    constructor(cfg, target, prop, to){
+        const currentValue = target[prop];
+        to = helpers_segment.resolve([
+            cfg.to,
+            to,
+            currentValue,
+            cfg.from
+        ]);
+        const from = helpers_segment.resolve([
+            cfg.from,
+            currentValue,
+            to
+        ]);
+        this._active = true;
+        this._fn = cfg.fn || interpolators[cfg.type || typeof from];
+        this._easing = helpers_segment.effects[cfg.easing] || helpers_segment.effects.linear;
+        this._start = Math.floor(Date.now() + (cfg.delay || 0));
+        this._duration = this._total = Math.floor(cfg.duration);
+        this._loop = !!cfg.loop;
+        this._target = target;
+        this._prop = prop;
+        this._from = from;
+        this._to = to;
+        this._promises = undefined;
+    }
+    active() {
+        return this._active;
+    }
+    update(cfg, to, date) {
+        if (this._active) {
+            this._notify(false);
+            const currentValue = this._target[this._prop];
+            const elapsed = date - this._start;
+            const remain = this._duration - elapsed;
+            this._start = date;
+            this._duration = Math.floor(Math.max(remain, cfg.duration));
+            this._total += elapsed;
+            this._loop = !!cfg.loop;
+            this._to = helpers_segment.resolve([
+                cfg.to,
+                to,
+                currentValue,
+                cfg.from
+            ]);
+            this._from = helpers_segment.resolve([
+                cfg.from,
+                currentValue,
+                to
+            ]);
+        }
+    }
+    cancel() {
+        if (this._active) {
+            this.tick(Date.now());
+            this._active = false;
+            this._notify(false);
+        }
+    }
+    tick(date) {
+        const elapsed = date - this._start;
+        const duration = this._duration;
+        const prop = this._prop;
+        const from = this._from;
+        const loop = this._loop;
+        const to = this._to;
+        let factor;
+        this._active = from !== to && (loop || elapsed < duration);
+        if (!this._active) {
+            this._target[prop] = to;
+            this._notify(true);
+            return;
+        }
+        if (elapsed < 0) {
+            this._target[prop] = from;
+            return;
+        }
+        factor = elapsed / duration % 2;
+        factor = loop && factor > 1 ? 2 - factor : factor;
+        factor = this._easing(Math.min(1, Math.max(0, factor)));
+        this._target[prop] = this._fn(from, to, factor);
+    }
+    wait() {
+        const promises = this._promises || (this._promises = []);
+        return new Promise((res, rej)=>{
+            promises.push({
+                res,
+                rej
+            });
+        });
+    }
+    _notify(resolved) {
+        const method = resolved ? 'res' : 'rej';
+        const promises = this._promises || [];
+        for(let i = 0; i < promises.length; i++){
+            promises[i][method]();
+        }
+    }
+}
+
+class Animations {
+    constructor(chart, config){
+        this._chart = chart;
+        this._properties = new Map();
+        this.configure(config);
+    }
+    configure(config) {
+        if (!helpers_segment.isObject(config)) {
+            return;
+        }
+        const animationOptions = Object.keys(helpers_segment.defaults.animation);
+        const animatedProps = this._properties;
+        Object.getOwnPropertyNames(config).forEach((key)=>{
+            const cfg = config[key];
+            if (!helpers_segment.isObject(cfg)) {
+                return;
+            }
+            const resolved = {};
+            for (const option of animationOptions){
+                resolved[option] = cfg[option];
+            }
+            (helpers_segment.isArray(cfg.properties) && cfg.properties || [
+                key
+            ]).forEach((prop)=>{
+                if (prop === key || !animatedProps.has(prop)) {
+                    animatedProps.set(prop, resolved);
+                }
+            });
+        });
+    }
+ _animateOptions(target, values) {
+        const newOptions = values.options;
+        const options = resolveTargetOptions(target, newOptions);
+        if (!options) {
+            return [];
+        }
+        const animations = this._createAnimations(options, newOptions);
+        if (newOptions.$shared) {
+            awaitAll(target.options.$animations, newOptions).then(()=>{
+                target.options = newOptions;
+            }, ()=>{
+            });
+        }
+        return animations;
+    }
+ _createAnimations(target, values) {
+        const animatedProps = this._properties;
+        const animations = [];
+        const running = target.$animations || (target.$animations = {});
+        const props = Object.keys(values);
+        const date = Date.now();
+        let i;
+        for(i = props.length - 1; i >= 0; --i){
+            const prop = props[i];
+            if (prop.charAt(0) === '$') {
+                continue;
+            }
+            if (prop === 'options') {
+                animations.push(...this._animateOptions(target, values));
+                continue;
+            }
+            const value = values[prop];
+            let animation = running[prop];
+            const cfg = animatedProps.get(prop);
+            if (animation) {
+                if (cfg && animation.active()) {
+                    animation.update(cfg, value, date);
+                    continue;
+                } else {
+                    animation.cancel();
+                }
+            }
+            if (!cfg || !cfg.duration) {
+                target[prop] = value;
+                continue;
+            }
+            running[prop] = animation = new Animation(cfg, target, prop, value);
+            animations.push(animation);
+        }
+        return animations;
+    }
+ update(target, values) {
+        if (this._properties.size === 0) {
+            Object.assign(target, values);
+            return;
+        }
+        const animations = this._createAnimations(target, values);
+        if (animations.length) {
+            animator.add(this._chart, animations);
+            return true;
+        }
+    }
+}
+function awaitAll(animations, properties) {
+    const running = [];
+    const keys = Object.keys(properties);
+    for(let i = 0; i < keys.length; i++){
+        const anim = animations[keys[i]];
+        if (anim && anim.active()) {
+            running.push(anim.wait());
+        }
+    }
+    return Promise.all(running);
+}
+function resolveTargetOptions(target, newOptions) {
+    if (!newOptions) {
+        return;
+    }
+    let options = target.options;
+    if (!options) {
+        target.options = newOptions;
+        return;
+    }
+    if (options.$shared) {
+        target.options = options = Object.assign({}, options, {
+            $shared: false,
+            $animations: {}
+        });
+    }
+    return options;
+}
+
+function scaleClip(scale, allowedOverflow) {
+    const opts = scale && scale.options || {};
+    const reverse = opts.reverse;
+    const min = opts.min === undefined ? allowedOverflow : 0;
+    const max = opts.max === undefined ? allowedOverflow : 0;
+    return {
+        start: reverse ? max : min,
+        end: reverse ? min : max
+    };
+}
+function defaultClip(xScale, yScale, allowedOverflow) {
+    if (allowedOverflow === false) {
+        return false;
+    }
+    const x = scaleClip(xScale, allowedOverflow);
+    const y = scaleClip(yScale, allowedOverflow);
+    return {
+        top: y.end,
+        right: x.end,
+        bottom: y.start,
+        left: x.start
+    };
+}
+function toClip(value) {
+    let t, r, b, l;
+    if (helpers_segment.isObject(value)) {
+        t = value.top;
+        r = value.right;
+        b = value.bottom;
+        l = value.left;
+    } else {
+        t = r = b = l = value;
+    }
+    return {
+        top: t,
+        right: r,
+        bottom: b,
+        left: l,
+        disabled: value === false
+    };
+}
+function getSortedDatasetIndices(chart, filterVisible) {
+    const keys = [];
+    const metasets = chart._getSortedDatasetMetas(filterVisible);
+    let i, ilen;
+    for(i = 0, ilen = metasets.length; i < ilen; ++i){
+        keys.push(metasets[i].index);
+    }
+    return keys;
+}
+function applyStack(stack, value, dsIndex, options = {}) {
+    const keys = stack.keys;
+    const singleMode = options.mode === 'single';
+    let i, ilen, datasetIndex, otherValue;
+    if (value === null) {
+        return;
+    }
+    let found = false;
+    for(i = 0, ilen = keys.length; i < ilen; ++i){
+        datasetIndex = +keys[i];
+        if (datasetIndex === dsIndex) {
+            found = true;
+            if (options.all) {
+                continue;
+            }
+            break;
+        }
+        otherValue = stack.values[datasetIndex];
+        if (helpers_segment.isNumberFinite(otherValue) && (singleMode || value === 0 || helpers_segment.sign(value) === helpers_segment.sign(otherValue))) {
+            value += otherValue;
+        }
+    }
+    if (!found && !options.all) {
+        return 0;
+    }
+    return value;
+}
+function convertObjectDataToArray(data, meta) {
+    const { iScale , vScale  } = meta;
+    const iAxisKey = iScale.axis === 'x' ? 'x' : 'y';
+    const vAxisKey = vScale.axis === 'x' ? 'x' : 'y';
+    const keys = Object.keys(data);
+    const adata = new Array(keys.length);
+    let i, ilen, key;
+    for(i = 0, ilen = keys.length; i < ilen; ++i){
+        key = keys[i];
+        adata[i] = {
+            [iAxisKey]: key,
+            [vAxisKey]: data[key]
+        };
+    }
+    return adata;
+}
+function isStacked(scale, meta) {
+    const stacked = scale && scale.options.stacked;
+    return stacked || stacked === undefined && meta.stack !== undefined;
+}
+function getStackKey(indexScale, valueScale, meta) {
+    return `${indexScale.id}.${valueScale.id}.${meta.stack || meta.type}`;
+}
+function getUserBounds(scale) {
+    const { min , max , minDefined , maxDefined  } = scale.getUserBounds();
+    return {
+        min: minDefined ? min : Number.NEGATIVE_INFINITY,
+        max: maxDefined ? max : Number.POSITIVE_INFINITY
+    };
+}
+function getOrCreateStack(stacks, stackKey, indexValue) {
+    const subStack = stacks[stackKey] || (stacks[stackKey] = {});
+    return subStack[indexValue] || (subStack[indexValue] = {});
+}
+function getLastIndexInStack(stack, vScale, positive, type) {
+    for (const meta of vScale.getMatchingVisibleMetas(type).reverse()){
+        const value = stack[meta.index];
+        if (positive && value > 0 || !positive && value < 0) {
+            return meta.index;
+        }
+    }
+    return null;
+}
+function updateStacks(controller, parsed) {
+    const { chart , _cachedMeta: meta  } = controller;
+    const stacks = chart._stacks || (chart._stacks = {});
+    const { iScale , vScale , index: datasetIndex  } = meta;
+    const iAxis = iScale.axis;
+    const vAxis = vScale.axis;
+    const key = getStackKey(iScale, vScale, meta);
+    const ilen = parsed.length;
+    let stack;
+    for(let i = 0; i < ilen; ++i){
+        const item = parsed[i];
+        const { [iAxis]: index , [vAxis]: value  } = item;
+        const itemStacks = item._stacks || (item._stacks = {});
+        stack = itemStacks[vAxis] = getOrCreateStack(stacks, key, index);
+        stack[datasetIndex] = value;
+        stack._top = getLastIndexInStack(stack, vScale, true, meta.type);
+        stack._bottom = getLastIndexInStack(stack, vScale, false, meta.type);
+        const visualValues = stack._visualValues || (stack._visualValues = {});
+        visualValues[datasetIndex] = value;
+    }
+}
+function getFirstScaleId(chart, axis) {
+    const scales = chart.scales;
+    return Object.keys(scales).filter((key)=>scales[key].axis === axis).shift();
+}
+function createDatasetContext(parent, index) {
+    return helpers_segment.createContext(parent, {
+        active: false,
+        dataset: undefined,
+        datasetIndex: index,
+        index,
+        mode: 'default',
+        type: 'dataset'
+    });
+}
+function createDataContext(parent, index, element) {
+    return helpers_segment.createContext(parent, {
+        active: false,
+        dataIndex: index,
+        parsed: undefined,
+        raw: undefined,
+        element,
+        index,
+        mode: 'default',
+        type: 'data'
+    });
+}
+function clearStacks(meta, items) {
+    const datasetIndex = meta.controller.index;
+    const axis = meta.vScale && meta.vScale.axis;
+    if (!axis) {
+        return;
+    }
+    items = items || meta._parsed;
+    for (const parsed of items){
+        const stacks = parsed._stacks;
+        if (!stacks || stacks[axis] === undefined || stacks[axis][datasetIndex] === undefined) {
+            return;
+        }
+        delete stacks[axis][datasetIndex];
+        if (stacks[axis]._visualValues !== undefined && stacks[axis]._visualValues[datasetIndex] !== undefined) {
+            delete stacks[axis]._visualValues[datasetIndex];
+        }
+    }
+}
+const isDirectUpdateMode = (mode)=>mode === 'reset' || mode === 'none';
+const cloneIfNotShared = (cached, shared)=>shared ? cached : Object.assign({}, cached);
+const createStack = (canStack, meta, chart)=>canStack && !meta.hidden && meta._stacked && {
+        keys: getSortedDatasetIndices(chart, true),
+        values: null
+    };
+class DatasetController {
+ static defaults = {};
+ static datasetElementType = null;
+ static dataElementType = null;
+ constructor(chart, datasetIndex){
+        this.chart = chart;
+        this._ctx = chart.ctx;
+        this.index = datasetIndex;
+        this._cachedDataOpts = {};
+        this._cachedMeta = this.getMeta();
+        this._type = this._cachedMeta.type;
+        this.options = undefined;
+         this._parsing = false;
+        this._data = undefined;
+        this._objectData = undefined;
+        this._sharedOptions = undefined;
+        this._drawStart = undefined;
+        this._drawCount = undefined;
+        this.enableOptionSharing = false;
+        this.supportsDecimation = false;
+        this.$context = undefined;
+        this._syncList = [];
+        this.datasetElementType = new.target.datasetElementType;
+        this.dataElementType = new.target.dataElementType;
+        this.initialize();
+    }
+    initialize() {
+        const meta = this._cachedMeta;
+        this.configure();
+        this.linkScales();
+        meta._stacked = isStacked(meta.vScale, meta);
+        this.addElements();
+        if (this.options.fill && !this.chart.isPluginEnabled('filler')) {
+            console.warn("Tried to use the 'fill' option without the 'Filler' plugin enabled. Please import and register the 'Filler' plugin and make sure it is not disabled in the options");
+        }
+    }
+    updateIndex(datasetIndex) {
+        if (this.index !== datasetIndex) {
+            clearStacks(this._cachedMeta);
+        }
+        this.index = datasetIndex;
+    }
+    linkScales() {
+        const chart = this.chart;
+        const meta = this._cachedMeta;
+        const dataset = this.getDataset();
+        const chooseId = (axis, x, y, r)=>axis === 'x' ? x : axis === 'r' ? r : y;
+        const xid = meta.xAxisID = helpers_segment.valueOrDefault(dataset.xAxisID, getFirstScaleId(chart, 'x'));
+        const yid = meta.yAxisID = helpers_segment.valueOrDefault(dataset.yAxisID, getFirstScaleId(chart, 'y'));
+        const rid = meta.rAxisID = helpers_segment.valueOrDefault(dataset.rAxisID, getFirstScaleId(chart, 'r'));
+        const indexAxis = meta.indexAxis;
+        const iid = meta.iAxisID = chooseId(indexAxis, xid, yid, rid);
+        const vid = meta.vAxisID = chooseId(indexAxis, yid, xid, rid);
+        meta.xScale = this.getScaleForId(xid);
+        meta.yScale = this.getScaleForId(yid);
+        meta.rScale = this.getScaleForId(rid);
+        meta.iScale = this.getScaleForId(iid);
+        meta.vScale = this.getScaleForId(vid);
+    }
+    getDataset() {
+        return this.chart.data.datasets[this.index];
+    }
+    getMeta() {
+        return this.chart.getDatasetMeta(this.index);
+    }
+ getScaleForId(scaleID) {
+        return this.chart.scales[scaleID];
+    }
+ _getOtherScale(scale) {
+        const meta = this._cachedMeta;
+        return scale === meta.iScale ? meta.vScale : meta.iScale;
+    }
+    reset() {
+        this._update('reset');
+    }
+ _destroy() {
+        const meta = this._cachedMeta;
+        if (this._data) {
+            helpers_segment.unlistenArrayEvents(this._data, this);
+        }
+        if (meta._stacked) {
+            clearStacks(meta);
+        }
+    }
+ _dataCheck() {
+        const dataset = this.getDataset();
+        const data = dataset.data || (dataset.data = []);
+        const _data = this._data;
+        if (helpers_segment.isObject(data)) {
+            const meta = this._cachedMeta;
+            this._data = convertObjectDataToArray(data, meta);
+        } else if (_data !== data) {
+            if (_data) {
+                helpers_segment.unlistenArrayEvents(_data, this);
+                const meta = this._cachedMeta;
+                clearStacks(meta);
+                meta._parsed = [];
+            }
+            if (data && Object.isExtensible(data)) {
+                helpers_segment.listenArrayEvents(data, this);
+            }
+            this._syncList = [];
+            this._data = data;
+        }
+    }
+    addElements() {
+        const meta = this._cachedMeta;
+        this._dataCheck();
+        if (this.datasetElementType) {
+            meta.dataset = new this.datasetElementType();
+        }
+    }
+    buildOrUpdateElements(resetNewElements) {
+        const meta = this._cachedMeta;
+        const dataset = this.getDataset();
+        let stackChanged = false;
+        this._dataCheck();
+        const oldStacked = meta._stacked;
+        meta._stacked = isStacked(meta.vScale, meta);
+        if (meta.stack !== dataset.stack) {
+            stackChanged = true;
+            clearStacks(meta);
+            meta.stack = dataset.stack;
+        }
+        this._resyncElements(resetNewElements);
+        if (stackChanged || oldStacked !== meta._stacked) {
+            updateStacks(this, meta._parsed);
+            meta._stacked = isStacked(meta.vScale, meta);
+        }
+    }
+ configure() {
+        const config = this.chart.config;
+        const scopeKeys = config.datasetScopeKeys(this._type);
+        const scopes = config.getOptionScopes(this.getDataset(), scopeKeys, true);
+        this.options = config.createResolver(scopes, this.getContext());
+        this._parsing = this.options.parsing;
+        this._cachedDataOpts = {};
+    }
+ parse(start, count) {
+        const { _cachedMeta: meta , _data: data  } = this;
+        const { iScale , _stacked  } = meta;
+        const iAxis = iScale.axis;
+        let sorted = start === 0 && count === data.length ? true : meta._sorted;
+        let prev = start > 0 && meta._parsed[start - 1];
+        let i, cur, parsed;
+        if (this._parsing === false) {
+            meta._parsed = data;
+            meta._sorted = true;
+            parsed = data;
+        } else {
+            if (helpers_segment.isArray(data[start])) {
+                parsed = this.parseArrayData(meta, data, start, count);
+            } else if (helpers_segment.isObject(data[start])) {
+                parsed = this.parseObjectData(meta, data, start, count);
+            } else {
+                parsed = this.parsePrimitiveData(meta, data, start, count);
+            }
+            const isNotInOrderComparedToPrev = ()=>cur[iAxis] === null || prev && cur[iAxis] < prev[iAxis];
+            for(i = 0; i < count; ++i){
+                meta._parsed[i + start] = cur = parsed[i];
+                if (sorted) {
+                    if (isNotInOrderComparedToPrev()) {
+                        sorted = false;
+                    }
+                    prev = cur;
+                }
+            }
+            meta._sorted = sorted;
+        }
+        if (_stacked) {
+            updateStacks(this, parsed);
+        }
+    }
+ parsePrimitiveData(meta, data, start, count) {
+        const { iScale , vScale  } = meta;
+        const iAxis = iScale.axis;
+        const vAxis = vScale.axis;
+        const labels = iScale.getLabels();
+        const singleScale = iScale === vScale;
+        const parsed = new Array(count);
+        let i, ilen, index;
+        for(i = 0, ilen = count; i < ilen; ++i){
+            index = i + start;
+            parsed[i] = {
+                [iAxis]: singleScale || iScale.parse(labels[index], index),
+                [vAxis]: vScale.parse(data[index], index)
+            };
+        }
+        return parsed;
+    }
+ parseArrayData(meta, data, start, count) {
+        const { xScale , yScale  } = meta;
+        const parsed = new Array(count);
+        let i, ilen, index, item;
+        for(i = 0, ilen = count; i < ilen; ++i){
+            index = i + start;
+            item = data[index];
+            parsed[i] = {
+                x: xScale.parse(item[0], index),
+                y: yScale.parse(item[1], index)
+            };
+        }
+        return parsed;
+    }
+ parseObjectData(meta, data, start, count) {
+        const { xScale , yScale  } = meta;
+        const { xAxisKey ='x' , yAxisKey ='y'  } = this._parsing;
+        const parsed = new Array(count);
+        let i, ilen, index, item;
+        for(i = 0, ilen = count; i < ilen; ++i){
+            index = i + start;
+            item = data[index];
+            parsed[i] = {
+                x: xScale.parse(helpers_segment.resolveObjectKey(item, xAxisKey), index),
+                y: yScale.parse(helpers_segment.resolveObjectKey(item, yAxisKey), index)
+            };
+        }
+        return parsed;
+    }
+ getParsed(index) {
+        return this._cachedMeta._parsed[index];
+    }
+ getDataElement(index) {
+        return this._cachedMeta.data[index];
+    }
+ applyStack(scale, parsed, mode) {
+        const chart = this.chart;
+        const meta = this._cachedMeta;
+        const value = parsed[scale.axis];
+        const stack = {
+            keys: getSortedDatasetIndices(chart, true),
+            values: parsed._stacks[scale.axis]._visualValues
+        };
+        return applyStack(stack, value, meta.index, {
+            mode
+        });
+    }
+ updateRangeFromParsed(range, scale, parsed, stack) {
+        const parsedValue = parsed[scale.axis];
+        let value = parsedValue === null ? NaN : parsedValue;
+        const values = stack && parsed._stacks[scale.axis];
+        if (stack && values) {
+            stack.values = values;
+            value = applyStack(stack, parsedValue, this._cachedMeta.index);
+        }
+        range.min = Math.min(range.min, value);
+        range.max = Math.max(range.max, value);
+    }
+ getMinMax(scale, canStack) {
+        const meta = this._cachedMeta;
+        const _parsed = meta._parsed;
+        const sorted = meta._sorted && scale === meta.iScale;
+        const ilen = _parsed.length;
+        const otherScale = this._getOtherScale(scale);
+        const stack = createStack(canStack, meta, this.chart);
+        const range = {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
+        };
+        const { min: otherMin , max: otherMax  } = getUserBounds(otherScale);
+        let i, parsed;
+        function _skip() {
+            parsed = _parsed[i];
+            const otherValue = parsed[otherScale.axis];
+            return !helpers_segment.isNumberFinite(parsed[scale.axis]) || otherMin > otherValue || otherMax < otherValue;
+        }
+        for(i = 0; i < ilen; ++i){
+            if (_skip()) {
+                continue;
+            }
+            this.updateRangeFromParsed(range, scale, parsed, stack);
+            if (sorted) {
+                break;
+            }
+        }
+        if (sorted) {
+            for(i = ilen - 1; i >= 0; --i){
+                if (_skip()) {
+                    continue;
+                }
+                this.updateRangeFromParsed(range, scale, parsed, stack);
+                break;
+            }
+        }
+        return range;
+    }
+    getAllParsedValues(scale) {
+        const parsed = this._cachedMeta._parsed;
+        const values = [];
+        let i, ilen, value;
+        for(i = 0, ilen = parsed.length; i < ilen; ++i){
+            value = parsed[i][scale.axis];
+            if (helpers_segment.isNumberFinite(value)) {
+                values.push(value);
+            }
+        }
+        return values;
+    }
+ getMaxOverflow() {
+        return false;
+    }
+ getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const iScale = meta.iScale;
+        const vScale = meta.vScale;
+        const parsed = this.getParsed(index);
+        return {
+            label: iScale ? '' + iScale.getLabelForValue(parsed[iScale.axis]) : '',
+            value: vScale ? '' + vScale.getLabelForValue(parsed[vScale.axis]) : ''
+        };
+    }
+ _update(mode) {
+        const meta = this._cachedMeta;
+        this.update(mode || 'default');
+        meta._clip = toClip(helpers_segment.valueOrDefault(this.options.clip, defaultClip(meta.xScale, meta.yScale, this.getMaxOverflow())));
+    }
+ update(mode) {}
+    draw() {
+        const ctx = this._ctx;
+        const chart = this.chart;
+        const meta = this._cachedMeta;
+        const elements = meta.data || [];
+        const area = chart.chartArea;
+        const active = [];
+        const start = this._drawStart || 0;
+        const count = this._drawCount || elements.length - start;
+        const drawActiveElementsOnTop = this.options.drawActiveElementsOnTop;
+        let i;
+        if (meta.dataset) {
+            meta.dataset.draw(ctx, area, start, count);
+        }
+        for(i = start; i < start + count; ++i){
+            const element = elements[i];
+            if (element.hidden) {
+                continue;
+            }
+            if (element.active && drawActiveElementsOnTop) {
+                active.push(element);
+            } else {
+                element.draw(ctx, area);
+            }
+        }
+        for(i = 0; i < active.length; ++i){
+            active[i].draw(ctx, area);
+        }
+    }
+ getStyle(index, active) {
+        const mode = active ? 'active' : 'default';
+        return index === undefined && this._cachedMeta.dataset ? this.resolveDatasetElementOptions(mode) : this.resolveDataElementOptions(index || 0, mode);
+    }
+ getContext(index, active, mode) {
+        const dataset = this.getDataset();
+        let context;
+        if (index >= 0 && index < this._cachedMeta.data.length) {
+            const element = this._cachedMeta.data[index];
+            context = element.$context || (element.$context = createDataContext(this.getContext(), index, element));
+            context.parsed = this.getParsed(index);
+            context.raw = dataset.data[index];
+            context.index = context.dataIndex = index;
+        } else {
+            context = this.$context || (this.$context = createDatasetContext(this.chart.getContext(), this.index));
+            context.dataset = dataset;
+            context.index = context.datasetIndex = this.index;
+        }
+        context.active = !!active;
+        context.mode = mode;
+        return context;
+    }
+ resolveDatasetElementOptions(mode) {
+        return this._resolveElementOptions(this.datasetElementType.id, mode);
+    }
+ resolveDataElementOptions(index, mode) {
+        return this._resolveElementOptions(this.dataElementType.id, mode, index);
+    }
+ _resolveElementOptions(elementType, mode = 'default', index) {
+        const active = mode === 'active';
+        const cache = this._cachedDataOpts;
+        const cacheKey = elementType + '-' + mode;
+        const cached = cache[cacheKey];
+        const sharing = this.enableOptionSharing && helpers_segment.defined(index);
+        if (cached) {
+            return cloneIfNotShared(cached, sharing);
+        }
+        const config = this.chart.config;
+        const scopeKeys = config.datasetElementScopeKeys(this._type, elementType);
+        const prefixes = active ? [
+            `${elementType}Hover`,
+            'hover',
+            elementType,
+            ''
+        ] : [
+            elementType,
+            ''
+        ];
+        const scopes = config.getOptionScopes(this.getDataset(), scopeKeys);
+        const names = Object.keys(helpers_segment.defaults.elements[elementType]);
+        const context = ()=>this.getContext(index, active, mode);
+        const values = config.resolveNamedOptions(scopes, names, context, prefixes);
+        if (values.$shared) {
+            values.$shared = sharing;
+            cache[cacheKey] = Object.freeze(cloneIfNotShared(values, sharing));
+        }
+        return values;
+    }
+ _resolveAnimations(index, transition, active) {
+        const chart = this.chart;
+        const cache = this._cachedDataOpts;
+        const cacheKey = `animation-${transition}`;
+        const cached = cache[cacheKey];
+        if (cached) {
+            return cached;
+        }
+        let options;
+        if (chart.options.animation !== false) {
+            const config = this.chart.config;
+            const scopeKeys = config.datasetAnimationScopeKeys(this._type, transition);
+            const scopes = config.getOptionScopes(this.getDataset(), scopeKeys);
+            options = config.createResolver(scopes, this.getContext(index, active, transition));
+        }
+        const animations = new Animations(chart, options && options.animations);
+        if (options && options._cacheable) {
+            cache[cacheKey] = Object.freeze(animations);
+        }
+        return animations;
+    }
+ getSharedOptions(options) {
+        if (!options.$shared) {
+            return;
+        }
+        return this._sharedOptions || (this._sharedOptions = Object.assign({}, options));
+    }
+ includeOptions(mode, sharedOptions) {
+        return !sharedOptions || isDirectUpdateMode(mode) || this.chart._animationsDisabled;
+    }
+ _getSharedOptions(start, mode) {
+        const firstOpts = this.resolveDataElementOptions(start, mode);
+        const previouslySharedOptions = this._sharedOptions;
+        const sharedOptions = this.getSharedOptions(firstOpts);
+        const includeOptions = this.includeOptions(mode, sharedOptions) || sharedOptions !== previouslySharedOptions;
+        this.updateSharedOptions(sharedOptions, mode, firstOpts);
+        return {
+            sharedOptions,
+            includeOptions
+        };
+    }
+ updateElement(element, index, properties, mode) {
+        if (isDirectUpdateMode(mode)) {
+            Object.assign(element, properties);
+        } else {
+            this._resolveAnimations(index, mode).update(element, properties);
+        }
+    }
+ updateSharedOptions(sharedOptions, mode, newOptions) {
+        if (sharedOptions && !isDirectUpdateMode(mode)) {
+            this._resolveAnimations(undefined, mode).update(sharedOptions, newOptions);
+        }
+    }
+ _setStyle(element, index, mode, active) {
+        element.active = active;
+        const options = this.getStyle(index, active);
+        this._resolveAnimations(index, mode, active).update(element, {
+            options: !active && this.getSharedOptions(options) || options
+        });
+    }
+    removeHoverStyle(element, datasetIndex, index) {
+        this._setStyle(element, index, 'active', false);
+    }
+    setHoverStyle(element, datasetIndex, index) {
+        this._setStyle(element, index, 'active', true);
+    }
+ _removeDatasetHoverStyle() {
+        const element = this._cachedMeta.dataset;
+        if (element) {
+            this._setStyle(element, undefined, 'active', false);
+        }
+    }
+ _setDatasetHoverStyle() {
+        const element = this._cachedMeta.dataset;
+        if (element) {
+            this._setStyle(element, undefined, 'active', true);
+        }
+    }
+ _resyncElements(resetNewElements) {
+        const data = this._data;
+        const elements = this._cachedMeta.data;
+        for (const [method, arg1, arg2] of this._syncList){
+            this[method](arg1, arg2);
+        }
+        this._syncList = [];
+        const numMeta = elements.length;
+        const numData = data.length;
+        const count = Math.min(numData, numMeta);
+        if (count) {
+            this.parse(0, count);
+        }
+        if (numData > numMeta) {
+            this._insertElements(numMeta, numData - numMeta, resetNewElements);
+        } else if (numData < numMeta) {
+            this._removeElements(numData, numMeta - numData);
+        }
+    }
+ _insertElements(start, count, resetNewElements = true) {
+        const meta = this._cachedMeta;
+        const data = meta.data;
+        const end = start + count;
+        let i;
+        const move = (arr)=>{
+            arr.length += count;
+            for(i = arr.length - 1; i >= end; i--){
+                arr[i] = arr[i - count];
+            }
+        };
+        move(data);
+        for(i = start; i < end; ++i){
+            data[i] = new this.dataElementType();
+        }
+        if (this._parsing) {
+            move(meta._parsed);
+        }
+        this.parse(start, count);
+        if (resetNewElements) {
+            this.updateElements(data, start, count, 'reset');
+        }
+    }
+    updateElements(element, start, count, mode) {}
+ _removeElements(start, count) {
+        const meta = this._cachedMeta;
+        if (this._parsing) {
+            const removed = meta._parsed.splice(start, count);
+            if (meta._stacked) {
+                clearStacks(meta, removed);
+            }
+        }
+        meta.data.splice(start, count);
+    }
+ _sync(args) {
+        if (this._parsing) {
+            this._syncList.push(args);
+        } else {
+            const [method, arg1, arg2] = args;
+            this[method](arg1, arg2);
+        }
+        this.chart._dataChanges.push([
+            this.index,
+            ...args
+        ]);
+    }
+    _onDataPush() {
+        const count = arguments.length;
+        this._sync([
+            '_insertElements',
+            this.getDataset().data.length - count,
+            count
+        ]);
+    }
+    _onDataPop() {
+        this._sync([
+            '_removeElements',
+            this._cachedMeta.data.length - 1,
+            1
+        ]);
+    }
+    _onDataShift() {
+        this._sync([
+            '_removeElements',
+            0,
+            1
+        ]);
+    }
+    _onDataSplice(start, count) {
+        if (count) {
+            this._sync([
+                '_removeElements',
+                start,
+                count
+            ]);
+        }
+        const newCount = arguments.length - 2;
+        if (newCount) {
+            this._sync([
+                '_insertElements',
+                start,
+                newCount
+            ]);
+        }
+    }
+    _onDataUnshift() {
+        this._sync([
+            '_insertElements',
+            0,
+            arguments.length
+        ]);
+    }
+}
+
+function getAllScaleValues(scale, type) {
+    if (!scale._cache.$bar) {
+        const visibleMetas = scale.getMatchingVisibleMetas(type);
+        let values = [];
+        for(let i = 0, ilen = visibleMetas.length; i < ilen; i++){
+            values = values.concat(visibleMetas[i].controller.getAllParsedValues(scale));
+        }
+        scale._cache.$bar = helpers_segment._arrayUnique(values.sort((a, b)=>a - b));
+    }
+    return scale._cache.$bar;
+}
+ function computeMinSampleSize(meta) {
+    const scale = meta.iScale;
+    const values = getAllScaleValues(scale, meta.type);
+    let min = scale._length;
+    let i, ilen, curr, prev;
+    const updateMinAndPrev = ()=>{
+        if (curr === 32767 || curr === -32768) {
+            return;
+        }
+        if (helpers_segment.defined(prev)) {
+            min = Math.min(min, Math.abs(curr - prev) || min);
+        }
+        prev = curr;
+    };
+    for(i = 0, ilen = values.length; i < ilen; ++i){
+        curr = scale.getPixelForValue(values[i]);
+        updateMinAndPrev();
+    }
+    prev = undefined;
+    for(i = 0, ilen = scale.ticks.length; i < ilen; ++i){
+        curr = scale.getPixelForTick(i);
+        updateMinAndPrev();
+    }
+    return min;
+}
+ function computeFitCategoryTraits(index, ruler, options, stackCount) {
+    const thickness = options.barThickness;
+    let size, ratio;
+    if (helpers_segment.isNullOrUndef(thickness)) {
+        size = ruler.min * options.categoryPercentage;
+        ratio = options.barPercentage;
+    } else {
+        size = thickness * stackCount;
+        ratio = 1;
+    }
+    return {
+        chunk: size / stackCount,
+        ratio,
+        start: ruler.pixels[index] - size / 2
+    };
+}
+ function computeFlexCategoryTraits(index, ruler, options, stackCount) {
+    const pixels = ruler.pixels;
+    const curr = pixels[index];
+    let prev = index > 0 ? pixels[index - 1] : null;
+    let next = index < pixels.length - 1 ? pixels[index + 1] : null;
+    const percent = options.categoryPercentage;
+    if (prev === null) {
+        prev = curr - (next === null ? ruler.end - ruler.start : next - curr);
+    }
+    if (next === null) {
+        next = curr + curr - prev;
+    }
+    const start = curr - (curr - Math.min(prev, next)) / 2 * percent;
+    const size = Math.abs(next - prev) / 2 * percent;
+    return {
+        chunk: size / stackCount,
+        ratio: options.barPercentage,
+        start
+    };
+}
+function parseFloatBar(entry, item, vScale, i) {
+    const startValue = vScale.parse(entry[0], i);
+    const endValue = vScale.parse(entry[1], i);
+    const min = Math.min(startValue, endValue);
+    const max = Math.max(startValue, endValue);
+    let barStart = min;
+    let barEnd = max;
+    if (Math.abs(min) > Math.abs(max)) {
+        barStart = max;
+        barEnd = min;
+    }
+    item[vScale.axis] = barEnd;
+    item._custom = {
+        barStart,
+        barEnd,
+        start: startValue,
+        end: endValue,
+        min,
+        max
+    };
+}
+function parseValue(entry, item, vScale, i) {
+    if (helpers_segment.isArray(entry)) {
+        parseFloatBar(entry, item, vScale, i);
+    } else {
+        item[vScale.axis] = vScale.parse(entry, i);
+    }
+    return item;
+}
+function parseArrayOrPrimitive(meta, data, start, count) {
+    const iScale = meta.iScale;
+    const vScale = meta.vScale;
+    const labels = iScale.getLabels();
+    const singleScale = iScale === vScale;
+    const parsed = [];
+    let i, ilen, item, entry;
+    for(i = start, ilen = start + count; i < ilen; ++i){
+        entry = data[i];
+        item = {};
+        item[iScale.axis] = singleScale || iScale.parse(labels[i], i);
+        parsed.push(parseValue(entry, item, vScale, i));
+    }
+    return parsed;
+}
+function isFloatBar(custom) {
+    return custom && custom.barStart !== undefined && custom.barEnd !== undefined;
+}
+function barSign(size, vScale, actualBase) {
+    if (size !== 0) {
+        return helpers_segment.sign(size);
+    }
+    return (vScale.isHorizontal() ? 1 : -1) * (vScale.min >= actualBase ? 1 : -1);
+}
+function borderProps(properties) {
+    let reverse, start, end, top, bottom;
+    if (properties.horizontal) {
+        reverse = properties.base > properties.x;
+        start = 'left';
+        end = 'right';
+    } else {
+        reverse = properties.base < properties.y;
+        start = 'bottom';
+        end = 'top';
+    }
+    if (reverse) {
+        top = 'end';
+        bottom = 'start';
+    } else {
+        top = 'start';
+        bottom = 'end';
+    }
+    return {
+        start,
+        end,
+        reverse,
+        top,
+        bottom
+    };
+}
+function setBorderSkipped(properties, options, stack, index) {
+    let edge = options.borderSkipped;
+    const res = {};
+    if (!edge) {
+        properties.borderSkipped = res;
+        return;
+    }
+    if (edge === true) {
+        properties.borderSkipped = {
+            top: true,
+            right: true,
+            bottom: true,
+            left: true
+        };
+        return;
+    }
+    const { start , end , reverse , top , bottom  } = borderProps(properties);
+    if (edge === 'middle' && stack) {
+        properties.enableBorderRadius = true;
+        if ((stack._top || 0) === index) {
+            edge = top;
+        } else if ((stack._bottom || 0) === index) {
+            edge = bottom;
+        } else {
+            res[parseEdge(bottom, start, end, reverse)] = true;
+            edge = top;
+        }
+    }
+    res[parseEdge(edge, start, end, reverse)] = true;
+    properties.borderSkipped = res;
+}
+function parseEdge(edge, a, b, reverse) {
+    if (reverse) {
+        edge = swap(edge, a, b);
+        edge = startEnd(edge, b, a);
+    } else {
+        edge = startEnd(edge, a, b);
+    }
+    return edge;
+}
+function swap(orig, v1, v2) {
+    return orig === v1 ? v2 : orig === v2 ? v1 : orig;
+}
+function startEnd(v, start, end) {
+    return v === 'start' ? start : v === 'end' ? end : v;
+}
+function setInflateAmount(properties, { inflateAmount  }, ratio) {
+    properties.inflateAmount = inflateAmount === 'auto' ? ratio === 1 ? 0.33 : 0 : inflateAmount;
+}
+class BarController extends DatasetController {
+    static id = 'bar';
+ static defaults = {
+        datasetElementType: false,
+        dataElementType: 'bar',
+        categoryPercentage: 0.8,
+        barPercentage: 0.9,
+        grouped: true,
+        animations: {
+            numbers: {
+                type: 'number',
+                properties: [
+                    'x',
+                    'y',
+                    'base',
+                    'width',
+                    'height'
+                ]
+            }
+        }
+    };
+ static overrides = {
+        scales: {
+            _index_: {
+                type: 'category',
+                offset: true,
+                grid: {
+                    offset: true
+                }
+            },
+            _value_: {
+                type: 'linear',
+                beginAtZero: true
+            }
+        }
+    };
+ parsePrimitiveData(meta, data, start, count) {
+        return parseArrayOrPrimitive(meta, data, start, count);
+    }
+ parseArrayData(meta, data, start, count) {
+        return parseArrayOrPrimitive(meta, data, start, count);
+    }
+ parseObjectData(meta, data, start, count) {
+        const { iScale , vScale  } = meta;
+        const { xAxisKey ='x' , yAxisKey ='y'  } = this._parsing;
+        const iAxisKey = iScale.axis === 'x' ? xAxisKey : yAxisKey;
+        const vAxisKey = vScale.axis === 'x' ? xAxisKey : yAxisKey;
+        const parsed = [];
+        let i, ilen, item, obj;
+        for(i = start, ilen = start + count; i < ilen; ++i){
+            obj = data[i];
+            item = {};
+            item[iScale.axis] = iScale.parse(helpers_segment.resolveObjectKey(obj, iAxisKey), i);
+            parsed.push(parseValue(helpers_segment.resolveObjectKey(obj, vAxisKey), item, vScale, i));
+        }
+        return parsed;
+    }
+ updateRangeFromParsed(range, scale, parsed, stack) {
+        super.updateRangeFromParsed(range, scale, parsed, stack);
+        const custom = parsed._custom;
+        if (custom && scale === this._cachedMeta.vScale) {
+            range.min = Math.min(range.min, custom.min);
+            range.max = Math.max(range.max, custom.max);
+        }
+    }
+ getMaxOverflow() {
+        return 0;
+    }
+ getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const { iScale , vScale  } = meta;
+        const parsed = this.getParsed(index);
+        const custom = parsed._custom;
+        const value = isFloatBar(custom) ? '[' + custom.start + ', ' + custom.end + ']' : '' + vScale.getLabelForValue(parsed[vScale.axis]);
+        return {
+            label: '' + iScale.getLabelForValue(parsed[iScale.axis]),
+            value
+        };
+    }
+    initialize() {
+        this.enableOptionSharing = true;
+        super.initialize();
+        const meta = this._cachedMeta;
+        meta.stack = this.getDataset().stack;
+    }
+    update(mode) {
+        const meta = this._cachedMeta;
+        this.updateElements(meta.data, 0, meta.data.length, mode);
+    }
+    updateElements(bars, start, count, mode) {
+        const reset = mode === 'reset';
+        const { index , _cachedMeta: { vScale  }  } = this;
+        const base = vScale.getBasePixel();
+        const horizontal = vScale.isHorizontal();
+        const ruler = this._getRuler();
+        const { sharedOptions , includeOptions  } = this._getSharedOptions(start, mode);
+        for(let i = start; i < start + count; i++){
+            const parsed = this.getParsed(i);
+            const vpixels = reset || helpers_segment.isNullOrUndef(parsed[vScale.axis]) ? {
+                base,
+                head: base
+            } : this._calculateBarValuePixels(i);
+            const ipixels = this._calculateBarIndexPixels(i, ruler);
+            const stack = (parsed._stacks || {})[vScale.axis];
+            const properties = {
+                horizontal,
+                base: vpixels.base,
+                enableBorderRadius: !stack || isFloatBar(parsed._custom) || index === stack._top || index === stack._bottom,
+                x: horizontal ? vpixels.head : ipixels.center,
+                y: horizontal ? ipixels.center : vpixels.head,
+                height: horizontal ? ipixels.size : Math.abs(vpixels.size),
+                width: horizontal ? Math.abs(vpixels.size) : ipixels.size
+            };
+            if (includeOptions) {
+                properties.options = sharedOptions || this.resolveDataElementOptions(i, bars[i].active ? 'active' : mode);
+            }
+            const options = properties.options || bars[i].options;
+            setBorderSkipped(properties, options, stack, index);
+            setInflateAmount(properties, options, ruler.ratio);
+            this.updateElement(bars[i], i, properties, mode);
+        }
+    }
+ _getStacks(last, dataIndex) {
+        const { iScale  } = this._cachedMeta;
+        const metasets = iScale.getMatchingVisibleMetas(this._type).filter((meta)=>meta.controller.options.grouped);
+        const stacked = iScale.options.stacked;
+        const stacks = [];
+        const currentParsed = this._cachedMeta.controller.getParsed(dataIndex);
+        const iScaleValue = currentParsed && currentParsed[iScale.axis];
+        const skipNull = (meta)=>{
+            const parsed = meta._parsed.find((item)=>item[iScale.axis] === iScaleValue);
+            const val = parsed && parsed[meta.vScale.axis];
+            if (helpers_segment.isNullOrUndef(val) || isNaN(val)) {
+                return true;
+            }
+        };
+        for (const meta of metasets){
+            if (dataIndex !== undefined && skipNull(meta)) {
+                continue;
+            }
+            if (stacked === false || stacks.indexOf(meta.stack) === -1 || stacked === undefined && meta.stack === undefined) {
+                stacks.push(meta.stack);
+            }
+            if (meta.index === last) {
+                break;
+            }
+        }
+        if (!stacks.length) {
+            stacks.push(undefined);
+        }
+        return stacks;
+    }
+ _getStackCount(index) {
+        return this._getStacks(undefined, index).length;
+    }
+ _getStackIndex(datasetIndex, name, dataIndex) {
+        const stacks = this._getStacks(datasetIndex, dataIndex);
+        const index = name !== undefined ? stacks.indexOf(name) : -1;
+        return index === -1 ? stacks.length - 1 : index;
+    }
+ _getRuler() {
+        const opts = this.options;
+        const meta = this._cachedMeta;
+        const iScale = meta.iScale;
+        const pixels = [];
+        let i, ilen;
+        for(i = 0, ilen = meta.data.length; i < ilen; ++i){
+            pixels.push(iScale.getPixelForValue(this.getParsed(i)[iScale.axis], i));
+        }
+        const barThickness = opts.barThickness;
+        const min = barThickness || computeMinSampleSize(meta);
+        return {
+            min,
+            pixels,
+            start: iScale._startPixel,
+            end: iScale._endPixel,
+            stackCount: this._getStackCount(),
+            scale: iScale,
+            grouped: opts.grouped,
+            ratio: barThickness ? 1 : opts.categoryPercentage * opts.barPercentage
+        };
+    }
+ _calculateBarValuePixels(index) {
+        const { _cachedMeta: { vScale , _stacked , index: datasetIndex  } , options: { base: baseValue , minBarLength  }  } = this;
+        const actualBase = baseValue || 0;
+        const parsed = this.getParsed(index);
+        const custom = parsed._custom;
+        const floating = isFloatBar(custom);
+        let value = parsed[vScale.axis];
+        let start = 0;
+        let length = _stacked ? this.applyStack(vScale, parsed, _stacked) : value;
+        let head, size;
+        if (length !== value) {
+            start = length - value;
+            length = value;
+        }
+        if (floating) {
+            value = custom.barStart;
+            length = custom.barEnd - custom.barStart;
+            if (value !== 0 && helpers_segment.sign(value) !== helpers_segment.sign(custom.barEnd)) {
+                start = 0;
+            }
+            start += value;
+        }
+        const startValue = !helpers_segment.isNullOrUndef(baseValue) && !floating ? baseValue : start;
+        let base = vScale.getPixelForValue(startValue);
+        if (this.chart.getDataVisibility(index)) {
+            head = vScale.getPixelForValue(start + length);
+        } else {
+            head = base;
+        }
+        size = head - base;
+        if (Math.abs(size) < minBarLength) {
+            size = barSign(size, vScale, actualBase) * minBarLength;
+            if (value === actualBase) {
+                base -= size / 2;
+            }
+            const startPixel = vScale.getPixelForDecimal(0);
+            const endPixel = vScale.getPixelForDecimal(1);
+            const min = Math.min(startPixel, endPixel);
+            const max = Math.max(startPixel, endPixel);
+            base = Math.max(Math.min(base, max), min);
+            head = base + size;
+            if (_stacked && !floating) {
+                parsed._stacks[vScale.axis]._visualValues[datasetIndex] = vScale.getValueForPixel(head) - vScale.getValueForPixel(base);
+            }
+        }
+        if (base === vScale.getPixelForValue(actualBase)) {
+            const halfGrid = helpers_segment.sign(size) * vScale.getLineWidthForValue(actualBase) / 2;
+            base += halfGrid;
+            size -= halfGrid;
+        }
+        return {
+            size,
+            base,
+            head,
+            center: head + size / 2
+        };
+    }
+ _calculateBarIndexPixels(index, ruler) {
+        const scale = ruler.scale;
+        const options = this.options;
+        const skipNull = options.skipNull;
+        const maxBarThickness = helpers_segment.valueOrDefault(options.maxBarThickness, Infinity);
+        let center, size;
+        if (ruler.grouped) {
+            const stackCount = skipNull ? this._getStackCount(index) : ruler.stackCount;
+            const range = options.barThickness === 'flex' ? computeFlexCategoryTraits(index, ruler, options, stackCount) : computeFitCategoryTraits(index, ruler, options, stackCount);
+            const stackIndex = this._getStackIndex(this.index, this._cachedMeta.stack, skipNull ? index : undefined);
+            center = range.start + range.chunk * stackIndex + range.chunk / 2;
+            size = Math.min(maxBarThickness, range.chunk * range.ratio);
+        } else {
+            center = scale.getPixelForValue(this.getParsed(index)[scale.axis], index);
+            size = Math.min(maxBarThickness, ruler.min * ruler.ratio);
+        }
+        return {
+            base: center - size / 2,
+            head: center + size / 2,
+            center,
+            size
+        };
+    }
+    draw() {
+        const meta = this._cachedMeta;
+        const vScale = meta.vScale;
+        const rects = meta.data;
+        const ilen = rects.length;
+        let i = 0;
+        for(; i < ilen; ++i){
+            if (this.getParsed(i)[vScale.axis] !== null && !rects[i].hidden) {
+                rects[i].draw(this._ctx);
+            }
+        }
+    }
+}
+
+class BubbleController extends DatasetController {
+    static id = 'bubble';
+ static defaults = {
+        datasetElementType: false,
+        dataElementType: 'point',
+        animations: {
+            numbers: {
+                type: 'number',
+                properties: [
+                    'x',
+                    'y',
+                    'borderWidth',
+                    'radius'
+                ]
+            }
+        }
+    };
+ static overrides = {
+        scales: {
+            x: {
+                type: 'linear'
+            },
+            y: {
+                type: 'linear'
+            }
+        }
+    };
+    initialize() {
+        this.enableOptionSharing = true;
+        super.initialize();
+    }
+ parsePrimitiveData(meta, data, start, count) {
+        const parsed = super.parsePrimitiveData(meta, data, start, count);
+        for(let i = 0; i < parsed.length; i++){
+            parsed[i]._custom = this.resolveDataElementOptions(i + start).radius;
+        }
+        return parsed;
+    }
+ parseArrayData(meta, data, start, count) {
+        const parsed = super.parseArrayData(meta, data, start, count);
+        for(let i = 0; i < parsed.length; i++){
+            const item = data[start + i];
+            parsed[i]._custom = helpers_segment.valueOrDefault(item[2], this.resolveDataElementOptions(i + start).radius);
+        }
+        return parsed;
+    }
+ parseObjectData(meta, data, start, count) {
+        const parsed = super.parseObjectData(meta, data, start, count);
+        for(let i = 0; i < parsed.length; i++){
+            const item = data[start + i];
+            parsed[i]._custom = helpers_segment.valueOrDefault(item && item.r && +item.r, this.resolveDataElementOptions(i + start).radius);
+        }
+        return parsed;
+    }
+ getMaxOverflow() {
+        const data = this._cachedMeta.data;
+        let max = 0;
+        for(let i = data.length - 1; i >= 0; --i){
+            max = Math.max(max, data[i].size(this.resolveDataElementOptions(i)) / 2);
+        }
+        return max > 0 && max;
+    }
+ getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const labels = this.chart.data.labels || [];
+        const { xScale , yScale  } = meta;
+        const parsed = this.getParsed(index);
+        const x = xScale.getLabelForValue(parsed.x);
+        const y = yScale.getLabelForValue(parsed.y);
+        const r = parsed._custom;
+        return {
+            label: labels[index] || '',
+            value: '(' + x + ', ' + y + (r ? ', ' + r : '') + ')'
+        };
+    }
+    update(mode) {
+        const points = this._cachedMeta.data;
+        this.updateElements(points, 0, points.length, mode);
+    }
+    updateElements(points, start, count, mode) {
+        const reset = mode === 'reset';
+        const { iScale , vScale  } = this._cachedMeta;
+        const { sharedOptions , includeOptions  } = this._getSharedOptions(start, mode);
+        const iAxis = iScale.axis;
+        const vAxis = vScale.axis;
+        for(let i = start; i < start + count; i++){
+            const point = points[i];
+            const parsed = !reset && this.getParsed(i);
+            const properties = {};
+            const iPixel = properties[iAxis] = reset ? iScale.getPixelForDecimal(0.5) : iScale.getPixelForValue(parsed[iAxis]);
+            const vPixel = properties[vAxis] = reset ? vScale.getBasePixel() : vScale.getPixelForValue(parsed[vAxis]);
+            properties.skip = isNaN(iPixel) || isNaN(vPixel);
+            if (includeOptions) {
+                properties.options = sharedOptions || this.resolveDataElementOptions(i, point.active ? 'active' : mode);
+                if (reset) {
+                    properties.options.radius = 0;
+                }
+            }
+            this.updateElement(point, i, properties, mode);
+        }
+    }
+ resolveDataElementOptions(index, mode) {
+        const parsed = this.getParsed(index);
+        let values = super.resolveDataElementOptions(index, mode);
+        if (values.$shared) {
+            values = Object.assign({}, values, {
+                $shared: false
+            });
+        }
+        const radius = values.radius;
+        if (mode !== 'active') {
+            values.radius = 0;
+        }
+        values.radius += helpers_segment.valueOrDefault(parsed && parsed._custom, radius);
+        return values;
+    }
+}
+
+function getRatioAndOffset(rotation, circumference, cutout) {
+    let ratioX = 1;
+    let ratioY = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    if (circumference < helpers_segment.TAU) {
+        const startAngle = rotation;
+        const endAngle = startAngle + circumference;
+        const startX = Math.cos(startAngle);
+        const startY = Math.sin(startAngle);
+        const endX = Math.cos(endAngle);
+        const endY = Math.sin(endAngle);
+        const calcMax = (angle, a, b)=>helpers_segment._angleBetween(angle, startAngle, endAngle, true) ? 1 : Math.max(a, a * cutout, b, b * cutout);
+        const calcMin = (angle, a, b)=>helpers_segment._angleBetween(angle, startAngle, endAngle, true) ? -1 : Math.min(a, a * cutout, b, b * cutout);
+        const maxX = calcMax(0, startX, endX);
+        const maxY = calcMax(helpers_segment.HALF_PI, startY, endY);
+        const minX = calcMin(helpers_segment.PI, startX, endX);
+        const minY = calcMin(helpers_segment.PI + helpers_segment.HALF_PI, startY, endY);
+        ratioX = (maxX - minX) / 2;
+        ratioY = (maxY - minY) / 2;
+        offsetX = -(maxX + minX) / 2;
+        offsetY = -(maxY + minY) / 2;
+    }
+    return {
+        ratioX,
+        ratioY,
+        offsetX,
+        offsetY
+    };
+}
+class DoughnutController extends DatasetController {
+    static id = 'doughnut';
+ static defaults = {
+        datasetElementType: false,
+        dataElementType: 'arc',
+        animation: {
+            animateRotate: true,
+            animateScale: false
+        },
+        animations: {
+            numbers: {
+                type: 'number',
+                properties: [
+                    'circumference',
+                    'endAngle',
+                    'innerRadius',
+                    'outerRadius',
+                    'startAngle',
+                    'x',
+                    'y',
+                    'offset',
+                    'borderWidth',
+                    'spacing'
+                ]
+            }
+        },
+        cutout: '50%',
+        rotation: 0,
+        circumference: 360,
+        radius: '100%',
+        spacing: 0,
+        indexAxis: 'r'
+    };
+    static descriptors = {
+        _scriptable: (name)=>name !== 'spacing',
+        _indexable: (name)=>name !== 'spacing' && !name.startsWith('borderDash') && !name.startsWith('hoverBorderDash')
+    };
+ static overrides = {
+        aspectRatio: 1,
+        plugins: {
+            legend: {
+                labels: {
+                    generateLabels (chart) {
+                        const data = chart.data;
+                        if (data.labels.length && data.datasets.length) {
+                            const { labels: { pointStyle , color  }  } = chart.legend.options;
+                            return data.labels.map((label, i)=>{
+                                const meta = chart.getDatasetMeta(0);
+                                const style = meta.controller.getStyle(i);
+                                return {
+                                    text: label,
+                                    fillStyle: style.backgroundColor,
+                                    strokeStyle: style.borderColor,
+                                    fontColor: color,
+                                    lineWidth: style.borderWidth,
+                                    pointStyle: pointStyle,
+                                    hidden: !chart.getDataVisibility(i),
+                                    index: i
+                                };
+                            });
+                        }
+                        return [];
+                    }
+                },
+                onClick (e, legendItem, legend) {
+                    legend.chart.toggleDataVisibility(legendItem.index);
+                    legend.chart.update();
+                }
+            }
+        }
+    };
+    constructor(chart, datasetIndex){
+        super(chart, datasetIndex);
+        this.enableOptionSharing = true;
+        this.innerRadius = undefined;
+        this.outerRadius = undefined;
+        this.offsetX = undefined;
+        this.offsetY = undefined;
+    }
+    linkScales() {}
+ parse(start, count) {
+        const data = this.getDataset().data;
+        const meta = this._cachedMeta;
+        if (this._parsing === false) {
+            meta._parsed = data;
+        } else {
+            let getter = (i)=>+data[i];
+            if (helpers_segment.isObject(data[start])) {
+                const { key ='value'  } = this._parsing;
+                getter = (i)=>+helpers_segment.resolveObjectKey(data[i], key);
+            }
+            let i, ilen;
+            for(i = start, ilen = start + count; i < ilen; ++i){
+                meta._parsed[i] = getter(i);
+            }
+        }
+    }
+ _getRotation() {
+        return helpers_segment.toRadians(this.options.rotation - 90);
+    }
+ _getCircumference() {
+        return helpers_segment.toRadians(this.options.circumference);
+    }
+ _getRotationExtents() {
+        let min = helpers_segment.TAU;
+        let max = -helpers_segment.TAU;
+        for(let i = 0; i < this.chart.data.datasets.length; ++i){
+            if (this.chart.isDatasetVisible(i) && this.chart.getDatasetMeta(i).type === this._type) {
+                const controller = this.chart.getDatasetMeta(i).controller;
+                const rotation = controller._getRotation();
+                const circumference = controller._getCircumference();
+                min = Math.min(min, rotation);
+                max = Math.max(max, rotation + circumference);
+            }
+        }
+        return {
+            rotation: min,
+            circumference: max - min
+        };
+    }
+ update(mode) {
+        const chart = this.chart;
+        const { chartArea  } = chart;
+        const meta = this._cachedMeta;
+        const arcs = meta.data;
+        const spacing = this.getMaxBorderWidth() + this.getMaxOffset(arcs) + this.options.spacing;
+        const maxSize = Math.max((Math.min(chartArea.width, chartArea.height) - spacing) / 2, 0);
+        const cutout = Math.min(helpers_segment.toPercentage(this.options.cutout, maxSize), 1);
+        const chartWeight = this._getRingWeight(this.index);
+        const { circumference , rotation  } = this._getRotationExtents();
+        const { ratioX , ratioY , offsetX , offsetY  } = getRatioAndOffset(rotation, circumference, cutout);
+        const maxWidth = (chartArea.width - spacing) / ratioX;
+        const maxHeight = (chartArea.height - spacing) / ratioY;
+        const maxRadius = Math.max(Math.min(maxWidth, maxHeight) / 2, 0);
+        const outerRadius = helpers_segment.toDimension(this.options.radius, maxRadius);
+        const innerRadius = Math.max(outerRadius * cutout, 0);
+        const radiusLength = (outerRadius - innerRadius) / this._getVisibleDatasetWeightTotal();
+        this.offsetX = offsetX * outerRadius;
+        this.offsetY = offsetY * outerRadius;
+        meta.total = this.calculateTotal();
+        this.outerRadius = outerRadius - radiusLength * this._getRingWeightOffset(this.index);
+        this.innerRadius = Math.max(this.outerRadius - radiusLength * chartWeight, 0);
+        this.updateElements(arcs, 0, arcs.length, mode);
+    }
+ _circumference(i, reset) {
+        const opts = this.options;
+        const meta = this._cachedMeta;
+        const circumference = this._getCircumference();
+        if (reset && opts.animation.animateRotate || !this.chart.getDataVisibility(i) || meta._parsed[i] === null || meta.data[i].hidden) {
+            return 0;
+        }
+        return this.calculateCircumference(meta._parsed[i] * circumference / helpers_segment.TAU);
+    }
+    updateElements(arcs, start, count, mode) {
+        const reset = mode === 'reset';
+        const chart = this.chart;
+        const chartArea = chart.chartArea;
+        const opts = chart.options;
+        const animationOpts = opts.animation;
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+        const animateScale = reset && animationOpts.animateScale;
+        const innerRadius = animateScale ? 0 : this.innerRadius;
+        const outerRadius = animateScale ? 0 : this.outerRadius;
+        const { sharedOptions , includeOptions  } = this._getSharedOptions(start, mode);
+        let startAngle = this._getRotation();
+        let i;
+        for(i = 0; i < start; ++i){
+            startAngle += this._circumference(i, reset);
+        }
+        for(i = start; i < start + count; ++i){
+            const circumference = this._circumference(i, reset);
+            const arc = arcs[i];
+            const properties = {
+                x: centerX + this.offsetX,
+                y: centerY + this.offsetY,
+                startAngle,
+                endAngle: startAngle + circumference,
+                circumference,
+                outerRadius,
+                innerRadius
+            };
+            if (includeOptions) {
+                properties.options = sharedOptions || this.resolveDataElementOptions(i, arc.active ? 'active' : mode);
+            }
+            startAngle += circumference;
+            this.updateElement(arc, i, properties, mode);
+        }
+    }
+    calculateTotal() {
+        const meta = this._cachedMeta;
+        const metaData = meta.data;
+        let total = 0;
+        let i;
+        for(i = 0; i < metaData.length; i++){
+            const value = meta._parsed[i];
+            if (value !== null && !isNaN(value) && this.chart.getDataVisibility(i) && !metaData[i].hidden) {
+                total += Math.abs(value);
+            }
+        }
+        return total;
+    }
+    calculateCircumference(value) {
+        const total = this._cachedMeta.total;
+        if (total > 0 && !isNaN(value)) {
+            return helpers_segment.TAU * (Math.abs(value) / total);
+        }
+        return 0;
+    }
+    getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const chart = this.chart;
+        const labels = chart.data.labels || [];
+        const value = helpers_segment.formatNumber(meta._parsed[index], chart.options.locale);
+        return {
+            label: labels[index] || '',
+            value
+        };
+    }
+    getMaxBorderWidth(arcs) {
+        let max = 0;
+        const chart = this.chart;
+        let i, ilen, meta, controller, options;
+        if (!arcs) {
+            for(i = 0, ilen = chart.data.datasets.length; i < ilen; ++i){
+                if (chart.isDatasetVisible(i)) {
+                    meta = chart.getDatasetMeta(i);
+                    arcs = meta.data;
+                    controller = meta.controller;
+                    break;
+                }
+            }
+        }
+        if (!arcs) {
+            return 0;
+        }
+        for(i = 0, ilen = arcs.length; i < ilen; ++i){
+            options = controller.resolveDataElementOptions(i);
+            if (options.borderAlign !== 'inner') {
+                max = Math.max(max, options.borderWidth || 0, options.hoverBorderWidth || 0);
+            }
+        }
+        return max;
+    }
+    getMaxOffset(arcs) {
+        let max = 0;
+        for(let i = 0, ilen = arcs.length; i < ilen; ++i){
+            const options = this.resolveDataElementOptions(i);
+            max = Math.max(max, options.offset || 0, options.hoverOffset || 0);
+        }
+        return max;
+    }
+ _getRingWeightOffset(datasetIndex) {
+        let ringWeightOffset = 0;
+        for(let i = 0; i < datasetIndex; ++i){
+            if (this.chart.isDatasetVisible(i)) {
+                ringWeightOffset += this._getRingWeight(i);
+            }
+        }
+        return ringWeightOffset;
+    }
+ _getRingWeight(datasetIndex) {
+        return Math.max(helpers_segment.valueOrDefault(this.chart.data.datasets[datasetIndex].weight, 1), 0);
+    }
+ _getVisibleDatasetWeightTotal() {
+        return this._getRingWeightOffset(this.chart.data.datasets.length) || 1;
+    }
+}
+
+class LineController extends DatasetController {
+    static id = 'line';
+ static defaults = {
+        datasetElementType: 'line',
+        dataElementType: 'point',
+        showLine: true,
+        spanGaps: false
+    };
+ static overrides = {
+        scales: {
+            _index_: {
+                type: 'category'
+            },
+            _value_: {
+                type: 'linear'
+            }
+        }
+    };
+    initialize() {
+        this.enableOptionSharing = true;
+        this.supportsDecimation = true;
+        super.initialize();
+    }
+    update(mode) {
+        const meta = this._cachedMeta;
+        const { dataset: line , data: points = [] , _dataset  } = meta;
+        const animationsDisabled = this.chart._animationsDisabled;
+        let { start , count  } = helpers_segment._getStartAndCountOfVisiblePoints(meta, points, animationsDisabled);
+        this._drawStart = start;
+        this._drawCount = count;
+        if (helpers_segment._scaleRangesChanged(meta)) {
+            start = 0;
+            count = points.length;
+        }
+        line._chart = this.chart;
+        line._datasetIndex = this.index;
+        line._decimated = !!_dataset._decimated;
+        line.points = points;
+        const options = this.resolveDatasetElementOptions(mode);
+        if (!this.options.showLine) {
+            options.borderWidth = 0;
+        }
+        options.segment = this.options.segment;
+        this.updateElement(line, undefined, {
+            animated: !animationsDisabled,
+            options
+        }, mode);
+        this.updateElements(points, start, count, mode);
+    }
+    updateElements(points, start, count, mode) {
+        const reset = mode === 'reset';
+        const { iScale , vScale , _stacked , _dataset  } = this._cachedMeta;
+        const { sharedOptions , includeOptions  } = this._getSharedOptions(start, mode);
+        const iAxis = iScale.axis;
+        const vAxis = vScale.axis;
+        const { spanGaps , segment  } = this.options;
+        const maxGapLength = helpers_segment.isNumber(spanGaps) ? spanGaps : Number.POSITIVE_INFINITY;
+        const directUpdate = this.chart._animationsDisabled || reset || mode === 'none';
+        const end = start + count;
+        const pointsCount = points.length;
+        let prevParsed = start > 0 && this.getParsed(start - 1);
+        for(let i = 0; i < pointsCount; ++i){
+            const point = points[i];
+            const properties = directUpdate ? point : {};
+            if (i < start || i >= end) {
+                properties.skip = true;
+                continue;
+            }
+            const parsed = this.getParsed(i);
+            const nullData = helpers_segment.isNullOrUndef(parsed[vAxis]);
+            const iPixel = properties[iAxis] = iScale.getPixelForValue(parsed[iAxis], i);
+            const vPixel = properties[vAxis] = reset || nullData ? vScale.getBasePixel() : vScale.getPixelForValue(_stacked ? this.applyStack(vScale, parsed, _stacked) : parsed[vAxis], i);
+            properties.skip = isNaN(iPixel) || isNaN(vPixel) || nullData;
+            properties.stop = i > 0 && Math.abs(parsed[iAxis] - prevParsed[iAxis]) > maxGapLength;
+            if (segment) {
+                properties.parsed = parsed;
+                properties.raw = _dataset.data[i];
+            }
+            if (includeOptions) {
+                properties.options = sharedOptions || this.resolveDataElementOptions(i, point.active ? 'active' : mode);
+            }
+            if (!directUpdate) {
+                this.updateElement(point, i, properties, mode);
+            }
+            prevParsed = parsed;
+        }
+    }
+ getMaxOverflow() {
+        const meta = this._cachedMeta;
+        const dataset = meta.dataset;
+        const border = dataset.options && dataset.options.borderWidth || 0;
+        const data = meta.data || [];
+        if (!data.length) {
+            return border;
+        }
+        const firstPoint = data[0].size(this.resolveDataElementOptions(0));
+        const lastPoint = data[data.length - 1].size(this.resolveDataElementOptions(data.length - 1));
+        return Math.max(border, firstPoint, lastPoint) / 2;
+    }
+    draw() {
+        const meta = this._cachedMeta;
+        meta.dataset.updateControlPoints(this.chart.chartArea, meta.iScale.axis);
+        super.draw();
+    }
+}
+
+class PolarAreaController extends DatasetController {
+    static id = 'polarArea';
+ static defaults = {
+        dataElementType: 'arc',
+        animation: {
+            animateRotate: true,
+            animateScale: true
+        },
+        animations: {
+            numbers: {
+                type: 'number',
+                properties: [
+                    'x',
+                    'y',
+                    'startAngle',
+                    'endAngle',
+                    'innerRadius',
+                    'outerRadius'
+                ]
+            }
+        },
+        indexAxis: 'r',
+        startAngle: 0
+    };
+ static overrides = {
+        aspectRatio: 1,
+        plugins: {
+            legend: {
+                labels: {
+                    generateLabels (chart) {
+                        const data = chart.data;
+                        if (data.labels.length && data.datasets.length) {
+                            const { labels: { pointStyle , color  }  } = chart.legend.options;
+                            return data.labels.map((label, i)=>{
+                                const meta = chart.getDatasetMeta(0);
+                                const style = meta.controller.getStyle(i);
+                                return {
+                                    text: label,
+                                    fillStyle: style.backgroundColor,
+                                    strokeStyle: style.borderColor,
+                                    fontColor: color,
+                                    lineWidth: style.borderWidth,
+                                    pointStyle: pointStyle,
+                                    hidden: !chart.getDataVisibility(i),
+                                    index: i
+                                };
+                            });
+                        }
+                        return [];
+                    }
+                },
+                onClick (e, legendItem, legend) {
+                    legend.chart.toggleDataVisibility(legendItem.index);
+                    legend.chart.update();
+                }
+            }
+        },
+        scales: {
+            r: {
+                type: 'radialLinear',
+                angleLines: {
+                    display: false
+                },
+                beginAtZero: true,
+                grid: {
+                    circular: true
+                },
+                pointLabels: {
+                    display: false
+                },
+                startAngle: 0
+            }
+        }
+    };
+    constructor(chart, datasetIndex){
+        super(chart, datasetIndex);
+        this.innerRadius = undefined;
+        this.outerRadius = undefined;
+    }
+    getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const chart = this.chart;
+        const labels = chart.data.labels || [];
+        const value = helpers_segment.formatNumber(meta._parsed[index].r, chart.options.locale);
+        return {
+            label: labels[index] || '',
+            value
+        };
+    }
+    parseObjectData(meta, data, start, count) {
+        return helpers_segment._parseObjectDataRadialScale.bind(this)(meta, data, start, count);
+    }
+    update(mode) {
+        const arcs = this._cachedMeta.data;
+        this._updateRadius();
+        this.updateElements(arcs, 0, arcs.length, mode);
+    }
+ getMinMax() {
+        const meta = this._cachedMeta;
+        const range = {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
+        };
+        meta.data.forEach((element, index)=>{
+            const parsed = this.getParsed(index).r;
+            if (!isNaN(parsed) && this.chart.getDataVisibility(index)) {
+                if (parsed < range.min) {
+                    range.min = parsed;
+                }
+                if (parsed > range.max) {
+                    range.max = parsed;
+                }
+            }
+        });
+        return range;
+    }
+ _updateRadius() {
+        const chart = this.chart;
+        const chartArea = chart.chartArea;
+        const opts = chart.options;
+        const minSize = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+        const outerRadius = Math.max(minSize / 2, 0);
+        const innerRadius = Math.max(opts.cutoutPercentage ? outerRadius / 100 * opts.cutoutPercentage : 1, 0);
+        const radiusLength = (outerRadius - innerRadius) / chart.getVisibleDatasetCount();
+        this.outerRadius = outerRadius - radiusLength * this.index;
+        this.innerRadius = this.outerRadius - radiusLength;
+    }
+    updateElements(arcs, start, count, mode) {
+        const reset = mode === 'reset';
+        const chart = this.chart;
+        const opts = chart.options;
+        const animationOpts = opts.animation;
+        const scale = this._cachedMeta.rScale;
+        const centerX = scale.xCenter;
+        const centerY = scale.yCenter;
+        const datasetStartAngle = scale.getIndexAngle(0) - 0.5 * helpers_segment.PI;
+        let angle = datasetStartAngle;
+        let i;
+        const defaultAngle = 360 / this.countVisibleElements();
+        for(i = 0; i < start; ++i){
+            angle += this._computeAngle(i, mode, defaultAngle);
+        }
+        for(i = start; i < start + count; i++){
+            const arc = arcs[i];
+            let startAngle = angle;
+            let endAngle = angle + this._computeAngle(i, mode, defaultAngle);
+            let outerRadius = chart.getDataVisibility(i) ? scale.getDistanceFromCenterForValue(this.getParsed(i).r) : 0;
+            angle = endAngle;
+            if (reset) {
+                if (animationOpts.animateScale) {
+                    outerRadius = 0;
+                }
+                if (animationOpts.animateRotate) {
+                    startAngle = endAngle = datasetStartAngle;
+                }
+            }
+            const properties = {
+                x: centerX,
+                y: centerY,
+                innerRadius: 0,
+                outerRadius,
+                startAngle,
+                endAngle,
+                options: this.resolveDataElementOptions(i, arc.active ? 'active' : mode)
+            };
+            this.updateElement(arc, i, properties, mode);
+        }
+    }
+    countVisibleElements() {
+        const meta = this._cachedMeta;
+        let count = 0;
+        meta.data.forEach((element, index)=>{
+            if (!isNaN(this.getParsed(index).r) && this.chart.getDataVisibility(index)) {
+                count++;
+            }
+        });
+        return count;
+    }
+ _computeAngle(index, mode, defaultAngle) {
+        return this.chart.getDataVisibility(index) ? helpers_segment.toRadians(this.resolveDataElementOptions(index, mode).angle || defaultAngle) : 0;
+    }
+}
+
+class PieController extends DoughnutController {
+    static id = 'pie';
+ static defaults = {
+        cutout: 0,
+        rotation: 0,
+        circumference: 360,
+        radius: '100%'
+    };
+}
+
+class RadarController extends DatasetController {
+    static id = 'radar';
+ static defaults = {
+        datasetElementType: 'line',
+        dataElementType: 'point',
+        indexAxis: 'r',
+        showLine: true,
+        elements: {
+            line: {
+                fill: 'start'
+            }
+        }
+    };
+ static overrides = {
+        aspectRatio: 1,
+        scales: {
+            r: {
+                type: 'radialLinear'
+            }
+        }
+    };
+ getLabelAndValue(index) {
+        const vScale = this._cachedMeta.vScale;
+        const parsed = this.getParsed(index);
+        return {
+            label: vScale.getLabels()[index],
+            value: '' + vScale.getLabelForValue(parsed[vScale.axis])
+        };
+    }
+    parseObjectData(meta, data, start, count) {
+        return helpers_segment._parseObjectDataRadialScale.bind(this)(meta, data, start, count);
+    }
+    update(mode) {
+        const meta = this._cachedMeta;
+        const line = meta.dataset;
+        const points = meta.data || [];
+        const labels = meta.iScale.getLabels();
+        line.points = points;
+        if (mode !== 'resize') {
+            const options = this.resolveDatasetElementOptions(mode);
+            if (!this.options.showLine) {
+                options.borderWidth = 0;
+            }
+            const properties = {
+                _loop: true,
+                _fullLoop: labels.length === points.length,
+                options
+            };
+            this.updateElement(line, undefined, properties, mode);
+        }
+        this.updateElements(points, 0, points.length, mode);
+    }
+    updateElements(points, start, count, mode) {
+        const scale = this._cachedMeta.rScale;
+        const reset = mode === 'reset';
+        for(let i = start; i < start + count; i++){
+            const point = points[i];
+            const options = this.resolveDataElementOptions(i, point.active ? 'active' : mode);
+            const pointPosition = scale.getPointPositionForValue(i, this.getParsed(i).r);
+            const x = reset ? scale.xCenter : pointPosition.x;
+            const y = reset ? scale.yCenter : pointPosition.y;
+            const properties = {
+                x,
+                y,
+                angle: pointPosition.angle,
+                skip: isNaN(x) || isNaN(y),
+                options
+            };
+            this.updateElement(point, i, properties, mode);
+        }
+    }
+}
+
+class ScatterController extends DatasetController {
+    static id = 'scatter';
+ static defaults = {
+        datasetElementType: false,
+        dataElementType: 'point',
+        showLine: false,
+        fill: false
+    };
+ static overrides = {
+        interaction: {
+            mode: 'point'
+        },
+        scales: {
+            x: {
+                type: 'linear'
+            },
+            y: {
+                type: 'linear'
+            }
+        }
+    };
+ getLabelAndValue(index) {
+        const meta = this._cachedMeta;
+        const labels = this.chart.data.labels || [];
+        const { xScale , yScale  } = meta;
+        const parsed = this.getParsed(index);
+        const x = xScale.getLabelForValue(parsed.x);
+        const y = yScale.getLabelForValue(parsed.y);
+        return {
+            label: labels[index] || '',
+            value: '(' + x + ', ' + y + ')'
+        };
+    }
+    update(mode) {
+        const meta = this._cachedMeta;
+        const { data: points = []  } = meta;
+        const animationsDisabled = this.chart._animationsDisabled;
+        let { start , count  } = helpers_segment._getStartAndCountOfVisiblePoints(meta, points, animationsDisabled);
+        this._drawStart = start;
+        this._drawCount = count;
+        if (helpers_segment._scaleRangesChanged(meta)) {
+            start = 0;
+            count = points.length;
+        }
+        if (this.options.showLine) {
+            if (!this.datasetElementType) {
+                this.addElements();
+            }
+            const { dataset: line , _dataset  } = meta;
+            line._chart = this.chart;
+            line._datasetIndex = this.index;
+            line._decimated = !!_dataset._decimated;
+            line.points = points;
+            const options = this.resolveDatasetElementOptions(mode);
+            options.segment = this.options.segment;
+            this.updateElement(line, undefined, {
+                animated: !animationsDisabled,
+                options
+            }, mode);
+        } else if (this.datasetElementType) {
+            delete meta.dataset;
+            this.datasetElementType = false;
+        }
+        this.updateElements(points, start, count, mode);
+    }
+    addElements() {
+        const { showLine  } = this.options;
+        if (!this.datasetElementType && showLine) {
+            this.datasetElementType = this.chart.registry.getElement('line');
+        }
+        super.addElements();
+    }
+    updateElements(points, start, count, mode) {
+        const reset = mode === 'reset';
+        const { iScale , vScale , _stacked , _dataset  } = this._cachedMeta;
+        const firstOpts = this.resolveDataElementOptions(start, mode);
+        const sharedOptions = this.getSharedOptions(firstOpts);
+        const includeOptions = this.includeOptions(mode, sharedOptions);
+        const iAxis = iScale.axis;
+        const vAxis = vScale.axis;
+        const { spanGaps , segment  } = this.options;
+        const maxGapLength = helpers_segment.isNumber(spanGaps) ? spanGaps : Number.POSITIVE_INFINITY;
+        const directUpdate = this.chart._animationsDisabled || reset || mode === 'none';
+        let prevParsed = start > 0 && this.getParsed(start - 1);
+        for(let i = start; i < start + count; ++i){
+            const point = points[i];
+            const parsed = this.getParsed(i);
+            const properties = directUpdate ? point : {};
+            const nullData = helpers_segment.isNullOrUndef(parsed[vAxis]);
+            const iPixel = properties[iAxis] = iScale.getPixelForValue(parsed[iAxis], i);
+            const vPixel = properties[vAxis] = reset || nullData ? vScale.getBasePixel() : vScale.getPixelForValue(_stacked ? this.applyStack(vScale, parsed, _stacked) : parsed[vAxis], i);
+            properties.skip = isNaN(iPixel) || isNaN(vPixel) || nullData;
+            properties.stop = i > 0 && Math.abs(parsed[iAxis] - prevParsed[iAxis]) > maxGapLength;
+            if (segment) {
+                properties.parsed = parsed;
+                properties.raw = _dataset.data[i];
+            }
+            if (includeOptions) {
+                properties.options = sharedOptions || this.resolveDataElementOptions(i, point.active ? 'active' : mode);
+            }
+            if (!directUpdate) {
+                this.updateElement(point, i, properties, mode);
+            }
+            prevParsed = parsed;
+        }
+        this.updateSharedOptions(sharedOptions, mode, firstOpts);
+    }
+ getMaxOverflow() {
+        const meta = this._cachedMeta;
+        const data = meta.data || [];
+        if (!this.options.showLine) {
+            let max = 0;
+            for(let i = data.length - 1; i >= 0; --i){
+                max = Math.max(max, data[i].size(this.resolveDataElementOptions(i)) / 2);
+            }
+            return max > 0 && max;
+        }
+        const dataset = meta.dataset;
+        const border = dataset.options && dataset.options.borderWidth || 0;
+        if (!data.length) {
+            return border;
+        }
+        const firstPoint = data[0].size(this.resolveDataElementOptions(0));
+        const lastPoint = data[data.length - 1].size(this.resolveDataElementOptions(data.length - 1));
+        return Math.max(border, firstPoint, lastPoint) / 2;
+    }
+}
+
+var controllers = /*#__PURE__*/Object.freeze({
+__proto__: null,
+BarController: BarController,
+BubbleController: BubbleController,
+DoughnutController: DoughnutController,
+LineController: LineController,
+PieController: PieController,
+PolarAreaController: PolarAreaController,
+RadarController: RadarController,
+ScatterController: ScatterController
+});
+
+/**
+ * @namespace Chart._adapters
+ * @since 2.8.0
+ * @private
+ */ function abstract() {
+    throw new Error('This method is not implemented: Check that a complete date adapter is provided.');
+}
+/**
+ * Date adapter (current used by the time scale)
+ * @namespace Chart._adapters._date
+ * @memberof Chart._adapters
+ * @private
+ */ class DateAdapterBase {
+    /**
+   * Override default date adapter methods.
+   * Accepts type parameter to define options type.
+   * @example
+   * Chart._adapters._date.override<{myAdapterOption: string}>({
+   *   init() {
+   *     console.log(this.options.myAdapterOption);
+   *   }
+   * })
+   */ static override(members) {
+        Object.assign(DateAdapterBase.prototype, members);
+    }
+    options;
+    constructor(options){
+        this.options = options || {};
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    init() {}
+    formats() {
+        return abstract();
+    }
+    parse() {
+        return abstract();
+    }
+    format() {
+        return abstract();
+    }
+    add() {
+        return abstract();
+    }
+    diff() {
+        return abstract();
+    }
+    startOf() {
+        return abstract();
+    }
+    endOf() {
+        return abstract();
+    }
+}
+var adapters = {
+    _date: DateAdapterBase
+};
+
+function binarySearch(metaset, axis, value, intersect) {
+    const { controller , data , _sorted  } = metaset;
+    const iScale = controller._cachedMeta.iScale;
+    const spanGaps = metaset.dataset ? metaset.dataset.options ? metaset.dataset.options.spanGaps : null : null;
+    if (iScale && axis === iScale.axis && axis !== 'r' && _sorted && data.length) {
+        const lookupMethod = iScale._reversePixels ? helpers_segment._rlookupByKey : helpers_segment._lookupByKey;
+        if (!intersect) {
+            const result = lookupMethod(data, axis, value);
+            if (spanGaps) {
+                const { vScale  } = controller._cachedMeta;
+                const { _parsed  } = metaset;
+                const distanceToDefinedLo = _parsed.slice(0, result.lo + 1).reverse().findIndex((point)=>!helpers_segment.isNullOrUndef(point[vScale.axis]));
+                result.lo -= Math.max(0, distanceToDefinedLo);
+                const distanceToDefinedHi = _parsed.slice(result.hi).findIndex((point)=>!helpers_segment.isNullOrUndef(point[vScale.axis]));
+                result.hi += Math.max(0, distanceToDefinedHi);
+            }
+            return result;
+        } else if (controller._sharedOptions) {
+            const el = data[0];
+            const range = typeof el.getRange === 'function' && el.getRange(axis);
+            if (range) {
+                const start = lookupMethod(data, axis, value - range);
+                const end = lookupMethod(data, axis, value + range);
+                return {
+                    lo: start.lo,
+                    hi: end.hi
+                };
+            }
+        }
+    }
+    return {
+        lo: 0,
+        hi: data.length - 1
+    };
+}
+ function evaluateInteractionItems(chart, axis, position, handler, intersect) {
+    const metasets = chart.getSortedVisibleDatasetMetas();
+    const value = position[axis];
+    for(let i = 0, ilen = metasets.length; i < ilen; ++i){
+        const { index , data  } = metasets[i];
+        const { lo , hi  } = binarySearch(metasets[i], axis, value, intersect);
+        for(let j = lo; j <= hi; ++j){
+            const element = data[j];
+            if (!element.skip) {
+                handler(element, index, j);
+            }
+        }
+    }
+}
+ function getDistanceMetricForAxis(axis) {
+    const useX = axis.indexOf('x') !== -1;
+    const useY = axis.indexOf('y') !== -1;
+    return function(pt1, pt2) {
+        const deltaX = useX ? Math.abs(pt1.x - pt2.x) : 0;
+        const deltaY = useY ? Math.abs(pt1.y - pt2.y) : 0;
+        return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+    };
+}
+ function getIntersectItems(chart, position, axis, useFinalPosition, includeInvisible) {
+    const items = [];
+    if (!includeInvisible && !chart.isPointInArea(position)) {
+        return items;
+    }
+    const evaluationFunc = function(element, datasetIndex, index) {
+        if (!includeInvisible && !helpers_segment._isPointInArea(element, chart.chartArea, 0)) {
+            return;
+        }
+        if (element.inRange(position.x, position.y, useFinalPosition)) {
+            items.push({
+                element,
+                datasetIndex,
+                index
+            });
+        }
+    };
+    evaluateInteractionItems(chart, axis, position, evaluationFunc, true);
+    return items;
+}
+ function getNearestRadialItems(chart, position, axis, useFinalPosition) {
+    let items = [];
+    function evaluationFunc(element, datasetIndex, index) {
+        const { startAngle , endAngle  } = element.getProps([
+            'startAngle',
+            'endAngle'
+        ], useFinalPosition);
+        const { angle  } = helpers_segment.getAngleFromPoint(element, {
+            x: position.x,
+            y: position.y
+        });
+        if (helpers_segment._angleBetween(angle, startAngle, endAngle)) {
+            items.push({
+                element,
+                datasetIndex,
+                index
+            });
+        }
+    }
+    evaluateInteractionItems(chart, axis, position, evaluationFunc);
+    return items;
+}
+ function getNearestCartesianItems(chart, position, axis, intersect, useFinalPosition, includeInvisible) {
+    let items = [];
+    const distanceMetric = getDistanceMetricForAxis(axis);
+    let minDistance = Number.POSITIVE_INFINITY;
+    function evaluationFunc(element, datasetIndex, index) {
+        const inRange = element.inRange(position.x, position.y, useFinalPosition);
+        if (intersect && !inRange) {
+            return;
+        }
+        const center = element.getCenterPoint(useFinalPosition);
+        const pointInArea = !!includeInvisible || chart.isPointInArea(center);
+        if (!pointInArea && !inRange) {
+            return;
+        }
+        const distance = distanceMetric(position, center);
+        if (distance < minDistance) {
+            items = [
+                {
+                    element,
+                    datasetIndex,
+                    index
+                }
+            ];
+            minDistance = distance;
+        } else if (distance === minDistance) {
+            items.push({
+                element,
+                datasetIndex,
+                index
+            });
+        }
+    }
+    evaluateInteractionItems(chart, axis, position, evaluationFunc);
+    return items;
+}
+ function getNearestItems(chart, position, axis, intersect, useFinalPosition, includeInvisible) {
+    if (!includeInvisible && !chart.isPointInArea(position)) {
+        return [];
+    }
+    return axis === 'r' && !intersect ? getNearestRadialItems(chart, position, axis, useFinalPosition) : getNearestCartesianItems(chart, position, axis, intersect, useFinalPosition, includeInvisible);
+}
+ function getAxisItems(chart, position, axis, intersect, useFinalPosition) {
+    const items = [];
+    const rangeMethod = axis === 'x' ? 'inXRange' : 'inYRange';
+    let intersectsItem = false;
+    evaluateInteractionItems(chart, axis, position, (element, datasetIndex, index)=>{
+        if (element[rangeMethod] && element[rangeMethod](position[axis], useFinalPosition)) {
+            items.push({
+                element,
+                datasetIndex,
+                index
+            });
+            intersectsItem = intersectsItem || element.inRange(position.x, position.y, useFinalPosition);
+        }
+    });
+    if (intersect && !intersectsItem) {
+        return [];
+    }
+    return items;
+}
+ var Interaction = {
+    evaluateInteractionItems,
+    modes: {
+ index (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            const axis = options.axis || 'x';
+            const includeInvisible = options.includeInvisible || false;
+            const items = options.intersect ? getIntersectItems(chart, position, axis, useFinalPosition, includeInvisible) : getNearestItems(chart, position, axis, false, useFinalPosition, includeInvisible);
+            const elements = [];
+            if (!items.length) {
+                return [];
+            }
+            chart.getSortedVisibleDatasetMetas().forEach((meta)=>{
+                const index = items[0].index;
+                const element = meta.data[index];
+                if (element && !element.skip) {
+                    elements.push({
+                        element,
+                        datasetIndex: meta.index,
+                        index
+                    });
+                }
+            });
+            return elements;
+        },
+ dataset (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            const axis = options.axis || 'xy';
+            const includeInvisible = options.includeInvisible || false;
+            let items = options.intersect ? getIntersectItems(chart, position, axis, useFinalPosition, includeInvisible) : getNearestItems(chart, position, axis, false, useFinalPosition, includeInvisible);
+            if (items.length > 0) {
+                const datasetIndex = items[0].datasetIndex;
+                const data = chart.getDatasetMeta(datasetIndex).data;
+                items = [];
+                for(let i = 0; i < data.length; ++i){
+                    items.push({
+                        element: data[i],
+                        datasetIndex,
+                        index: i
+                    });
+                }
+            }
+            return items;
+        },
+ point (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            const axis = options.axis || 'xy';
+            const includeInvisible = options.includeInvisible || false;
+            return getIntersectItems(chart, position, axis, useFinalPosition, includeInvisible);
+        },
+ nearest (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            const axis = options.axis || 'xy';
+            const includeInvisible = options.includeInvisible || false;
+            return getNearestItems(chart, position, axis, options.intersect, useFinalPosition, includeInvisible);
+        },
+ x (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            return getAxisItems(chart, position, 'x', options.intersect, useFinalPosition);
+        },
+ y (chart, e, options, useFinalPosition) {
+            const position = helpers_segment.getRelativePosition(e, chart);
+            return getAxisItems(chart, position, 'y', options.intersect, useFinalPosition);
+        }
+    }
+};
+
+const STATIC_POSITIONS = [
+    'left',
+    'top',
+    'right',
+    'bottom'
+];
+function filterByPosition(array, position) {
+    return array.filter((v)=>v.pos === position);
+}
+function filterDynamicPositionByAxis(array, axis) {
+    return array.filter((v)=>STATIC_POSITIONS.indexOf(v.pos) === -1 && v.box.axis === axis);
+}
+function sortByWeight(array, reverse) {
+    return array.sort((a, b)=>{
+        const v0 = reverse ? b : a;
+        const v1 = reverse ? a : b;
+        return v0.weight === v1.weight ? v0.index - v1.index : v0.weight - v1.weight;
+    });
+}
+function wrapBoxes(boxes) {
+    const layoutBoxes = [];
+    let i, ilen, box, pos, stack, stackWeight;
+    for(i = 0, ilen = (boxes || []).length; i < ilen; ++i){
+        box = boxes[i];
+        ({ position: pos , options: { stack , stackWeight =1  }  } = box);
+        layoutBoxes.push({
+            index: i,
+            box,
+            pos,
+            horizontal: box.isHorizontal(),
+            weight: box.weight,
+            stack: stack && pos + stack,
+            stackWeight
+        });
+    }
+    return layoutBoxes;
+}
+function buildStacks(layouts) {
+    const stacks = {};
+    for (const wrap of layouts){
+        const { stack , pos , stackWeight  } = wrap;
+        if (!stack || !STATIC_POSITIONS.includes(pos)) {
+            continue;
+        }
+        const _stack = stacks[stack] || (stacks[stack] = {
+            count: 0,
+            placed: 0,
+            weight: 0,
+            size: 0
+        });
+        _stack.count++;
+        _stack.weight += stackWeight;
+    }
+    return stacks;
+}
+ function setLayoutDims(layouts, params) {
+    const stacks = buildStacks(layouts);
+    const { vBoxMaxWidth , hBoxMaxHeight  } = params;
+    let i, ilen, layout;
+    for(i = 0, ilen = layouts.length; i < ilen; ++i){
+        layout = layouts[i];
+        const { fullSize  } = layout.box;
+        const stack = stacks[layout.stack];
+        const factor = stack && layout.stackWeight / stack.weight;
+        if (layout.horizontal) {
+            layout.width = factor ? factor * vBoxMaxWidth : fullSize && params.availableWidth;
+            layout.height = hBoxMaxHeight;
+        } else {
+            layout.width = vBoxMaxWidth;
+            layout.height = factor ? factor * hBoxMaxHeight : fullSize && params.availableHeight;
+        }
+    }
+    return stacks;
+}
+function buildLayoutBoxes(boxes) {
+    const layoutBoxes = wrapBoxes(boxes);
+    const fullSize = sortByWeight(layoutBoxes.filter((wrap)=>wrap.box.fullSize), true);
+    const left = sortByWeight(filterByPosition(layoutBoxes, 'left'), true);
+    const right = sortByWeight(filterByPosition(layoutBoxes, 'right'));
+    const top = sortByWeight(filterByPosition(layoutBoxes, 'top'), true);
+    const bottom = sortByWeight(filterByPosition(layoutBoxes, 'bottom'));
+    const centerHorizontal = filterDynamicPositionByAxis(layoutBoxes, 'x');
+    const centerVertical = filterDynamicPositionByAxis(layoutBoxes, 'y');
+    return {
+        fullSize,
+        leftAndTop: left.concat(top),
+        rightAndBottom: right.concat(centerVertical).concat(bottom).concat(centerHorizontal),
+        chartArea: filterByPosition(layoutBoxes, 'chartArea'),
+        vertical: left.concat(right).concat(centerVertical),
+        horizontal: top.concat(bottom).concat(centerHorizontal)
+    };
+}
+function getCombinedMax(maxPadding, chartArea, a, b) {
+    return Math.max(maxPadding[a], chartArea[a]) + Math.max(maxPadding[b], chartArea[b]);
+}
+function updateMaxPadding(maxPadding, boxPadding) {
+    maxPadding.top = Math.max(maxPadding.top, boxPadding.top);
+    maxPadding.left = Math.max(maxPadding.left, boxPadding.left);
+    maxPadding.bottom = Math.max(maxPadding.bottom, boxPadding.bottom);
+    maxPadding.right = Math.max(maxPadding.right, boxPadding.right);
+}
+function updateDims(chartArea, params, layout, stacks) {
+    const { pos , box  } = layout;
+    const maxPadding = chartArea.maxPadding;
+    if (!helpers_segment.isObject(pos)) {
+        if (layout.size) {
+            chartArea[pos] -= layout.size;
+        }
+        const stack = stacks[layout.stack] || {
+            size: 0,
+            count: 1
+        };
+        stack.size = Math.max(stack.size, layout.horizontal ? box.height : box.width);
+        layout.size = stack.size / stack.count;
+        chartArea[pos] += layout.size;
+    }
+    if (box.getPadding) {
+        updateMaxPadding(maxPadding, box.getPadding());
+    }
+    const newWidth = Math.max(0, params.outerWidth - getCombinedMax(maxPadding, chartArea, 'left', 'right'));
+    const newHeight = Math.max(0, params.outerHeight - getCombinedMax(maxPadding, chartArea, 'top', 'bottom'));
+    const widthChanged = newWidth !== chartArea.w;
+    const heightChanged = newHeight !== chartArea.h;
+    chartArea.w = newWidth;
+    chartArea.h = newHeight;
+    return layout.horizontal ? {
+        same: widthChanged,
+        other: heightChanged
+    } : {
+        same: heightChanged,
+        other: widthChanged
+    };
+}
+function handleMaxPadding(chartArea) {
+    const maxPadding = chartArea.maxPadding;
+    function updatePos(pos) {
+        const change = Math.max(maxPadding[pos] - chartArea[pos], 0);
+        chartArea[pos] += change;
+        return change;
+    }
+    chartArea.y += updatePos('top');
+    chartArea.x += updatePos('left');
+    updatePos('right');
+    updatePos('bottom');
+}
+function getMargins(horizontal, chartArea) {
+    const maxPadding = chartArea.maxPadding;
+    function marginForPositions(positions) {
+        const margin = {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0
+        };
+        positions.forEach((pos)=>{
+            margin[pos] = Math.max(chartArea[pos], maxPadding[pos]);
+        });
+        return margin;
+    }
+    return horizontal ? marginForPositions([
+        'left',
+        'right'
+    ]) : marginForPositions([
+        'top',
+        'bottom'
+    ]);
+}
+function fitBoxes(boxes, chartArea, params, stacks) {
+    const refitBoxes = [];
+    let i, ilen, layout, box, refit, changed;
+    for(i = 0, ilen = boxes.length, refit = 0; i < ilen; ++i){
+        layout = boxes[i];
+        box = layout.box;
+        box.update(layout.width || chartArea.w, layout.height || chartArea.h, getMargins(layout.horizontal, chartArea));
+        const { same , other  } = updateDims(chartArea, params, layout, stacks);
+        refit |= same && refitBoxes.length;
+        changed = changed || other;
+        if (!box.fullSize) {
+            refitBoxes.push(layout);
+        }
+    }
+    return refit && fitBoxes(refitBoxes, chartArea, params, stacks) || changed;
+}
+function setBoxDims(box, left, top, width, height) {
+    box.top = top;
+    box.left = left;
+    box.right = left + width;
+    box.bottom = top + height;
+    box.width = width;
+    box.height = height;
+}
+function placeBoxes(boxes, chartArea, params, stacks) {
+    const userPadding = params.padding;
+    let { x , y  } = chartArea;
+    for (const layout of boxes){
+        const box = layout.box;
+        const stack = stacks[layout.stack] || {
+            count: 1,
+            placed: 0,
+            weight: 1
+        };
+        const weight = layout.stackWeight / stack.weight || 1;
+        if (layout.horizontal) {
+            const width = chartArea.w * weight;
+            const height = stack.size || box.height;
+            if (helpers_segment.defined(stack.start)) {
+                y = stack.start;
+            }
+            if (box.fullSize) {
+                setBoxDims(box, userPadding.left, y, params.outerWidth - userPadding.right - userPadding.left, height);
+            } else {
+                setBoxDims(box, chartArea.left + stack.placed, y, width, height);
+            }
+            stack.start = y;
+            stack.placed += width;
+            y = box.bottom;
+        } else {
+            const height = chartArea.h * weight;
+            const width = stack.size || box.width;
+            if (helpers_segment.defined(stack.start)) {
+                x = stack.start;
+            }
+            if (box.fullSize) {
+                setBoxDims(box, x, userPadding.top, width, params.outerHeight - userPadding.bottom - userPadding.top);
+            } else {
+                setBoxDims(box, x, chartArea.top + stack.placed, width, height);
+            }
+            stack.start = x;
+            stack.placed += height;
+            x = box.right;
+        }
+    }
+    chartArea.x = x;
+    chartArea.y = y;
+}
+var layouts = {
+ addBox (chart, item) {
+        if (!chart.boxes) {
+            chart.boxes = [];
+        }
+        item.fullSize = item.fullSize || false;
+        item.position = item.position || 'top';
+        item.weight = item.weight || 0;
+        item._layers = item._layers || function() {
+            return [
+                {
+                    z: 0,
+                    draw (chartArea) {
+                        item.draw(chartArea);
+                    }
+                }
+            ];
+        };
+        chart.boxes.push(item);
+    },
+ removeBox (chart, layoutItem) {
+        const index = chart.boxes ? chart.boxes.indexOf(layoutItem) : -1;
+        if (index !== -1) {
+            chart.boxes.splice(index, 1);
+        }
+    },
+ configure (chart, item, options) {
+        item.fullSize = options.fullSize;
+        item.position = options.position;
+        item.weight = options.weight;
+    },
+ update (chart, width, height, minPadding) {
+        if (!chart) {
+            return;
+        }
+        const padding = helpers_segment.toPadding(chart.options.layout.padding);
+        const availableWidth = Math.max(width - padding.width, 0);
+        const availableHeight = Math.max(height - padding.height, 0);
+        const boxes = buildLayoutBoxes(chart.boxes);
+        const verticalBoxes = boxes.vertical;
+        const horizontalBoxes = boxes.horizontal;
+        helpers_segment.each(chart.boxes, (box)=>{
+            if (typeof box.beforeLayout === 'function') {
+                box.beforeLayout();
+            }
+        });
+        const visibleVerticalBoxCount = verticalBoxes.reduce((total, wrap)=>wrap.box.options && wrap.box.options.display === false ? total : total + 1, 0) || 1;
+        const params = Object.freeze({
+            outerWidth: width,
+            outerHeight: height,
+            padding,
+            availableWidth,
+            availableHeight,
+            vBoxMaxWidth: availableWidth / 2 / visibleVerticalBoxCount,
+            hBoxMaxHeight: availableHeight / 2
+        });
+        const maxPadding = Object.assign({}, padding);
+        updateMaxPadding(maxPadding, helpers_segment.toPadding(minPadding));
+        const chartArea = Object.assign({
+            maxPadding,
+            w: availableWidth,
+            h: availableHeight,
+            x: padding.left,
+            y: padding.top
+        }, padding);
+        const stacks = setLayoutDims(verticalBoxes.concat(horizontalBoxes), params);
+        fitBoxes(boxes.fullSize, chartArea, params, stacks);
+        fitBoxes(verticalBoxes, chartArea, params, stacks);
+        if (fitBoxes(horizontalBoxes, chartArea, params, stacks)) {
+            fitBoxes(verticalBoxes, chartArea, params, stacks);
+        }
+        handleMaxPadding(chartArea);
+        placeBoxes(boxes.leftAndTop, chartArea, params, stacks);
+        chartArea.x += chartArea.w;
+        chartArea.y += chartArea.h;
+        placeBoxes(boxes.rightAndBottom, chartArea, params, stacks);
+        chart.chartArea = {
+            left: chartArea.left,
+            top: chartArea.top,
+            right: chartArea.left + chartArea.w,
+            bottom: chartArea.top + chartArea.h,
+            height: chartArea.h,
+            width: chartArea.w
+        };
+        helpers_segment.each(boxes.chartArea, (layout)=>{
+            const box = layout.box;
+            Object.assign(box, chart.chartArea);
+            box.update(chartArea.w, chartArea.h, {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0
+            });
+        });
+    }
+};
+
+class BasePlatform {
+ acquireContext(canvas, aspectRatio) {}
+ releaseContext(context) {
+        return false;
+    }
+ addEventListener(chart, type, listener) {}
+ removeEventListener(chart, type, listener) {}
+ getDevicePixelRatio() {
+        return 1;
+    }
+ getMaximumSize(element, width, height, aspectRatio) {
+        width = Math.max(0, width || element.width);
+        height = height || element.height;
+        return {
+            width,
+            height: Math.max(0, aspectRatio ? Math.floor(width / aspectRatio) : height)
+        };
+    }
+ isAttached(canvas) {
+        return true;
+    }
+ updateConfig(config) {
+    }
+}
+
+class BasicPlatform extends BasePlatform {
+    acquireContext(item) {
+        return item && item.getContext && item.getContext('2d') || null;
+    }
+    updateConfig(config) {
+        config.options.animation = false;
+    }
+}
+
+const EXPANDO_KEY = '$chartjs';
+ const EVENT_TYPES = {
+    touchstart: 'mousedown',
+    touchmove: 'mousemove',
+    touchend: 'mouseup',
+    pointerenter: 'mouseenter',
+    pointerdown: 'mousedown',
+    pointermove: 'mousemove',
+    pointerup: 'mouseup',
+    pointerleave: 'mouseout',
+    pointerout: 'mouseout'
+};
+const isNullOrEmpty = (value)=>value === null || value === '';
+ function initCanvas(canvas, aspectRatio) {
+    const style = canvas.style;
+    const renderHeight = canvas.getAttribute('height');
+    const renderWidth = canvas.getAttribute('width');
+    canvas[EXPANDO_KEY] = {
+        initial: {
+            height: renderHeight,
+            width: renderWidth,
+            style: {
+                display: style.display,
+                height: style.height,
+                width: style.width
+            }
+        }
+    };
+    style.display = style.display || 'block';
+    style.boxSizing = style.boxSizing || 'border-box';
+    if (isNullOrEmpty(renderWidth)) {
+        const displayWidth = helpers_segment.readUsedSize(canvas, 'width');
+        if (displayWidth !== undefined) {
+            canvas.width = displayWidth;
+        }
+    }
+    if (isNullOrEmpty(renderHeight)) {
+        if (canvas.style.height === '') {
+            canvas.height = canvas.width / (aspectRatio || 2);
+        } else {
+            const displayHeight = helpers_segment.readUsedSize(canvas, 'height');
+            if (displayHeight !== undefined) {
+                canvas.height = displayHeight;
+            }
+        }
+    }
+    return canvas;
+}
+const eventListenerOptions = helpers_segment.supportsEventListenerOptions ? {
+    passive: true
+} : false;
+function addListener(node, type, listener) {
+    if (node) {
+        node.addEventListener(type, listener, eventListenerOptions);
+    }
+}
+function removeListener(chart, type, listener) {
+    if (chart && chart.canvas) {
+        chart.canvas.removeEventListener(type, listener, eventListenerOptions);
+    }
+}
+function fromNativeEvent(event, chart) {
+    const type = EVENT_TYPES[event.type] || event.type;
+    const { x , y  } = helpers_segment.getRelativePosition(event, chart);
+    return {
+        type,
+        chart,
+        native: event,
+        x: x !== undefined ? x : null,
+        y: y !== undefined ? y : null
+    };
+}
+function nodeListContains(nodeList, canvas) {
+    for (const node of nodeList){
+        if (node === canvas || node.contains(canvas)) {
+            return true;
+        }
+    }
+}
+function createAttachObserver(chart, type, listener) {
+    const canvas = chart.canvas;
+    const observer = new MutationObserver((entries)=>{
+        let trigger = false;
+        for (const entry of entries){
+            trigger = trigger || nodeListContains(entry.addedNodes, canvas);
+            trigger = trigger && !nodeListContains(entry.removedNodes, canvas);
+        }
+        if (trigger) {
+            listener();
+        }
+    });
+    observer.observe(document, {
+        childList: true,
+        subtree: true
+    });
+    return observer;
+}
+function createDetachObserver(chart, type, listener) {
+    const canvas = chart.canvas;
+    const observer = new MutationObserver((entries)=>{
+        let trigger = false;
+        for (const entry of entries){
+            trigger = trigger || nodeListContains(entry.removedNodes, canvas);
+            trigger = trigger && !nodeListContains(entry.addedNodes, canvas);
+        }
+        if (trigger) {
+            listener();
+        }
+    });
+    observer.observe(document, {
+        childList: true,
+        subtree: true
+    });
+    return observer;
+}
+const drpListeningCharts = new Map();
+let oldDevicePixelRatio = 0;
+function onWindowResize() {
+    const dpr = window.devicePixelRatio;
+    if (dpr === oldDevicePixelRatio) {
+        return;
+    }
+    oldDevicePixelRatio = dpr;
+    drpListeningCharts.forEach((resize, chart)=>{
+        if (chart.currentDevicePixelRatio !== dpr) {
+            resize();
+        }
+    });
+}
+function listenDevicePixelRatioChanges(chart, resize) {
+    if (!drpListeningCharts.size) {
+        window.addEventListener('resize', onWindowResize);
+    }
+    drpListeningCharts.set(chart, resize);
+}
+function unlistenDevicePixelRatioChanges(chart) {
+    drpListeningCharts.delete(chart);
+    if (!drpListeningCharts.size) {
+        window.removeEventListener('resize', onWindowResize);
+    }
+}
+function createResizeObserver(chart, type, listener) {
+    const canvas = chart.canvas;
+    const container = canvas && helpers_segment._getParentNode(canvas);
+    if (!container) {
+        return;
+    }
+    const resize = helpers_segment.throttled((width, height)=>{
+        const w = container.clientWidth;
+        listener(width, height);
+        if (w < container.clientWidth) {
+            listener();
+        }
+    }, window);
+    const observer = new ResizeObserver((entries)=>{
+        const entry = entries[0];
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+        if (width === 0 && height === 0) {
+            return;
+        }
+        resize(width, height);
+    });
+    observer.observe(container);
+    listenDevicePixelRatioChanges(chart, resize);
+    return observer;
+}
+function releaseObserver(chart, type, observer) {
+    if (observer) {
+        observer.disconnect();
+    }
+    if (type === 'resize') {
+        unlistenDevicePixelRatioChanges(chart);
+    }
+}
+function createProxyAndListen(chart, type, listener) {
+    const canvas = chart.canvas;
+    const proxy = helpers_segment.throttled((event)=>{
+        if (chart.ctx !== null) {
+            listener(fromNativeEvent(event, chart));
+        }
+    }, chart);
+    addListener(canvas, type, proxy);
+    return proxy;
+}
+ class DomPlatform extends BasePlatform {
+ acquireContext(canvas, aspectRatio) {
+        const context = canvas && canvas.getContext && canvas.getContext('2d');
+        if (context && context.canvas === canvas) {
+            initCanvas(canvas, aspectRatio);
+            return context;
+        }
+        return null;
+    }
+ releaseContext(context) {
+        const canvas = context.canvas;
+        if (!canvas[EXPANDO_KEY]) {
+            return false;
+        }
+        const initial = canvas[EXPANDO_KEY].initial;
+        [
+            'height',
+            'width'
+        ].forEach((prop)=>{
+            const value = initial[prop];
+            if (helpers_segment.isNullOrUndef(value)) {
+                canvas.removeAttribute(prop);
+            } else {
+                canvas.setAttribute(prop, value);
+            }
+        });
+        const style = initial.style || {};
+        Object.keys(style).forEach((key)=>{
+            canvas.style[key] = style[key];
+        });
+        canvas.width = canvas.width;
+        delete canvas[EXPANDO_KEY];
+        return true;
+    }
+ addEventListener(chart, type, listener) {
+        this.removeEventListener(chart, type);
+        const proxies = chart.$proxies || (chart.$proxies = {});
+        const handlers = {
+            attach: createAttachObserver,
+            detach: createDetachObserver,
+            resize: createResizeObserver
+        };
+        const handler = handlers[type] || createProxyAndListen;
+        proxies[type] = handler(chart, type, listener);
+    }
+ removeEventListener(chart, type) {
+        const proxies = chart.$proxies || (chart.$proxies = {});
+        const proxy = proxies[type];
+        if (!proxy) {
+            return;
+        }
+        const handlers = {
+            attach: releaseObserver,
+            detach: releaseObserver,
+            resize: releaseObserver
+        };
+        const handler = handlers[type] || removeListener;
+        handler(chart, type, proxy);
+        proxies[type] = undefined;
+    }
+    getDevicePixelRatio() {
+        return window.devicePixelRatio;
+    }
+ getMaximumSize(canvas, width, height, aspectRatio) {
+        return helpers_segment.getMaximumSize(canvas, width, height, aspectRatio);
+    }
+ isAttached(canvas) {
+        const container = canvas && helpers_segment._getParentNode(canvas);
+        return !!(container && container.isConnected);
+    }
+}
+
+function _detectPlatform(canvas) {
+    if (!helpers_segment._isDomSupported() || typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+        return BasicPlatform;
+    }
+    return DomPlatform;
+}
+
+class Element {
+    static defaults = {};
+    static defaultRoutes = undefined;
+    x;
+    y;
+    active = false;
+    options;
+    $animations;
+    tooltipPosition(useFinalPosition) {
+        const { x , y  } = this.getProps([
+            'x',
+            'y'
+        ], useFinalPosition);
+        return {
+            x,
+            y
+        };
+    }
+    hasValue() {
+        return helpers_segment.isNumber(this.x) && helpers_segment.isNumber(this.y);
+    }
+    getProps(props, final) {
+        const anims = this.$animations;
+        if (!final || !anims) {
+            // let's not create an object, if not needed
+            return this;
+        }
+        const ret = {};
+        props.forEach((prop)=>{
+            ret[prop] = anims[prop] && anims[prop].active() ? anims[prop]._to : this[prop];
+        });
+        return ret;
+    }
+}
+
+function autoSkip(scale, ticks) {
+    const tickOpts = scale.options.ticks;
+    const determinedMaxTicks = determineMaxTicks(scale);
+    const ticksLimit = Math.min(tickOpts.maxTicksLimit || determinedMaxTicks, determinedMaxTicks);
+    const majorIndices = tickOpts.major.enabled ? getMajorIndices(ticks) : [];
+    const numMajorIndices = majorIndices.length;
+    const first = majorIndices[0];
+    const last = majorIndices[numMajorIndices - 1];
+    const newTicks = [];
+    if (numMajorIndices > ticksLimit) {
+        skipMajors(ticks, newTicks, majorIndices, numMajorIndices / ticksLimit);
+        return newTicks;
+    }
+    const spacing = calculateSpacing(majorIndices, ticks, ticksLimit);
+    if (numMajorIndices > 0) {
+        let i, ilen;
+        const avgMajorSpacing = numMajorIndices > 1 ? Math.round((last - first) / (numMajorIndices - 1)) : null;
+        skip(ticks, newTicks, spacing, helpers_segment.isNullOrUndef(avgMajorSpacing) ? 0 : first - avgMajorSpacing, first);
+        for(i = 0, ilen = numMajorIndices - 1; i < ilen; i++){
+            skip(ticks, newTicks, spacing, majorIndices[i], majorIndices[i + 1]);
+        }
+        skip(ticks, newTicks, spacing, last, helpers_segment.isNullOrUndef(avgMajorSpacing) ? ticks.length : last + avgMajorSpacing);
+        return newTicks;
+    }
+    skip(ticks, newTicks, spacing);
+    return newTicks;
+}
+function determineMaxTicks(scale) {
+    const offset = scale.options.offset;
+    const tickLength = scale._tickSize();
+    const maxScale = scale._length / tickLength + (offset ? 0 : 1);
+    const maxChart = scale._maxLength / tickLength;
+    return Math.floor(Math.min(maxScale, maxChart));
+}
+ function calculateSpacing(majorIndices, ticks, ticksLimit) {
+    const evenMajorSpacing = getEvenSpacing(majorIndices);
+    const spacing = ticks.length / ticksLimit;
+    if (!evenMajorSpacing) {
+        return Math.max(spacing, 1);
+    }
+    const factors = helpers_segment._factorize(evenMajorSpacing);
+    for(let i = 0, ilen = factors.length - 1; i < ilen; i++){
+        const factor = factors[i];
+        if (factor > spacing) {
+            return factor;
+        }
+    }
+    return Math.max(spacing, 1);
+}
+ function getMajorIndices(ticks) {
+    const result = [];
+    let i, ilen;
+    for(i = 0, ilen = ticks.length; i < ilen; i++){
+        if (ticks[i].major) {
+            result.push(i);
+        }
+    }
+    return result;
+}
+ function skipMajors(ticks, newTicks, majorIndices, spacing) {
+    let count = 0;
+    let next = majorIndices[0];
+    let i;
+    spacing = Math.ceil(spacing);
+    for(i = 0; i < ticks.length; i++){
+        if (i === next) {
+            newTicks.push(ticks[i]);
+            count++;
+            next = majorIndices[count * spacing];
+        }
+    }
+}
+ function skip(ticks, newTicks, spacing, majorStart, majorEnd) {
+    const start = helpers_segment.valueOrDefault(majorStart, 0);
+    const end = Math.min(helpers_segment.valueOrDefault(majorEnd, ticks.length), ticks.length);
+    let count = 0;
+    let length, i, next;
+    spacing = Math.ceil(spacing);
+    if (majorEnd) {
+        length = majorEnd - majorStart;
+        spacing = length / Math.floor(length / spacing);
+    }
+    next = start;
+    while(next < 0){
+        count++;
+        next = Math.round(start + count * spacing);
+    }
+    for(i = Math.max(start, 0); i < end; i++){
+        if (i === next) {
+            newTicks.push(ticks[i]);
+            count++;
+            next = Math.round(start + count * spacing);
+        }
+    }
+}
+ function getEvenSpacing(arr) {
+    const len = arr.length;
+    let i, diff;
+    if (len < 2) {
+        return false;
+    }
+    for(diff = arr[0], i = 1; i < len; ++i){
+        if (arr[i] - arr[i - 1] !== diff) {
+            return false;
+        }
+    }
+    return diff;
+}
+
+const reverseAlign = (align)=>align === 'left' ? 'right' : align === 'right' ? 'left' : align;
+const offsetFromEdge = (scale, edge, offset)=>edge === 'top' || edge === 'left' ? scale[edge] + offset : scale[edge] - offset;
+const getTicksLimit = (ticksLength, maxTicksLimit)=>Math.min(maxTicksLimit || ticksLength, ticksLength);
+ function sample(arr, numItems) {
+    const result = [];
+    const increment = arr.length / numItems;
+    const len = arr.length;
+    let i = 0;
+    for(; i < len; i += increment){
+        result.push(arr[Math.floor(i)]);
+    }
+    return result;
+}
+ function getPixelForGridLine(scale, index, offsetGridLines) {
+    const length = scale.ticks.length;
+    const validIndex = Math.min(index, length - 1);
+    const start = scale._startPixel;
+    const end = scale._endPixel;
+    const epsilon = 1e-6;
+    let lineValue = scale.getPixelForTick(validIndex);
+    let offset;
+    if (offsetGridLines) {
+        if (length === 1) {
+            offset = Math.max(lineValue - start, end - lineValue);
+        } else if (index === 0) {
+            offset = (scale.getPixelForTick(1) - lineValue) / 2;
+        } else {
+            offset = (lineValue - scale.getPixelForTick(validIndex - 1)) / 2;
+        }
+        lineValue += validIndex < index ? offset : -offset;
+        if (lineValue < start - epsilon || lineValue > end + epsilon) {
+            return;
+        }
+    }
+    return lineValue;
+}
+ function garbageCollect(caches, length) {
+    helpers_segment.each(caches, (cache)=>{
+        const gc = cache.gc;
+        const gcLen = gc.length / 2;
+        let i;
+        if (gcLen > length) {
+            for(i = 0; i < gcLen; ++i){
+                delete cache.data[gc[i]];
+            }
+            gc.splice(0, gcLen);
+        }
+    });
+}
+ function getTickMarkLength(options) {
+    return options.drawTicks ? options.tickLength : 0;
+}
+ function getTitleHeight(options, fallback) {
+    if (!options.display) {
+        return 0;
+    }
+    const font = helpers_segment.toFont(options.font, fallback);
+    const padding = helpers_segment.toPadding(options.padding);
+    const lines = helpers_segment.isArray(options.text) ? options.text.length : 1;
+    return lines * font.lineHeight + padding.height;
+}
+function createScaleContext(parent, scale) {
+    return helpers_segment.createContext(parent, {
+        scale,
+        type: 'scale'
+    });
+}
+function createTickContext(parent, index, tick) {
+    return helpers_segment.createContext(parent, {
+        tick,
+        index,
+        type: 'tick'
+    });
+}
+function titleAlign(align, position, reverse) {
+     let ret = helpers_segment._toLeftRightCenter(align);
+    if (reverse && position !== 'right' || !reverse && position === 'right') {
+        ret = reverseAlign(ret);
+    }
+    return ret;
+}
+function titleArgs(scale, offset, position, align) {
+    const { top , left , bottom , right , chart  } = scale;
+    const { chartArea , scales  } = chart;
+    let rotation = 0;
+    let maxWidth, titleX, titleY;
+    const height = bottom - top;
+    const width = right - left;
+    if (scale.isHorizontal()) {
+        titleX = helpers_segment._alignStartEnd(align, left, right);
+        if (helpers_segment.isObject(position)) {
+            const positionAxisID = Object.keys(position)[0];
+            const value = position[positionAxisID];
+            titleY = scales[positionAxisID].getPixelForValue(value) + height - offset;
+        } else if (position === 'center') {
+            titleY = (chartArea.bottom + chartArea.top) / 2 + height - offset;
+        } else {
+            titleY = offsetFromEdge(scale, position, offset);
+        }
+        maxWidth = right - left;
+    } else {
+        if (helpers_segment.isObject(position)) {
+            const positionAxisID = Object.keys(position)[0];
+            const value = position[positionAxisID];
+            titleX = scales[positionAxisID].getPixelForValue(value) - width + offset;
+        } else if (position === 'center') {
+            titleX = (chartArea.left + chartArea.right) / 2 - width + offset;
+        } else {
+            titleX = offsetFromEdge(scale, position, offset);
+        }
+        titleY = helpers_segment._alignStartEnd(align, bottom, top);
+        rotation = position === 'left' ? -helpers_segment.HALF_PI : helpers_segment.HALF_PI;
+    }
+    return {
+        titleX,
+        titleY,
+        maxWidth,
+        rotation
+    };
+}
+class Scale extends Element {
+    constructor(cfg){
+        super();
+         this.id = cfg.id;
+         this.type = cfg.type;
+         this.options = undefined;
+         this.ctx = cfg.ctx;
+         this.chart = cfg.chart;
+         this.top = undefined;
+         this.bottom = undefined;
+         this.left = undefined;
+         this.right = undefined;
+         this.width = undefined;
+         this.height = undefined;
+        this._margins = {
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0
+        };
+         this.maxWidth = undefined;
+         this.maxHeight = undefined;
+         this.paddingTop = undefined;
+         this.paddingBottom = undefined;
+         this.paddingLeft = undefined;
+         this.paddingRight = undefined;
+         this.axis = undefined;
+         this.labelRotation = undefined;
+        this.min = undefined;
+        this.max = undefined;
+        this._range = undefined;
+         this.ticks = [];
+         this._gridLineItems = null;
+         this._labelItems = null;
+         this._labelSizes = null;
+        this._length = 0;
+        this._maxLength = 0;
+        this._longestTextCache = {};
+         this._startPixel = undefined;
+         this._endPixel = undefined;
+        this._reversePixels = false;
+        this._userMax = undefined;
+        this._userMin = undefined;
+        this._suggestedMax = undefined;
+        this._suggestedMin = undefined;
+        this._ticksLength = 0;
+        this._borderValue = 0;
+        this._cache = {};
+        this._dataLimitsCached = false;
+        this.$context = undefined;
+    }
+ init(options) {
+        this.options = options.setContext(this.getContext());
+        this.axis = options.axis;
+        this._userMin = this.parse(options.min);
+        this._userMax = this.parse(options.max);
+        this._suggestedMin = this.parse(options.suggestedMin);
+        this._suggestedMax = this.parse(options.suggestedMax);
+    }
+ parse(raw, index) {
+        return raw;
+    }
+ getUserBounds() {
+        let { _userMin , _userMax , _suggestedMin , _suggestedMax  } = this;
+        _userMin = helpers_segment.finiteOrDefault(_userMin, Number.POSITIVE_INFINITY);
+        _userMax = helpers_segment.finiteOrDefault(_userMax, Number.NEGATIVE_INFINITY);
+        _suggestedMin = helpers_segment.finiteOrDefault(_suggestedMin, Number.POSITIVE_INFINITY);
+        _suggestedMax = helpers_segment.finiteOrDefault(_suggestedMax, Number.NEGATIVE_INFINITY);
+        return {
+            min: helpers_segment.finiteOrDefault(_userMin, _suggestedMin),
+            max: helpers_segment.finiteOrDefault(_userMax, _suggestedMax),
+            minDefined: helpers_segment.isNumberFinite(_userMin),
+            maxDefined: helpers_segment.isNumberFinite(_userMax)
+        };
+    }
+ getMinMax(canStack) {
+        let { min , max , minDefined , maxDefined  } = this.getUserBounds();
+        let range;
+        if (minDefined && maxDefined) {
+            return {
+                min,
+                max
+            };
+        }
+        const metas = this.getMatchingVisibleMetas();
+        for(let i = 0, ilen = metas.length; i < ilen; ++i){
+            range = metas[i].controller.getMinMax(this, canStack);
+            if (!minDefined) {
+                min = Math.min(min, range.min);
+            }
+            if (!maxDefined) {
+                max = Math.max(max, range.max);
+            }
+        }
+        min = maxDefined && min > max ? max : min;
+        max = minDefined && min > max ? min : max;
+        return {
+            min: helpers_segment.finiteOrDefault(min, helpers_segment.finiteOrDefault(max, min)),
+            max: helpers_segment.finiteOrDefault(max, helpers_segment.finiteOrDefault(min, max))
+        };
+    }
+ getPadding() {
+        return {
+            left: this.paddingLeft || 0,
+            top: this.paddingTop || 0,
+            right: this.paddingRight || 0,
+            bottom: this.paddingBottom || 0
+        };
+    }
+ getTicks() {
+        return this.ticks;
+    }
+ getLabels() {
+        const data = this.chart.data;
+        return this.options.labels || (this.isHorizontal() ? data.xLabels : data.yLabels) || data.labels || [];
+    }
+ getLabelItems(chartArea = this.chart.chartArea) {
+        const items = this._labelItems || (this._labelItems = this._computeLabelItems(chartArea));
+        return items;
+    }
+    beforeLayout() {
+        this._cache = {};
+        this._dataLimitsCached = false;
+    }
+    beforeUpdate() {
+        helpers_segment.callback(this.options.beforeUpdate, [
+            this
+        ]);
+    }
+ update(maxWidth, maxHeight, margins) {
+        const { beginAtZero , grace , ticks: tickOpts  } = this.options;
+        const sampleSize = tickOpts.sampleSize;
+        this.beforeUpdate();
+        this.maxWidth = maxWidth;
+        this.maxHeight = maxHeight;
+        this._margins = margins = Object.assign({
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0
+        }, margins);
+        this.ticks = null;
+        this._labelSizes = null;
+        this._gridLineItems = null;
+        this._labelItems = null;
+        this.beforeSetDimensions();
+        this.setDimensions();
+        this.afterSetDimensions();
+        this._maxLength = this.isHorizontal() ? this.width + margins.left + margins.right : this.height + margins.top + margins.bottom;
+        if (!this._dataLimitsCached) {
+            this.beforeDataLimits();
+            this.determineDataLimits();
+            this.afterDataLimits();
+            this._range = helpers_segment._addGrace(this, grace, beginAtZero);
+            this._dataLimitsCached = true;
+        }
+        this.beforeBuildTicks();
+        this.ticks = this.buildTicks() || [];
+        this.afterBuildTicks();
+        const samplingEnabled = sampleSize < this.ticks.length;
+        this._convertTicksToLabels(samplingEnabled ? sample(this.ticks, sampleSize) : this.ticks);
+        this.configure();
+        this.beforeCalculateLabelRotation();
+        this.calculateLabelRotation();
+        this.afterCalculateLabelRotation();
+        if (tickOpts.display && (tickOpts.autoSkip || tickOpts.source === 'auto')) {
+            this.ticks = autoSkip(this, this.ticks);
+            this._labelSizes = null;
+            this.afterAutoSkip();
+        }
+        if (samplingEnabled) {
+            this._convertTicksToLabels(this.ticks);
+        }
+        this.beforeFit();
+        this.fit();
+        this.afterFit();
+        this.afterUpdate();
+    }
+ configure() {
+        let reversePixels = this.options.reverse;
+        let startPixel, endPixel;
+        if (this.isHorizontal()) {
+            startPixel = this.left;
+            endPixel = this.right;
+        } else {
+            startPixel = this.top;
+            endPixel = this.bottom;
+            reversePixels = !reversePixels;
+        }
+        this._startPixel = startPixel;
+        this._endPixel = endPixel;
+        this._reversePixels = reversePixels;
+        this._length = endPixel - startPixel;
+        this._alignToPixels = this.options.alignToPixels;
+    }
+    afterUpdate() {
+        helpers_segment.callback(this.options.afterUpdate, [
+            this
+        ]);
+    }
+    beforeSetDimensions() {
+        helpers_segment.callback(this.options.beforeSetDimensions, [
+            this
+        ]);
+    }
+    setDimensions() {
+        if (this.isHorizontal()) {
+            this.width = this.maxWidth;
+            this.left = 0;
+            this.right = this.width;
+        } else {
+            this.height = this.maxHeight;
+            this.top = 0;
+            this.bottom = this.height;
+        }
+        this.paddingLeft = 0;
+        this.paddingTop = 0;
+        this.paddingRight = 0;
+        this.paddingBottom = 0;
+    }
+    afterSetDimensions() {
+        helpers_segment.callback(this.options.afterSetDimensions, [
+            this
+        ]);
+    }
+    _callHooks(name) {
+        this.chart.notifyPlugins(name, this.getContext());
+        helpers_segment.callback(this.options[name], [
+            this
+        ]);
+    }
+    beforeDataLimits() {
+        this._callHooks('beforeDataLimits');
+    }
+    determineDataLimits() {}
+    afterDataLimits() {
+        this._callHooks('afterDataLimits');
+    }
+    beforeBuildTicks() {
+        this._callHooks('beforeBuildTicks');
+    }
+ buildTicks() {
+        return [];
+    }
+    afterBuildTicks() {
+        this._callHooks('afterBuildTicks');
+    }
+    beforeTickToLabelConversion() {
+        helpers_segment.callback(this.options.beforeTickToLabelConversion, [
+            this
+        ]);
+    }
+ generateTickLabels(ticks) {
+        const tickOpts = this.options.ticks;
+        let i, ilen, tick;
+        for(i = 0, ilen = ticks.length; i < ilen; i++){
+            tick = ticks[i];
+            tick.label = helpers_segment.callback(tickOpts.callback, [
+                tick.value,
+                i,
+                ticks
+            ], this);
+        }
+    }
+    afterTickToLabelConversion() {
+        helpers_segment.callback(this.options.afterTickToLabelConversion, [
+            this
+        ]);
+    }
+    beforeCalculateLabelRotation() {
+        helpers_segment.callback(this.options.beforeCalculateLabelRotation, [
+            this
+        ]);
+    }
+    calculateLabelRotation() {
+        const options = this.options;
+        const tickOpts = options.ticks;
+        const numTicks = getTicksLimit(this.ticks.length, options.ticks.maxTicksLimit);
+        const minRotation = tickOpts.minRotation || 0;
+        const maxRotation = tickOpts.maxRotation;
+        let labelRotation = minRotation;
+        let tickWidth, maxHeight, maxLabelDiagonal;
+        if (!this._isVisible() || !tickOpts.display || minRotation >= maxRotation || numTicks <= 1 || !this.isHorizontal()) {
+            this.labelRotation = minRotation;
+            return;
+        }
+        const labelSizes = this._getLabelSizes();
+        const maxLabelWidth = labelSizes.widest.width;
+        const maxLabelHeight = labelSizes.highest.height;
+        const maxWidth = helpers_segment._limitValue(this.chart.width - maxLabelWidth, 0, this.maxWidth);
+        tickWidth = options.offset ? this.maxWidth / numTicks : maxWidth / (numTicks - 1);
+        if (maxLabelWidth + 6 > tickWidth) {
+            tickWidth = maxWidth / (numTicks - (options.offset ? 0.5 : 1));
+            maxHeight = this.maxHeight - getTickMarkLength(options.grid) - tickOpts.padding - getTitleHeight(options.title, this.chart.options.font);
+            maxLabelDiagonal = Math.sqrt(maxLabelWidth * maxLabelWidth + maxLabelHeight * maxLabelHeight);
+            labelRotation = helpers_segment.toDegrees(Math.min(Math.asin(helpers_segment._limitValue((labelSizes.highest.height + 6) / tickWidth, -1, 1)), Math.asin(helpers_segment._limitValue(maxHeight / maxLabelDiagonal, -1, 1)) - Math.asin(helpers_segment._limitValue(maxLabelHeight / maxLabelDiagonal, -1, 1))));
+            labelRotation = Math.max(minRotation, Math.min(maxRotation, labelRotation));
+        }
+        this.labelRotation = labelRotation;
+    }
+    afterCalculateLabelRotation() {
+        helpers_segment.callback(this.options.afterCalculateLabelRotation, [
+            this
+        ]);
+    }
+    afterAutoSkip() {}
+    beforeFit() {
+        helpers_segment.callback(this.options.beforeFit, [
+            this
+        ]);
+    }
+    fit() {
+        const minSize = {
+            width: 0,
+            height: 0
+        };
+        const { chart , options: { ticks: tickOpts , title: titleOpts , grid: gridOpts  }  } = this;
+        const display = this._isVisible();
+        const isHorizontal = this.isHorizontal();
+        if (display) {
+            const titleHeight = getTitleHeight(titleOpts, chart.options.font);
+            if (isHorizontal) {
+                minSize.width = this.maxWidth;
+                minSize.height = getTickMarkLength(gridOpts) + titleHeight;
+            } else {
+                minSize.height = this.maxHeight;
+                minSize.width = getTickMarkLength(gridOpts) + titleHeight;
+            }
+            if (tickOpts.display && this.ticks.length) {
+                const { first , last , widest , highest  } = this._getLabelSizes();
+                const tickPadding = tickOpts.padding * 2;
+                const angleRadians = helpers_segment.toRadians(this.labelRotation);
+                const cos = Math.cos(angleRadians);
+                const sin = Math.sin(angleRadians);
+                if (isHorizontal) {
+                    const labelHeight = tickOpts.mirror ? 0 : sin * widest.width + cos * highest.height;
+                    minSize.height = Math.min(this.maxHeight, minSize.height + labelHeight + tickPadding);
+                } else {
+                    const labelWidth = tickOpts.mirror ? 0 : cos * widest.width + sin * highest.height;
+                    minSize.width = Math.min(this.maxWidth, minSize.width + labelWidth + tickPadding);
+                }
+                this._calculatePadding(first, last, sin, cos);
+            }
+        }
+        this._handleMargins();
+        if (isHorizontal) {
+            this.width = this._length = chart.width - this._margins.left - this._margins.right;
+            this.height = minSize.height;
+        } else {
+            this.width = minSize.width;
+            this.height = this._length = chart.height - this._margins.top - this._margins.bottom;
+        }
+    }
+    _calculatePadding(first, last, sin, cos) {
+        const { ticks: { align , padding  } , position  } = this.options;
+        const isRotated = this.labelRotation !== 0;
+        const labelsBelowTicks = position !== 'top' && this.axis === 'x';
+        if (this.isHorizontal()) {
+            const offsetLeft = this.getPixelForTick(0) - this.left;
+            const offsetRight = this.right - this.getPixelForTick(this.ticks.length - 1);
+            let paddingLeft = 0;
+            let paddingRight = 0;
+            if (isRotated) {
+                if (labelsBelowTicks) {
+                    paddingLeft = cos * first.width;
+                    paddingRight = sin * last.height;
+                } else {
+                    paddingLeft = sin * first.height;
+                    paddingRight = cos * last.width;
+                }
+            } else if (align === 'start') {
+                paddingRight = last.width;
+            } else if (align === 'end') {
+                paddingLeft = first.width;
+            } else if (align !== 'inner') {
+                paddingLeft = first.width / 2;
+                paddingRight = last.width / 2;
+            }
+            this.paddingLeft = Math.max((paddingLeft - offsetLeft + padding) * this.width / (this.width - offsetLeft), 0);
+            this.paddingRight = Math.max((paddingRight - offsetRight + padding) * this.width / (this.width - offsetRight), 0);
+        } else {
+            let paddingTop = last.height / 2;
+            let paddingBottom = first.height / 2;
+            if (align === 'start') {
+                paddingTop = 0;
+                paddingBottom = first.height;
+            } else if (align === 'end') {
+                paddingTop = last.height;
+                paddingBottom = 0;
+            }
+            this.paddingTop = paddingTop + padding;
+            this.paddingBottom = paddingBottom + padding;
+        }
+    }
+ _handleMargins() {
+        if (this._margins) {
+            this._margins.left = Math.max(this.paddingLeft, this._margins.left);
+            this._margins.top = Math.max(this.paddingTop, this._margins.top);
+            this._margins.right = Math.max(this.paddingRight, this._margins.right);
+            this._margins.bottom = Math.max(this.paddingBottom, this._margins.bottom);
+        }
+    }
+    afterFit() {
+        helpers_segment.callback(this.options.afterFit, [
+            this
+        ]);
+    }
+ isHorizontal() {
+        const { axis , position  } = this.options;
+        return position === 'top' || position === 'bottom' || axis === 'x';
+    }
+ isFullSize() {
+        return this.options.fullSize;
+    }
+ _convertTicksToLabels(ticks) {
+        this.beforeTickToLabelConversion();
+        this.generateTickLabels(ticks);
+        let i, ilen;
+        for(i = 0, ilen = ticks.length; i < ilen; i++){
+            if (helpers_segment.isNullOrUndef(ticks[i].label)) {
+                ticks.splice(i, 1);
+                ilen--;
+                i--;
+            }
+        }
+        this.afterTickToLabelConversion();
+    }
+ _getLabelSizes() {
+        let labelSizes = this._labelSizes;
+        if (!labelSizes) {
+            const sampleSize = this.options.ticks.sampleSize;
+            let ticks = this.ticks;
+            if (sampleSize < ticks.length) {
+                ticks = sample(ticks, sampleSize);
+            }
+            this._labelSizes = labelSizes = this._computeLabelSizes(ticks, ticks.length, this.options.ticks.maxTicksLimit);
+        }
+        return labelSizes;
+    }
+ _computeLabelSizes(ticks, length, maxTicksLimit) {
+        const { ctx , _longestTextCache: caches  } = this;
+        const widths = [];
+        const heights = [];
+        const increment = Math.floor(length / getTicksLimit(length, maxTicksLimit));
+        let widestLabelSize = 0;
+        let highestLabelSize = 0;
+        let i, j, jlen, label, tickFont, fontString, cache, lineHeight, width, height, nestedLabel;
+        for(i = 0; i < length; i += increment){
+            label = ticks[i].label;
+            tickFont = this._resolveTickFontOptions(i);
+            ctx.font = fontString = tickFont.string;
+            cache = caches[fontString] = caches[fontString] || {
+                data: {},
+                gc: []
+            };
+            lineHeight = tickFont.lineHeight;
+            width = height = 0;
+            if (!helpers_segment.isNullOrUndef(label) && !helpers_segment.isArray(label)) {
+                width = helpers_segment._measureText(ctx, cache.data, cache.gc, width, label);
+                height = lineHeight;
+            } else if (helpers_segment.isArray(label)) {
+                for(j = 0, jlen = label.length; j < jlen; ++j){
+                    nestedLabel =  label[j];
+                    if (!helpers_segment.isNullOrUndef(nestedLabel) && !helpers_segment.isArray(nestedLabel)) {
+                        width = helpers_segment._measureText(ctx, cache.data, cache.gc, width, nestedLabel);
+                        height += lineHeight;
+                    }
+                }
+            }
+            widths.push(width);
+            heights.push(height);
+            widestLabelSize = Math.max(width, widestLabelSize);
+            highestLabelSize = Math.max(height, highestLabelSize);
+        }
+        garbageCollect(caches, length);
+        const widest = widths.indexOf(widestLabelSize);
+        const highest = heights.indexOf(highestLabelSize);
+        const valueAt = (idx)=>({
+                width: widths[idx] || 0,
+                height: heights[idx] || 0
+            });
+        return {
+            first: valueAt(0),
+            last: valueAt(length - 1),
+            widest: valueAt(widest),
+            highest: valueAt(highest),
+            widths,
+            heights
+        };
+    }
+ getLabelForValue(value) {
+        return value;
+    }
+ getPixelForValue(value, index) {
+        return NaN;
+    }
+ getValueForPixel(pixel) {}
+ getPixelForTick(index) {
+        const ticks = this.ticks;
+        if (index < 0 || index > ticks.length - 1) {
+            return null;
+        }
+        return this.getPixelForValue(ticks[index].value);
+    }
+ getPixelForDecimal(decimal) {
+        if (this._reversePixels) {
+            decimal = 1 - decimal;
+        }
+        const pixel = this._startPixel + decimal * this._length;
+        return helpers_segment._int16Range(this._alignToPixels ? helpers_segment._alignPixel(this.chart, pixel, 0) : pixel);
+    }
+ getDecimalForPixel(pixel) {
+        const decimal = (pixel - this._startPixel) / this._length;
+        return this._reversePixels ? 1 - decimal : decimal;
+    }
+ getBasePixel() {
+        return this.getPixelForValue(this.getBaseValue());
+    }
+ getBaseValue() {
+        const { min , max  } = this;
+        return min < 0 && max < 0 ? max : min > 0 && max > 0 ? min : 0;
+    }
+ getContext(index) {
+        const ticks = this.ticks || [];
+        if (index >= 0 && index < ticks.length) {
+            const tick = ticks[index];
+            return tick.$context || (tick.$context = createTickContext(this.getContext(), index, tick));
+        }
+        return this.$context || (this.$context = createScaleContext(this.chart.getContext(), this));
+    }
+ _tickSize() {
+        const optionTicks = this.options.ticks;
+        const rot = helpers_segment.toRadians(this.labelRotation);
+        const cos = Math.abs(Math.cos(rot));
+        const sin = Math.abs(Math.sin(rot));
+        const labelSizes = this._getLabelSizes();
+        const padding = optionTicks.autoSkipPadding || 0;
+        const w = labelSizes ? labelSizes.widest.width + padding : 0;
+        const h = labelSizes ? labelSizes.highest.height + padding : 0;
+        return this.isHorizontal() ? h * cos > w * sin ? w / cos : h / sin : h * sin < w * cos ? h / cos : w / sin;
+    }
+ _isVisible() {
+        const display = this.options.display;
+        if (display !== 'auto') {
+            return !!display;
+        }
+        return this.getMatchingVisibleMetas().length > 0;
+    }
+ _computeGridLineItems(chartArea) {
+        const axis = this.axis;
+        const chart = this.chart;
+        const options = this.options;
+        const { grid , position , border  } = options;
+        const offset = grid.offset;
+        const isHorizontal = this.isHorizontal();
+        const ticks = this.ticks;
+        const ticksLength = ticks.length + (offset ? 1 : 0);
+        const tl = getTickMarkLength(grid);
+        const items = [];
+        const borderOpts = border.setContext(this.getContext());
+        const axisWidth = borderOpts.display ? borderOpts.width : 0;
+        const axisHalfWidth = axisWidth / 2;
+        const alignBorderValue = function(pixel) {
+            return helpers_segment._alignPixel(chart, pixel, axisWidth);
+        };
+        let borderValue, i, lineValue, alignedLineValue;
+        let tx1, ty1, tx2, ty2, x1, y1, x2, y2;
+        if (position === 'top') {
+            borderValue = alignBorderValue(this.bottom);
+            ty1 = this.bottom - tl;
+            ty2 = borderValue - axisHalfWidth;
+            y1 = alignBorderValue(chartArea.top) + axisHalfWidth;
+            y2 = chartArea.bottom;
+        } else if (position === 'bottom') {
+            borderValue = alignBorderValue(this.top);
+            y1 = chartArea.top;
+            y2 = alignBorderValue(chartArea.bottom) - axisHalfWidth;
+            ty1 = borderValue + axisHalfWidth;
+            ty2 = this.top + tl;
+        } else if (position === 'left') {
+            borderValue = alignBorderValue(this.right);
+            tx1 = this.right - tl;
+            tx2 = borderValue - axisHalfWidth;
+            x1 = alignBorderValue(chartArea.left) + axisHalfWidth;
+            x2 = chartArea.right;
+        } else if (position === 'right') {
+            borderValue = alignBorderValue(this.left);
+            x1 = chartArea.left;
+            x2 = alignBorderValue(chartArea.right) - axisHalfWidth;
+            tx1 = borderValue + axisHalfWidth;
+            tx2 = this.left + tl;
+        } else if (axis === 'x') {
+            if (position === 'center') {
+                borderValue = alignBorderValue((chartArea.top + chartArea.bottom) / 2 + 0.5);
+            } else if (helpers_segment.isObject(position)) {
+                const positionAxisID = Object.keys(position)[0];
+                const value = position[positionAxisID];
+                borderValue = alignBorderValue(this.chart.scales[positionAxisID].getPixelForValue(value));
+            }
+            y1 = chartArea.top;
+            y2 = chartArea.bottom;
+            ty1 = borderValue + axisHalfWidth;
+            ty2 = ty1 + tl;
+        } else if (axis === 'y') {
+            if (position === 'center') {
+                borderValue = alignBorderValue((chartArea.left + chartArea.right) / 2);
+            } else if (helpers_segment.isObject(position)) {
+                const positionAxisID = Object.keys(position)[0];
+                const value = position[positionAxisID];
+                borderValue = alignBorderValue(this.chart.scales[positionAxisID].getPixelForValue(value));
+            }
+            tx1 = borderValue - axisHalfWidth;
+            tx2 = tx1 - tl;
+            x1 = chartArea.left;
+            x2 = chartArea.right;
+        }
+        const limit = helpers_segment.valueOrDefault(options.ticks.maxTicksLimit, ticksLength);
+        const step = Math.max(1, Math.ceil(ticksLength / limit));
+        for(i = 0; i < ticksLength; i += step){
+            const context = this.getContext(i);
+            const optsAtIndex = grid.setContext(context);
+            const optsAtIndexBorder = border.setContext(context);
+            const lineWidth = optsAtIndex.lineWidth;
+            const lineColor = optsAtIndex.color;
+            const borderDash = optsAtIndexBorder.dash || [];
+            const borderDashOffset = optsAtIndexBorder.dashOffset;
+            const tickWidth = optsAtIndex.tickWidth;
+            const tickColor = optsAtIndex.tickColor;
+            const tickBorderDash = optsAtIndex.tickBorderDash || [];
+            const tickBorderDashOffset = optsAtIndex.tickBorderDashOffset;
+            lineValue = getPixelForGridLine(this, i, offset);
+            if (lineValue === undefined) {
+                continue;
+            }
+            alignedLineValue = helpers_segment._alignPixel(chart, lineValue, lineWidth);
+            if (isHorizontal) {
+                tx1 = tx2 = x1 = x2 = alignedLineValue;
+            } else {
+                ty1 = ty2 = y1 = y2 = alignedLineValue;
+            }
+            items.push({
+                tx1,
+                ty1,
+                tx2,
+                ty2,
+                x1,
+                y1,
+                x2,
+                y2,
+                width: lineWidth,
+                color: lineColor,
+                borderDash,
+                borderDashOffset,
+                tickWidth,
+                tickColor,
+                tickBorderDash,
+                tickBorderDashOffset
+            });
+        }
+        this._ticksLength = ticksLength;
+        this._borderValue = borderValue;
+        return items;
+    }
+ _computeLabelItems(chartArea) {
+        const axis = this.axis;
+        const options = this.options;
+        const { position , ticks: optionTicks  } = options;
+        const isHorizontal = this.isHorizontal();
+        const ticks = this.ticks;
+        const { align , crossAlign , padding , mirror  } = optionTicks;
+        const tl = getTickMarkLength(options.grid);
+        const tickAndPadding = tl + padding;
+        const hTickAndPadding = mirror ? -padding : tickAndPadding;
+        const rotation = -helpers_segment.toRadians(this.labelRotation);
+        const items = [];
+        let i, ilen, tick, label, x, y, textAlign, pixel, font, lineHeight, lineCount, textOffset;
+        let textBaseline = 'middle';
+        if (position === 'top') {
+            y = this.bottom - hTickAndPadding;
+            textAlign = this._getXAxisLabelAlignment();
+        } else if (position === 'bottom') {
+            y = this.top + hTickAndPadding;
+            textAlign = this._getXAxisLabelAlignment();
+        } else if (position === 'left') {
+            const ret = this._getYAxisLabelAlignment(tl);
+            textAlign = ret.textAlign;
+            x = ret.x;
+        } else if (position === 'right') {
+            const ret = this._getYAxisLabelAlignment(tl);
+            textAlign = ret.textAlign;
+            x = ret.x;
+        } else if (axis === 'x') {
+            if (position === 'center') {
+                y = (chartArea.top + chartArea.bottom) / 2 + tickAndPadding;
+            } else if (helpers_segment.isObject(position)) {
+                const positionAxisID = Object.keys(position)[0];
+                const value = position[positionAxisID];
+                y = this.chart.scales[positionAxisID].getPixelForValue(value) + tickAndPadding;
+            }
+            textAlign = this._getXAxisLabelAlignment();
+        } else if (axis === 'y') {
+            if (position === 'center') {
+                x = (chartArea.left + chartArea.right) / 2 - tickAndPadding;
+            } else if (helpers_segment.isObject(position)) {
+                const positionAxisID = Object.keys(position)[0];
+                const value = position[positionAxisID];
+                x = this.chart.scales[positionAxisID].getPixelForValue(value);
+            }
+            textAlign = this._getYAxisLabelAlignment(tl).textAlign;
+        }
+        if (axis === 'y') {
+            if (align === 'start') {
+                textBaseline = 'top';
+            } else if (align === 'end') {
+                textBaseline = 'bottom';
+            }
+        }
+        const labelSizes = this._getLabelSizes();
+        for(i = 0, ilen = ticks.length; i < ilen; ++i){
+            tick = ticks[i];
+            label = tick.label;
+            const optsAtIndex = optionTicks.setContext(this.getContext(i));
+            pixel = this.getPixelForTick(i) + optionTicks.labelOffset;
+            font = this._resolveTickFontOptions(i);
+            lineHeight = font.lineHeight;
+            lineCount = helpers_segment.isArray(label) ? label.length : 1;
+            const halfCount = lineCount / 2;
+            const color = optsAtIndex.color;
+            const strokeColor = optsAtIndex.textStrokeColor;
+            const strokeWidth = optsAtIndex.textStrokeWidth;
+            let tickTextAlign = textAlign;
+            if (isHorizontal) {
+                x = pixel;
+                if (textAlign === 'inner') {
+                    if (i === ilen - 1) {
+                        tickTextAlign = !this.options.reverse ? 'right' : 'left';
+                    } else if (i === 0) {
+                        tickTextAlign = !this.options.reverse ? 'left' : 'right';
+                    } else {
+                        tickTextAlign = 'center';
+                    }
+                }
+                if (position === 'top') {
+                    if (crossAlign === 'near' || rotation !== 0) {
+                        textOffset = -lineCount * lineHeight + lineHeight / 2;
+                    } else if (crossAlign === 'center') {
+                        textOffset = -labelSizes.highest.height / 2 - halfCount * lineHeight + lineHeight;
+                    } else {
+                        textOffset = -labelSizes.highest.height + lineHeight / 2;
+                    }
+                } else {
+                    if (crossAlign === 'near' || rotation !== 0) {
+                        textOffset = lineHeight / 2;
+                    } else if (crossAlign === 'center') {
+                        textOffset = labelSizes.highest.height / 2 - halfCount * lineHeight;
+                    } else {
+                        textOffset = labelSizes.highest.height - lineCount * lineHeight;
+                    }
+                }
+                if (mirror) {
+                    textOffset *= -1;
+                }
+                if (rotation !== 0 && !optsAtIndex.showLabelBackdrop) {
+                    x += lineHeight / 2 * Math.sin(rotation);
+                }
+            } else {
+                y = pixel;
+                textOffset = (1 - lineCount) * lineHeight / 2;
+            }
+            let backdrop;
+            if (optsAtIndex.showLabelBackdrop) {
+                const labelPadding = helpers_segment.toPadding(optsAtIndex.backdropPadding);
+                const height = labelSizes.heights[i];
+                const width = labelSizes.widths[i];
+                let top = textOffset - labelPadding.top;
+                let left = 0 - labelPadding.left;
+                switch(textBaseline){
+                    case 'middle':
+                        top -= height / 2;
+                        break;
+                    case 'bottom':
+                        top -= height;
+                        break;
+                }
+                switch(textAlign){
+                    case 'center':
+                        left -= width / 2;
+                        break;
+                    case 'right':
+                        left -= width;
+                        break;
+                    case 'inner':
+                        if (i === ilen - 1) {
+                            left -= width;
+                        } else if (i > 0) {
+                            left -= width / 2;
+                        }
+                        break;
+                }
+                backdrop = {
+                    left,
+                    top,
+                    width: width + labelPadding.width,
+                    height: height + labelPadding.height,
+                    color: optsAtIndex.backdropColor
+                };
+            }
+            items.push({
+                label,
+                font,
+                textOffset,
+                options: {
+                    rotation,
+                    color,
+                    strokeColor,
+                    strokeWidth,
+                    textAlign: tickTextAlign,
+                    textBaseline,
+                    translation: [
+                        x,
+                        y
+                    ],
+                    backdrop
+                }
+            });
+        }
+        return items;
+    }
+    _getXAxisLabelAlignment() {
+        const { position , ticks  } = this.options;
+        const rotation = -helpers_segment.toRadians(this.labelRotation);
+        if (rotation) {
+            return position === 'top' ? 'left' : 'right';
+        }
+        let align = 'center';
+        if (ticks.align === 'start') {
+            align = 'left';
+        } else if (ticks.align === 'end') {
+            align = 'right';
+        } else if (ticks.align === 'inner') {
+            align = 'inner';
+        }
+        return align;
+    }
+    _getYAxisLabelAlignment(tl) {
+        const { position , ticks: { crossAlign , mirror , padding  }  } = this.options;
+        const labelSizes = this._getLabelSizes();
+        const tickAndPadding = tl + padding;
+        const widest = labelSizes.widest.width;
+        let textAlign;
+        let x;
+        if (position === 'left') {
+            if (mirror) {
+                x = this.right + padding;
+                if (crossAlign === 'near') {
+                    textAlign = 'left';
+                } else if (crossAlign === 'center') {
+                    textAlign = 'center';
+                    x += widest / 2;
+                } else {
+                    textAlign = 'right';
+                    x += widest;
+                }
+            } else {
+                x = this.right - tickAndPadding;
+                if (crossAlign === 'near') {
+                    textAlign = 'right';
+                } else if (crossAlign === 'center') {
+                    textAlign = 'center';
+                    x -= widest / 2;
+                } else {
+                    textAlign = 'left';
+                    x = this.left;
+                }
+            }
+        } else if (position === 'right') {
+            if (mirror) {
+                x = this.left + padding;
+                if (crossAlign === 'near') {
+                    textAlign = 'right';
+                } else if (crossAlign === 'center') {
+                    textAlign = 'center';
+                    x -= widest / 2;
+                } else {
+                    textAlign = 'left';
+                    x -= widest;
+                }
+            } else {
+                x = this.left + tickAndPadding;
+                if (crossAlign === 'near') {
+                    textAlign = 'left';
+                } else if (crossAlign === 'center') {
+                    textAlign = 'center';
+                    x += widest / 2;
+                } else {
+                    textAlign = 'right';
+                    x = this.right;
+                }
+            }
+        } else {
+            textAlign = 'right';
+        }
+        return {
+            textAlign,
+            x
+        };
+    }
+ _computeLabelArea() {
+        if (this.options.ticks.mirror) {
+            return;
+        }
+        const chart = this.chart;
+        const position = this.options.position;
+        if (position === 'left' || position === 'right') {
+            return {
+                top: 0,
+                left: this.left,
+                bottom: chart.height,
+                right: this.right
+            };
+        }
+        if (position === 'top' || position === 'bottom') {
+            return {
+                top: this.top,
+                left: 0,
+                bottom: this.bottom,
+                right: chart.width
+            };
+        }
+    }
+ drawBackground() {
+        const { ctx , options: { backgroundColor  } , left , top , width , height  } = this;
+        if (backgroundColor) {
+            ctx.save();
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(left, top, width, height);
+            ctx.restore();
+        }
+    }
+    getLineWidthForValue(value) {
+        const grid = this.options.grid;
+        if (!this._isVisible() || !grid.display) {
+            return 0;
+        }
+        const ticks = this.ticks;
+        const index = ticks.findIndex((t)=>t.value === value);
+        if (index >= 0) {
+            const opts = grid.setContext(this.getContext(index));
+            return opts.lineWidth;
+        }
+        return 0;
+    }
+ drawGrid(chartArea) {
+        const grid = this.options.grid;
+        const ctx = this.ctx;
+        const items = this._gridLineItems || (this._gridLineItems = this._computeGridLineItems(chartArea));
+        let i, ilen;
+        const drawLine = (p1, p2, style)=>{
+            if (!style.width || !style.color) {
+                return;
+            }
+            ctx.save();
+            ctx.lineWidth = style.width;
+            ctx.strokeStyle = style.color;
+            ctx.setLineDash(style.borderDash || []);
+            ctx.lineDashOffset = style.borderDashOffset;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+            ctx.restore();
+        };
+        if (grid.display) {
+            for(i = 0, ilen = items.length; i < ilen; ++i){
+                const item = items[i];
+                if (grid.drawOnChartArea) {
+                    drawLine({
+                        x: item.x1,
+                        y: item.y1
+                    }, {
+                        x: item.x2,
+                        y: item.y2
+                    }, item);
+                }
+                if (grid.drawTicks) {
+                    drawLine({
+                        x: item.tx1,
+                        y: item.ty1
+                    }, {
+                        x: item.tx2,
+                        y: item.ty2
+                    }, {
+                        color: item.tickColor,
+                        width: item.tickWidth,
+                        borderDash: item.tickBorderDash,
+                        borderDashOffset: item.tickBorderDashOffset
+                    });
+                }
+            }
+        }
+    }
+ drawBorder() {
+        const { chart , ctx , options: { border , grid  }  } = this;
+        const borderOpts = border.setContext(this.getContext());
+        const axisWidth = border.display ? borderOpts.width : 0;
+        if (!axisWidth) {
+            return;
+        }
+        const lastLineWidth = grid.setContext(this.getContext(0)).lineWidth;
+        const borderValue = this._borderValue;
+        let x1, x2, y1, y2;
+        if (this.isHorizontal()) {
+            x1 = helpers_segment._alignPixel(chart, this.left, axisWidth) - axisWidth / 2;
+            x2 = helpers_segment._alignPixel(chart, this.right, lastLineWidth) + lastLineWidth / 2;
+            y1 = y2 = borderValue;
+        } else {
+            y1 = helpers_segment._alignPixel(chart, this.top, axisWidth) - axisWidth / 2;
+            y2 = helpers_segment._alignPixel(chart, this.bottom, lastLineWidth) + lastLineWidth / 2;
+            x1 = x2 = borderValue;
+        }
+        ctx.save();
+        ctx.lineWidth = borderOpts.width;
+        ctx.strokeStyle = borderOpts.color;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+ drawLabels(chartArea) {
+        const optionTicks = this.options.ticks;
+        if (!optionTicks.display) {
+            return;
+        }
+        const ctx = this.ctx;
+        const area = this._computeLabelArea();
+        if (area) {
+            helpers_segment.clipArea(ctx, area);
+        }
+        const items = this.getLabelItems(chartArea);
+        for (const item of items){
+            const renderTextOptions = item.options;
+            const tickFont = item.font;
+            const label = item.label;
+            const y = item.textOffset;
+            helpers_segment.renderText(ctx, label, 0, y, tickFont, renderTextOptions);
+        }
+        if (area) {
+            helpers_segment.unclipArea(ctx);
+        }
+    }
+ drawTitle() {
+        const { ctx , options: { position , title , reverse  }  } = this;
+        if (!title.display) {
+            return;
+        }
+        const font = helpers_segment.toFont(title.font);
+        const padding = helpers_segment.toPadding(title.padding);
+        const align = title.align;
+        let offset = font.lineHeight / 2;
+        if (position === 'bottom' || position === 'center' || helpers_segment.isObject(position)) {
+            offset += padding.bottom;
+            if (helpers_segment.isArray(title.text)) {
+                offset += font.lineHeight * (title.text.length - 1);
+            }
+        } else {
+            offset += padding.top;
+        }
+        const { titleX , titleY , maxWidth , rotation  } = titleArgs(this, offset, position, align);
+        helpers_segment.renderText(ctx, title.text, 0, 0, font, {
+            color: title.color,
+            maxWidth,
+            rotation,
+            textAlign: titleAlign(align, position, reverse),
+            textBaseline: 'middle',
+            translation: [
+                titleX,
+                titleY
+            ]
+        });
+    }
+    draw(chartArea) {
+        if (!this._isVisible()) {
+            return;
+        }
+        this.drawBackground();
+        this.drawGrid(chartArea);
+        this.drawBorder();
+        this.drawTitle();
+        this.drawLabels(chartArea);
+    }
+ _layers() {
+        const opts = this.options;
+        const tz = opts.ticks && opts.ticks.z || 0;
+        const gz = helpers_segment.valueOrDefault(opts.grid && opts.grid.z, -1);
+        const bz = helpers_segment.valueOrDefault(opts.border && opts.border.z, 0);
+        if (!this._isVisible() || this.draw !== Scale.prototype.draw) {
+            return [
+                {
+                    z: tz,
+                    draw: (chartArea)=>{
+                        this.draw(chartArea);
+                    }
+                }
+            ];
+        }
+        return [
+            {
+                z: gz,
+                draw: (chartArea)=>{
+                    this.drawBackground();
+                    this.drawGrid(chartArea);
+                    this.drawTitle();
+                }
+            },
+            {
+                z: bz,
+                draw: ()=>{
+                    this.drawBorder();
+                }
+            },
+            {
+                z: tz,
+                draw: (chartArea)=>{
+                    this.drawLabels(chartArea);
+                }
+            }
+        ];
+    }
+ getMatchingVisibleMetas(type) {
+        const metas = this.chart.getSortedVisibleDatasetMetas();
+        const axisID = this.axis + 'AxisID';
+        const result = [];
+        let i, ilen;
+        for(i = 0, ilen = metas.length; i < ilen; ++i){
+            const meta = metas[i];
+            if (meta[axisID] === this.id && (!type || meta.type === type)) {
+                result.push(meta);
+            }
+        }
+        return result;
+    }
+ _resolveTickFontOptions(index) {
+        const opts = this.options.ticks.setContext(this.getContext(index));
+        return helpers_segment.toFont(opts.font);
+    }
+ _maxDigits() {
+        const fontSize = this._resolveTickFontOptions(0).lineHeight;
+        return (this.isHorizontal() ? this.width : this.height) / fontSize;
+    }
+}
+
+class TypedRegistry {
+    constructor(type, scope, override){
+        this.type = type;
+        this.scope = scope;
+        this.override = override;
+        this.items = Object.create(null);
+    }
+    isForType(type) {
+        return Object.prototype.isPrototypeOf.call(this.type.prototype, type.prototype);
+    }
+ register(item) {
+        const proto = Object.getPrototypeOf(item);
+        let parentScope;
+        if (isIChartComponent(proto)) {
+            parentScope = this.register(proto);
+        }
+        const items = this.items;
+        const id = item.id;
+        const scope = this.scope + '.' + id;
+        if (!id) {
+            throw new Error('class does not have id: ' + item);
+        }
+        if (id in items) {
+            return scope;
+        }
+        items[id] = item;
+        registerDefaults(item, scope, parentScope);
+        if (this.override) {
+            helpers_segment.defaults.override(item.id, item.overrides);
+        }
+        return scope;
+    }
+ get(id) {
+        return this.items[id];
+    }
+ unregister(item) {
+        const items = this.items;
+        const id = item.id;
+        const scope = this.scope;
+        if (id in items) {
+            delete items[id];
+        }
+        if (scope && id in helpers_segment.defaults[scope]) {
+            delete helpers_segment.defaults[scope][id];
+            if (this.override) {
+                delete helpers_segment.overrides[id];
+            }
+        }
+    }
+}
+function registerDefaults(item, scope, parentScope) {
+    const itemDefaults = helpers_segment.merge(Object.create(null), [
+        parentScope ? helpers_segment.defaults.get(parentScope) : {},
+        helpers_segment.defaults.get(scope),
+        item.defaults
+    ]);
+    helpers_segment.defaults.set(scope, itemDefaults);
+    if (item.defaultRoutes) {
+        routeDefaults(scope, item.defaultRoutes);
+    }
+    if (item.descriptors) {
+        helpers_segment.defaults.describe(scope, item.descriptors);
+    }
+}
+function routeDefaults(scope, routes) {
+    Object.keys(routes).forEach((property)=>{
+        const propertyParts = property.split('.');
+        const sourceName = propertyParts.pop();
+        const sourceScope = [
+            scope
+        ].concat(propertyParts).join('.');
+        const parts = routes[property].split('.');
+        const targetName = parts.pop();
+        const targetScope = parts.join('.');
+        helpers_segment.defaults.route(sourceScope, sourceName, targetScope, targetName);
+    });
+}
+function isIChartComponent(proto) {
+    return 'id' in proto && 'defaults' in proto;
+}
+
+class Registry {
+    constructor(){
+        this.controllers = new TypedRegistry(DatasetController, 'datasets', true);
+        this.elements = new TypedRegistry(Element, 'elements');
+        this.plugins = new TypedRegistry(Object, 'plugins');
+        this.scales = new TypedRegistry(Scale, 'scales');
+        this._typedRegistries = [
+            this.controllers,
+            this.scales,
+            this.elements
+        ];
+    }
+ add(...args) {
+        this._each('register', args);
+    }
+    remove(...args) {
+        this._each('unregister', args);
+    }
+ addControllers(...args) {
+        this._each('register', args, this.controllers);
+    }
+ addElements(...args) {
+        this._each('register', args, this.elements);
+    }
+ addPlugins(...args) {
+        this._each('register', args, this.plugins);
+    }
+ addScales(...args) {
+        this._each('register', args, this.scales);
+    }
+ getController(id) {
+        return this._get(id, this.controllers, 'controller');
+    }
+ getElement(id) {
+        return this._get(id, this.elements, 'element');
+    }
+ getPlugin(id) {
+        return this._get(id, this.plugins, 'plugin');
+    }
+ getScale(id) {
+        return this._get(id, this.scales, 'scale');
+    }
+ removeControllers(...args) {
+        this._each('unregister', args, this.controllers);
+    }
+ removeElements(...args) {
+        this._each('unregister', args, this.elements);
+    }
+ removePlugins(...args) {
+        this._each('unregister', args, this.plugins);
+    }
+ removeScales(...args) {
+        this._each('unregister', args, this.scales);
+    }
+ _each(method, args, typedRegistry) {
+        [
+            ...args
+        ].forEach((arg)=>{
+            const reg = typedRegistry || this._getRegistryForType(arg);
+            if (typedRegistry || reg.isForType(arg) || reg === this.plugins && arg.id) {
+                this._exec(method, reg, arg);
+            } else {
+                helpers_segment.each(arg, (item)=>{
+                    const itemReg = typedRegistry || this._getRegistryForType(item);
+                    this._exec(method, itemReg, item);
+                });
+            }
+        });
+    }
+ _exec(method, registry, component) {
+        const camelMethod = helpers_segment._capitalize(method);
+        helpers_segment.callback(component['before' + camelMethod], [], component);
+        registry[method](component);
+        helpers_segment.callback(component['after' + camelMethod], [], component);
+    }
+ _getRegistryForType(type) {
+        for(let i = 0; i < this._typedRegistries.length; i++){
+            const reg = this._typedRegistries[i];
+            if (reg.isForType(type)) {
+                return reg;
+            }
+        }
+        return this.plugins;
+    }
+ _get(id, typedRegistry, type) {
+        const item = typedRegistry.get(id);
+        if (item === undefined) {
+            throw new Error('"' + id + '" is not a registered ' + type + '.');
+        }
+        return item;
+    }
+}
+var registry = /* #__PURE__ */ new Registry();
+
+class PluginService {
+    constructor(){
+        this._init = [];
+    }
+ notify(chart, hook, args, filter) {
+        if (hook === 'beforeInit') {
+            this._init = this._createDescriptors(chart, true);
+            this._notify(this._init, chart, 'install');
+        }
+        const descriptors = filter ? this._descriptors(chart).filter(filter) : this._descriptors(chart);
+        const result = this._notify(descriptors, chart, hook, args);
+        if (hook === 'afterDestroy') {
+            this._notify(descriptors, chart, 'stop');
+            this._notify(this._init, chart, 'uninstall');
+        }
+        return result;
+    }
+ _notify(descriptors, chart, hook, args) {
+        args = args || {};
+        for (const descriptor of descriptors){
+            const plugin = descriptor.plugin;
+            const method = plugin[hook];
+            const params = [
+                chart,
+                args,
+                descriptor.options
+            ];
+            if (helpers_segment.callback(method, params, plugin) === false && args.cancelable) {
+                return false;
+            }
+        }
+        return true;
+    }
+    invalidate() {
+        if (!helpers_segment.isNullOrUndef(this._cache)) {
+            this._oldCache = this._cache;
+            this._cache = undefined;
+        }
+    }
+ _descriptors(chart) {
+        if (this._cache) {
+            return this._cache;
+        }
+        const descriptors = this._cache = this._createDescriptors(chart);
+        this._notifyStateChanges(chart);
+        return descriptors;
+    }
+    _createDescriptors(chart, all) {
+        const config = chart && chart.config;
+        const options = helpers_segment.valueOrDefault(config.options && config.options.plugins, {});
+        const plugins = allPlugins(config);
+        return options === false && !all ? [] : createDescriptors(chart, plugins, options, all);
+    }
+ _notifyStateChanges(chart) {
+        const previousDescriptors = this._oldCache || [];
+        const descriptors = this._cache;
+        const diff = (a, b)=>a.filter((x)=>!b.some((y)=>x.plugin.id === y.plugin.id));
+        this._notify(diff(previousDescriptors, descriptors), chart, 'stop');
+        this._notify(diff(descriptors, previousDescriptors), chart, 'start');
+    }
+}
+ function allPlugins(config) {
+    const localIds = {};
+    const plugins = [];
+    const keys = Object.keys(registry.plugins.items);
+    for(let i = 0; i < keys.length; i++){
+        plugins.push(registry.getPlugin(keys[i]));
+    }
+    const local = config.plugins || [];
+    for(let i = 0; i < local.length; i++){
+        const plugin = local[i];
+        if (plugins.indexOf(plugin) === -1) {
+            plugins.push(plugin);
+            localIds[plugin.id] = true;
+        }
+    }
+    return {
+        plugins,
+        localIds
+    };
+}
+function getOpts(options, all) {
+    if (!all && options === false) {
+        return null;
+    }
+    if (options === true) {
+        return {};
+    }
+    return options;
+}
+function createDescriptors(chart, { plugins , localIds  }, options, all) {
+    const result = [];
+    const context = chart.getContext();
+    for (const plugin of plugins){
+        const id = plugin.id;
+        const opts = getOpts(options[id], all);
+        if (opts === null) {
+            continue;
+        }
+        result.push({
+            plugin,
+            options: pluginOpts(chart.config, {
+                plugin,
+                local: localIds[id]
+            }, opts, context)
+        });
+    }
+    return result;
+}
+function pluginOpts(config, { plugin , local  }, opts, context) {
+    const keys = config.pluginScopeKeys(plugin);
+    const scopes = config.getOptionScopes(opts, keys);
+    if (local && plugin.defaults) {
+        scopes.push(plugin.defaults);
+    }
+    return config.createResolver(scopes, context, [
+        ''
+    ], {
+        scriptable: false,
+        indexable: false,
+        allKeys: true
+    });
+}
+
+function getIndexAxis(type, options) {
+    const datasetDefaults = helpers_segment.defaults.datasets[type] || {};
+    const datasetOptions = (options.datasets || {})[type] || {};
+    return datasetOptions.indexAxis || options.indexAxis || datasetDefaults.indexAxis || 'x';
+}
+function getAxisFromDefaultScaleID(id, indexAxis) {
+    let axis = id;
+    if (id === '_index_') {
+        axis = indexAxis;
+    } else if (id === '_value_') {
+        axis = indexAxis === 'x' ? 'y' : 'x';
+    }
+    return axis;
+}
+function getDefaultScaleIDFromAxis(axis, indexAxis) {
+    return axis === indexAxis ? '_index_' : '_value_';
+}
+function idMatchesAxis(id) {
+    if (id === 'x' || id === 'y' || id === 'r') {
+        return id;
+    }
+}
+function axisFromPosition(position) {
+    if (position === 'top' || position === 'bottom') {
+        return 'x';
+    }
+    if (position === 'left' || position === 'right') {
+        return 'y';
+    }
+}
+function determineAxis(id, ...scaleOptions) {
+    if (idMatchesAxis(id)) {
+        return id;
+    }
+    for (const opts of scaleOptions){
+        const axis = opts.axis || axisFromPosition(opts.position) || id.length > 1 && idMatchesAxis(id[0].toLowerCase());
+        if (axis) {
+            return axis;
+        }
+    }
+    throw new Error(`Cannot determine type of '${id}' axis. Please provide 'axis' or 'position' option.`);
+}
+function getAxisFromDataset(id, axis, dataset) {
+    if (dataset[axis + 'AxisID'] === id) {
+        return {
+            axis
+        };
+    }
+}
+function retrieveAxisFromDatasets(id, config) {
+    if (config.data && config.data.datasets) {
+        const boundDs = config.data.datasets.filter((d)=>d.xAxisID === id || d.yAxisID === id);
+        if (boundDs.length) {
+            return getAxisFromDataset(id, 'x', boundDs[0]) || getAxisFromDataset(id, 'y', boundDs[0]);
+        }
+    }
+    return {};
+}
+function mergeScaleConfig(config, options) {
+    const chartDefaults = helpers_segment.overrides[config.type] || {
+        scales: {}
+    };
+    const configScales = options.scales || {};
+    const chartIndexAxis = getIndexAxis(config.type, options);
+    const scales = Object.create(null);
+    Object.keys(configScales).forEach((id)=>{
+        const scaleConf = configScales[id];
+        if (!helpers_segment.isObject(scaleConf)) {
+            return console.error(`Invalid scale configuration for scale: ${id}`);
+        }
+        if (scaleConf._proxy) {
+            return console.warn(`Ignoring resolver passed as options for scale: ${id}`);
+        }
+        const axis = determineAxis(id, scaleConf, retrieveAxisFromDatasets(id, config), helpers_segment.defaults.scales[scaleConf.type]);
+        const defaultId = getDefaultScaleIDFromAxis(axis, chartIndexAxis);
+        const defaultScaleOptions = chartDefaults.scales || {};
+        scales[id] = helpers_segment.mergeIf(Object.create(null), [
+            {
+                axis
+            },
+            scaleConf,
+            defaultScaleOptions[axis],
+            defaultScaleOptions[defaultId]
+        ]);
+    });
+    config.data.datasets.forEach((dataset)=>{
+        const type = dataset.type || config.type;
+        const indexAxis = dataset.indexAxis || getIndexAxis(type, options);
+        const datasetDefaults = helpers_segment.overrides[type] || {};
+        const defaultScaleOptions = datasetDefaults.scales || {};
+        Object.keys(defaultScaleOptions).forEach((defaultID)=>{
+            const axis = getAxisFromDefaultScaleID(defaultID, indexAxis);
+            const id = dataset[axis + 'AxisID'] || axis;
+            scales[id] = scales[id] || Object.create(null);
+            helpers_segment.mergeIf(scales[id], [
+                {
+                    axis
+                },
+                configScales[id],
+                defaultScaleOptions[defaultID]
+            ]);
+        });
+    });
+    Object.keys(scales).forEach((key)=>{
+        const scale = scales[key];
+        helpers_segment.mergeIf(scale, [
+            helpers_segment.defaults.scales[scale.type],
+            helpers_segment.defaults.scale
+        ]);
+    });
+    return scales;
+}
+function initOptions(config) {
+    const options = config.options || (config.options = {});
+    options.plugins = helpers_segment.valueOrDefault(options.plugins, {});
+    options.scales = mergeScaleConfig(config, options);
+}
+function initData(data) {
+    data = data || {};
+    data.datasets = data.datasets || [];
+    data.labels = data.labels || [];
+    return data;
+}
+function initConfig(config) {
+    config = config || {};
+    config.data = initData(config.data);
+    initOptions(config);
+    return config;
+}
+const keyCache = new Map();
+const keysCached = new Set();
+function cachedKeys(cacheKey, generate) {
+    let keys = keyCache.get(cacheKey);
+    if (!keys) {
+        keys = generate();
+        keyCache.set(cacheKey, keys);
+        keysCached.add(keys);
+    }
+    return keys;
+}
+const addIfFound = (set, obj, key)=>{
+    const opts = helpers_segment.resolveObjectKey(obj, key);
+    if (opts !== undefined) {
+        set.add(opts);
+    }
+};
+class Config {
+    constructor(config){
+        this._config = initConfig(config);
+        this._scopeCache = new Map();
+        this._resolverCache = new Map();
+    }
+    get platform() {
+        return this._config.platform;
+    }
+    get type() {
+        return this._config.type;
+    }
+    set type(type) {
+        this._config.type = type;
+    }
+    get data() {
+        return this._config.data;
+    }
+    set data(data) {
+        this._config.data = initData(data);
+    }
+    get options() {
+        return this._config.options;
+    }
+    set options(options) {
+        this._config.options = options;
+    }
+    get plugins() {
+        return this._config.plugins;
+    }
+    update() {
+        const config = this._config;
+        this.clearCache();
+        initOptions(config);
+    }
+    clearCache() {
+        this._scopeCache.clear();
+        this._resolverCache.clear();
+    }
+ datasetScopeKeys(datasetType) {
+        return cachedKeys(datasetType, ()=>[
+                [
+                    `datasets.${datasetType}`,
+                    ''
+                ]
+            ]);
+    }
+ datasetAnimationScopeKeys(datasetType, transition) {
+        return cachedKeys(`${datasetType}.transition.${transition}`, ()=>[
+                [
+                    `datasets.${datasetType}.transitions.${transition}`,
+                    `transitions.${transition}`
+                ],
+                [
+                    `datasets.${datasetType}`,
+                    ''
+                ]
+            ]);
+    }
+ datasetElementScopeKeys(datasetType, elementType) {
+        return cachedKeys(`${datasetType}-${elementType}`, ()=>[
+                [
+                    `datasets.${datasetType}.elements.${elementType}`,
+                    `datasets.${datasetType}`,
+                    `elements.${elementType}`,
+                    ''
+                ]
+            ]);
+    }
+ pluginScopeKeys(plugin) {
+        const id = plugin.id;
+        const type = this.type;
+        return cachedKeys(`${type}-plugin-${id}`, ()=>[
+                [
+                    `plugins.${id}`,
+                    ...plugin.additionalOptionScopes || []
+                ]
+            ]);
+    }
+ _cachedScopes(mainScope, resetCache) {
+        const _scopeCache = this._scopeCache;
+        let cache = _scopeCache.get(mainScope);
+        if (!cache || resetCache) {
+            cache = new Map();
+            _scopeCache.set(mainScope, cache);
+        }
+        return cache;
+    }
+ getOptionScopes(mainScope, keyLists, resetCache) {
+        const { options , type  } = this;
+        const cache = this._cachedScopes(mainScope, resetCache);
+        const cached = cache.get(keyLists);
+        if (cached) {
+            return cached;
+        }
+        const scopes = new Set();
+        keyLists.forEach((keys)=>{
+            if (mainScope) {
+                scopes.add(mainScope);
+                keys.forEach((key)=>addIfFound(scopes, mainScope, key));
+            }
+            keys.forEach((key)=>addIfFound(scopes, options, key));
+            keys.forEach((key)=>addIfFound(scopes, helpers_segment.overrides[type] || {}, key));
+            keys.forEach((key)=>addIfFound(scopes, helpers_segment.defaults, key));
+            keys.forEach((key)=>addIfFound(scopes, helpers_segment.descriptors, key));
+        });
+        const array = Array.from(scopes);
+        if (array.length === 0) {
+            array.push(Object.create(null));
+        }
+        if (keysCached.has(keyLists)) {
+            cache.set(keyLists, array);
+        }
+        return array;
+    }
+ chartOptionScopes() {
+        const { options , type  } = this;
+        return [
+            options,
+            helpers_segment.overrides[type] || {},
+            helpers_segment.defaults.datasets[type] || {},
+            {
+                type
+            },
+            helpers_segment.defaults,
+            helpers_segment.descriptors
+        ];
+    }
+ resolveNamedOptions(scopes, names, context, prefixes = [
+        ''
+    ]) {
+        const result = {
+            $shared: true
+        };
+        const { resolver , subPrefixes  } = getResolver(this._resolverCache, scopes, prefixes);
+        let options = resolver;
+        if (needContext(resolver, names)) {
+            result.$shared = false;
+            context = helpers_segment.isFunction(context) ? context() : context;
+            const subResolver = this.createResolver(scopes, context, subPrefixes);
+            options = helpers_segment._attachContext(resolver, context, subResolver);
+        }
+        for (const prop of names){
+            result[prop] = options[prop];
+        }
+        return result;
+    }
+ createResolver(scopes, context, prefixes = [
+        ''
+    ], descriptorDefaults) {
+        const { resolver  } = getResolver(this._resolverCache, scopes, prefixes);
+        return helpers_segment.isObject(context) ? helpers_segment._attachContext(resolver, context, undefined, descriptorDefaults) : resolver;
+    }
+}
+function getResolver(resolverCache, scopes, prefixes) {
+    let cache = resolverCache.get(scopes);
+    if (!cache) {
+        cache = new Map();
+        resolverCache.set(scopes, cache);
+    }
+    const cacheKey = prefixes.join();
+    let cached = cache.get(cacheKey);
+    if (!cached) {
+        const resolver = helpers_segment._createResolver(scopes, prefixes);
+        cached = {
+            resolver,
+            subPrefixes: prefixes.filter((p)=>!p.toLowerCase().includes('hover'))
+        };
+        cache.set(cacheKey, cached);
+    }
+    return cached;
+}
+const hasFunction = (value)=>helpers_segment.isObject(value) && Object.getOwnPropertyNames(value).some((key)=>helpers_segment.isFunction(value[key]));
+function needContext(proxy, names) {
+    const { isScriptable , isIndexable  } = helpers_segment._descriptors(proxy);
+    for (const prop of names){
+        const scriptable = isScriptable(prop);
+        const indexable = isIndexable(prop);
+        const value = (indexable || scriptable) && proxy[prop];
+        if (scriptable && (helpers_segment.isFunction(value) || hasFunction(value)) || indexable && helpers_segment.isArray(value)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+var version = "4.4.8";
+
+const KNOWN_POSITIONS = [
+    'top',
+    'bottom',
+    'left',
+    'right',
+    'chartArea'
+];
+function positionIsHorizontal(position, axis) {
+    return position === 'top' || position === 'bottom' || KNOWN_POSITIONS.indexOf(position) === -1 && axis === 'x';
+}
+function compare2Level(l1, l2) {
+    return function(a, b) {
+        return a[l1] === b[l1] ? a[l2] - b[l2] : a[l1] - b[l1];
+    };
+}
+function onAnimationsComplete(context) {
+    const chart = context.chart;
+    const animationOptions = chart.options.animation;
+    chart.notifyPlugins('afterRender');
+    helpers_segment.callback(animationOptions && animationOptions.onComplete, [
+        context
+    ], chart);
+}
+function onAnimationProgress(context) {
+    const chart = context.chart;
+    const animationOptions = chart.options.animation;
+    helpers_segment.callback(animationOptions && animationOptions.onProgress, [
+        context
+    ], chart);
+}
+ function getCanvas(item) {
+    if (helpers_segment._isDomSupported() && typeof item === 'string') {
+        item = document.getElementById(item);
+    } else if (item && item.length) {
+        item = item[0];
+    }
+    if (item && item.canvas) {
+        item = item.canvas;
+    }
+    return item;
+}
+const instances = {};
+const getChart = (key)=>{
+    const canvas = getCanvas(key);
+    return Object.values(instances).filter((c)=>c.canvas === canvas).pop();
+};
+function moveNumericKeys(obj, start, move) {
+    const keys = Object.keys(obj);
+    for (const key of keys){
+        const intKey = +key;
+        if (intKey >= start) {
+            const value = obj[key];
+            delete obj[key];
+            if (move > 0 || intKey > start) {
+                obj[intKey + move] = value;
+            }
+        }
+    }
+}
+ function determineLastEvent(e, lastEvent, inChartArea, isClick) {
+    if (!inChartArea || e.type === 'mouseout') {
+        return null;
+    }
+    if (isClick) {
+        return lastEvent;
+    }
+    return e;
+}
+function getSizeForArea(scale, chartArea, field) {
+    return scale.options.clip ? scale[field] : chartArea[field];
+}
+function getDatasetArea(meta, chartArea) {
+    const { xScale , yScale  } = meta;
+    if (xScale && yScale) {
+        return {
+            left: getSizeForArea(xScale, chartArea, 'left'),
+            right: getSizeForArea(xScale, chartArea, 'right'),
+            top: getSizeForArea(yScale, chartArea, 'top'),
+            bottom: getSizeForArea(yScale, chartArea, 'bottom')
+        };
+    }
+    return chartArea;
+}
+class Chart {
+    static defaults = helpers_segment.defaults;
+    static instances = instances;
+    static overrides = helpers_segment.overrides;
+    static registry = registry;
+    static version = version;
+    static getChart = getChart;
+    static register(...items) {
+        registry.add(...items);
+        invalidatePlugins();
+    }
+    static unregister(...items) {
+        registry.remove(...items);
+        invalidatePlugins();
+    }
+    constructor(item, userConfig){
+        const config = this.config = new Config(userConfig);
+        const initialCanvas = getCanvas(item);
+        const existingChart = getChart(initialCanvas);
+        if (existingChart) {
+            throw new Error('Canvas is already in use. Chart with ID \'' + existingChart.id + '\'' + ' must be destroyed before the canvas with ID \'' + existingChart.canvas.id + '\' can be reused.');
+        }
+        const options = config.createResolver(config.chartOptionScopes(), this.getContext());
+        this.platform = new (config.platform || _detectPlatform(initialCanvas))();
+        this.platform.updateConfig(config);
+        const context = this.platform.acquireContext(initialCanvas, options.aspectRatio);
+        const canvas = context && context.canvas;
+        const height = canvas && canvas.height;
+        const width = canvas && canvas.width;
+        this.id = helpers_segment.uid();
+        this.ctx = context;
+        this.canvas = canvas;
+        this.width = width;
+        this.height = height;
+        this._options = options;
+        this._aspectRatio = this.aspectRatio;
+        this._layers = [];
+        this._metasets = [];
+        this._stacks = undefined;
+        this.boxes = [];
+        this.currentDevicePixelRatio = undefined;
+        this.chartArea = undefined;
+        this._active = [];
+        this._lastEvent = undefined;
+        this._listeners = {};
+         this._responsiveListeners = undefined;
+        this._sortedMetasets = [];
+        this.scales = {};
+        this._plugins = new PluginService();
+        this.$proxies = {};
+        this._hiddenIndices = {};
+        this.attached = false;
+        this._animationsDisabled = undefined;
+        this.$context = undefined;
+        this._doResize = helpers_segment.debounce((mode)=>this.update(mode), options.resizeDelay || 0);
+        this._dataChanges = [];
+        instances[this.id] = this;
+        if (!context || !canvas) {
+            console.error("Failed to create chart: can't acquire context from the given item");
+            return;
+        }
+        animator.listen(this, 'complete', onAnimationsComplete);
+        animator.listen(this, 'progress', onAnimationProgress);
+        this._initialize();
+        if (this.attached) {
+            this.update();
+        }
+    }
+    get aspectRatio() {
+        const { options: { aspectRatio , maintainAspectRatio  } , width , height , _aspectRatio  } = this;
+        if (!helpers_segment.isNullOrUndef(aspectRatio)) {
+            return aspectRatio;
+        }
+        if (maintainAspectRatio && _aspectRatio) {
+            return _aspectRatio;
+        }
+        return height ? width / height : null;
+    }
+    get data() {
+        return this.config.data;
+    }
+    set data(data) {
+        this.config.data = data;
+    }
+    get options() {
+        return this._options;
+    }
+    set options(options) {
+        this.config.options = options;
+    }
+    get registry() {
+        return registry;
+    }
+ _initialize() {
+        this.notifyPlugins('beforeInit');
+        if (this.options.responsive) {
+            this.resize();
+        } else {
+            helpers_segment.retinaScale(this, this.options.devicePixelRatio);
+        }
+        this.bindEvents();
+        this.notifyPlugins('afterInit');
+        return this;
+    }
+    clear() {
+        helpers_segment.clearCanvas(this.canvas, this.ctx);
+        return this;
+    }
+    stop() {
+        animator.stop(this);
+        return this;
+    }
+ resize(width, height) {
+        if (!animator.running(this)) {
+            this._resize(width, height);
+        } else {
+            this._resizeBeforeDraw = {
+                width,
+                height
+            };
+        }
+    }
+    _resize(width, height) {
+        const options = this.options;
+        const canvas = this.canvas;
+        const aspectRatio = options.maintainAspectRatio && this.aspectRatio;
+        const newSize = this.platform.getMaximumSize(canvas, width, height, aspectRatio);
+        const newRatio = options.devicePixelRatio || this.platform.getDevicePixelRatio();
+        const mode = this.width ? 'resize' : 'attach';
+        this.width = newSize.width;
+        this.height = newSize.height;
+        this._aspectRatio = this.aspectRatio;
+        if (!helpers_segment.retinaScale(this, newRatio, true)) {
+            return;
+        }
+        this.notifyPlugins('resize', {
+            size: newSize
+        });
+        helpers_segment.callback(options.onResize, [
+            this,
+            newSize
+        ], this);
+        if (this.attached) {
+            if (this._doResize(mode)) {
+                this.render();
+            }
+        }
+    }
+    ensureScalesHaveIDs() {
+        const options = this.options;
+        const scalesOptions = options.scales || {};
+        helpers_segment.each(scalesOptions, (axisOptions, axisID)=>{
+            axisOptions.id = axisID;
+        });
+    }
+ buildOrUpdateScales() {
+        const options = this.options;
+        const scaleOpts = options.scales;
+        const scales = this.scales;
+        const updated = Object.keys(scales).reduce((obj, id)=>{
+            obj[id] = false;
+            return obj;
+        }, {});
+        let items = [];
+        if (scaleOpts) {
+            items = items.concat(Object.keys(scaleOpts).map((id)=>{
+                const scaleOptions = scaleOpts[id];
+                const axis = determineAxis(id, scaleOptions);
+                const isRadial = axis === 'r';
+                const isHorizontal = axis === 'x';
+                return {
+                    options: scaleOptions,
+                    dposition: isRadial ? 'chartArea' : isHorizontal ? 'bottom' : 'left',
+                    dtype: isRadial ? 'radialLinear' : isHorizontal ? 'category' : 'linear'
+                };
+            }));
+        }
+        helpers_segment.each(items, (item)=>{
+            const scaleOptions = item.options;
+            const id = scaleOptions.id;
+            const axis = determineAxis(id, scaleOptions);
+            const scaleType = helpers_segment.valueOrDefault(scaleOptions.type, item.dtype);
+            if (scaleOptions.position === undefined || positionIsHorizontal(scaleOptions.position, axis) !== positionIsHorizontal(item.dposition)) {
+                scaleOptions.position = item.dposition;
+            }
+            updated[id] = true;
+            let scale = null;
+            if (id in scales && scales[id].type === scaleType) {
+                scale = scales[id];
+            } else {
+                const scaleClass = registry.getScale(scaleType);
+                scale = new scaleClass({
+                    id,
+                    type: scaleType,
+                    ctx: this.ctx,
+                    chart: this
+                });
+                scales[scale.id] = scale;
+            }
+            scale.init(scaleOptions, options);
+        });
+        helpers_segment.each(updated, (hasUpdated, id)=>{
+            if (!hasUpdated) {
+                delete scales[id];
+            }
+        });
+        helpers_segment.each(scales, (scale)=>{
+            layouts.configure(this, scale, scale.options);
+            layouts.addBox(this, scale);
+        });
+    }
+ _updateMetasets() {
+        const metasets = this._metasets;
+        const numData = this.data.datasets.length;
+        const numMeta = metasets.length;
+        metasets.sort((a, b)=>a.index - b.index);
+        if (numMeta > numData) {
+            for(let i = numData; i < numMeta; ++i){
+                this._destroyDatasetMeta(i);
+            }
+            metasets.splice(numData, numMeta - numData);
+        }
+        this._sortedMetasets = metasets.slice(0).sort(compare2Level('order', 'index'));
+    }
+ _removeUnreferencedMetasets() {
+        const { _metasets: metasets , data: { datasets  }  } = this;
+        if (metasets.length > datasets.length) {
+            delete this._stacks;
+        }
+        metasets.forEach((meta, index)=>{
+            if (datasets.filter((x)=>x === meta._dataset).length === 0) {
+                this._destroyDatasetMeta(index);
+            }
+        });
+    }
+    buildOrUpdateControllers() {
+        const newControllers = [];
+        const datasets = this.data.datasets;
+        let i, ilen;
+        this._removeUnreferencedMetasets();
+        for(i = 0, ilen = datasets.length; i < ilen; i++){
+            const dataset = datasets[i];
+            let meta = this.getDatasetMeta(i);
+            const type = dataset.type || this.config.type;
+            if (meta.type && meta.type !== type) {
+                this._destroyDatasetMeta(i);
+                meta = this.getDatasetMeta(i);
+            }
+            meta.type = type;
+            meta.indexAxis = dataset.indexAxis || getIndexAxis(type, this.options);
+            meta.order = dataset.order || 0;
+            meta.index = i;
+            meta.label = '' + dataset.label;
+            meta.visible = this.isDatasetVisible(i);
+            if (meta.controller) {
+                meta.controller.updateIndex(i);
+                meta.controller.linkScales();
+            } else {
+                const ControllerClass = registry.getController(type);
+                const { datasetElementType , dataElementType  } = helpers_segment.defaults.datasets[type];
+                Object.assign(ControllerClass, {
+                    dataElementType: registry.getElement(dataElementType),
+                    datasetElementType: datasetElementType && registry.getElement(datasetElementType)
+                });
+                meta.controller = new ControllerClass(this, i);
+                newControllers.push(meta.controller);
+            }
+        }
+        this._updateMetasets();
+        return newControllers;
+    }
+ _resetElements() {
+        helpers_segment.each(this.data.datasets, (dataset, datasetIndex)=>{
+            this.getDatasetMeta(datasetIndex).controller.reset();
+        }, this);
+    }
+ reset() {
+        this._resetElements();
+        this.notifyPlugins('reset');
+    }
+    update(mode) {
+        const config = this.config;
+        config.update();
+        const options = this._options = config.createResolver(config.chartOptionScopes(), this.getContext());
+        const animsDisabled = this._animationsDisabled = !options.animation;
+        this._updateScales();
+        this._checkEventBindings();
+        this._updateHiddenIndices();
+        this._plugins.invalidate();
+        if (this.notifyPlugins('beforeUpdate', {
+            mode,
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        const newControllers = this.buildOrUpdateControllers();
+        this.notifyPlugins('beforeElementsUpdate');
+        let minPadding = 0;
+        for(let i = 0, ilen = this.data.datasets.length; i < ilen; i++){
+            const { controller  } = this.getDatasetMeta(i);
+            const reset = !animsDisabled && newControllers.indexOf(controller) === -1;
+            controller.buildOrUpdateElements(reset);
+            minPadding = Math.max(+controller.getMaxOverflow(), minPadding);
+        }
+        minPadding = this._minPadding = options.layout.autoPadding ? minPadding : 0;
+        this._updateLayout(minPadding);
+        if (!animsDisabled) {
+            helpers_segment.each(newControllers, (controller)=>{
+                controller.reset();
+            });
+        }
+        this._updateDatasets(mode);
+        this.notifyPlugins('afterUpdate', {
+            mode
+        });
+        this._layers.sort(compare2Level('z', '_idx'));
+        const { _active , _lastEvent  } = this;
+        if (_lastEvent) {
+            this._eventHandler(_lastEvent, true);
+        } else if (_active.length) {
+            this._updateHoverStyles(_active, _active, true);
+        }
+        this.render();
+    }
+ _updateScales() {
+        helpers_segment.each(this.scales, (scale)=>{
+            layouts.removeBox(this, scale);
+        });
+        this.ensureScalesHaveIDs();
+        this.buildOrUpdateScales();
+    }
+ _checkEventBindings() {
+        const options = this.options;
+        const existingEvents = new Set(Object.keys(this._listeners));
+        const newEvents = new Set(options.events);
+        if (!helpers_segment.setsEqual(existingEvents, newEvents) || !!this._responsiveListeners !== options.responsive) {
+            this.unbindEvents();
+            this.bindEvents();
+        }
+    }
+ _updateHiddenIndices() {
+        const { _hiddenIndices  } = this;
+        const changes = this._getUniformDataChanges() || [];
+        for (const { method , start , count  } of changes){
+            const move = method === '_removeElements' ? -count : count;
+            moveNumericKeys(_hiddenIndices, start, move);
+        }
+    }
+ _getUniformDataChanges() {
+        const _dataChanges = this._dataChanges;
+        if (!_dataChanges || !_dataChanges.length) {
+            return;
+        }
+        this._dataChanges = [];
+        const datasetCount = this.data.datasets.length;
+        const makeSet = (idx)=>new Set(_dataChanges.filter((c)=>c[0] === idx).map((c, i)=>i + ',' + c.splice(1).join(',')));
+        const changeSet = makeSet(0);
+        for(let i = 1; i < datasetCount; i++){
+            if (!helpers_segment.setsEqual(changeSet, makeSet(i))) {
+                return;
+            }
+        }
+        return Array.from(changeSet).map((c)=>c.split(',')).map((a)=>({
+                method: a[1],
+                start: +a[2],
+                count: +a[3]
+            }));
+    }
+ _updateLayout(minPadding) {
+        if (this.notifyPlugins('beforeLayout', {
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        layouts.update(this, this.width, this.height, minPadding);
+        const area = this.chartArea;
+        const noArea = area.width <= 0 || area.height <= 0;
+        this._layers = [];
+        helpers_segment.each(this.boxes, (box)=>{
+            if (noArea && box.position === 'chartArea') {
+                return;
+            }
+            if (box.configure) {
+                box.configure();
+            }
+            this._layers.push(...box._layers());
+        }, this);
+        this._layers.forEach((item, index)=>{
+            item._idx = index;
+        });
+        this.notifyPlugins('afterLayout');
+    }
+ _updateDatasets(mode) {
+        if (this.notifyPlugins('beforeDatasetsUpdate', {
+            mode,
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        for(let i = 0, ilen = this.data.datasets.length; i < ilen; ++i){
+            this.getDatasetMeta(i).controller.configure();
+        }
+        for(let i = 0, ilen = this.data.datasets.length; i < ilen; ++i){
+            this._updateDataset(i, helpers_segment.isFunction(mode) ? mode({
+                datasetIndex: i
+            }) : mode);
+        }
+        this.notifyPlugins('afterDatasetsUpdate', {
+            mode
+        });
+    }
+ _updateDataset(index, mode) {
+        const meta = this.getDatasetMeta(index);
+        const args = {
+            meta,
+            index,
+            mode,
+            cancelable: true
+        };
+        if (this.notifyPlugins('beforeDatasetUpdate', args) === false) {
+            return;
+        }
+        meta.controller._update(mode);
+        args.cancelable = false;
+        this.notifyPlugins('afterDatasetUpdate', args);
+    }
+    render() {
+        if (this.notifyPlugins('beforeRender', {
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        if (animator.has(this)) {
+            if (this.attached && !animator.running(this)) {
+                animator.start(this);
+            }
+        } else {
+            this.draw();
+            onAnimationsComplete({
+                chart: this
+            });
+        }
+    }
+    draw() {
+        let i;
+        if (this._resizeBeforeDraw) {
+            const { width , height  } = this._resizeBeforeDraw;
+            this._resizeBeforeDraw = null;
+            this._resize(width, height);
+        }
+        this.clear();
+        if (this.width <= 0 || this.height <= 0) {
+            return;
+        }
+        if (this.notifyPlugins('beforeDraw', {
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        const layers = this._layers;
+        for(i = 0; i < layers.length && layers[i].z <= 0; ++i){
+            layers[i].draw(this.chartArea);
+        }
+        this._drawDatasets();
+        for(; i < layers.length; ++i){
+            layers[i].draw(this.chartArea);
+        }
+        this.notifyPlugins('afterDraw');
+    }
+ _getSortedDatasetMetas(filterVisible) {
+        const metasets = this._sortedMetasets;
+        const result = [];
+        let i, ilen;
+        for(i = 0, ilen = metasets.length; i < ilen; ++i){
+            const meta = metasets[i];
+            if (!filterVisible || meta.visible) {
+                result.push(meta);
+            }
+        }
+        return result;
+    }
+ getSortedVisibleDatasetMetas() {
+        return this._getSortedDatasetMetas(true);
+    }
+ _drawDatasets() {
+        if (this.notifyPlugins('beforeDatasetsDraw', {
+            cancelable: true
+        }) === false) {
+            return;
+        }
+        const metasets = this.getSortedVisibleDatasetMetas();
+        for(let i = metasets.length - 1; i >= 0; --i){
+            this._drawDataset(metasets[i]);
+        }
+        this.notifyPlugins('afterDatasetsDraw');
+    }
+ _drawDataset(meta) {
+        const ctx = this.ctx;
+        const clip = meta._clip;
+        const useClip = !clip.disabled;
+        const area = getDatasetArea(meta, this.chartArea);
+        const args = {
+            meta,
+            index: meta.index,
+            cancelable: true
+        };
+        if (this.notifyPlugins('beforeDatasetDraw', args) === false) {
+            return;
+        }
+        if (useClip) {
+            helpers_segment.clipArea(ctx, {
+                left: clip.left === false ? 0 : area.left - clip.left,
+                right: clip.right === false ? this.width : area.right + clip.right,
+                top: clip.top === false ? 0 : area.top - clip.top,
+                bottom: clip.bottom === false ? this.height : area.bottom + clip.bottom
+            });
+        }
+        meta.controller.draw();
+        if (useClip) {
+            helpers_segment.unclipArea(ctx);
+        }
+        args.cancelable = false;
+        this.notifyPlugins('afterDatasetDraw', args);
+    }
+ isPointInArea(point) {
+        return helpers_segment._isPointInArea(point, this.chartArea, this._minPadding);
+    }
+    getElementsAtEventForMode(e, mode, options, useFinalPosition) {
+        const method = Interaction.modes[mode];
+        if (typeof method === 'function') {
+            return method(this, e, options, useFinalPosition);
+        }
+        return [];
+    }
+    getDatasetMeta(datasetIndex) {
+        const dataset = this.data.datasets[datasetIndex];
+        const metasets = this._metasets;
+        let meta = metasets.filter((x)=>x && x._dataset === dataset).pop();
+        if (!meta) {
+            meta = {
+                type: null,
+                data: [],
+                dataset: null,
+                controller: null,
+                hidden: null,
+                xAxisID: null,
+                yAxisID: null,
+                order: dataset && dataset.order || 0,
+                index: datasetIndex,
+                _dataset: dataset,
+                _parsed: [],
+                _sorted: false
+            };
+            metasets.push(meta);
+        }
+        return meta;
+    }
+    getContext() {
+        return this.$context || (this.$context = helpers_segment.createContext(null, {
+            chart: this,
+            type: 'chart'
+        }));
+    }
+    getVisibleDatasetCount() {
+        return this.getSortedVisibleDatasetMetas().length;
+    }
+    isDatasetVisible(datasetIndex) {
+        const dataset = this.data.datasets[datasetIndex];
+        if (!dataset) {
+            return false;
+        }
+        const meta = this.getDatasetMeta(datasetIndex);
+        return typeof meta.hidden === 'boolean' ? !meta.hidden : !dataset.hidden;
+    }
+    setDatasetVisibility(datasetIndex, visible) {
+        const meta = this.getDatasetMeta(datasetIndex);
+        meta.hidden = !visible;
+    }
+    toggleDataVisibility(index) {
+        this._hiddenIndices[index] = !this._hiddenIndices[index];
+    }
+    getDataVisibility(index) {
+        return !this._hiddenIndices[index];
+    }
+ _updateVisibility(datasetIndex, dataIndex, visible) {
+        const mode = visible ? 'show' : 'hide';
+        const meta = this.getDatasetMeta(datasetIndex);
+        const anims = meta.controller._resolveAnimations(undefined, mode);
+        if (helpers_segment.defined(dataIndex)) {
+            meta.data[dataIndex].hidden = !visible;
+            this.update();
+        } else {
+            this.setDatasetVisibility(datasetIndex, visible);
+            anims.update(meta, {
+                visible
+            });
+            this.update((ctx)=>ctx.datasetIndex === datasetIndex ? mode : undefined);
+        }
+    }
+    hide(datasetIndex, dataIndex) {
+        this._updateVisibility(datasetIndex, dataIndex, false);
+    }
+    show(datasetIndex, dataIndex) {
+        this._updateVisibility(datasetIndex, dataIndex, true);
+    }
+ _destroyDatasetMeta(datasetIndex) {
+        const meta = this._metasets[datasetIndex];
+        if (meta && meta.controller) {
+            meta.controller._destroy();
+        }
+        delete this._metasets[datasetIndex];
+    }
+    _stop() {
+        let i, ilen;
+        this.stop();
+        animator.remove(this);
+        for(i = 0, ilen = this.data.datasets.length; i < ilen; ++i){
+            this._destroyDatasetMeta(i);
+        }
+    }
+    destroy() {
+        this.notifyPlugins('beforeDestroy');
+        const { canvas , ctx  } = this;
+        this._stop();
+        this.config.clearCache();
+        if (canvas) {
+            this.unbindEvents();
+            helpers_segment.clearCanvas(canvas, ctx);
+            this.platform.releaseContext(ctx);
+            this.canvas = null;
+            this.ctx = null;
+        }
+        delete instances[this.id];
+        this.notifyPlugins('afterDestroy');
+    }
+    toBase64Image(...args) {
+        return this.canvas.toDataURL(...args);
+    }
+ bindEvents() {
+        this.bindUserEvents();
+        if (this.options.responsive) {
+            this.bindResponsiveEvents();
+        } else {
+            this.attached = true;
+        }
+    }
+ bindUserEvents() {
+        const listeners = this._listeners;
+        const platform = this.platform;
+        const _add = (type, listener)=>{
+            platform.addEventListener(this, type, listener);
+            listeners[type] = listener;
+        };
+        const listener = (e, x, y)=>{
+            e.offsetX = x;
+            e.offsetY = y;
+            this._eventHandler(e);
+        };
+        helpers_segment.each(this.options.events, (type)=>_add(type, listener));
+    }
+ bindResponsiveEvents() {
+        if (!this._responsiveListeners) {
+            this._responsiveListeners = {};
+        }
+        const listeners = this._responsiveListeners;
+        const platform = this.platform;
+        const _add = (type, listener)=>{
+            platform.addEventListener(this, type, listener);
+            listeners[type] = listener;
+        };
+        const _remove = (type, listener)=>{
+            if (listeners[type]) {
+                platform.removeEventListener(this, type, listener);
+                delete listeners[type];
+            }
+        };
+        const listener = (width, height)=>{
+            if (this.canvas) {
+                this.resize(width, height);
+            }
+        };
+        let detached;
+        const attached = ()=>{
+            _remove('attach', attached);
+            this.attached = true;
+            this.resize();
+            _add('resize', listener);
+            _add('detach', detached);
+        };
+        detached = ()=>{
+            this.attached = false;
+            _remove('resize', listener);
+            this._stop();
+            this._resize(0, 0);
+            _add('attach', attached);
+        };
+        if (platform.isAttached(this.canvas)) {
+            attached();
+        } else {
+            detached();
+        }
+    }
+ unbindEvents() {
+        helpers_segment.each(this._listeners, (listener, type)=>{
+            this.platform.removeEventListener(this, type, listener);
+        });
+        this._listeners = {};
+        helpers_segment.each(this._responsiveListeners, (listener, type)=>{
+            this.platform.removeEventListener(this, type, listener);
+        });
+        this._responsiveListeners = undefined;
+    }
+    updateHoverStyle(items, mode, enabled) {
+        const prefix = enabled ? 'set' : 'remove';
+        let meta, item, i, ilen;
+        if (mode === 'dataset') {
+            meta = this.getDatasetMeta(items[0].datasetIndex);
+            meta.controller['_' + prefix + 'DatasetHoverStyle']();
+        }
+        for(i = 0, ilen = items.length; i < ilen; ++i){
+            item = items[i];
+            const controller = item && this.getDatasetMeta(item.datasetIndex).controller;
+            if (controller) {
+                controller[prefix + 'HoverStyle'](item.element, item.datasetIndex, item.index);
+            }
+        }
+    }
+ getActiveElements() {
+        return this._active || [];
+    }
+ setActiveElements(activeElements) {
+        const lastActive = this._active || [];
+        const active = activeElements.map(({ datasetIndex , index  })=>{
+            const meta = this.getDatasetMeta(datasetIndex);
+            if (!meta) {
+                throw new Error('No dataset found at index ' + datasetIndex);
+            }
+            return {
+                datasetIndex,
+                element: meta.data[index],
+                index
+            };
+        });
+        const changed = !helpers_segment._elementsEqual(active, lastActive);
+        if (changed) {
+            this._active = active;
+            this._lastEvent = null;
+            this._updateHoverStyles(active, lastActive);
+        }
+    }
+ notifyPlugins(hook, args, filter) {
+        return this._plugins.notify(this, hook, args, filter);
+    }
+ isPluginEnabled(pluginId) {
+        return this._plugins._cache.filter((p)=>p.plugin.id === pluginId).length === 1;
+    }
+ _updateHoverStyles(active, lastActive, replay) {
+        const hoverOptions = this.options.hover;
+        const diff = (a, b)=>a.filter((x)=>!b.some((y)=>x.datasetIndex === y.datasetIndex && x.index === y.index));
+        const deactivated = diff(lastActive, active);
+        const activated = replay ? active : diff(active, lastActive);
+        if (deactivated.length) {
+            this.updateHoverStyle(deactivated, hoverOptions.mode, false);
+        }
+        if (activated.length && hoverOptions.mode) {
+            this.updateHoverStyle(activated, hoverOptions.mode, true);
+        }
+    }
+ _eventHandler(e, replay) {
+        const args = {
+            event: e,
+            replay,
+            cancelable: true,
+            inChartArea: this.isPointInArea(e)
+        };
+        const eventFilter = (plugin)=>(plugin.options.events || this.options.events).includes(e.native.type);
+        if (this.notifyPlugins('beforeEvent', args, eventFilter) === false) {
+            return;
+        }
+        const changed = this._handleEvent(e, replay, args.inChartArea);
+        args.cancelable = false;
+        this.notifyPlugins('afterEvent', args, eventFilter);
+        if (changed || args.changed) {
+            this.render();
+        }
+        return this;
+    }
+ _handleEvent(e, replay, inChartArea) {
+        const { _active: lastActive = [] , options  } = this;
+        const useFinalPosition = replay;
+        const active = this._getActiveElements(e, lastActive, inChartArea, useFinalPosition);
+        const isClick = helpers_segment._isClickEvent(e);
+        const lastEvent = determineLastEvent(e, this._lastEvent, inChartArea, isClick);
+        if (inChartArea) {
+            this._lastEvent = null;
+            helpers_segment.callback(options.onHover, [
+                e,
+                active,
+                this
+            ], this);
+            if (isClick) {
+                helpers_segment.callback(options.onClick, [
+                    e,
+                    active,
+                    this
+                ], this);
+            }
+        }
+        const changed = !helpers_segment._elementsEqual(active, lastActive);
+        if (changed || replay) {
+            this._active = active;
+            this._updateHoverStyles(active, lastActive, replay);
+        }
+        this._lastEvent = lastEvent;
+        return changed;
+    }
+ _getActiveElements(e, lastActive, inChartArea, useFinalPosition) {
+        if (e.type === 'mouseout') {
+            return [];
+        }
+        if (!inChartArea) {
+            return lastActive;
+        }
+        const hoverOptions = this.options.hover;
+        return this.getElementsAtEventForMode(e, hoverOptions.mode, hoverOptions, useFinalPosition);
+    }
+}
+function invalidatePlugins() {
+    return helpers_segment.each(Chart.instances, (chart)=>chart._plugins.invalidate());
+}
+
+function clipArc(ctx, element, endAngle) {
+    const { startAngle , pixelMargin , x , y , outerRadius , innerRadius  } = element;
+    let angleMargin = pixelMargin / outerRadius;
+    // Draw an inner border by clipping the arc and drawing a double-width border
+    // Enlarge the clipping arc by 0.33 pixels to eliminate glitches between borders
+    ctx.beginPath();
+    ctx.arc(x, y, outerRadius, startAngle - angleMargin, endAngle + angleMargin);
+    if (innerRadius > pixelMargin) {
+        angleMargin = pixelMargin / innerRadius;
+        ctx.arc(x, y, innerRadius, endAngle + angleMargin, startAngle - angleMargin, true);
+    } else {
+        ctx.arc(x, y, pixelMargin, endAngle + helpers_segment.HALF_PI, startAngle - helpers_segment.HALF_PI);
+    }
+    ctx.closePath();
+    ctx.clip();
+}
+function toRadiusCorners(value) {
+    return helpers_segment._readValueToProps(value, [
+        'outerStart',
+        'outerEnd',
+        'innerStart',
+        'innerEnd'
+    ]);
+}
+/**
+ * Parse border radius from the provided options
+ */ function parseBorderRadius$1(arc, innerRadius, outerRadius, angleDelta) {
+    const o = toRadiusCorners(arc.options.borderRadius);
+    const halfThickness = (outerRadius - innerRadius) / 2;
+    const innerLimit = Math.min(halfThickness, angleDelta * innerRadius / 2);
+    // Outer limits are complicated. We want to compute the available angular distance at
+    // a radius of outerRadius - borderRadius because for small angular distances, this term limits.
+    // We compute at r = outerRadius - borderRadius because this circle defines the center of the border corners.
+    //
+    // If the borderRadius is large, that value can become negative.
+    // This causes the outer borders to lose their radius entirely, which is rather unexpected. To solve that, if borderRadius > outerRadius
+    // we know that the thickness term will dominate and compute the limits at that point
+    const computeOuterLimit = (val)=>{
+        const outerArcLimit = (outerRadius - Math.min(halfThickness, val)) * angleDelta / 2;
+        return helpers_segment._limitValue(val, 0, Math.min(halfThickness, outerArcLimit));
+    };
+    return {
+        outerStart: computeOuterLimit(o.outerStart),
+        outerEnd: computeOuterLimit(o.outerEnd),
+        innerStart: helpers_segment._limitValue(o.innerStart, 0, innerLimit),
+        innerEnd: helpers_segment._limitValue(o.innerEnd, 0, innerLimit)
+    };
+}
+/**
+ * Convert (r, 𝜃) to (x, y)
+ */ function rThetaToXY(r, theta, x, y) {
+    return {
+        x: x + r * Math.cos(theta),
+        y: y + r * Math.sin(theta)
+    };
+}
+/**
+ * Path the arc, respecting border radius by separating into left and right halves.
+ *
+ *   Start      End
+ *
+ *    1--->a--->2    Outer
+ *   /           \
+ *   8           3
+ *   |           |
+ *   |           |
+ *   7           4
+ *   \           /
+ *    6<---b<---5    Inner
+ */ function pathArc(ctx, element, offset, spacing, end, circular) {
+    const { x , y , startAngle: start , pixelMargin , innerRadius: innerR  } = element;
+    const outerRadius = Math.max(element.outerRadius + spacing + offset - pixelMargin, 0);
+    const innerRadius = innerR > 0 ? innerR + spacing + offset + pixelMargin : 0;
+    let spacingOffset = 0;
+    const alpha = end - start;
+    if (spacing) {
+        // When spacing is present, it is the same for all items
+        // So we adjust the start and end angle of the arc such that
+        // the distance is the same as it would be without the spacing
+        const noSpacingInnerRadius = innerR > 0 ? innerR - spacing : 0;
+        const noSpacingOuterRadius = outerRadius > 0 ? outerRadius - spacing : 0;
+        const avNogSpacingRadius = (noSpacingInnerRadius + noSpacingOuterRadius) / 2;
+        const adjustedAngle = avNogSpacingRadius !== 0 ? alpha * avNogSpacingRadius / (avNogSpacingRadius + spacing) : alpha;
+        spacingOffset = (alpha - adjustedAngle) / 2;
+    }
+    const beta = Math.max(0.001, alpha * outerRadius - offset / helpers_segment.PI) / outerRadius;
+    const angleOffset = (alpha - beta) / 2;
+    const startAngle = start + angleOffset + spacingOffset;
+    const endAngle = end - angleOffset - spacingOffset;
+    const { outerStart , outerEnd , innerStart , innerEnd  } = parseBorderRadius$1(element, innerRadius, outerRadius, endAngle - startAngle);
+    const outerStartAdjustedRadius = outerRadius - outerStart;
+    const outerEndAdjustedRadius = outerRadius - outerEnd;
+    const outerStartAdjustedAngle = startAngle + outerStart / outerStartAdjustedRadius;
+    const outerEndAdjustedAngle = endAngle - outerEnd / outerEndAdjustedRadius;
+    const innerStartAdjustedRadius = innerRadius + innerStart;
+    const innerEndAdjustedRadius = innerRadius + innerEnd;
+    const innerStartAdjustedAngle = startAngle + innerStart / innerStartAdjustedRadius;
+    const innerEndAdjustedAngle = endAngle - innerEnd / innerEndAdjustedRadius;
+    ctx.beginPath();
+    if (circular) {
+        // The first arc segments from point 1 to point a to point 2
+        const outerMidAdjustedAngle = (outerStartAdjustedAngle + outerEndAdjustedAngle) / 2;
+        ctx.arc(x, y, outerRadius, outerStartAdjustedAngle, outerMidAdjustedAngle);
+        ctx.arc(x, y, outerRadius, outerMidAdjustedAngle, outerEndAdjustedAngle);
+        // The corner segment from point 2 to point 3
+        if (outerEnd > 0) {
+            const pCenter = rThetaToXY(outerEndAdjustedRadius, outerEndAdjustedAngle, x, y);
+            ctx.arc(pCenter.x, pCenter.y, outerEnd, outerEndAdjustedAngle, endAngle + helpers_segment.HALF_PI);
+        }
+        // The line from point 3 to point 4
+        const p4 = rThetaToXY(innerEndAdjustedRadius, endAngle, x, y);
+        ctx.lineTo(p4.x, p4.y);
+        // The corner segment from point 4 to point 5
+        if (innerEnd > 0) {
+            const pCenter = rThetaToXY(innerEndAdjustedRadius, innerEndAdjustedAngle, x, y);
+            ctx.arc(pCenter.x, pCenter.y, innerEnd, endAngle + helpers_segment.HALF_PI, innerEndAdjustedAngle + Math.PI);
+        }
+        // The inner arc from point 5 to point b to point 6
+        const innerMidAdjustedAngle = (endAngle - innerEnd / innerRadius + (startAngle + innerStart / innerRadius)) / 2;
+        ctx.arc(x, y, innerRadius, endAngle - innerEnd / innerRadius, innerMidAdjustedAngle, true);
+        ctx.arc(x, y, innerRadius, innerMidAdjustedAngle, startAngle + innerStart / innerRadius, true);
+        // The corner segment from point 6 to point 7
+        if (innerStart > 0) {
+            const pCenter = rThetaToXY(innerStartAdjustedRadius, innerStartAdjustedAngle, x, y);
+            ctx.arc(pCenter.x, pCenter.y, innerStart, innerStartAdjustedAngle + Math.PI, startAngle - helpers_segment.HALF_PI);
+        }
+        // The line from point 7 to point 8
+        const p8 = rThetaToXY(outerStartAdjustedRadius, startAngle, x, y);
+        ctx.lineTo(p8.x, p8.y);
+        // The corner segment from point 8 to point 1
+        if (outerStart > 0) {
+            const pCenter = rThetaToXY(outerStartAdjustedRadius, outerStartAdjustedAngle, x, y);
+            ctx.arc(pCenter.x, pCenter.y, outerStart, startAngle - helpers_segment.HALF_PI, outerStartAdjustedAngle);
+        }
+    } else {
+        ctx.moveTo(x, y);
+        const outerStartX = Math.cos(outerStartAdjustedAngle) * outerRadius + x;
+        const outerStartY = Math.sin(outerStartAdjustedAngle) * outerRadius + y;
+        ctx.lineTo(outerStartX, outerStartY);
+        const outerEndX = Math.cos(outerEndAdjustedAngle) * outerRadius + x;
+        const outerEndY = Math.sin(outerEndAdjustedAngle) * outerRadius + y;
+        ctx.lineTo(outerEndX, outerEndY);
+    }
+    ctx.closePath();
+}
+function drawArc(ctx, element, offset, spacing, circular) {
+    const { fullCircles , startAngle , circumference  } = element;
+    let endAngle = element.endAngle;
+    if (fullCircles) {
+        pathArc(ctx, element, offset, spacing, endAngle, circular);
+        for(let i = 0; i < fullCircles; ++i){
+            ctx.fill();
+        }
+        if (!isNaN(circumference)) {
+            endAngle = startAngle + (circumference % helpers_segment.TAU || helpers_segment.TAU);
+        }
+    }
+    pathArc(ctx, element, offset, spacing, endAngle, circular);
+    ctx.fill();
+    return endAngle;
+}
+function drawBorder(ctx, element, offset, spacing, circular) {
+    const { fullCircles , startAngle , circumference , options  } = element;
+    const { borderWidth , borderJoinStyle , borderDash , borderDashOffset  } = options;
+    const inner = options.borderAlign === 'inner';
+    if (!borderWidth) {
+        return;
+    }
+    ctx.setLineDash(borderDash || []);
+    ctx.lineDashOffset = borderDashOffset;
+    if (inner) {
+        ctx.lineWidth = borderWidth * 2;
+        ctx.lineJoin = borderJoinStyle || 'round';
+    } else {
+        ctx.lineWidth = borderWidth;
+        ctx.lineJoin = borderJoinStyle || 'bevel';
+    }
+    let endAngle = element.endAngle;
+    if (fullCircles) {
+        pathArc(ctx, element, offset, spacing, endAngle, circular);
+        for(let i = 0; i < fullCircles; ++i){
+            ctx.stroke();
+        }
+        if (!isNaN(circumference)) {
+            endAngle = startAngle + (circumference % helpers_segment.TAU || helpers_segment.TAU);
+        }
+    }
+    if (inner) {
+        clipArc(ctx, element, endAngle);
+    }
+    if (!fullCircles) {
+        pathArc(ctx, element, offset, spacing, endAngle, circular);
+        ctx.stroke();
+    }
+}
+class ArcElement extends Element {
+    static id = 'arc';
+    static defaults = {
+        borderAlign: 'center',
+        borderColor: '#fff',
+        borderDash: [],
+        borderDashOffset: 0,
+        borderJoinStyle: undefined,
+        borderRadius: 0,
+        borderWidth: 2,
+        offset: 0,
+        spacing: 0,
+        angle: undefined,
+        circular: true
+    };
+    static defaultRoutes = {
+        backgroundColor: 'backgroundColor'
+    };
+    static descriptors = {
+        _scriptable: true,
+        _indexable: (name)=>name !== 'borderDash'
+    };
+    circumference;
+    endAngle;
+    fullCircles;
+    innerRadius;
+    outerRadius;
+    pixelMargin;
+    startAngle;
+    constructor(cfg){
+        super();
+        this.options = undefined;
+        this.circumference = undefined;
+        this.startAngle = undefined;
+        this.endAngle = undefined;
+        this.innerRadius = undefined;
+        this.outerRadius = undefined;
+        this.pixelMargin = 0;
+        this.fullCircles = 0;
+        if (cfg) {
+            Object.assign(this, cfg);
+        }
+    }
+    inRange(chartX, chartY, useFinalPosition) {
+        const point = this.getProps([
+            'x',
+            'y'
+        ], useFinalPosition);
+        const { angle , distance  } = helpers_segment.getAngleFromPoint(point, {
+            x: chartX,
+            y: chartY
+        });
+        const { startAngle , endAngle , innerRadius , outerRadius , circumference  } = this.getProps([
+            'startAngle',
+            'endAngle',
+            'innerRadius',
+            'outerRadius',
+            'circumference'
+        ], useFinalPosition);
+        const rAdjust = (this.options.spacing + this.options.borderWidth) / 2;
+        const _circumference = helpers_segment.valueOrDefault(circumference, endAngle - startAngle);
+        const nonZeroBetween = helpers_segment._angleBetween(angle, startAngle, endAngle) && startAngle !== endAngle;
+        const betweenAngles = _circumference >= helpers_segment.TAU || nonZeroBetween;
+        const withinRadius = helpers_segment._isBetween(distance, innerRadius + rAdjust, outerRadius + rAdjust);
+        return betweenAngles && withinRadius;
+    }
+    getCenterPoint(useFinalPosition) {
+        const { x , y , startAngle , endAngle , innerRadius , outerRadius  } = this.getProps([
+            'x',
+            'y',
+            'startAngle',
+            'endAngle',
+            'innerRadius',
+            'outerRadius'
+        ], useFinalPosition);
+        const { offset , spacing  } = this.options;
+        const halfAngle = (startAngle + endAngle) / 2;
+        const halfRadius = (innerRadius + outerRadius + spacing + offset) / 2;
+        return {
+            x: x + Math.cos(halfAngle) * halfRadius,
+            y: y + Math.sin(halfAngle) * halfRadius
+        };
+    }
+    tooltipPosition(useFinalPosition) {
+        return this.getCenterPoint(useFinalPosition);
+    }
+    draw(ctx) {
+        const { options , circumference  } = this;
+        const offset = (options.offset || 0) / 4;
+        const spacing = (options.spacing || 0) / 2;
+        const circular = options.circular;
+        this.pixelMargin = options.borderAlign === 'inner' ? 0.33 : 0;
+        this.fullCircles = circumference > helpers_segment.TAU ? Math.floor(circumference / helpers_segment.TAU) : 0;
+        if (circumference === 0 || this.innerRadius < 0 || this.outerRadius < 0) {
+            return;
+        }
+        ctx.save();
+        const halfAngle = (this.startAngle + this.endAngle) / 2;
+        ctx.translate(Math.cos(halfAngle) * offset, Math.sin(halfAngle) * offset);
+        const fix = 1 - Math.sin(Math.min(helpers_segment.PI, circumference || 0));
+        const radiusOffset = offset * fix;
+        ctx.fillStyle = options.backgroundColor;
+        ctx.strokeStyle = options.borderColor;
+        drawArc(ctx, this, radiusOffset, spacing, circular);
+        drawBorder(ctx, this, radiusOffset, spacing, circular);
+        ctx.restore();
+    }
+}
+
+function setStyle(ctx, options, style = options) {
+    ctx.lineCap = helpers_segment.valueOrDefault(style.borderCapStyle, options.borderCapStyle);
+    ctx.setLineDash(helpers_segment.valueOrDefault(style.borderDash, options.borderDash));
+    ctx.lineDashOffset = helpers_segment.valueOrDefault(style.borderDashOffset, options.borderDashOffset);
+    ctx.lineJoin = helpers_segment.valueOrDefault(style.borderJoinStyle, options.borderJoinStyle);
+    ctx.lineWidth = helpers_segment.valueOrDefault(style.borderWidth, options.borderWidth);
+    ctx.strokeStyle = helpers_segment.valueOrDefault(style.borderColor, options.borderColor);
+}
+function lineTo(ctx, previous, target) {
+    ctx.lineTo(target.x, target.y);
+}
+ function getLineMethod(options) {
+    if (options.stepped) {
+        return helpers_segment._steppedLineTo;
+    }
+    if (options.tension || options.cubicInterpolationMode === 'monotone') {
+        return helpers_segment._bezierCurveTo;
+    }
+    return lineTo;
+}
+function pathVars(points, segment, params = {}) {
+    const count = points.length;
+    const { start: paramsStart = 0 , end: paramsEnd = count - 1  } = params;
+    const { start: segmentStart , end: segmentEnd  } = segment;
+    const start = Math.max(paramsStart, segmentStart);
+    const end = Math.min(paramsEnd, segmentEnd);
+    const outside = paramsStart < segmentStart && paramsEnd < segmentStart || paramsStart > segmentEnd && paramsEnd > segmentEnd;
+    return {
+        count,
+        start,
+        loop: segment.loop,
+        ilen: end < start && !outside ? count + end - start : end - start
+    };
+}
+ function pathSegment(ctx, line, segment, params) {
+    const { points , options  } = line;
+    const { count , start , loop , ilen  } = pathVars(points, segment, params);
+    const lineMethod = getLineMethod(options);
+    let { move =true , reverse  } = params || {};
+    let i, point, prev;
+    for(i = 0; i <= ilen; ++i){
+        point = points[(start + (reverse ? ilen - i : i)) % count];
+        if (point.skip) {
+            continue;
+        } else if (move) {
+            ctx.moveTo(point.x, point.y);
+            move = false;
+        } else {
+            lineMethod(ctx, prev, point, reverse, options.stepped);
+        }
+        prev = point;
+    }
+    if (loop) {
+        point = points[(start + (reverse ? ilen : 0)) % count];
+        lineMethod(ctx, prev, point, reverse, options.stepped);
+    }
+    return !!loop;
+}
+ function fastPathSegment(ctx, line, segment, params) {
+    const points = line.points;
+    const { count , start , ilen  } = pathVars(points, segment, params);
+    const { move =true , reverse  } = params || {};
+    let avgX = 0;
+    let countX = 0;
+    let i, point, prevX, minY, maxY, lastY;
+    const pointIndex = (index)=>(start + (reverse ? ilen - index : index)) % count;
+    const drawX = ()=>{
+        if (minY !== maxY) {
+            ctx.lineTo(avgX, maxY);
+            ctx.lineTo(avgX, minY);
+            ctx.lineTo(avgX, lastY);
+        }
+    };
+    if (move) {
+        point = points[pointIndex(0)];
+        ctx.moveTo(point.x, point.y);
+    }
+    for(i = 0; i <= ilen; ++i){
+        point = points[pointIndex(i)];
+        if (point.skip) {
+            continue;
+        }
+        const x = point.x;
+        const y = point.y;
+        const truncX = x | 0;
+        if (truncX === prevX) {
+            if (y < minY) {
+                minY = y;
+            } else if (y > maxY) {
+                maxY = y;
+            }
+            avgX = (countX * avgX + x) / ++countX;
+        } else {
+            drawX();
+            ctx.lineTo(x, y);
+            prevX = truncX;
+            countX = 0;
+            minY = maxY = y;
+        }
+        lastY = y;
+    }
+    drawX();
+}
+ function _getSegmentMethod(line) {
+    const opts = line.options;
+    const borderDash = opts.borderDash && opts.borderDash.length;
+    const useFastPath = !line._decimated && !line._loop && !opts.tension && opts.cubicInterpolationMode !== 'monotone' && !opts.stepped && !borderDash;
+    return useFastPath ? fastPathSegment : pathSegment;
+}
+ function _getInterpolationMethod(options) {
+    if (options.stepped) {
+        return helpers_segment._steppedInterpolation;
+    }
+    if (options.tension || options.cubicInterpolationMode === 'monotone') {
+        return helpers_segment._bezierInterpolation;
+    }
+    return helpers_segment._pointInLine;
+}
+function strokePathWithCache(ctx, line, start, count) {
+    let path = line._path;
+    if (!path) {
+        path = line._path = new Path2D();
+        if (line.path(path, start, count)) {
+            path.closePath();
+        }
+    }
+    setStyle(ctx, line.options);
+    ctx.stroke(path);
+}
+function strokePathDirect(ctx, line, start, count) {
+    const { segments , options  } = line;
+    const segmentMethod = _getSegmentMethod(line);
+    for (const segment of segments){
+        setStyle(ctx, options, segment.style);
+        ctx.beginPath();
+        if (segmentMethod(ctx, line, segment, {
+            start,
+            end: start + count - 1
+        })) {
+            ctx.closePath();
+        }
+        ctx.stroke();
+    }
+}
+const usePath2D = typeof Path2D === 'function';
+function draw(ctx, line, start, count) {
+    if (usePath2D && !line.options.segment) {
+        strokePathWithCache(ctx, line, start, count);
+    } else {
+        strokePathDirect(ctx, line, start, count);
+    }
+}
+class LineElement extends Element {
+    static id = 'line';
+ static defaults = {
+        borderCapStyle: 'butt',
+        borderDash: [],
+        borderDashOffset: 0,
+        borderJoinStyle: 'miter',
+        borderWidth: 3,
+        capBezierPoints: true,
+        cubicInterpolationMode: 'default',
+        fill: false,
+        spanGaps: false,
+        stepped: false,
+        tension: 0
+    };
+ static defaultRoutes = {
+        backgroundColor: 'backgroundColor',
+        borderColor: 'borderColor'
+    };
+    static descriptors = {
+        _scriptable: true,
+        _indexable: (name)=>name !== 'borderDash' && name !== 'fill'
+    };
+    constructor(cfg){
+        super();
+        this.animated = true;
+        this.options = undefined;
+        this._chart = undefined;
+        this._loop = undefined;
+        this._fullLoop = undefined;
+        this._path = undefined;
+        this._points = undefined;
+        this._segments = undefined;
+        this._decimated = false;
+        this._pointsUpdated = false;
+        this._datasetIndex = undefined;
+        if (cfg) {
+            Object.assign(this, cfg);
+        }
+    }
+    updateControlPoints(chartArea, indexAxis) {
+        const options = this.options;
+        if ((options.tension || options.cubicInterpolationMode === 'monotone') && !options.stepped && !this._pointsUpdated) {
+            const loop = options.spanGaps ? this._loop : this._fullLoop;
+            helpers_segment._updateBezierControlPoints(this._points, options, chartArea, loop, indexAxis);
+            this._pointsUpdated = true;
+        }
+    }
+    set points(points) {
+        this._points = points;
+        delete this._segments;
+        delete this._path;
+        this._pointsUpdated = false;
+    }
+    get points() {
+        return this._points;
+    }
+    get segments() {
+        return this._segments || (this._segments = helpers_segment._computeSegments(this, this.options.segment));
+    }
+ first() {
+        const segments = this.segments;
+        const points = this.points;
+        return segments.length && points[segments[0].start];
+    }
+ last() {
+        const segments = this.segments;
+        const points = this.points;
+        const count = segments.length;
+        return count && points[segments[count - 1].end];
+    }
+ interpolate(point, property) {
+        const options = this.options;
+        const value = point[property];
+        const points = this.points;
+        const segments = helpers_segment._boundSegments(this, {
+            property,
+            start: value,
+            end: value
+        });
+        if (!segments.length) {
+            return;
+        }
+        const result = [];
+        const _interpolate = _getInterpolationMethod(options);
+        let i, ilen;
+        for(i = 0, ilen = segments.length; i < ilen; ++i){
+            const { start , end  } = segments[i];
+            const p1 = points[start];
+            const p2 = points[end];
+            if (p1 === p2) {
+                result.push(p1);
+                continue;
+            }
+            const t = Math.abs((value - p1[property]) / (p2[property] - p1[property]));
+            const interpolated = _interpolate(p1, p2, t, options.stepped);
+            interpolated[property] = point[property];
+            result.push(interpolated);
+        }
+        return result.length === 1 ? result[0] : result;
+    }
+ pathSegment(ctx, segment, params) {
+        const segmentMethod = _getSegmentMethod(this);
+        return segmentMethod(ctx, this, segment, params);
+    }
+ path(ctx, start, count) {
+        const segments = this.segments;
+        const segmentMethod = _getSegmentMethod(this);
+        let loop = this._loop;
+        start = start || 0;
+        count = count || this.points.length - start;
+        for (const segment of segments){
+            loop &= segmentMethod(ctx, this, segment, {
+                start,
+                end: start + count - 1
+            });
+        }
+        return !!loop;
+    }
+ draw(ctx, chartArea, start, count) {
+        const options = this.options || {};
+        const points = this.points || [];
+        if (points.length && options.borderWidth) {
+            ctx.save();
+            draw(ctx, this, start, count);
+            ctx.restore();
+        }
+        if (this.animated) {
+            this._pointsUpdated = false;
+            this._path = undefined;
+        }
+    }
+}
+
+function inRange$1(el, pos, axis, useFinalPosition) {
+    const options = el.options;
+    const { [axis]: value  } = el.getProps([
+        axis
+    ], useFinalPosition);
+    return Math.abs(pos - value) < options.radius + options.hitRadius;
+}
+class PointElement extends Element {
+    static id = 'point';
+    parsed;
+    skip;
+    stop;
+    /**
+   * @type {any}
+   */ static defaults = {
+        borderWidth: 1,
+        hitRadius: 1,
+        hoverBorderWidth: 1,
+        hoverRadius: 4,
+        pointStyle: 'circle',
+        radius: 3,
+        rotation: 0
+    };
+    /**
+   * @type {any}
+   */ static defaultRoutes = {
+        backgroundColor: 'backgroundColor',
+        borderColor: 'borderColor'
+    };
+    constructor(cfg){
+        super();
+        this.options = undefined;
+        this.parsed = undefined;
+        this.skip = undefined;
+        this.stop = undefined;
+        if (cfg) {
+            Object.assign(this, cfg);
+        }
+    }
+    inRange(mouseX, mouseY, useFinalPosition) {
+        const options = this.options;
+        const { x , y  } = this.getProps([
+            'x',
+            'y'
+        ], useFinalPosition);
+        return Math.pow(mouseX - x, 2) + Math.pow(mouseY - y, 2) < Math.pow(options.hitRadius + options.radius, 2);
+    }
+    inXRange(mouseX, useFinalPosition) {
+        return inRange$1(this, mouseX, 'x', useFinalPosition);
+    }
+    inYRange(mouseY, useFinalPosition) {
+        return inRange$1(this, mouseY, 'y', useFinalPosition);
+    }
+    getCenterPoint(useFinalPosition) {
+        const { x , y  } = this.getProps([
+            'x',
+            'y'
+        ], useFinalPosition);
+        return {
+            x,
+            y
+        };
+    }
+    size(options) {
+        options = options || this.options || {};
+        let radius = options.radius || 0;
+        radius = Math.max(radius, radius && options.hoverRadius || 0);
+        const borderWidth = radius && options.borderWidth || 0;
+        return (radius + borderWidth) * 2;
+    }
+    draw(ctx, area) {
+        const options = this.options;
+        if (this.skip || options.radius < 0.1 || !helpers_segment._isPointInArea(this, area, this.size(options) / 2)) {
+            return;
+        }
+        ctx.strokeStyle = options.borderColor;
+        ctx.lineWidth = options.borderWidth;
+        ctx.fillStyle = options.backgroundColor;
+        helpers_segment.drawPoint(ctx, options, this.x, this.y);
+    }
+    getRange() {
+        const options = this.options || {};
+        // @ts-expect-error Fallbacks should never be hit in practice
+        return options.radius + options.hitRadius;
+    }
+}
+
+function getBarBounds(bar, useFinalPosition) {
+    const { x , y , base , width , height  } =  bar.getProps([
+        'x',
+        'y',
+        'base',
+        'width',
+        'height'
+    ], useFinalPosition);
+    let left, right, top, bottom, half;
+    if (bar.horizontal) {
+        half = height / 2;
+        left = Math.min(x, base);
+        right = Math.max(x, base);
+        top = y - half;
+        bottom = y + half;
+    } else {
+        half = width / 2;
+        left = x - half;
+        right = x + half;
+        top = Math.min(y, base);
+        bottom = Math.max(y, base);
+    }
+    return {
+        left,
+        top,
+        right,
+        bottom
+    };
+}
+function skipOrLimit(skip, value, min, max) {
+    return skip ? 0 : helpers_segment._limitValue(value, min, max);
+}
+function parseBorderWidth(bar, maxW, maxH) {
+    const value = bar.options.borderWidth;
+    const skip = bar.borderSkipped;
+    const o = helpers_segment.toTRBL(value);
+    return {
+        t: skipOrLimit(skip.top, o.top, 0, maxH),
+        r: skipOrLimit(skip.right, o.right, 0, maxW),
+        b: skipOrLimit(skip.bottom, o.bottom, 0, maxH),
+        l: skipOrLimit(skip.left, o.left, 0, maxW)
+    };
+}
+function parseBorderRadius(bar, maxW, maxH) {
+    const { enableBorderRadius  } = bar.getProps([
+        'enableBorderRadius'
+    ]);
+    const value = bar.options.borderRadius;
+    const o = helpers_segment.toTRBLCorners(value);
+    const maxR = Math.min(maxW, maxH);
+    const skip = bar.borderSkipped;
+    const enableBorder = enableBorderRadius || helpers_segment.isObject(value);
+    return {
+        topLeft: skipOrLimit(!enableBorder || skip.top || skip.left, o.topLeft, 0, maxR),
+        topRight: skipOrLimit(!enableBorder || skip.top || skip.right, o.topRight, 0, maxR),
+        bottomLeft: skipOrLimit(!enableBorder || skip.bottom || skip.left, o.bottomLeft, 0, maxR),
+        bottomRight: skipOrLimit(!enableBorder || skip.bottom || skip.right, o.bottomRight, 0, maxR)
+    };
+}
+function boundingRects(bar) {
+    const bounds = getBarBounds(bar);
+    const width = bounds.right - bounds.left;
+    const height = bounds.bottom - bounds.top;
+    const border = parseBorderWidth(bar, width / 2, height / 2);
+    const radius = parseBorderRadius(bar, width / 2, height / 2);
+    return {
+        outer: {
+            x: bounds.left,
+            y: bounds.top,
+            w: width,
+            h: height,
+            radius
+        },
+        inner: {
+            x: bounds.left + border.l,
+            y: bounds.top + border.t,
+            w: width - border.l - border.r,
+            h: height - border.t - border.b,
+            radius: {
+                topLeft: Math.max(0, radius.topLeft - Math.max(border.t, border.l)),
+                topRight: Math.max(0, radius.topRight - Math.max(border.t, border.r)),
+                bottomLeft: Math.max(0, radius.bottomLeft - Math.max(border.b, border.l)),
+                bottomRight: Math.max(0, radius.bottomRight - Math.max(border.b, border.r))
+            }
+        }
+    };
+}
+function inRange(bar, x, y, useFinalPosition) {
+    const skipX = x === null;
+    const skipY = y === null;
+    const skipBoth = skipX && skipY;
+    const bounds = bar && !skipBoth && getBarBounds(bar, useFinalPosition);
+    return bounds && (skipX || helpers_segment._isBetween(x, bounds.left, bounds.right)) && (skipY || helpers_segment._isBetween(y, bounds.top, bounds.bottom));
+}
+function hasRadius(radius) {
+    return radius.topLeft || radius.topRight || radius.bottomLeft || radius.bottomRight;
+}
+ function addNormalRectPath(ctx, rect) {
+    ctx.rect(rect.x, rect.y, rect.w, rect.h);
+}
+function inflateRect(rect, amount, refRect = {}) {
+    const x = rect.x !== refRect.x ? -amount : 0;
+    const y = rect.y !== refRect.y ? -amount : 0;
+    const w = (rect.x + rect.w !== refRect.x + refRect.w ? amount : 0) - x;
+    const h = (rect.y + rect.h !== refRect.y + refRect.h ? amount : 0) - y;
+    return {
+        x: rect.x + x,
+        y: rect.y + y,
+        w: rect.w + w,
+        h: rect.h + h,
+        radius: rect.radius
+    };
+}
+class BarElement extends Element {
+    static id = 'bar';
+ static defaults = {
+        borderSkipped: 'start',
+        borderWidth: 0,
+        borderRadius: 0,
+        inflateAmount: 'auto',
+        pointStyle: undefined
+    };
+ static defaultRoutes = {
+        backgroundColor: 'backgroundColor',
+        borderColor: 'borderColor'
+    };
+    constructor(cfg){
+        super();
+        this.options = undefined;
+        this.horizontal = undefined;
+        this.base = undefined;
+        this.width = undefined;
+        this.height = undefined;
+        this.inflateAmount = undefined;
+        if (cfg) {
+            Object.assign(this, cfg);
+        }
+    }
+    draw(ctx) {
+        const { inflateAmount , options: { borderColor , backgroundColor  }  } = this;
+        const { inner , outer  } = boundingRects(this);
+        const addRectPath = hasRadius(outer.radius) ? helpers_segment.addRoundedRectPath : addNormalRectPath;
+        ctx.save();
+        if (outer.w !== inner.w || outer.h !== inner.h) {
+            ctx.beginPath();
+            addRectPath(ctx, inflateRect(outer, inflateAmount, inner));
+            ctx.clip();
+            addRectPath(ctx, inflateRect(inner, -inflateAmount, outer));
+            ctx.fillStyle = borderColor;
+            ctx.fill('evenodd');
+        }
+        ctx.beginPath();
+        addRectPath(ctx, inflateRect(inner, inflateAmount));
+        ctx.fillStyle = backgroundColor;
+        ctx.fill();
+        ctx.restore();
+    }
+    inRange(mouseX, mouseY, useFinalPosition) {
+        return inRange(this, mouseX, mouseY, useFinalPosition);
+    }
+    inXRange(mouseX, useFinalPosition) {
+        return inRange(this, mouseX, null, useFinalPosition);
+    }
+    inYRange(mouseY, useFinalPosition) {
+        return inRange(this, null, mouseY, useFinalPosition);
+    }
+    getCenterPoint(useFinalPosition) {
+        const { x , y , base , horizontal  } =  this.getProps([
+            'x',
+            'y',
+            'base',
+            'horizontal'
+        ], useFinalPosition);
+        return {
+            x: horizontal ? (x + base) / 2 : x,
+            y: horizontal ? y : (y + base) / 2
+        };
+    }
+    getRange(axis) {
+        return axis === 'x' ? this.width / 2 : this.height / 2;
+    }
+}
+
+var elements = /*#__PURE__*/Object.freeze({
+__proto__: null,
+ArcElement: ArcElement,
+BarElement: BarElement,
+LineElement: LineElement,
+PointElement: PointElement
+});
+
+const BORDER_COLORS = [
+    'rgb(54, 162, 235)',
+    'rgb(255, 99, 132)',
+    'rgb(255, 159, 64)',
+    'rgb(255, 205, 86)',
+    'rgb(75, 192, 192)',
+    'rgb(153, 102, 255)',
+    'rgb(201, 203, 207)' // grey
+];
+// Border colors with 50% transparency
+const BACKGROUND_COLORS = /* #__PURE__ */ BORDER_COLORS.map((color)=>color.replace('rgb(', 'rgba(').replace(')', ', 0.5)'));
+function getBorderColor(i) {
+    return BORDER_COLORS[i % BORDER_COLORS.length];
+}
+function getBackgroundColor(i) {
+    return BACKGROUND_COLORS[i % BACKGROUND_COLORS.length];
+}
+function colorizeDefaultDataset(dataset, i) {
+    dataset.borderColor = getBorderColor(i);
+    dataset.backgroundColor = getBackgroundColor(i);
+    return ++i;
+}
+function colorizeDoughnutDataset(dataset, i) {
+    dataset.backgroundColor = dataset.data.map(()=>getBorderColor(i++));
+    return i;
+}
+function colorizePolarAreaDataset(dataset, i) {
+    dataset.backgroundColor = dataset.data.map(()=>getBackgroundColor(i++));
+    return i;
+}
+function getColorizer(chart) {
+    let i = 0;
+    return (dataset, datasetIndex)=>{
+        const controller = chart.getDatasetMeta(datasetIndex).controller;
+        if (controller instanceof DoughnutController) {
+            i = colorizeDoughnutDataset(dataset, i);
+        } else if (controller instanceof PolarAreaController) {
+            i = colorizePolarAreaDataset(dataset, i);
+        } else if (controller) {
+            i = colorizeDefaultDataset(dataset, i);
+        }
+    };
+}
+function containsColorsDefinitions(descriptors) {
+    let k;
+    for(k in descriptors){
+        if (descriptors[k].borderColor || descriptors[k].backgroundColor) {
+            return true;
+        }
+    }
+    return false;
+}
+function containsColorsDefinition(descriptor) {
+    return descriptor && (descriptor.borderColor || descriptor.backgroundColor);
+}
+function containsDefaultColorsDefenitions() {
+    return helpers_segment.defaults.borderColor !== 'rgba(0,0,0,0.1)' || helpers_segment.defaults.backgroundColor !== 'rgba(0,0,0,0.1)';
+}
+var plugin_colors = {
+    id: 'colors',
+    defaults: {
+        enabled: true,
+        forceOverride: false
+    },
+    beforeLayout (chart, _args, options) {
+        if (!options.enabled) {
+            return;
+        }
+        const { data: { datasets  } , options: chartOptions  } = chart.config;
+        const { elements  } = chartOptions;
+        const containsColorDefenition = containsColorsDefinitions(datasets) || containsColorsDefinition(chartOptions) || elements && containsColorsDefinitions(elements) || containsDefaultColorsDefenitions();
+        if (!options.forceOverride && containsColorDefenition) {
+            return;
+        }
+        const colorizer = getColorizer(chart);
+        datasets.forEach(colorizer);
+    }
+};
+
+function lttbDecimation(data, start, count, availableWidth, options) {
+ const samples = options.samples || availableWidth;
+    if (samples >= count) {
+        return data.slice(start, start + count);
+    }
+    const decimated = [];
+    const bucketWidth = (count - 2) / (samples - 2);
+    let sampledIndex = 0;
+    const endIndex = start + count - 1;
+    let a = start;
+    let i, maxAreaPoint, maxArea, area, nextA;
+    decimated[sampledIndex++] = data[a];
+    for(i = 0; i < samples - 2; i++){
+        let avgX = 0;
+        let avgY = 0;
+        let j;
+        const avgRangeStart = Math.floor((i + 1) * bucketWidth) + 1 + start;
+        const avgRangeEnd = Math.min(Math.floor((i + 2) * bucketWidth) + 1, count) + start;
+        const avgRangeLength = avgRangeEnd - avgRangeStart;
+        for(j = avgRangeStart; j < avgRangeEnd; j++){
+            avgX += data[j].x;
+            avgY += data[j].y;
+        }
+        avgX /= avgRangeLength;
+        avgY /= avgRangeLength;
+        const rangeOffs = Math.floor(i * bucketWidth) + 1 + start;
+        const rangeTo = Math.min(Math.floor((i + 1) * bucketWidth) + 1, count) + start;
+        const { x: pointAx , y: pointAy  } = data[a];
+        maxArea = area = -1;
+        for(j = rangeOffs; j < rangeTo; j++){
+            area = 0.5 * Math.abs((pointAx - avgX) * (data[j].y - pointAy) - (pointAx - data[j].x) * (avgY - pointAy));
+            if (area > maxArea) {
+                maxArea = area;
+                maxAreaPoint = data[j];
+                nextA = j;
+            }
+        }
+        decimated[sampledIndex++] = maxAreaPoint;
+        a = nextA;
+    }
+    decimated[sampledIndex++] = data[endIndex];
+    return decimated;
+}
+function minMaxDecimation(data, start, count, availableWidth) {
+    let avgX = 0;
+    let countX = 0;
+    let i, point, x, y, prevX, minIndex, maxIndex, startIndex, minY, maxY;
+    const decimated = [];
+    const endIndex = start + count - 1;
+    const xMin = data[start].x;
+    const xMax = data[endIndex].x;
+    const dx = xMax - xMin;
+    for(i = start; i < start + count; ++i){
+        point = data[i];
+        x = (point.x - xMin) / dx * availableWidth;
+        y = point.y;
+        const truncX = x | 0;
+        if (truncX === prevX) {
+            if (y < minY) {
+                minY = y;
+                minIndex = i;
+            } else if (y > maxY) {
+                maxY = y;
+                maxIndex = i;
+            }
+            avgX = (countX * avgX + point.x) / ++countX;
+        } else {
+            const lastIndex = i - 1;
+            if (!helpers_segment.isNullOrUndef(minIndex) && !helpers_segment.isNullOrUndef(maxIndex)) {
+                const intermediateIndex1 = Math.min(minIndex, maxIndex);
+                const intermediateIndex2 = Math.max(minIndex, maxIndex);
+                if (intermediateIndex1 !== startIndex && intermediateIndex1 !== lastIndex) {
+                    decimated.push({
+                        ...data[intermediateIndex1],
+                        x: avgX
+                    });
+                }
+                if (intermediateIndex2 !== startIndex && intermediateIndex2 !== lastIndex) {
+                    decimated.push({
+                        ...data[intermediateIndex2],
+                        x: avgX
+                    });
+                }
+            }
+            if (i > 0 && lastIndex !== startIndex) {
+                decimated.push(data[lastIndex]);
+            }
+            decimated.push(point);
+            prevX = truncX;
+            countX = 0;
+            minY = maxY = y;
+            minIndex = maxIndex = startIndex = i;
+        }
+    }
+    return decimated;
+}
+function cleanDecimatedDataset(dataset) {
+    if (dataset._decimated) {
+        const data = dataset._data;
+        delete dataset._decimated;
+        delete dataset._data;
+        Object.defineProperty(dataset, 'data', {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value: data
+        });
+    }
+}
+function cleanDecimatedData(chart) {
+    chart.data.datasets.forEach((dataset)=>{
+        cleanDecimatedDataset(dataset);
+    });
+}
+function getStartAndCountOfVisiblePointsSimplified(meta, points) {
+    const pointCount = points.length;
+    let start = 0;
+    let count;
+    const { iScale  } = meta;
+    const { min , max , minDefined , maxDefined  } = iScale.getUserBounds();
+    if (minDefined) {
+        start = helpers_segment._limitValue(helpers_segment._lookupByKey(points, iScale.axis, min).lo, 0, pointCount - 1);
+    }
+    if (maxDefined) {
+        count = helpers_segment._limitValue(helpers_segment._lookupByKey(points, iScale.axis, max).hi + 1, start, pointCount) - start;
+    } else {
+        count = pointCount - start;
+    }
+    return {
+        start,
+        count
+    };
+}
+var plugin_decimation = {
+    id: 'decimation',
+    defaults: {
+        algorithm: 'min-max',
+        enabled: false
+    },
+    beforeElementsUpdate: (chart, args, options)=>{
+        if (!options.enabled) {
+            cleanDecimatedData(chart);
+            return;
+        }
+        const availableWidth = chart.width;
+        chart.data.datasets.forEach((dataset, datasetIndex)=>{
+            const { _data , indexAxis  } = dataset;
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const data = _data || dataset.data;
+            if (helpers_segment.resolve([
+                indexAxis,
+                chart.options.indexAxis
+            ]) === 'y') {
+                return;
+            }
+            if (!meta.controller.supportsDecimation) {
+                return;
+            }
+            const xAxis = chart.scales[meta.xAxisID];
+            if (xAxis.type !== 'linear' && xAxis.type !== 'time') {
+                return;
+            }
+            if (chart.options.parsing) {
+                return;
+            }
+            let { start , count  } = getStartAndCountOfVisiblePointsSimplified(meta, data);
+            const threshold = options.threshold || 4 * availableWidth;
+            if (count <= threshold) {
+                cleanDecimatedDataset(dataset);
+                return;
+            }
+            if (helpers_segment.isNullOrUndef(_data)) {
+                dataset._data = data;
+                delete dataset.data;
+                Object.defineProperty(dataset, 'data', {
+                    configurable: true,
+                    enumerable: true,
+                    get: function() {
+                        return this._decimated;
+                    },
+                    set: function(d) {
+                        this._data = d;
+                    }
+                });
+            }
+            let decimated;
+            switch(options.algorithm){
+                case 'lttb':
+                    decimated = lttbDecimation(data, start, count, availableWidth, options);
+                    break;
+                case 'min-max':
+                    decimated = minMaxDecimation(data, start, count, availableWidth);
+                    break;
+                default:
+                    throw new Error(`Unsupported decimation algorithm '${options.algorithm}'`);
+            }
+            dataset._decimated = decimated;
+        });
+    },
+    destroy (chart) {
+        cleanDecimatedData(chart);
+    }
+};
+
+function _segments(line, target, property) {
+    const segments = line.segments;
+    const points = line.points;
+    const tpoints = target.points;
+    const parts = [];
+    for (const segment of segments){
+        let { start , end  } = segment;
+        end = _findSegmentEnd(start, end, points);
+        const bounds = _getBounds(property, points[start], points[end], segment.loop);
+        if (!target.segments) {
+            parts.push({
+                source: segment,
+                target: bounds,
+                start: points[start],
+                end: points[end]
+            });
+            continue;
+        }
+        const targetSegments = helpers_segment._boundSegments(target, bounds);
+        for (const tgt of targetSegments){
+            const subBounds = _getBounds(property, tpoints[tgt.start], tpoints[tgt.end], tgt.loop);
+            const fillSources = helpers_segment._boundSegment(segment, points, subBounds);
+            for (const fillSource of fillSources){
+                parts.push({
+                    source: fillSource,
+                    target: tgt,
+                    start: {
+                        [property]: _getEdge(bounds, subBounds, 'start', Math.max)
+                    },
+                    end: {
+                        [property]: _getEdge(bounds, subBounds, 'end', Math.min)
+                    }
+                });
+            }
+        }
+    }
+    return parts;
+}
+function _getBounds(property, first, last, loop) {
+    if (loop) {
+        return;
+    }
+    let start = first[property];
+    let end = last[property];
+    if (property === 'angle') {
+        start = helpers_segment._normalizeAngle(start);
+        end = helpers_segment._normalizeAngle(end);
+    }
+    return {
+        property,
+        start,
+        end
+    };
+}
+function _pointsFromSegments(boundary, line) {
+    const { x =null , y =null  } = boundary || {};
+    const linePoints = line.points;
+    const points = [];
+    line.segments.forEach(({ start , end  })=>{
+        end = _findSegmentEnd(start, end, linePoints);
+        const first = linePoints[start];
+        const last = linePoints[end];
+        if (y !== null) {
+            points.push({
+                x: first.x,
+                y
+            });
+            points.push({
+                x: last.x,
+                y
+            });
+        } else if (x !== null) {
+            points.push({
+                x,
+                y: first.y
+            });
+            points.push({
+                x,
+                y: last.y
+            });
+        }
+    });
+    return points;
+}
+function _findSegmentEnd(start, end, points) {
+    for(; end > start; end--){
+        const point = points[end];
+        if (!isNaN(point.x) && !isNaN(point.y)) {
+            break;
+        }
+    }
+    return end;
+}
+function _getEdge(a, b, prop, fn) {
+    if (a && b) {
+        return fn(a[prop], b[prop]);
+    }
+    return a ? a[prop] : b ? b[prop] : 0;
+}
+
+function _createBoundaryLine(boundary, line) {
+    let points = [];
+    let _loop = false;
+    if (helpers_segment.isArray(boundary)) {
+        _loop = true;
+        points = boundary;
+    } else {
+        points = _pointsFromSegments(boundary, line);
+    }
+    return points.length ? new LineElement({
+        points,
+        options: {
+            tension: 0
+        },
+        _loop,
+        _fullLoop: _loop
+    }) : null;
+}
+function _shouldApplyFill(source) {
+    return source && source.fill !== false;
+}
+
+function _resolveTarget(sources, index, propagate) {
+    const source = sources[index];
+    let fill = source.fill;
+    const visited = [
+        index
+    ];
+    let target;
+    if (!propagate) {
+        return fill;
+    }
+    while(fill !== false && visited.indexOf(fill) === -1){
+        if (!helpers_segment.isNumberFinite(fill)) {
+            return fill;
+        }
+        target = sources[fill];
+        if (!target) {
+            return false;
+        }
+        if (target.visible) {
+            return fill;
+        }
+        visited.push(fill);
+        fill = target.fill;
+    }
+    return false;
+}
+ function _decodeFill(line, index, count) {
+     const fill = parseFillOption(line);
+    if (helpers_segment.isObject(fill)) {
+        return isNaN(fill.value) ? false : fill;
+    }
+    let target = parseFloat(fill);
+    if (helpers_segment.isNumberFinite(target) && Math.floor(target) === target) {
+        return decodeTargetIndex(fill[0], index, target, count);
+    }
+    return [
+        'origin',
+        'start',
+        'end',
+        'stack',
+        'shape'
+    ].indexOf(fill) >= 0 && fill;
+}
+function decodeTargetIndex(firstCh, index, target, count) {
+    if (firstCh === '-' || firstCh === '+') {
+        target = index + target;
+    }
+    if (target === index || target < 0 || target >= count) {
+        return false;
+    }
+    return target;
+}
+ function _getTargetPixel(fill, scale) {
+    let pixel = null;
+    if (fill === 'start') {
+        pixel = scale.bottom;
+    } else if (fill === 'end') {
+        pixel = scale.top;
+    } else if (helpers_segment.isObject(fill)) {
+        pixel = scale.getPixelForValue(fill.value);
+    } else if (scale.getBasePixel) {
+        pixel = scale.getBasePixel();
+    }
+    return pixel;
+}
+ function _getTargetValue(fill, scale, startValue) {
+    let value;
+    if (fill === 'start') {
+        value = startValue;
+    } else if (fill === 'end') {
+        value = scale.options.reverse ? scale.min : scale.max;
+    } else if (helpers_segment.isObject(fill)) {
+        value = fill.value;
+    } else {
+        value = scale.getBaseValue();
+    }
+    return value;
+}
+ function parseFillOption(line) {
+    const options = line.options;
+    const fillOption = options.fill;
+    let fill = helpers_segment.valueOrDefault(fillOption && fillOption.target, fillOption);
+    if (fill === undefined) {
+        fill = !!options.backgroundColor;
+    }
+    if (fill === false || fill === null) {
+        return false;
+    }
+    if (fill === true) {
+        return 'origin';
+    }
+    return fill;
+}
+
+function _buildStackLine(source) {
+    const { scale , index , line  } = source;
+    const points = [];
+    const segments = line.segments;
+    const sourcePoints = line.points;
+    const linesBelow = getLinesBelow(scale, index);
+    linesBelow.push(_createBoundaryLine({
+        x: null,
+        y: scale.bottom
+    }, line));
+    for(let i = 0; i < segments.length; i++){
+        const segment = segments[i];
+        for(let j = segment.start; j <= segment.end; j++){
+            addPointsBelow(points, sourcePoints[j], linesBelow);
+        }
+    }
+    return new LineElement({
+        points,
+        options: {}
+    });
+}
+ function getLinesBelow(scale, index) {
+    const below = [];
+    const metas = scale.getMatchingVisibleMetas('line');
+    for(let i = 0; i < metas.length; i++){
+        const meta = metas[i];
+        if (meta.index === index) {
+            break;
+        }
+        if (!meta.hidden) {
+            below.unshift(meta.dataset);
+        }
+    }
+    return below;
+}
+ function addPointsBelow(points, sourcePoint, linesBelow) {
+    const postponed = [];
+    for(let j = 0; j < linesBelow.length; j++){
+        const line = linesBelow[j];
+        const { first , last , point  } = findPoint(line, sourcePoint, 'x');
+        if (!point || first && last) {
+            continue;
+        }
+        if (first) {
+            postponed.unshift(point);
+        } else {
+            points.push(point);
+            if (!last) {
+                break;
+            }
+        }
+    }
+    points.push(...postponed);
+}
+ function findPoint(line, sourcePoint, property) {
+    const point = line.interpolate(sourcePoint, property);
+    if (!point) {
+        return {};
+    }
+    const pointValue = point[property];
+    const segments = line.segments;
+    const linePoints = line.points;
+    let first = false;
+    let last = false;
+    for(let i = 0; i < segments.length; i++){
+        const segment = segments[i];
+        const firstValue = linePoints[segment.start][property];
+        const lastValue = linePoints[segment.end][property];
+        if (helpers_segment._isBetween(pointValue, firstValue, lastValue)) {
+            first = pointValue === firstValue;
+            last = pointValue === lastValue;
+            break;
+        }
+    }
+    return {
+        first,
+        last,
+        point
+    };
+}
+
+class simpleArc {
+    constructor(opts){
+        this.x = opts.x;
+        this.y = opts.y;
+        this.radius = opts.radius;
+    }
+    pathSegment(ctx, bounds, opts) {
+        const { x , y , radius  } = this;
+        bounds = bounds || {
+            start: 0,
+            end: helpers_segment.TAU
+        };
+        ctx.arc(x, y, radius, bounds.end, bounds.start, true);
+        return !opts.bounds;
+    }
+    interpolate(point) {
+        const { x , y , radius  } = this;
+        const angle = point.angle;
+        return {
+            x: x + Math.cos(angle) * radius,
+            y: y + Math.sin(angle) * radius,
+            angle
+        };
+    }
+}
+
+function _getTarget(source) {
+    const { chart , fill , line  } = source;
+    if (helpers_segment.isNumberFinite(fill)) {
+        return getLineByIndex(chart, fill);
+    }
+    if (fill === 'stack') {
+        return _buildStackLine(source);
+    }
+    if (fill === 'shape') {
+        return true;
+    }
+    const boundary = computeBoundary(source);
+    if (boundary instanceof simpleArc) {
+        return boundary;
+    }
+    return _createBoundaryLine(boundary, line);
+}
+ function getLineByIndex(chart, index) {
+    const meta = chart.getDatasetMeta(index);
+    const visible = meta && chart.isDatasetVisible(index);
+    return visible ? meta.dataset : null;
+}
+function computeBoundary(source) {
+    const scale = source.scale || {};
+    if (scale.getPointPositionForValue) {
+        return computeCircularBoundary(source);
+    }
+    return computeLinearBoundary(source);
+}
+function computeLinearBoundary(source) {
+    const { scale ={} , fill  } = source;
+    const pixel = _getTargetPixel(fill, scale);
+    if (helpers_segment.isNumberFinite(pixel)) {
+        const horizontal = scale.isHorizontal();
+        return {
+            x: horizontal ? pixel : null,
+            y: horizontal ? null : pixel
+        };
+    }
+    return null;
+}
+function computeCircularBoundary(source) {
+    const { scale , fill  } = source;
+    const options = scale.options;
+    const length = scale.getLabels().length;
+    const start = options.reverse ? scale.max : scale.min;
+    const value = _getTargetValue(fill, scale, start);
+    const target = [];
+    if (options.grid.circular) {
+        const center = scale.getPointPositionForValue(0, start);
+        return new simpleArc({
+            x: center.x,
+            y: center.y,
+            radius: scale.getDistanceFromCenterForValue(value)
+        });
+    }
+    for(let i = 0; i < length; ++i){
+        target.push(scale.getPointPositionForValue(i, value));
+    }
+    return target;
+}
+
+function _drawfill(ctx, source, area) {
+    const target = _getTarget(source);
+    const { line , scale , axis  } = source;
+    const lineOpts = line.options;
+    const fillOption = lineOpts.fill;
+    const color = lineOpts.backgroundColor;
+    const { above =color , below =color  } = fillOption || {};
+    if (target && line.points.length) {
+        helpers_segment.clipArea(ctx, area);
+        doFill(ctx, {
+            line,
+            target,
+            above,
+            below,
+            area,
+            scale,
+            axis
+        });
+        helpers_segment.unclipArea(ctx);
+    }
+}
+function doFill(ctx, cfg) {
+    const { line , target , above , below , area , scale  } = cfg;
+    const property = line._loop ? 'angle' : cfg.axis;
+    ctx.save();
+    if (property === 'x' && below !== above) {
+        clipVertical(ctx, target, area.top);
+        fill(ctx, {
+            line,
+            target,
+            color: above,
+            scale,
+            property
+        });
+        ctx.restore();
+        ctx.save();
+        clipVertical(ctx, target, area.bottom);
+    }
+    fill(ctx, {
+        line,
+        target,
+        color: below,
+        scale,
+        property
+    });
+    ctx.restore();
+}
+function clipVertical(ctx, target, clipY) {
+    const { segments , points  } = target;
+    let first = true;
+    let lineLoop = false;
+    ctx.beginPath();
+    for (const segment of segments){
+        const { start , end  } = segment;
+        const firstPoint = points[start];
+        const lastPoint = points[_findSegmentEnd(start, end, points)];
+        if (first) {
+            ctx.moveTo(firstPoint.x, firstPoint.y);
+            first = false;
+        } else {
+            ctx.lineTo(firstPoint.x, clipY);
+            ctx.lineTo(firstPoint.x, firstPoint.y);
+        }
+        lineLoop = !!target.pathSegment(ctx, segment, {
+            move: lineLoop
+        });
+        if (lineLoop) {
+            ctx.closePath();
+        } else {
+            ctx.lineTo(lastPoint.x, clipY);
+        }
+    }
+    ctx.lineTo(target.first().x, clipY);
+    ctx.closePath();
+    ctx.clip();
+}
+function fill(ctx, cfg) {
+    const { line , target , property , color , scale  } = cfg;
+    const segments = _segments(line, target, property);
+    for (const { source: src , target: tgt , start , end  } of segments){
+        const { style: { backgroundColor =color  } = {}  } = src;
+        const notShape = target !== true;
+        ctx.save();
+        ctx.fillStyle = backgroundColor;
+        clipBounds(ctx, scale, notShape && _getBounds(property, start, end));
+        ctx.beginPath();
+        const lineLoop = !!line.pathSegment(ctx, src);
+        let loop;
+        if (notShape) {
+            if (lineLoop) {
+                ctx.closePath();
+            } else {
+                interpolatedLineTo(ctx, target, end, property);
+            }
+            const targetLoop = !!target.pathSegment(ctx, tgt, {
+                move: lineLoop,
+                reverse: true
+            });
+            loop = lineLoop && targetLoop;
+            if (!loop) {
+                interpolatedLineTo(ctx, target, start, property);
+            }
+        }
+        ctx.closePath();
+        ctx.fill(loop ? 'evenodd' : 'nonzero');
+        ctx.restore();
+    }
+}
+function clipBounds(ctx, scale, bounds) {
+    const { top , bottom  } = scale.chart.chartArea;
+    const { property , start , end  } = bounds || {};
+    if (property === 'x') {
+        ctx.beginPath();
+        ctx.rect(start, top, end - start, bottom - top);
+        ctx.clip();
+    }
+}
+function interpolatedLineTo(ctx, target, point, property) {
+    const interpolatedPoint = target.interpolate(point, property);
+    if (interpolatedPoint) {
+        ctx.lineTo(interpolatedPoint.x, interpolatedPoint.y);
+    }
+}
+
+var index = {
+    id: 'filler',
+    afterDatasetsUpdate (chart, _args, options) {
+        const count = (chart.data.datasets || []).length;
+        const sources = [];
+        let meta, i, line, source;
+        for(i = 0; i < count; ++i){
+            meta = chart.getDatasetMeta(i);
+            line = meta.dataset;
+            source = null;
+            if (line && line.options && line instanceof LineElement) {
+                source = {
+                    visible: chart.isDatasetVisible(i),
+                    index: i,
+                    fill: _decodeFill(line, i, count),
+                    chart,
+                    axis: meta.controller.options.indexAxis,
+                    scale: meta.vScale,
+                    line
+                };
+            }
+            meta.$filler = source;
+            sources.push(source);
+        }
+        for(i = 0; i < count; ++i){
+            source = sources[i];
+            if (!source || source.fill === false) {
+                continue;
+            }
+            source.fill = _resolveTarget(sources, i, options.propagate);
+        }
+    },
+    beforeDraw (chart, _args, options) {
+        const draw = options.drawTime === 'beforeDraw';
+        const metasets = chart.getSortedVisibleDatasetMetas();
+        const area = chart.chartArea;
+        for(let i = metasets.length - 1; i >= 0; --i){
+            const source = metasets[i].$filler;
+            if (!source) {
+                continue;
+            }
+            source.line.updateControlPoints(area, source.axis);
+            if (draw && source.fill) {
+                _drawfill(chart.ctx, source, area);
+            }
+        }
+    },
+    beforeDatasetsDraw (chart, _args, options) {
+        if (options.drawTime !== 'beforeDatasetsDraw') {
+            return;
+        }
+        const metasets = chart.getSortedVisibleDatasetMetas();
+        for(let i = metasets.length - 1; i >= 0; --i){
+            const source = metasets[i].$filler;
+            if (_shouldApplyFill(source)) {
+                _drawfill(chart.ctx, source, chart.chartArea);
+            }
+        }
+    },
+    beforeDatasetDraw (chart, args, options) {
+        const source = args.meta.$filler;
+        if (!_shouldApplyFill(source) || options.drawTime !== 'beforeDatasetDraw') {
+            return;
+        }
+        _drawfill(chart.ctx, source, chart.chartArea);
+    },
+    defaults: {
+        propagate: true,
+        drawTime: 'beforeDatasetDraw'
+    }
+};
+
+const getBoxSize = (labelOpts, fontSize)=>{
+    let { boxHeight =fontSize , boxWidth =fontSize  } = labelOpts;
+    if (labelOpts.usePointStyle) {
+        boxHeight = Math.min(boxHeight, fontSize);
+        boxWidth = labelOpts.pointStyleWidth || Math.min(boxWidth, fontSize);
+    }
+    return {
+        boxWidth,
+        boxHeight,
+        itemHeight: Math.max(fontSize, boxHeight)
+    };
+};
+const itemsEqual = (a, b)=>a !== null && b !== null && a.datasetIndex === b.datasetIndex && a.index === b.index;
+class Legend extends Element {
+ constructor(config){
+        super();
+        this._added = false;
+        this.legendHitBoxes = [];
+ this._hoveredItem = null;
+        this.doughnutMode = false;
+        this.chart = config.chart;
+        this.options = config.options;
+        this.ctx = config.ctx;
+        this.legendItems = undefined;
+        this.columnSizes = undefined;
+        this.lineWidths = undefined;
+        this.maxHeight = undefined;
+        this.maxWidth = undefined;
+        this.top = undefined;
+        this.bottom = undefined;
+        this.left = undefined;
+        this.right = undefined;
+        this.height = undefined;
+        this.width = undefined;
+        this._margins = undefined;
+        this.position = undefined;
+        this.weight = undefined;
+        this.fullSize = undefined;
+    }
+    update(maxWidth, maxHeight, margins) {
+        this.maxWidth = maxWidth;
+        this.maxHeight = maxHeight;
+        this._margins = margins;
+        this.setDimensions();
+        this.buildLabels();
+        this.fit();
+    }
+    setDimensions() {
+        if (this.isHorizontal()) {
+            this.width = this.maxWidth;
+            this.left = this._margins.left;
+            this.right = this.width;
+        } else {
+            this.height = this.maxHeight;
+            this.top = this._margins.top;
+            this.bottom = this.height;
+        }
+    }
+    buildLabels() {
+        const labelOpts = this.options.labels || {};
+        let legendItems = helpers_segment.callback(labelOpts.generateLabels, [
+            this.chart
+        ], this) || [];
+        if (labelOpts.filter) {
+            legendItems = legendItems.filter((item)=>labelOpts.filter(item, this.chart.data));
+        }
+        if (labelOpts.sort) {
+            legendItems = legendItems.sort((a, b)=>labelOpts.sort(a, b, this.chart.data));
+        }
+        if (this.options.reverse) {
+            legendItems.reverse();
+        }
+        this.legendItems = legendItems;
+    }
+    fit() {
+        const { options , ctx  } = this;
+        if (!options.display) {
+            this.width = this.height = 0;
+            return;
+        }
+        const labelOpts = options.labels;
+        const labelFont = helpers_segment.toFont(labelOpts.font);
+        const fontSize = labelFont.size;
+        const titleHeight = this._computeTitleHeight();
+        const { boxWidth , itemHeight  } = getBoxSize(labelOpts, fontSize);
+        let width, height;
+        ctx.font = labelFont.string;
+        if (this.isHorizontal()) {
+            width = this.maxWidth;
+            height = this._fitRows(titleHeight, fontSize, boxWidth, itemHeight) + 10;
+        } else {
+            height = this.maxHeight;
+            width = this._fitCols(titleHeight, labelFont, boxWidth, itemHeight) + 10;
+        }
+        this.width = Math.min(width, options.maxWidth || this.maxWidth);
+        this.height = Math.min(height, options.maxHeight || this.maxHeight);
+    }
+ _fitRows(titleHeight, fontSize, boxWidth, itemHeight) {
+        const { ctx , maxWidth , options: { labels: { padding  }  }  } = this;
+        const hitboxes = this.legendHitBoxes = [];
+        const lineWidths = this.lineWidths = [
+            0
+        ];
+        const lineHeight = itemHeight + padding;
+        let totalHeight = titleHeight;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        let row = -1;
+        let top = -lineHeight;
+        this.legendItems.forEach((legendItem, i)=>{
+            const itemWidth = boxWidth + fontSize / 2 + ctx.measureText(legendItem.text).width;
+            if (i === 0 || lineWidths[lineWidths.length - 1] + itemWidth + 2 * padding > maxWidth) {
+                totalHeight += lineHeight;
+                lineWidths[lineWidths.length - (i > 0 ? 0 : 1)] = 0;
+                top += lineHeight;
+                row++;
+            }
+            hitboxes[i] = {
+                left: 0,
+                top,
+                row,
+                width: itemWidth,
+                height: itemHeight
+            };
+            lineWidths[lineWidths.length - 1] += itemWidth + padding;
+        });
+        return totalHeight;
+    }
+    _fitCols(titleHeight, labelFont, boxWidth, _itemHeight) {
+        const { ctx , maxHeight , options: { labels: { padding  }  }  } = this;
+        const hitboxes = this.legendHitBoxes = [];
+        const columnSizes = this.columnSizes = [];
+        const heightLimit = maxHeight - titleHeight;
+        let totalWidth = padding;
+        let currentColWidth = 0;
+        let currentColHeight = 0;
+        let left = 0;
+        let col = 0;
+        this.legendItems.forEach((legendItem, i)=>{
+            const { itemWidth , itemHeight  } = calculateItemSize(boxWidth, labelFont, ctx, legendItem, _itemHeight);
+            if (i > 0 && currentColHeight + itemHeight + 2 * padding > heightLimit) {
+                totalWidth += currentColWidth + padding;
+                columnSizes.push({
+                    width: currentColWidth,
+                    height: currentColHeight
+                });
+                left += currentColWidth + padding;
+                col++;
+                currentColWidth = currentColHeight = 0;
+            }
+            hitboxes[i] = {
+                left,
+                top: currentColHeight,
+                col,
+                width: itemWidth,
+                height: itemHeight
+            };
+            currentColWidth = Math.max(currentColWidth, itemWidth);
+            currentColHeight += itemHeight + padding;
+        });
+        totalWidth += currentColWidth;
+        columnSizes.push({
+            width: currentColWidth,
+            height: currentColHeight
+        });
+        return totalWidth;
+    }
+    adjustHitBoxes() {
+        if (!this.options.display) {
+            return;
+        }
+        const titleHeight = this._computeTitleHeight();
+        const { legendHitBoxes: hitboxes , options: { align , labels: { padding  } , rtl  }  } = this;
+        const rtlHelper = helpers_segment.getRtlAdapter(rtl, this.left, this.width);
+        if (this.isHorizontal()) {
+            let row = 0;
+            let left = helpers_segment._alignStartEnd(align, this.left + padding, this.right - this.lineWidths[row]);
+            for (const hitbox of hitboxes){
+                if (row !== hitbox.row) {
+                    row = hitbox.row;
+                    left = helpers_segment._alignStartEnd(align, this.left + padding, this.right - this.lineWidths[row]);
+                }
+                hitbox.top += this.top + titleHeight + padding;
+                hitbox.left = rtlHelper.leftForLtr(rtlHelper.x(left), hitbox.width);
+                left += hitbox.width + padding;
+            }
+        } else {
+            let col = 0;
+            let top = helpers_segment._alignStartEnd(align, this.top + titleHeight + padding, this.bottom - this.columnSizes[col].height);
+            for (const hitbox of hitboxes){
+                if (hitbox.col !== col) {
+                    col = hitbox.col;
+                    top = helpers_segment._alignStartEnd(align, this.top + titleHeight + padding, this.bottom - this.columnSizes[col].height);
+                }
+                hitbox.top = top;
+                hitbox.left += this.left + padding;
+                hitbox.left = rtlHelper.leftForLtr(rtlHelper.x(hitbox.left), hitbox.width);
+                top += hitbox.height + padding;
+            }
+        }
+    }
+    isHorizontal() {
+        return this.options.position === 'top' || this.options.position === 'bottom';
+    }
+    draw() {
+        if (this.options.display) {
+            const ctx = this.ctx;
+            helpers_segment.clipArea(ctx, this);
+            this._draw();
+            helpers_segment.unclipArea(ctx);
+        }
+    }
+ _draw() {
+        const { options: opts , columnSizes , lineWidths , ctx  } = this;
+        const { align , labels: labelOpts  } = opts;
+        const defaultColor = helpers_segment.defaults.color;
+        const rtlHelper = helpers_segment.getRtlAdapter(opts.rtl, this.left, this.width);
+        const labelFont = helpers_segment.toFont(labelOpts.font);
+        const { padding  } = labelOpts;
+        const fontSize = labelFont.size;
+        const halfFontSize = fontSize / 2;
+        let cursor;
+        this.drawTitle();
+        ctx.textAlign = rtlHelper.textAlign('left');
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = 0.5;
+        ctx.font = labelFont.string;
+        const { boxWidth , boxHeight , itemHeight  } = getBoxSize(labelOpts, fontSize);
+        const drawLegendBox = function(x, y, legendItem) {
+            if (isNaN(boxWidth) || boxWidth <= 0 || isNaN(boxHeight) || boxHeight < 0) {
+                return;
+            }
+            ctx.save();
+            const lineWidth = helpers_segment.valueOrDefault(legendItem.lineWidth, 1);
+            ctx.fillStyle = helpers_segment.valueOrDefault(legendItem.fillStyle, defaultColor);
+            ctx.lineCap = helpers_segment.valueOrDefault(legendItem.lineCap, 'butt');
+            ctx.lineDashOffset = helpers_segment.valueOrDefault(legendItem.lineDashOffset, 0);
+            ctx.lineJoin = helpers_segment.valueOrDefault(legendItem.lineJoin, 'miter');
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = helpers_segment.valueOrDefault(legendItem.strokeStyle, defaultColor);
+            ctx.setLineDash(helpers_segment.valueOrDefault(legendItem.lineDash, []));
+            if (labelOpts.usePointStyle) {
+                const drawOptions = {
+                    radius: boxHeight * Math.SQRT2 / 2,
+                    pointStyle: legendItem.pointStyle,
+                    rotation: legendItem.rotation,
+                    borderWidth: lineWidth
+                };
+                const centerX = rtlHelper.xPlus(x, boxWidth / 2);
+                const centerY = y + halfFontSize;
+                helpers_segment.drawPointLegend(ctx, drawOptions, centerX, centerY, labelOpts.pointStyleWidth && boxWidth);
+            } else {
+                const yBoxTop = y + Math.max((fontSize - boxHeight) / 2, 0);
+                const xBoxLeft = rtlHelper.leftForLtr(x, boxWidth);
+                const borderRadius = helpers_segment.toTRBLCorners(legendItem.borderRadius);
+                ctx.beginPath();
+                if (Object.values(borderRadius).some((v)=>v !== 0)) {
+                    helpers_segment.addRoundedRectPath(ctx, {
+                        x: xBoxLeft,
+                        y: yBoxTop,
+                        w: boxWidth,
+                        h: boxHeight,
+                        radius: borderRadius
+                    });
+                } else {
+                    ctx.rect(xBoxLeft, yBoxTop, boxWidth, boxHeight);
+                }
+                ctx.fill();
+                if (lineWidth !== 0) {
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        };
+        const fillText = function(x, y, legendItem) {
+            helpers_segment.renderText(ctx, legendItem.text, x, y + itemHeight / 2, labelFont, {
+                strikethrough: legendItem.hidden,
+                textAlign: rtlHelper.textAlign(legendItem.textAlign)
+            });
+        };
+        const isHorizontal = this.isHorizontal();
+        const titleHeight = this._computeTitleHeight();
+        if (isHorizontal) {
+            cursor = {
+                x: helpers_segment._alignStartEnd(align, this.left + padding, this.right - lineWidths[0]),
+                y: this.top + padding + titleHeight,
+                line: 0
+            };
+        } else {
+            cursor = {
+                x: this.left + padding,
+                y: helpers_segment._alignStartEnd(align, this.top + titleHeight + padding, this.bottom - columnSizes[0].height),
+                line: 0
+            };
+        }
+        helpers_segment.overrideTextDirection(this.ctx, opts.textDirection);
+        const lineHeight = itemHeight + padding;
+        this.legendItems.forEach((legendItem, i)=>{
+            ctx.strokeStyle = legendItem.fontColor;
+            ctx.fillStyle = legendItem.fontColor;
+            const textWidth = ctx.measureText(legendItem.text).width;
+            const textAlign = rtlHelper.textAlign(legendItem.textAlign || (legendItem.textAlign = labelOpts.textAlign));
+            const width = boxWidth + halfFontSize + textWidth;
+            let x = cursor.x;
+            let y = cursor.y;
+            rtlHelper.setWidth(this.width);
+            if (isHorizontal) {
+                if (i > 0 && x + width + padding > this.right) {
+                    y = cursor.y += lineHeight;
+                    cursor.line++;
+                    x = cursor.x = helpers_segment._alignStartEnd(align, this.left + padding, this.right - lineWidths[cursor.line]);
+                }
+            } else if (i > 0 && y + lineHeight > this.bottom) {
+                x = cursor.x = x + columnSizes[cursor.line].width + padding;
+                cursor.line++;
+                y = cursor.y = helpers_segment._alignStartEnd(align, this.top + titleHeight + padding, this.bottom - columnSizes[cursor.line].height);
+            }
+            const realX = rtlHelper.x(x);
+            drawLegendBox(realX, y, legendItem);
+            x = helpers_segment._textX(textAlign, x + boxWidth + halfFontSize, isHorizontal ? x + width : this.right, opts.rtl);
+            fillText(rtlHelper.x(x), y, legendItem);
+            if (isHorizontal) {
+                cursor.x += width + padding;
+            } else if (typeof legendItem.text !== 'string') {
+                const fontLineHeight = labelFont.lineHeight;
+                cursor.y += calculateLegendItemHeight(legendItem, fontLineHeight) + padding;
+            } else {
+                cursor.y += lineHeight;
+            }
+        });
+        helpers_segment.restoreTextDirection(this.ctx, opts.textDirection);
+    }
+ drawTitle() {
+        const opts = this.options;
+        const titleOpts = opts.title;
+        const titleFont = helpers_segment.toFont(titleOpts.font);
+        const titlePadding = helpers_segment.toPadding(titleOpts.padding);
+        if (!titleOpts.display) {
+            return;
+        }
+        const rtlHelper = helpers_segment.getRtlAdapter(opts.rtl, this.left, this.width);
+        const ctx = this.ctx;
+        const position = titleOpts.position;
+        const halfFontSize = titleFont.size / 2;
+        const topPaddingPlusHalfFontSize = titlePadding.top + halfFontSize;
+        let y;
+        let left = this.left;
+        let maxWidth = this.width;
+        if (this.isHorizontal()) {
+            maxWidth = Math.max(...this.lineWidths);
+            y = this.top + topPaddingPlusHalfFontSize;
+            left = helpers_segment._alignStartEnd(opts.align, left, this.right - maxWidth);
+        } else {
+            const maxHeight = this.columnSizes.reduce((acc, size)=>Math.max(acc, size.height), 0);
+            y = topPaddingPlusHalfFontSize + helpers_segment._alignStartEnd(opts.align, this.top, this.bottom - maxHeight - opts.labels.padding - this._computeTitleHeight());
+        }
+        const x = helpers_segment._alignStartEnd(position, left, left + maxWidth);
+        ctx.textAlign = rtlHelper.textAlign(helpers_segment._toLeftRightCenter(position));
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = titleOpts.color;
+        ctx.fillStyle = titleOpts.color;
+        ctx.font = titleFont.string;
+        helpers_segment.renderText(ctx, titleOpts.text, x, y, titleFont);
+    }
+ _computeTitleHeight() {
+        const titleOpts = this.options.title;
+        const titleFont = helpers_segment.toFont(titleOpts.font);
+        const titlePadding = helpers_segment.toPadding(titleOpts.padding);
+        return titleOpts.display ? titleFont.lineHeight + titlePadding.height : 0;
+    }
+ _getLegendItemAt(x, y) {
+        let i, hitBox, lh;
+        if (helpers_segment._isBetween(x, this.left, this.right) && helpers_segment._isBetween(y, this.top, this.bottom)) {
+            lh = this.legendHitBoxes;
+            for(i = 0; i < lh.length; ++i){
+                hitBox = lh[i];
+                if (helpers_segment._isBetween(x, hitBox.left, hitBox.left + hitBox.width) && helpers_segment._isBetween(y, hitBox.top, hitBox.top + hitBox.height)) {
+                    return this.legendItems[i];
+                }
+            }
+        }
+        return null;
+    }
+ handleEvent(e) {
+        const opts = this.options;
+        if (!isListened(e.type, opts)) {
+            return;
+        }
+        const hoveredItem = this._getLegendItemAt(e.x, e.y);
+        if (e.type === 'mousemove' || e.type === 'mouseout') {
+            const previous = this._hoveredItem;
+            const sameItem = itemsEqual(previous, hoveredItem);
+            if (previous && !sameItem) {
+                helpers_segment.callback(opts.onLeave, [
+                    e,
+                    previous,
+                    this
+                ], this);
+            }
+            this._hoveredItem = hoveredItem;
+            if (hoveredItem && !sameItem) {
+                helpers_segment.callback(opts.onHover, [
+                    e,
+                    hoveredItem,
+                    this
+                ], this);
+            }
+        } else if (hoveredItem) {
+            helpers_segment.callback(opts.onClick, [
+                e,
+                hoveredItem,
+                this
+            ], this);
+        }
+    }
+}
+function calculateItemSize(boxWidth, labelFont, ctx, legendItem, _itemHeight) {
+    const itemWidth = calculateItemWidth(legendItem, boxWidth, labelFont, ctx);
+    const itemHeight = calculateItemHeight(_itemHeight, legendItem, labelFont.lineHeight);
+    return {
+        itemWidth,
+        itemHeight
+    };
+}
+function calculateItemWidth(legendItem, boxWidth, labelFont, ctx) {
+    let legendItemText = legendItem.text;
+    if (legendItemText && typeof legendItemText !== 'string') {
+        legendItemText = legendItemText.reduce((a, b)=>a.length > b.length ? a : b);
+    }
+    return boxWidth + labelFont.size / 2 + ctx.measureText(legendItemText).width;
+}
+function calculateItemHeight(_itemHeight, legendItem, fontLineHeight) {
+    let itemHeight = _itemHeight;
+    if (typeof legendItem.text !== 'string') {
+        itemHeight = calculateLegendItemHeight(legendItem, fontLineHeight);
+    }
+    return itemHeight;
+}
+function calculateLegendItemHeight(legendItem, fontLineHeight) {
+    const labelHeight = legendItem.text ? legendItem.text.length : 0;
+    return fontLineHeight * labelHeight;
+}
+function isListened(type, opts) {
+    if ((type === 'mousemove' || type === 'mouseout') && (opts.onHover || opts.onLeave)) {
+        return true;
+    }
+    if (opts.onClick && (type === 'click' || type === 'mouseup')) {
+        return true;
+    }
+    return false;
+}
+var plugin_legend = {
+    id: 'legend',
+ _element: Legend,
+    start (chart, _args, options) {
+        const legend = chart.legend = new Legend({
+            ctx: chart.ctx,
+            options,
+            chart
+        });
+        layouts.configure(chart, legend, options);
+        layouts.addBox(chart, legend);
+    },
+    stop (chart) {
+        layouts.removeBox(chart, chart.legend);
+        delete chart.legend;
+    },
+    beforeUpdate (chart, _args, options) {
+        const legend = chart.legend;
+        layouts.configure(chart, legend, options);
+        legend.options = options;
+    },
+    afterUpdate (chart) {
+        const legend = chart.legend;
+        legend.buildLabels();
+        legend.adjustHitBoxes();
+    },
+    afterEvent (chart, args) {
+        if (!args.replay) {
+            chart.legend.handleEvent(args.event);
+        }
+    },
+    defaults: {
+        display: true,
+        position: 'top',
+        align: 'center',
+        fullSize: true,
+        reverse: false,
+        weight: 1000,
+        onClick (e, legendItem, legend) {
+            const index = legendItem.datasetIndex;
+            const ci = legend.chart;
+            if (ci.isDatasetVisible(index)) {
+                ci.hide(index);
+                legendItem.hidden = true;
+            } else {
+                ci.show(index);
+                legendItem.hidden = false;
+            }
+        },
+        onHover: null,
+        onLeave: null,
+        labels: {
+            color: (ctx)=>ctx.chart.options.color,
+            boxWidth: 40,
+            padding: 10,
+            generateLabels (chart) {
+                const datasets = chart.data.datasets;
+                const { labels: { usePointStyle , pointStyle , textAlign , color , useBorderRadius , borderRadius  }  } = chart.legend.options;
+                return chart._getSortedDatasetMetas().map((meta)=>{
+                    const style = meta.controller.getStyle(usePointStyle ? 0 : undefined);
+                    const borderWidth = helpers_segment.toPadding(style.borderWidth);
+                    return {
+                        text: datasets[meta.index].label,
+                        fillStyle: style.backgroundColor,
+                        fontColor: color,
+                        hidden: !meta.visible,
+                        lineCap: style.borderCapStyle,
+                        lineDash: style.borderDash,
+                        lineDashOffset: style.borderDashOffset,
+                        lineJoin: style.borderJoinStyle,
+                        lineWidth: (borderWidth.width + borderWidth.height) / 4,
+                        strokeStyle: style.borderColor,
+                        pointStyle: pointStyle || style.pointStyle,
+                        rotation: style.rotation,
+                        textAlign: textAlign || style.textAlign,
+                        borderRadius: useBorderRadius && (borderRadius || style.borderRadius),
+                        datasetIndex: meta.index
+                    };
+                }, this);
+            }
+        },
+        title: {
+            color: (ctx)=>ctx.chart.options.color,
+            display: false,
+            position: 'center',
+            text: ''
+        }
+    },
+    descriptors: {
+        _scriptable: (name)=>!name.startsWith('on'),
+        labels: {
+            _scriptable: (name)=>![
+                    'generateLabels',
+                    'filter',
+                    'sort'
+                ].includes(name)
+        }
+    }
+};
+
+class Title extends Element {
+ constructor(config){
+        super();
+        this.chart = config.chart;
+        this.options = config.options;
+        this.ctx = config.ctx;
+        this._padding = undefined;
+        this.top = undefined;
+        this.bottom = undefined;
+        this.left = undefined;
+        this.right = undefined;
+        this.width = undefined;
+        this.height = undefined;
+        this.position = undefined;
+        this.weight = undefined;
+        this.fullSize = undefined;
+    }
+    update(maxWidth, maxHeight) {
+        const opts = this.options;
+        this.left = 0;
+        this.top = 0;
+        if (!opts.display) {
+            this.width = this.height = this.right = this.bottom = 0;
+            return;
+        }
+        this.width = this.right = maxWidth;
+        this.height = this.bottom = maxHeight;
+        const lineCount = helpers_segment.isArray(opts.text) ? opts.text.length : 1;
+        this._padding = helpers_segment.toPadding(opts.padding);
+        const textSize = lineCount * helpers_segment.toFont(opts.font).lineHeight + this._padding.height;
+        if (this.isHorizontal()) {
+            this.height = textSize;
+        } else {
+            this.width = textSize;
+        }
+    }
+    isHorizontal() {
+        const pos = this.options.position;
+        return pos === 'top' || pos === 'bottom';
+    }
+    _drawArgs(offset) {
+        const { top , left , bottom , right , options  } = this;
+        const align = options.align;
+        let rotation = 0;
+        let maxWidth, titleX, titleY;
+        if (this.isHorizontal()) {
+            titleX = helpers_segment._alignStartEnd(align, left, right);
+            titleY = top + offset;
+            maxWidth = right - left;
+        } else {
+            if (options.position === 'left') {
+                titleX = left + offset;
+                titleY = helpers_segment._alignStartEnd(align, bottom, top);
+                rotation = helpers_segment.PI * -0.5;
+            } else {
+                titleX = right - offset;
+                titleY = helpers_segment._alignStartEnd(align, top, bottom);
+                rotation = helpers_segment.PI * 0.5;
+            }
+            maxWidth = bottom - top;
+        }
+        return {
+            titleX,
+            titleY,
+            maxWidth,
+            rotation
+        };
+    }
+    draw() {
+        const ctx = this.ctx;
+        const opts = this.options;
+        if (!opts.display) {
+            return;
+        }
+        const fontOpts = helpers_segment.toFont(opts.font);
+        const lineHeight = fontOpts.lineHeight;
+        const offset = lineHeight / 2 + this._padding.top;
+        const { titleX , titleY , maxWidth , rotation  } = this._drawArgs(offset);
+        helpers_segment.renderText(ctx, opts.text, 0, 0, fontOpts, {
+            color: opts.color,
+            maxWidth,
+            rotation,
+            textAlign: helpers_segment._toLeftRightCenter(opts.align),
+            textBaseline: 'middle',
+            translation: [
+                titleX,
+                titleY
+            ]
+        });
+    }
+}
+function createTitle(chart, titleOpts) {
+    const title = new Title({
+        ctx: chart.ctx,
+        options: titleOpts,
+        chart
+    });
+    layouts.configure(chart, title, titleOpts);
+    layouts.addBox(chart, title);
+    chart.titleBlock = title;
+}
+var plugin_title = {
+    id: 'title',
+ _element: Title,
+    start (chart, _args, options) {
+        createTitle(chart, options);
+    },
+    stop (chart) {
+        const titleBlock = chart.titleBlock;
+        layouts.removeBox(chart, titleBlock);
+        delete chart.titleBlock;
+    },
+    beforeUpdate (chart, _args, options) {
+        const title = chart.titleBlock;
+        layouts.configure(chart, title, options);
+        title.options = options;
+    },
+    defaults: {
+        align: 'center',
+        display: false,
+        font: {
+            weight: 'bold'
+        },
+        fullSize: true,
+        padding: 10,
+        position: 'top',
+        text: '',
+        weight: 2000
+    },
+    defaultRoutes: {
+        color: 'color'
+    },
+    descriptors: {
+        _scriptable: true,
+        _indexable: false
+    }
+};
+
+const map = new WeakMap();
+var plugin_subtitle = {
+    id: 'subtitle',
+    start (chart, _args, options) {
+        const title = new Title({
+            ctx: chart.ctx,
+            options,
+            chart
+        });
+        layouts.configure(chart, title, options);
+        layouts.addBox(chart, title);
+        map.set(chart, title);
+    },
+    stop (chart) {
+        layouts.removeBox(chart, map.get(chart));
+        map.delete(chart);
+    },
+    beforeUpdate (chart, _args, options) {
+        const title = map.get(chart);
+        layouts.configure(chart, title, options);
+        title.options = options;
+    },
+    defaults: {
+        align: 'center',
+        display: false,
+        font: {
+            weight: 'normal'
+        },
+        fullSize: true,
+        padding: 0,
+        position: 'top',
+        text: '',
+        weight: 1500
+    },
+    defaultRoutes: {
+        color: 'color'
+    },
+    descriptors: {
+        _scriptable: true,
+        _indexable: false
+    }
+};
+
+const positioners = {
+ average (items) {
+        if (!items.length) {
+            return false;
+        }
+        let i, len;
+        let xSet = new Set();
+        let y = 0;
+        let count = 0;
+        for(i = 0, len = items.length; i < len; ++i){
+            const el = items[i].element;
+            if (el && el.hasValue()) {
+                const pos = el.tooltipPosition();
+                xSet.add(pos.x);
+                y += pos.y;
+                ++count;
+            }
+        }
+        if (count === 0 || xSet.size === 0) {
+            return false;
+        }
+        const xAverage = [
+            ...xSet
+        ].reduce((a, b)=>a + b) / xSet.size;
+        return {
+            x: xAverage,
+            y: y / count
+        };
+    },
+ nearest (items, eventPosition) {
+        if (!items.length) {
+            return false;
+        }
+        let x = eventPosition.x;
+        let y = eventPosition.y;
+        let minDistance = Number.POSITIVE_INFINITY;
+        let i, len, nearestElement;
+        for(i = 0, len = items.length; i < len; ++i){
+            const el = items[i].element;
+            if (el && el.hasValue()) {
+                const center = el.getCenterPoint();
+                const d = helpers_segment.distanceBetweenPoints(eventPosition, center);
+                if (d < minDistance) {
+                    minDistance = d;
+                    nearestElement = el;
+                }
+            }
+        }
+        if (nearestElement) {
+            const tp = nearestElement.tooltipPosition();
+            x = tp.x;
+            y = tp.y;
+        }
+        return {
+            x,
+            y
+        };
+    }
+};
+function pushOrConcat(base, toPush) {
+    if (toPush) {
+        if (helpers_segment.isArray(toPush)) {
+            Array.prototype.push.apply(base, toPush);
+        } else {
+            base.push(toPush);
+        }
+    }
+    return base;
+}
+ function splitNewlines(str) {
+    if ((typeof str === 'string' || str instanceof String) && str.indexOf('\n') > -1) {
+        return str.split('\n');
+    }
+    return str;
+}
+ function createTooltipItem(chart, item) {
+    const { element , datasetIndex , index  } = item;
+    const controller = chart.getDatasetMeta(datasetIndex).controller;
+    const { label , value  } = controller.getLabelAndValue(index);
+    return {
+        chart,
+        label,
+        parsed: controller.getParsed(index),
+        raw: chart.data.datasets[datasetIndex].data[index],
+        formattedValue: value,
+        dataset: controller.getDataset(),
+        dataIndex: index,
+        datasetIndex,
+        element
+    };
+}
+ function getTooltipSize(tooltip, options) {
+    const ctx = tooltip.chart.ctx;
+    const { body , footer , title  } = tooltip;
+    const { boxWidth , boxHeight  } = options;
+    const bodyFont = helpers_segment.toFont(options.bodyFont);
+    const titleFont = helpers_segment.toFont(options.titleFont);
+    const footerFont = helpers_segment.toFont(options.footerFont);
+    const titleLineCount = title.length;
+    const footerLineCount = footer.length;
+    const bodyLineItemCount = body.length;
+    const padding = helpers_segment.toPadding(options.padding);
+    let height = padding.height;
+    let width = 0;
+    let combinedBodyLength = body.reduce((count, bodyItem)=>count + bodyItem.before.length + bodyItem.lines.length + bodyItem.after.length, 0);
+    combinedBodyLength += tooltip.beforeBody.length + tooltip.afterBody.length;
+    if (titleLineCount) {
+        height += titleLineCount * titleFont.lineHeight + (titleLineCount - 1) * options.titleSpacing + options.titleMarginBottom;
+    }
+    if (combinedBodyLength) {
+        const bodyLineHeight = options.displayColors ? Math.max(boxHeight, bodyFont.lineHeight) : bodyFont.lineHeight;
+        height += bodyLineItemCount * bodyLineHeight + (combinedBodyLength - bodyLineItemCount) * bodyFont.lineHeight + (combinedBodyLength - 1) * options.bodySpacing;
+    }
+    if (footerLineCount) {
+        height += options.footerMarginTop + footerLineCount * footerFont.lineHeight + (footerLineCount - 1) * options.footerSpacing;
+    }
+    let widthPadding = 0;
+    const maxLineWidth = function(line) {
+        width = Math.max(width, ctx.measureText(line).width + widthPadding);
+    };
+    ctx.save();
+    ctx.font = titleFont.string;
+    helpers_segment.each(tooltip.title, maxLineWidth);
+    ctx.font = bodyFont.string;
+    helpers_segment.each(tooltip.beforeBody.concat(tooltip.afterBody), maxLineWidth);
+    widthPadding = options.displayColors ? boxWidth + 2 + options.boxPadding : 0;
+    helpers_segment.each(body, (bodyItem)=>{
+        helpers_segment.each(bodyItem.before, maxLineWidth);
+        helpers_segment.each(bodyItem.lines, maxLineWidth);
+        helpers_segment.each(bodyItem.after, maxLineWidth);
+    });
+    widthPadding = 0;
+    ctx.font = footerFont.string;
+    helpers_segment.each(tooltip.footer, maxLineWidth);
+    ctx.restore();
+    width += padding.width;
+    return {
+        width,
+        height
+    };
+}
+function determineYAlign(chart, size) {
+    const { y , height  } = size;
+    if (y < height / 2) {
+        return 'top';
+    } else if (y > chart.height - height / 2) {
+        return 'bottom';
+    }
+    return 'center';
+}
+function doesNotFitWithAlign(xAlign, chart, options, size) {
+    const { x , width  } = size;
+    const caret = options.caretSize + options.caretPadding;
+    if (xAlign === 'left' && x + width + caret > chart.width) {
+        return true;
+    }
+    if (xAlign === 'right' && x - width - caret < 0) {
+        return true;
+    }
+}
+function determineXAlign(chart, options, size, yAlign) {
+    const { x , width  } = size;
+    const { width: chartWidth , chartArea: { left , right  }  } = chart;
+    let xAlign = 'center';
+    if (yAlign === 'center') {
+        xAlign = x <= (left + right) / 2 ? 'left' : 'right';
+    } else if (x <= width / 2) {
+        xAlign = 'left';
+    } else if (x >= chartWidth - width / 2) {
+        xAlign = 'right';
+    }
+    if (doesNotFitWithAlign(xAlign, chart, options, size)) {
+        xAlign = 'center';
+    }
+    return xAlign;
+}
+ function determineAlignment(chart, options, size) {
+    const yAlign = size.yAlign || options.yAlign || determineYAlign(chart, size);
+    return {
+        xAlign: size.xAlign || options.xAlign || determineXAlign(chart, options, size, yAlign),
+        yAlign
+    };
+}
+function alignX(size, xAlign) {
+    let { x , width  } = size;
+    if (xAlign === 'right') {
+        x -= width;
+    } else if (xAlign === 'center') {
+        x -= width / 2;
+    }
+    return x;
+}
+function alignY(size, yAlign, paddingAndSize) {
+    let { y , height  } = size;
+    if (yAlign === 'top') {
+        y += paddingAndSize;
+    } else if (yAlign === 'bottom') {
+        y -= height + paddingAndSize;
+    } else {
+        y -= height / 2;
+    }
+    return y;
+}
+ function getBackgroundPoint(options, size, alignment, chart) {
+    const { caretSize , caretPadding , cornerRadius  } = options;
+    const { xAlign , yAlign  } = alignment;
+    const paddingAndSize = caretSize + caretPadding;
+    const { topLeft , topRight , bottomLeft , bottomRight  } = helpers_segment.toTRBLCorners(cornerRadius);
+    let x = alignX(size, xAlign);
+    const y = alignY(size, yAlign, paddingAndSize);
+    if (yAlign === 'center') {
+        if (xAlign === 'left') {
+            x += paddingAndSize;
+        } else if (xAlign === 'right') {
+            x -= paddingAndSize;
+        }
+    } else if (xAlign === 'left') {
+        x -= Math.max(topLeft, bottomLeft) + caretSize;
+    } else if (xAlign === 'right') {
+        x += Math.max(topRight, bottomRight) + caretSize;
+    }
+    return {
+        x: helpers_segment._limitValue(x, 0, chart.width - size.width),
+        y: helpers_segment._limitValue(y, 0, chart.height - size.height)
+    };
+}
+function getAlignedX(tooltip, align, options) {
+    const padding = helpers_segment.toPadding(options.padding);
+    return align === 'center' ? tooltip.x + tooltip.width / 2 : align === 'right' ? tooltip.x + tooltip.width - padding.right : tooltip.x + padding.left;
+}
+ function getBeforeAfterBodyLines(callback) {
+    return pushOrConcat([], splitNewlines(callback));
+}
+function createTooltipContext(parent, tooltip, tooltipItems) {
+    return helpers_segment.createContext(parent, {
+        tooltip,
+        tooltipItems,
+        type: 'tooltip'
+    });
+}
+function overrideCallbacks(callbacks, context) {
+    const override = context && context.dataset && context.dataset.tooltip && context.dataset.tooltip.callbacks;
+    return override ? callbacks.override(override) : callbacks;
+}
+const defaultCallbacks = {
+    beforeTitle: helpers_segment.noop,
+    title (tooltipItems) {
+        if (tooltipItems.length > 0) {
+            const item = tooltipItems[0];
+            const labels = item.chart.data.labels;
+            const labelCount = labels ? labels.length : 0;
+            if (this && this.options && this.options.mode === 'dataset') {
+                return item.dataset.label || '';
+            } else if (item.label) {
+                return item.label;
+            } else if (labelCount > 0 && item.dataIndex < labelCount) {
+                return labels[item.dataIndex];
+            }
+        }
+        return '';
+    },
+    afterTitle: helpers_segment.noop,
+    beforeBody: helpers_segment.noop,
+    beforeLabel: helpers_segment.noop,
+    label (tooltipItem) {
+        if (this && this.options && this.options.mode === 'dataset') {
+            return tooltipItem.label + ': ' + tooltipItem.formattedValue || tooltipItem.formattedValue;
+        }
+        let label = tooltipItem.dataset.label || '';
+        if (label) {
+            label += ': ';
+        }
+        const value = tooltipItem.formattedValue;
+        if (!helpers_segment.isNullOrUndef(value)) {
+            label += value;
+        }
+        return label;
+    },
+    labelColor (tooltipItem) {
+        const meta = tooltipItem.chart.getDatasetMeta(tooltipItem.datasetIndex);
+        const options = meta.controller.getStyle(tooltipItem.dataIndex);
+        return {
+            borderColor: options.borderColor,
+            backgroundColor: options.backgroundColor,
+            borderWidth: options.borderWidth,
+            borderDash: options.borderDash,
+            borderDashOffset: options.borderDashOffset,
+            borderRadius: 0
+        };
+    },
+    labelTextColor () {
+        return this.options.bodyColor;
+    },
+    labelPointStyle (tooltipItem) {
+        const meta = tooltipItem.chart.getDatasetMeta(tooltipItem.datasetIndex);
+        const options = meta.controller.getStyle(tooltipItem.dataIndex);
+        return {
+            pointStyle: options.pointStyle,
+            rotation: options.rotation
+        };
+    },
+    afterLabel: helpers_segment.noop,
+    afterBody: helpers_segment.noop,
+    beforeFooter: helpers_segment.noop,
+    footer: helpers_segment.noop,
+    afterFooter: helpers_segment.noop
+};
+ function invokeCallbackWithFallback(callbacks, name, ctx, arg) {
+    const result = callbacks[name].call(ctx, arg);
+    if (typeof result === 'undefined') {
+        return defaultCallbacks[name].call(ctx, arg);
+    }
+    return result;
+}
+class Tooltip extends Element {
+ static positioners = positioners;
+    constructor(config){
+        super();
+        this.opacity = 0;
+        this._active = [];
+        this._eventPosition = undefined;
+        this._size = undefined;
+        this._cachedAnimations = undefined;
+        this._tooltipItems = [];
+        this.$animations = undefined;
+        this.$context = undefined;
+        this.chart = config.chart;
+        this.options = config.options;
+        this.dataPoints = undefined;
+        this.title = undefined;
+        this.beforeBody = undefined;
+        this.body = undefined;
+        this.afterBody = undefined;
+        this.footer = undefined;
+        this.xAlign = undefined;
+        this.yAlign = undefined;
+        this.x = undefined;
+        this.y = undefined;
+        this.height = undefined;
+        this.width = undefined;
+        this.caretX = undefined;
+        this.caretY = undefined;
+        this.labelColors = undefined;
+        this.labelPointStyles = undefined;
+        this.labelTextColors = undefined;
+    }
+    initialize(options) {
+        this.options = options;
+        this._cachedAnimations = undefined;
+        this.$context = undefined;
+    }
+ _resolveAnimations() {
+        const cached = this._cachedAnimations;
+        if (cached) {
+            return cached;
+        }
+        const chart = this.chart;
+        const options = this.options.setContext(this.getContext());
+        const opts = options.enabled && chart.options.animation && options.animations;
+        const animations = new Animations(this.chart, opts);
+        if (opts._cacheable) {
+            this._cachedAnimations = Object.freeze(animations);
+        }
+        return animations;
+    }
+ getContext() {
+        return this.$context || (this.$context = createTooltipContext(this.chart.getContext(), this, this._tooltipItems));
+    }
+    getTitle(context, options) {
+        const { callbacks  } = options;
+        const beforeTitle = invokeCallbackWithFallback(callbacks, 'beforeTitle', this, context);
+        const title = invokeCallbackWithFallback(callbacks, 'title', this, context);
+        const afterTitle = invokeCallbackWithFallback(callbacks, 'afterTitle', this, context);
+        let lines = [];
+        lines = pushOrConcat(lines, splitNewlines(beforeTitle));
+        lines = pushOrConcat(lines, splitNewlines(title));
+        lines = pushOrConcat(lines, splitNewlines(afterTitle));
+        return lines;
+    }
+    getBeforeBody(tooltipItems, options) {
+        return getBeforeAfterBodyLines(invokeCallbackWithFallback(options.callbacks, 'beforeBody', this, tooltipItems));
+    }
+    getBody(tooltipItems, options) {
+        const { callbacks  } = options;
+        const bodyItems = [];
+        helpers_segment.each(tooltipItems, (context)=>{
+            const bodyItem = {
+                before: [],
+                lines: [],
+                after: []
+            };
+            const scoped = overrideCallbacks(callbacks, context);
+            pushOrConcat(bodyItem.before, splitNewlines(invokeCallbackWithFallback(scoped, 'beforeLabel', this, context)));
+            pushOrConcat(bodyItem.lines, invokeCallbackWithFallback(scoped, 'label', this, context));
+            pushOrConcat(bodyItem.after, splitNewlines(invokeCallbackWithFallback(scoped, 'afterLabel', this, context)));
+            bodyItems.push(bodyItem);
+        });
+        return bodyItems;
+    }
+    getAfterBody(tooltipItems, options) {
+        return getBeforeAfterBodyLines(invokeCallbackWithFallback(options.callbacks, 'afterBody', this, tooltipItems));
+    }
+    getFooter(tooltipItems, options) {
+        const { callbacks  } = options;
+        const beforeFooter = invokeCallbackWithFallback(callbacks, 'beforeFooter', this, tooltipItems);
+        const footer = invokeCallbackWithFallback(callbacks, 'footer', this, tooltipItems);
+        const afterFooter = invokeCallbackWithFallback(callbacks, 'afterFooter', this, tooltipItems);
+        let lines = [];
+        lines = pushOrConcat(lines, splitNewlines(beforeFooter));
+        lines = pushOrConcat(lines, splitNewlines(footer));
+        lines = pushOrConcat(lines, splitNewlines(afterFooter));
+        return lines;
+    }
+ _createItems(options) {
+        const active = this._active;
+        const data = this.chart.data;
+        const labelColors = [];
+        const labelPointStyles = [];
+        const labelTextColors = [];
+        let tooltipItems = [];
+        let i, len;
+        for(i = 0, len = active.length; i < len; ++i){
+            tooltipItems.push(createTooltipItem(this.chart, active[i]));
+        }
+        if (options.filter) {
+            tooltipItems = tooltipItems.filter((element, index, array)=>options.filter(element, index, array, data));
+        }
+        if (options.itemSort) {
+            tooltipItems = tooltipItems.sort((a, b)=>options.itemSort(a, b, data));
+        }
+        helpers_segment.each(tooltipItems, (context)=>{
+            const scoped = overrideCallbacks(options.callbacks, context);
+            labelColors.push(invokeCallbackWithFallback(scoped, 'labelColor', this, context));
+            labelPointStyles.push(invokeCallbackWithFallback(scoped, 'labelPointStyle', this, context));
+            labelTextColors.push(invokeCallbackWithFallback(scoped, 'labelTextColor', this, context));
+        });
+        this.labelColors = labelColors;
+        this.labelPointStyles = labelPointStyles;
+        this.labelTextColors = labelTextColors;
+        this.dataPoints = tooltipItems;
+        return tooltipItems;
+    }
+    update(changed, replay) {
+        const options = this.options.setContext(this.getContext());
+        const active = this._active;
+        let properties;
+        let tooltipItems = [];
+        if (!active.length) {
+            if (this.opacity !== 0) {
+                properties = {
+                    opacity: 0
+                };
+            }
+        } else {
+            const position = positioners[options.position].call(this, active, this._eventPosition);
+            tooltipItems = this._createItems(options);
+            this.title = this.getTitle(tooltipItems, options);
+            this.beforeBody = this.getBeforeBody(tooltipItems, options);
+            this.body = this.getBody(tooltipItems, options);
+            this.afterBody = this.getAfterBody(tooltipItems, options);
+            this.footer = this.getFooter(tooltipItems, options);
+            const size = this._size = getTooltipSize(this, options);
+            const positionAndSize = Object.assign({}, position, size);
+            const alignment = determineAlignment(this.chart, options, positionAndSize);
+            const backgroundPoint = getBackgroundPoint(options, positionAndSize, alignment, this.chart);
+            this.xAlign = alignment.xAlign;
+            this.yAlign = alignment.yAlign;
+            properties = {
+                opacity: 1,
+                x: backgroundPoint.x,
+                y: backgroundPoint.y,
+                width: size.width,
+                height: size.height,
+                caretX: position.x,
+                caretY: position.y
+            };
+        }
+        this._tooltipItems = tooltipItems;
+        this.$context = undefined;
+        if (properties) {
+            this._resolveAnimations().update(this, properties);
+        }
+        if (changed && options.external) {
+            options.external.call(this, {
+                chart: this.chart,
+                tooltip: this,
+                replay
+            });
+        }
+    }
+    drawCaret(tooltipPoint, ctx, size, options) {
+        const caretPosition = this.getCaretPosition(tooltipPoint, size, options);
+        ctx.lineTo(caretPosition.x1, caretPosition.y1);
+        ctx.lineTo(caretPosition.x2, caretPosition.y2);
+        ctx.lineTo(caretPosition.x3, caretPosition.y3);
+    }
+    getCaretPosition(tooltipPoint, size, options) {
+        const { xAlign , yAlign  } = this;
+        const { caretSize , cornerRadius  } = options;
+        const { topLeft , topRight , bottomLeft , bottomRight  } = helpers_segment.toTRBLCorners(cornerRadius);
+        const { x: ptX , y: ptY  } = tooltipPoint;
+        const { width , height  } = size;
+        let x1, x2, x3, y1, y2, y3;
+        if (yAlign === 'center') {
+            y2 = ptY + height / 2;
+            if (xAlign === 'left') {
+                x1 = ptX;
+                x2 = x1 - caretSize;
+                y1 = y2 + caretSize;
+                y3 = y2 - caretSize;
+            } else {
+                x1 = ptX + width;
+                x2 = x1 + caretSize;
+                y1 = y2 - caretSize;
+                y3 = y2 + caretSize;
+            }
+            x3 = x1;
+        } else {
+            if (xAlign === 'left') {
+                x2 = ptX + Math.max(topLeft, bottomLeft) + caretSize;
+            } else if (xAlign === 'right') {
+                x2 = ptX + width - Math.max(topRight, bottomRight) - caretSize;
+            } else {
+                x2 = this.caretX;
+            }
+            if (yAlign === 'top') {
+                y1 = ptY;
+                y2 = y1 - caretSize;
+                x1 = x2 - caretSize;
+                x3 = x2 + caretSize;
+            } else {
+                y1 = ptY + height;
+                y2 = y1 + caretSize;
+                x1 = x2 + caretSize;
+                x3 = x2 - caretSize;
+            }
+            y3 = y1;
+        }
+        return {
+            x1,
+            x2,
+            x3,
+            y1,
+            y2,
+            y3
+        };
+    }
+    drawTitle(pt, ctx, options) {
+        const title = this.title;
+        const length = title.length;
+        let titleFont, titleSpacing, i;
+        if (length) {
+            const rtlHelper = helpers_segment.getRtlAdapter(options.rtl, this.x, this.width);
+            pt.x = getAlignedX(this, options.titleAlign, options);
+            ctx.textAlign = rtlHelper.textAlign(options.titleAlign);
+            ctx.textBaseline = 'middle';
+            titleFont = helpers_segment.toFont(options.titleFont);
+            titleSpacing = options.titleSpacing;
+            ctx.fillStyle = options.titleColor;
+            ctx.font = titleFont.string;
+            for(i = 0; i < length; ++i){
+                ctx.fillText(title[i], rtlHelper.x(pt.x), pt.y + titleFont.lineHeight / 2);
+                pt.y += titleFont.lineHeight + titleSpacing;
+                if (i + 1 === length) {
+                    pt.y += options.titleMarginBottom - titleSpacing;
+                }
+            }
+        }
+    }
+ _drawColorBox(ctx, pt, i, rtlHelper, options) {
+        const labelColor = this.labelColors[i];
+        const labelPointStyle = this.labelPointStyles[i];
+        const { boxHeight , boxWidth  } = options;
+        const bodyFont = helpers_segment.toFont(options.bodyFont);
+        const colorX = getAlignedX(this, 'left', options);
+        const rtlColorX = rtlHelper.x(colorX);
+        const yOffSet = boxHeight < bodyFont.lineHeight ? (bodyFont.lineHeight - boxHeight) / 2 : 0;
+        const colorY = pt.y + yOffSet;
+        if (options.usePointStyle) {
+            const drawOptions = {
+                radius: Math.min(boxWidth, boxHeight) / 2,
+                pointStyle: labelPointStyle.pointStyle,
+                rotation: labelPointStyle.rotation,
+                borderWidth: 1
+            };
+            const centerX = rtlHelper.leftForLtr(rtlColorX, boxWidth) + boxWidth / 2;
+            const centerY = colorY + boxHeight / 2;
+            ctx.strokeStyle = options.multiKeyBackground;
+            ctx.fillStyle = options.multiKeyBackground;
+            helpers_segment.drawPoint(ctx, drawOptions, centerX, centerY);
+            ctx.strokeStyle = labelColor.borderColor;
+            ctx.fillStyle = labelColor.backgroundColor;
+            helpers_segment.drawPoint(ctx, drawOptions, centerX, centerY);
+        } else {
+            ctx.lineWidth = helpers_segment.isObject(labelColor.borderWidth) ? Math.max(...Object.values(labelColor.borderWidth)) : labelColor.borderWidth || 1;
+            ctx.strokeStyle = labelColor.borderColor;
+            ctx.setLineDash(labelColor.borderDash || []);
+            ctx.lineDashOffset = labelColor.borderDashOffset || 0;
+            const outerX = rtlHelper.leftForLtr(rtlColorX, boxWidth);
+            const innerX = rtlHelper.leftForLtr(rtlHelper.xPlus(rtlColorX, 1), boxWidth - 2);
+            const borderRadius = helpers_segment.toTRBLCorners(labelColor.borderRadius);
+            if (Object.values(borderRadius).some((v)=>v !== 0)) {
+                ctx.beginPath();
+                ctx.fillStyle = options.multiKeyBackground;
+                helpers_segment.addRoundedRectPath(ctx, {
+                    x: outerX,
+                    y: colorY,
+                    w: boxWidth,
+                    h: boxHeight,
+                    radius: borderRadius
+                });
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = labelColor.backgroundColor;
+                ctx.beginPath();
+                helpers_segment.addRoundedRectPath(ctx, {
+                    x: innerX,
+                    y: colorY + 1,
+                    w: boxWidth - 2,
+                    h: boxHeight - 2,
+                    radius: borderRadius
+                });
+                ctx.fill();
+            } else {
+                ctx.fillStyle = options.multiKeyBackground;
+                ctx.fillRect(outerX, colorY, boxWidth, boxHeight);
+                ctx.strokeRect(outerX, colorY, boxWidth, boxHeight);
+                ctx.fillStyle = labelColor.backgroundColor;
+                ctx.fillRect(innerX, colorY + 1, boxWidth - 2, boxHeight - 2);
+            }
+        }
+        ctx.fillStyle = this.labelTextColors[i];
+    }
+    drawBody(pt, ctx, options) {
+        const { body  } = this;
+        const { bodySpacing , bodyAlign , displayColors , boxHeight , boxWidth , boxPadding  } = options;
+        const bodyFont = helpers_segment.toFont(options.bodyFont);
+        let bodyLineHeight = bodyFont.lineHeight;
+        let xLinePadding = 0;
+        const rtlHelper = helpers_segment.getRtlAdapter(options.rtl, this.x, this.width);
+        const fillLineOfText = function(line) {
+            ctx.fillText(line, rtlHelper.x(pt.x + xLinePadding), pt.y + bodyLineHeight / 2);
+            pt.y += bodyLineHeight + bodySpacing;
+        };
+        const bodyAlignForCalculation = rtlHelper.textAlign(bodyAlign);
+        let bodyItem, textColor, lines, i, j, ilen, jlen;
+        ctx.textAlign = bodyAlign;
+        ctx.textBaseline = 'middle';
+        ctx.font = bodyFont.string;
+        pt.x = getAlignedX(this, bodyAlignForCalculation, options);
+        ctx.fillStyle = options.bodyColor;
+        helpers_segment.each(this.beforeBody, fillLineOfText);
+        xLinePadding = displayColors && bodyAlignForCalculation !== 'right' ? bodyAlign === 'center' ? boxWidth / 2 + boxPadding : boxWidth + 2 + boxPadding : 0;
+        for(i = 0, ilen = body.length; i < ilen; ++i){
+            bodyItem = body[i];
+            textColor = this.labelTextColors[i];
+            ctx.fillStyle = textColor;
+            helpers_segment.each(bodyItem.before, fillLineOfText);
+            lines = bodyItem.lines;
+            if (displayColors && lines.length) {
+                this._drawColorBox(ctx, pt, i, rtlHelper, options);
+                bodyLineHeight = Math.max(bodyFont.lineHeight, boxHeight);
+            }
+            for(j = 0, jlen = lines.length; j < jlen; ++j){
+                fillLineOfText(lines[j]);
+                bodyLineHeight = bodyFont.lineHeight;
+            }
+            helpers_segment.each(bodyItem.after, fillLineOfText);
+        }
+        xLinePadding = 0;
+        bodyLineHeight = bodyFont.lineHeight;
+        helpers_segment.each(this.afterBody, fillLineOfText);
+        pt.y -= bodySpacing;
+    }
+    drawFooter(pt, ctx, options) {
+        const footer = this.footer;
+        const length = footer.length;
+        let footerFont, i;
+        if (length) {
+            const rtlHelper = helpers_segment.getRtlAdapter(options.rtl, this.x, this.width);
+            pt.x = getAlignedX(this, options.footerAlign, options);
+            pt.y += options.footerMarginTop;
+            ctx.textAlign = rtlHelper.textAlign(options.footerAlign);
+            ctx.textBaseline = 'middle';
+            footerFont = helpers_segment.toFont(options.footerFont);
+            ctx.fillStyle = options.footerColor;
+            ctx.font = footerFont.string;
+            for(i = 0; i < length; ++i){
+                ctx.fillText(footer[i], rtlHelper.x(pt.x), pt.y + footerFont.lineHeight / 2);
+                pt.y += footerFont.lineHeight + options.footerSpacing;
+            }
+        }
+    }
+    drawBackground(pt, ctx, tooltipSize, options) {
+        const { xAlign , yAlign  } = this;
+        const { x , y  } = pt;
+        const { width , height  } = tooltipSize;
+        const { topLeft , topRight , bottomLeft , bottomRight  } = helpers_segment.toTRBLCorners(options.cornerRadius);
+        ctx.fillStyle = options.backgroundColor;
+        ctx.strokeStyle = options.borderColor;
+        ctx.lineWidth = options.borderWidth;
+        ctx.beginPath();
+        ctx.moveTo(x + topLeft, y);
+        if (yAlign === 'top') {
+            this.drawCaret(pt, ctx, tooltipSize, options);
+        }
+        ctx.lineTo(x + width - topRight, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + topRight);
+        if (yAlign === 'center' && xAlign === 'right') {
+            this.drawCaret(pt, ctx, tooltipSize, options);
+        }
+        ctx.lineTo(x + width, y + height - bottomRight);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - bottomRight, y + height);
+        if (yAlign === 'bottom') {
+            this.drawCaret(pt, ctx, tooltipSize, options);
+        }
+        ctx.lineTo(x + bottomLeft, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - bottomLeft);
+        if (yAlign === 'center' && xAlign === 'left') {
+            this.drawCaret(pt, ctx, tooltipSize, options);
+        }
+        ctx.lineTo(x, y + topLeft);
+        ctx.quadraticCurveTo(x, y, x + topLeft, y);
+        ctx.closePath();
+        ctx.fill();
+        if (options.borderWidth > 0) {
+            ctx.stroke();
+        }
+    }
+ _updateAnimationTarget(options) {
+        const chart = this.chart;
+        const anims = this.$animations;
+        const animX = anims && anims.x;
+        const animY = anims && anims.y;
+        if (animX || animY) {
+            const position = positioners[options.position].call(this, this._active, this._eventPosition);
+            if (!position) {
+                return;
+            }
+            const size = this._size = getTooltipSize(this, options);
+            const positionAndSize = Object.assign({}, position, this._size);
+            const alignment = determineAlignment(chart, options, positionAndSize);
+            const point = getBackgroundPoint(options, positionAndSize, alignment, chart);
+            if (animX._to !== point.x || animY._to !== point.y) {
+                this.xAlign = alignment.xAlign;
+                this.yAlign = alignment.yAlign;
+                this.width = size.width;
+                this.height = size.height;
+                this.caretX = position.x;
+                this.caretY = position.y;
+                this._resolveAnimations().update(this, point);
+            }
+        }
+    }
+ _willRender() {
+        return !!this.opacity;
+    }
+    draw(ctx) {
+        const options = this.options.setContext(this.getContext());
+        let opacity = this.opacity;
+        if (!opacity) {
+            return;
+        }
+        this._updateAnimationTarget(options);
+        const tooltipSize = {
+            width: this.width,
+            height: this.height
+        };
+        const pt = {
+            x: this.x,
+            y: this.y
+        };
+        opacity = Math.abs(opacity) < 1e-3 ? 0 : opacity;
+        const padding = helpers_segment.toPadding(options.padding);
+        const hasTooltipContent = this.title.length || this.beforeBody.length || this.body.length || this.afterBody.length || this.footer.length;
+        if (options.enabled && hasTooltipContent) {
+            ctx.save();
+            ctx.globalAlpha = opacity;
+            this.drawBackground(pt, ctx, tooltipSize, options);
+            helpers_segment.overrideTextDirection(ctx, options.textDirection);
+            pt.y += padding.top;
+            this.drawTitle(pt, ctx, options);
+            this.drawBody(pt, ctx, options);
+            this.drawFooter(pt, ctx, options);
+            helpers_segment.restoreTextDirection(ctx, options.textDirection);
+            ctx.restore();
+        }
+    }
+ getActiveElements() {
+        return this._active || [];
+    }
+ setActiveElements(activeElements, eventPosition) {
+        const lastActive = this._active;
+        const active = activeElements.map(({ datasetIndex , index  })=>{
+            const meta = this.chart.getDatasetMeta(datasetIndex);
+            if (!meta) {
+                throw new Error('Cannot find a dataset at index ' + datasetIndex);
+            }
+            return {
+                datasetIndex,
+                element: meta.data[index],
+                index
+            };
+        });
+        const changed = !helpers_segment._elementsEqual(lastActive, active);
+        const positionChanged = this._positionChanged(active, eventPosition);
+        if (changed || positionChanged) {
+            this._active = active;
+            this._eventPosition = eventPosition;
+            this._ignoreReplayEvents = true;
+            this.update(true);
+        }
+    }
+ handleEvent(e, replay, inChartArea = true) {
+        if (replay && this._ignoreReplayEvents) {
+            return false;
+        }
+        this._ignoreReplayEvents = false;
+        const options = this.options;
+        const lastActive = this._active || [];
+        const active = this._getActiveElements(e, lastActive, replay, inChartArea);
+        const positionChanged = this._positionChanged(active, e);
+        const changed = replay || !helpers_segment._elementsEqual(active, lastActive) || positionChanged;
+        if (changed) {
+            this._active = active;
+            if (options.enabled || options.external) {
+                this._eventPosition = {
+                    x: e.x,
+                    y: e.y
+                };
+                this.update(true, replay);
+            }
+        }
+        return changed;
+    }
+ _getActiveElements(e, lastActive, replay, inChartArea) {
+        const options = this.options;
+        if (e.type === 'mouseout') {
+            return [];
+        }
+        if (!inChartArea) {
+            return lastActive.filter((i)=>this.chart.data.datasets[i.datasetIndex] && this.chart.getDatasetMeta(i.datasetIndex).controller.getParsed(i.index) !== undefined);
+        }
+        const active = this.chart.getElementsAtEventForMode(e, options.mode, options, replay);
+        if (options.reverse) {
+            active.reverse();
+        }
+        return active;
+    }
+ _positionChanged(active, e) {
+        const { caretX , caretY , options  } = this;
+        const position = positioners[options.position].call(this, active, e);
+        return position !== false && (caretX !== position.x || caretY !== position.y);
+    }
+}
+var plugin_tooltip = {
+    id: 'tooltip',
+    _element: Tooltip,
+    positioners,
+    afterInit (chart, _args, options) {
+        if (options) {
+            chart.tooltip = new Tooltip({
+                chart,
+                options
+            });
+        }
+    },
+    beforeUpdate (chart, _args, options) {
+        if (chart.tooltip) {
+            chart.tooltip.initialize(options);
+        }
+    },
+    reset (chart, _args, options) {
+        if (chart.tooltip) {
+            chart.tooltip.initialize(options);
+        }
+    },
+    afterDraw (chart) {
+        const tooltip = chart.tooltip;
+        if (tooltip && tooltip._willRender()) {
+            const args = {
+                tooltip
+            };
+            if (chart.notifyPlugins('beforeTooltipDraw', {
+                ...args,
+                cancelable: true
+            }) === false) {
+                return;
+            }
+            tooltip.draw(chart.ctx);
+            chart.notifyPlugins('afterTooltipDraw', args);
+        }
+    },
+    afterEvent (chart, args) {
+        if (chart.tooltip) {
+            const useFinalPosition = args.replay;
+            if (chart.tooltip.handleEvent(args.event, useFinalPosition, args.inChartArea)) {
+                args.changed = true;
+            }
+        }
+    },
+    defaults: {
+        enabled: true,
+        external: null,
+        position: 'average',
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        titleColor: '#fff',
+        titleFont: {
+            weight: 'bold'
+        },
+        titleSpacing: 2,
+        titleMarginBottom: 6,
+        titleAlign: 'left',
+        bodyColor: '#fff',
+        bodySpacing: 2,
+        bodyFont: {},
+        bodyAlign: 'left',
+        footerColor: '#fff',
+        footerSpacing: 2,
+        footerMarginTop: 6,
+        footerFont: {
+            weight: 'bold'
+        },
+        footerAlign: 'left',
+        padding: 6,
+        caretPadding: 2,
+        caretSize: 5,
+        cornerRadius: 6,
+        boxHeight: (ctx, opts)=>opts.bodyFont.size,
+        boxWidth: (ctx, opts)=>opts.bodyFont.size,
+        multiKeyBackground: '#fff',
+        displayColors: true,
+        boxPadding: 0,
+        borderColor: 'rgba(0,0,0,0)',
+        borderWidth: 0,
+        animation: {
+            duration: 400,
+            easing: 'easeOutQuart'
+        },
+        animations: {
+            numbers: {
+                type: 'number',
+                properties: [
+                    'x',
+                    'y',
+                    'width',
+                    'height',
+                    'caretX',
+                    'caretY'
+                ]
+            },
+            opacity: {
+                easing: 'linear',
+                duration: 200
+            }
+        },
+        callbacks: defaultCallbacks
+    },
+    defaultRoutes: {
+        bodyFont: 'font',
+        footerFont: 'font',
+        titleFont: 'font'
+    },
+    descriptors: {
+        _scriptable: (name)=>name !== 'filter' && name !== 'itemSort' && name !== 'external',
+        _indexable: false,
+        callbacks: {
+            _scriptable: false,
+            _indexable: false
+        },
+        animation: {
+            _fallback: false
+        },
+        animations: {
+            _fallback: 'animation'
+        }
+    },
+    additionalOptionScopes: [
+        'interaction'
+    ]
+};
+
+var plugins = /*#__PURE__*/Object.freeze({
+__proto__: null,
+Colors: plugin_colors,
+Decimation: plugin_decimation,
+Filler: index,
+Legend: plugin_legend,
+SubTitle: plugin_subtitle,
+Title: plugin_title,
+Tooltip: plugin_tooltip
+});
+
+const addIfString = (labels, raw, index, addedLabels)=>{
+    if (typeof raw === 'string') {
+        index = labels.push(raw) - 1;
+        addedLabels.unshift({
+            index,
+            label: raw
+        });
+    } else if (isNaN(raw)) {
+        index = null;
+    }
+    return index;
+};
+function findOrAddLabel(labels, raw, index, addedLabels) {
+    const first = labels.indexOf(raw);
+    if (first === -1) {
+        return addIfString(labels, raw, index, addedLabels);
+    }
+    const last = labels.lastIndexOf(raw);
+    return first !== last ? index : first;
+}
+const validIndex = (index, max)=>index === null ? null : helpers_segment._limitValue(Math.round(index), 0, max);
+function _getLabelForValue(value) {
+    const labels = this.getLabels();
+    if (value >= 0 && value < labels.length) {
+        return labels[value];
+    }
+    return value;
+}
+class CategoryScale extends Scale {
+    static id = 'category';
+ static defaults = {
+        ticks: {
+            callback: _getLabelForValue
+        }
+    };
+    constructor(cfg){
+        super(cfg);
+         this._startValue = undefined;
+        this._valueRange = 0;
+        this._addedLabels = [];
+    }
+    init(scaleOptions) {
+        const added = this._addedLabels;
+        if (added.length) {
+            const labels = this.getLabels();
+            for (const { index , label  } of added){
+                if (labels[index] === label) {
+                    labels.splice(index, 1);
+                }
+            }
+            this._addedLabels = [];
+        }
+        super.init(scaleOptions);
+    }
+    parse(raw, index) {
+        if (helpers_segment.isNullOrUndef(raw)) {
+            return null;
+        }
+        const labels = this.getLabels();
+        index = isFinite(index) && labels[index] === raw ? index : findOrAddLabel(labels, raw, helpers_segment.valueOrDefault(index, raw), this._addedLabels);
+        return validIndex(index, labels.length - 1);
+    }
+    determineDataLimits() {
+        const { minDefined , maxDefined  } = this.getUserBounds();
+        let { min , max  } = this.getMinMax(true);
+        if (this.options.bounds === 'ticks') {
+            if (!minDefined) {
+                min = 0;
+            }
+            if (!maxDefined) {
+                max = this.getLabels().length - 1;
+            }
+        }
+        this.min = min;
+        this.max = max;
+    }
+    buildTicks() {
+        const min = this.min;
+        const max = this.max;
+        const offset = this.options.offset;
+        const ticks = [];
+        let labels = this.getLabels();
+        labels = min === 0 && max === labels.length - 1 ? labels : labels.slice(min, max + 1);
+        this._valueRange = Math.max(labels.length - (offset ? 0 : 1), 1);
+        this._startValue = this.min - (offset ? 0.5 : 0);
+        for(let value = min; value <= max; value++){
+            ticks.push({
+                value
+            });
+        }
+        return ticks;
+    }
+    getLabelForValue(value) {
+        return _getLabelForValue.call(this, value);
+    }
+ configure() {
+        super.configure();
+        if (!this.isHorizontal()) {
+            this._reversePixels = !this._reversePixels;
+        }
+    }
+    getPixelForValue(value) {
+        if (typeof value !== 'number') {
+            value = this.parse(value);
+        }
+        return value === null ? NaN : this.getPixelForDecimal((value - this._startValue) / this._valueRange);
+    }
+    getPixelForTick(index) {
+        const ticks = this.ticks;
+        if (index < 0 || index > ticks.length - 1) {
+            return null;
+        }
+        return this.getPixelForValue(ticks[index].value);
+    }
+    getValueForPixel(pixel) {
+        return Math.round(this._startValue + this.getDecimalForPixel(pixel) * this._valueRange);
+    }
+    getBasePixel() {
+        return this.bottom;
+    }
+}
+
+function generateTicks$1(generationOptions, dataRange) {
+    const ticks = [];
+    const MIN_SPACING = 1e-14;
+    const { bounds , step , min , max , precision , count , maxTicks , maxDigits , includeBounds  } = generationOptions;
+    const unit = step || 1;
+    const maxSpaces = maxTicks - 1;
+    const { min: rmin , max: rmax  } = dataRange;
+    const minDefined = !helpers_segment.isNullOrUndef(min);
+    const maxDefined = !helpers_segment.isNullOrUndef(max);
+    const countDefined = !helpers_segment.isNullOrUndef(count);
+    const minSpacing = (rmax - rmin) / (maxDigits + 1);
+    let spacing = helpers_segment.niceNum((rmax - rmin) / maxSpaces / unit) * unit;
+    let factor, niceMin, niceMax, numSpaces;
+    if (spacing < MIN_SPACING && !minDefined && !maxDefined) {
+        return [
+            {
+                value: rmin
+            },
+            {
+                value: rmax
+            }
+        ];
+    }
+    numSpaces = Math.ceil(rmax / spacing) - Math.floor(rmin / spacing);
+    if (numSpaces > maxSpaces) {
+        spacing = helpers_segment.niceNum(numSpaces * spacing / maxSpaces / unit) * unit;
+    }
+    if (!helpers_segment.isNullOrUndef(precision)) {
+        factor = Math.pow(10, precision);
+        spacing = Math.ceil(spacing * factor) / factor;
+    }
+    if (bounds === 'ticks') {
+        niceMin = Math.floor(rmin / spacing) * spacing;
+        niceMax = Math.ceil(rmax / spacing) * spacing;
+    } else {
+        niceMin = rmin;
+        niceMax = rmax;
+    }
+    if (minDefined && maxDefined && step && helpers_segment.almostWhole((max - min) / step, spacing / 1000)) {
+        numSpaces = Math.round(Math.min((max - min) / spacing, maxTicks));
+        spacing = (max - min) / numSpaces;
+        niceMin = min;
+        niceMax = max;
+    } else if (countDefined) {
+        niceMin = minDefined ? min : niceMin;
+        niceMax = maxDefined ? max : niceMax;
+        numSpaces = count - 1;
+        spacing = (niceMax - niceMin) / numSpaces;
+    } else {
+        numSpaces = (niceMax - niceMin) / spacing;
+        if (helpers_segment.almostEquals(numSpaces, Math.round(numSpaces), spacing / 1000)) {
+            numSpaces = Math.round(numSpaces);
+        } else {
+            numSpaces = Math.ceil(numSpaces);
+        }
+    }
+    const decimalPlaces = Math.max(helpers_segment._decimalPlaces(spacing), helpers_segment._decimalPlaces(niceMin));
+    factor = Math.pow(10, helpers_segment.isNullOrUndef(precision) ? decimalPlaces : precision);
+    niceMin = Math.round(niceMin * factor) / factor;
+    niceMax = Math.round(niceMax * factor) / factor;
+    let j = 0;
+    if (minDefined) {
+        if (includeBounds && niceMin !== min) {
+            ticks.push({
+                value: min
+            });
+            if (niceMin < min) {
+                j++;
+            }
+            if (helpers_segment.almostEquals(Math.round((niceMin + j * spacing) * factor) / factor, min, relativeLabelSize(min, minSpacing, generationOptions))) {
+                j++;
+            }
+        } else if (niceMin < min) {
+            j++;
+        }
+    }
+    for(; j < numSpaces; ++j){
+        const tickValue = Math.round((niceMin + j * spacing) * factor) / factor;
+        if (maxDefined && tickValue > max) {
+            break;
+        }
+        ticks.push({
+            value: tickValue
+        });
+    }
+    if (maxDefined && includeBounds && niceMax !== max) {
+        if (ticks.length && helpers_segment.almostEquals(ticks[ticks.length - 1].value, max, relativeLabelSize(max, minSpacing, generationOptions))) {
+            ticks[ticks.length - 1].value = max;
+        } else {
+            ticks.push({
+                value: max
+            });
+        }
+    } else if (!maxDefined || niceMax === max) {
+        ticks.push({
+            value: niceMax
+        });
+    }
+    return ticks;
+}
+function relativeLabelSize(value, minSpacing, { horizontal , minRotation  }) {
+    const rad = helpers_segment.toRadians(minRotation);
+    const ratio = (horizontal ? Math.sin(rad) : Math.cos(rad)) || 0.001;
+    const length = 0.75 * minSpacing * ('' + value).length;
+    return Math.min(minSpacing / ratio, length);
+}
+class LinearScaleBase extends Scale {
+    constructor(cfg){
+        super(cfg);
+         this.start = undefined;
+         this.end = undefined;
+         this._startValue = undefined;
+         this._endValue = undefined;
+        this._valueRange = 0;
+    }
+    parse(raw, index) {
+        if (helpers_segment.isNullOrUndef(raw)) {
+            return null;
+        }
+        if ((typeof raw === 'number' || raw instanceof Number) && !isFinite(+raw)) {
+            return null;
+        }
+        return +raw;
+    }
+    handleTickRangeOptions() {
+        const { beginAtZero  } = this.options;
+        const { minDefined , maxDefined  } = this.getUserBounds();
+        let { min , max  } = this;
+        const setMin = (v)=>min = minDefined ? min : v;
+        const setMax = (v)=>max = maxDefined ? max : v;
+        if (beginAtZero) {
+            const minSign = helpers_segment.sign(min);
+            const maxSign = helpers_segment.sign(max);
+            if (minSign < 0 && maxSign < 0) {
+                setMax(0);
+            } else if (minSign > 0 && maxSign > 0) {
+                setMin(0);
+            }
+        }
+        if (min === max) {
+            let offset = max === 0 ? 1 : Math.abs(max * 0.05);
+            setMax(max + offset);
+            if (!beginAtZero) {
+                setMin(min - offset);
+            }
+        }
+        this.min = min;
+        this.max = max;
+    }
+    getTickLimit() {
+        const tickOpts = this.options.ticks;
+        let { maxTicksLimit , stepSize  } = tickOpts;
+        let maxTicks;
+        if (stepSize) {
+            maxTicks = Math.ceil(this.max / stepSize) - Math.floor(this.min / stepSize) + 1;
+            if (maxTicks > 1000) {
+                console.warn(`scales.${this.id}.ticks.stepSize: ${stepSize} would result generating up to ${maxTicks} ticks. Limiting to 1000.`);
+                maxTicks = 1000;
+            }
+        } else {
+            maxTicks = this.computeTickLimit();
+            maxTicksLimit = maxTicksLimit || 11;
+        }
+        if (maxTicksLimit) {
+            maxTicks = Math.min(maxTicksLimit, maxTicks);
+        }
+        return maxTicks;
+    }
+ computeTickLimit() {
+        return Number.POSITIVE_INFINITY;
+    }
+    buildTicks() {
+        const opts = this.options;
+        const tickOpts = opts.ticks;
+        let maxTicks = this.getTickLimit();
+        maxTicks = Math.max(2, maxTicks);
+        const numericGeneratorOptions = {
+            maxTicks,
+            bounds: opts.bounds,
+            min: opts.min,
+            max: opts.max,
+            precision: tickOpts.precision,
+            step: tickOpts.stepSize,
+            count: tickOpts.count,
+            maxDigits: this._maxDigits(),
+            horizontal: this.isHorizontal(),
+            minRotation: tickOpts.minRotation || 0,
+            includeBounds: tickOpts.includeBounds !== false
+        };
+        const dataRange = this._range || this;
+        const ticks = generateTicks$1(numericGeneratorOptions, dataRange);
+        if (opts.bounds === 'ticks') {
+            helpers_segment._setMinAndMaxByKey(ticks, this, 'value');
+        }
+        if (opts.reverse) {
+            ticks.reverse();
+            this.start = this.max;
+            this.end = this.min;
+        } else {
+            this.start = this.min;
+            this.end = this.max;
+        }
+        return ticks;
+    }
+ configure() {
+        const ticks = this.ticks;
+        let start = this.min;
+        let end = this.max;
+        super.configure();
+        if (this.options.offset && ticks.length) {
+            const offset = (end - start) / Math.max(ticks.length - 1, 1) / 2;
+            start -= offset;
+            end += offset;
+        }
+        this._startValue = start;
+        this._endValue = end;
+        this._valueRange = end - start;
+    }
+    getLabelForValue(value) {
+        return helpers_segment.formatNumber(value, this.chart.options.locale, this.options.ticks.format);
+    }
+}
+
+class LinearScale extends LinearScaleBase {
+    static id = 'linear';
+ static defaults = {
+        ticks: {
+            callback: helpers_segment.Ticks.formatters.numeric
+        }
+    };
+    determineDataLimits() {
+        const { min , max  } = this.getMinMax(true);
+        this.min = helpers_segment.isNumberFinite(min) ? min : 0;
+        this.max = helpers_segment.isNumberFinite(max) ? max : 1;
+        this.handleTickRangeOptions();
+    }
+ computeTickLimit() {
+        const horizontal = this.isHorizontal();
+        const length = horizontal ? this.width : this.height;
+        const minRotation = helpers_segment.toRadians(this.options.ticks.minRotation);
+        const ratio = (horizontal ? Math.sin(minRotation) : Math.cos(minRotation)) || 0.001;
+        const tickFont = this._resolveTickFontOptions(0);
+        return Math.ceil(length / Math.min(40, tickFont.lineHeight / ratio));
+    }
+    getPixelForValue(value) {
+        return value === null ? NaN : this.getPixelForDecimal((value - this._startValue) / this._valueRange);
+    }
+    getValueForPixel(pixel) {
+        return this._startValue + this.getDecimalForPixel(pixel) * this._valueRange;
+    }
+}
+
+const log10Floor = (v)=>Math.floor(helpers_segment.log10(v));
+const changeExponent = (v, m)=>Math.pow(10, log10Floor(v) + m);
+function isMajor(tickVal) {
+    const remain = tickVal / Math.pow(10, log10Floor(tickVal));
+    return remain === 1;
+}
+function steps(min, max, rangeExp) {
+    const rangeStep = Math.pow(10, rangeExp);
+    const start = Math.floor(min / rangeStep);
+    const end = Math.ceil(max / rangeStep);
+    return end - start;
+}
+function startExp(min, max) {
+    const range = max - min;
+    let rangeExp = log10Floor(range);
+    while(steps(min, max, rangeExp) > 10){
+        rangeExp++;
+    }
+    while(steps(min, max, rangeExp) < 10){
+        rangeExp--;
+    }
+    return Math.min(rangeExp, log10Floor(min));
+}
+ function generateTicks(generationOptions, { min , max  }) {
+    min = helpers_segment.finiteOrDefault(generationOptions.min, min);
+    const ticks = [];
+    const minExp = log10Floor(min);
+    let exp = startExp(min, max);
+    let precision = exp < 0 ? Math.pow(10, Math.abs(exp)) : 1;
+    const stepSize = Math.pow(10, exp);
+    const base = minExp > exp ? Math.pow(10, minExp) : 0;
+    const start = Math.round((min - base) * precision) / precision;
+    const offset = Math.floor((min - base) / stepSize / 10) * stepSize * 10;
+    let significand = Math.floor((start - offset) / Math.pow(10, exp));
+    let value = helpers_segment.finiteOrDefault(generationOptions.min, Math.round((base + offset + significand * Math.pow(10, exp)) * precision) / precision);
+    while(value < max){
+        ticks.push({
+            value,
+            major: isMajor(value),
+            significand
+        });
+        if (significand >= 10) {
+            significand = significand < 15 ? 15 : 20;
+        } else {
+            significand++;
+        }
+        if (significand >= 20) {
+            exp++;
+            significand = 2;
+            precision = exp >= 0 ? 1 : precision;
+        }
+        value = Math.round((base + offset + significand * Math.pow(10, exp)) * precision) / precision;
+    }
+    const lastTick = helpers_segment.finiteOrDefault(generationOptions.max, value);
+    ticks.push({
+        value: lastTick,
+        major: isMajor(lastTick),
+        significand
+    });
+    return ticks;
+}
+class LogarithmicScale extends Scale {
+    static id = 'logarithmic';
+ static defaults = {
+        ticks: {
+            callback: helpers_segment.Ticks.formatters.logarithmic,
+            major: {
+                enabled: true
+            }
+        }
+    };
+    constructor(cfg){
+        super(cfg);
+         this.start = undefined;
+         this.end = undefined;
+         this._startValue = undefined;
+        this._valueRange = 0;
+    }
+    parse(raw, index) {
+        const value = LinearScaleBase.prototype.parse.apply(this, [
+            raw,
+            index
+        ]);
+        if (value === 0) {
+            this._zero = true;
+            return undefined;
+        }
+        return helpers_segment.isNumberFinite(value) && value > 0 ? value : null;
+    }
+    determineDataLimits() {
+        const { min , max  } = this.getMinMax(true);
+        this.min = helpers_segment.isNumberFinite(min) ? Math.max(0, min) : null;
+        this.max = helpers_segment.isNumberFinite(max) ? Math.max(0, max) : null;
+        if (this.options.beginAtZero) {
+            this._zero = true;
+        }
+        if (this._zero && this.min !== this._suggestedMin && !helpers_segment.isNumberFinite(this._userMin)) {
+            this.min = min === changeExponent(this.min, 0) ? changeExponent(this.min, -1) : changeExponent(this.min, 0);
+        }
+        this.handleTickRangeOptions();
+    }
+    handleTickRangeOptions() {
+        const { minDefined , maxDefined  } = this.getUserBounds();
+        let min = this.min;
+        let max = this.max;
+        const setMin = (v)=>min = minDefined ? min : v;
+        const setMax = (v)=>max = maxDefined ? max : v;
+        if (min === max) {
+            if (min <= 0) {
+                setMin(1);
+                setMax(10);
+            } else {
+                setMin(changeExponent(min, -1));
+                setMax(changeExponent(max, +1));
+            }
+        }
+        if (min <= 0) {
+            setMin(changeExponent(max, -1));
+        }
+        if (max <= 0) {
+            setMax(changeExponent(min, +1));
+        }
+        this.min = min;
+        this.max = max;
+    }
+    buildTicks() {
+        const opts = this.options;
+        const generationOptions = {
+            min: this._userMin,
+            max: this._userMax
+        };
+        const ticks = generateTicks(generationOptions, this);
+        if (opts.bounds === 'ticks') {
+            helpers_segment._setMinAndMaxByKey(ticks, this, 'value');
+        }
+        if (opts.reverse) {
+            ticks.reverse();
+            this.start = this.max;
+            this.end = this.min;
+        } else {
+            this.start = this.min;
+            this.end = this.max;
+        }
+        return ticks;
+    }
+ getLabelForValue(value) {
+        return value === undefined ? '0' : helpers_segment.formatNumber(value, this.chart.options.locale, this.options.ticks.format);
+    }
+ configure() {
+        const start = this.min;
+        super.configure();
+        this._startValue = helpers_segment.log10(start);
+        this._valueRange = helpers_segment.log10(this.max) - helpers_segment.log10(start);
+    }
+    getPixelForValue(value) {
+        if (value === undefined || value === 0) {
+            value = this.min;
+        }
+        if (value === null || isNaN(value)) {
+            return NaN;
+        }
+        return this.getPixelForDecimal(value === this.min ? 0 : (helpers_segment.log10(value) - this._startValue) / this._valueRange);
+    }
+    getValueForPixel(pixel) {
+        const decimal = this.getDecimalForPixel(pixel);
+        return Math.pow(10, this._startValue + decimal * this._valueRange);
+    }
+}
+
+function getTickBackdropHeight(opts) {
+    const tickOpts = opts.ticks;
+    if (tickOpts.display && opts.display) {
+        const padding = helpers_segment.toPadding(tickOpts.backdropPadding);
+        return helpers_segment.valueOrDefault(tickOpts.font && tickOpts.font.size, helpers_segment.defaults.font.size) + padding.height;
+    }
+    return 0;
+}
+function measureLabelSize(ctx, font, label) {
+    label = helpers_segment.isArray(label) ? label : [
+        label
+    ];
+    return {
+        w: helpers_segment._longestText(ctx, font.string, label),
+        h: label.length * font.lineHeight
+    };
+}
+function determineLimits(angle, pos, size, min, max) {
+    if (angle === min || angle === max) {
+        return {
+            start: pos - size / 2,
+            end: pos + size / 2
+        };
+    } else if (angle < min || angle > max) {
+        return {
+            start: pos - size,
+            end: pos
+        };
+    }
+    return {
+        start: pos,
+        end: pos + size
+    };
+}
+ function fitWithPointLabels(scale) {
+    const orig = {
+        l: scale.left + scale._padding.left,
+        r: scale.right - scale._padding.right,
+        t: scale.top + scale._padding.top,
+        b: scale.bottom - scale._padding.bottom
+    };
+    const limits = Object.assign({}, orig);
+    const labelSizes = [];
+    const padding = [];
+    const valueCount = scale._pointLabels.length;
+    const pointLabelOpts = scale.options.pointLabels;
+    const additionalAngle = pointLabelOpts.centerPointLabels ? helpers_segment.PI / valueCount : 0;
+    for(let i = 0; i < valueCount; i++){
+        const opts = pointLabelOpts.setContext(scale.getPointLabelContext(i));
+        padding[i] = opts.padding;
+        const pointPosition = scale.getPointPosition(i, scale.drawingArea + padding[i], additionalAngle);
+        const plFont = helpers_segment.toFont(opts.font);
+        const textSize = measureLabelSize(scale.ctx, plFont, scale._pointLabels[i]);
+        labelSizes[i] = textSize;
+        const angleRadians = helpers_segment._normalizeAngle(scale.getIndexAngle(i) + additionalAngle);
+        const angle = Math.round(helpers_segment.toDegrees(angleRadians));
+        const hLimits = determineLimits(angle, pointPosition.x, textSize.w, 0, 180);
+        const vLimits = determineLimits(angle, pointPosition.y, textSize.h, 90, 270);
+        updateLimits(limits, orig, angleRadians, hLimits, vLimits);
+    }
+    scale.setCenterPoint(orig.l - limits.l, limits.r - orig.r, orig.t - limits.t, limits.b - orig.b);
+    scale._pointLabelItems = buildPointLabelItems(scale, labelSizes, padding);
+}
+function updateLimits(limits, orig, angle, hLimits, vLimits) {
+    const sin = Math.abs(Math.sin(angle));
+    const cos = Math.abs(Math.cos(angle));
+    let x = 0;
+    let y = 0;
+    if (hLimits.start < orig.l) {
+        x = (orig.l - hLimits.start) / sin;
+        limits.l = Math.min(limits.l, orig.l - x);
+    } else if (hLimits.end > orig.r) {
+        x = (hLimits.end - orig.r) / sin;
+        limits.r = Math.max(limits.r, orig.r + x);
+    }
+    if (vLimits.start < orig.t) {
+        y = (orig.t - vLimits.start) / cos;
+        limits.t = Math.min(limits.t, orig.t - y);
+    } else if (vLimits.end > orig.b) {
+        y = (vLimits.end - orig.b) / cos;
+        limits.b = Math.max(limits.b, orig.b + y);
+    }
+}
+function createPointLabelItem(scale, index, itemOpts) {
+    const outerDistance = scale.drawingArea;
+    const { extra , additionalAngle , padding , size  } = itemOpts;
+    const pointLabelPosition = scale.getPointPosition(index, outerDistance + extra + padding, additionalAngle);
+    const angle = Math.round(helpers_segment.toDegrees(helpers_segment._normalizeAngle(pointLabelPosition.angle + helpers_segment.HALF_PI)));
+    const y = yForAngle(pointLabelPosition.y, size.h, angle);
+    const textAlign = getTextAlignForAngle(angle);
+    const left = leftForTextAlign(pointLabelPosition.x, size.w, textAlign);
+    return {
+        visible: true,
+        x: pointLabelPosition.x,
+        y,
+        textAlign,
+        left,
+        top: y,
+        right: left + size.w,
+        bottom: y + size.h
+    };
+}
+function isNotOverlapped(item, area) {
+    if (!area) {
+        return true;
+    }
+    const { left , top , right , bottom  } = item;
+    const apexesInArea = helpers_segment._isPointInArea({
+        x: left,
+        y: top
+    }, area) || helpers_segment._isPointInArea({
+        x: left,
+        y: bottom
+    }, area) || helpers_segment._isPointInArea({
+        x: right,
+        y: top
+    }, area) || helpers_segment._isPointInArea({
+        x: right,
+        y: bottom
+    }, area);
+    return !apexesInArea;
+}
+function buildPointLabelItems(scale, labelSizes, padding) {
+    const items = [];
+    const valueCount = scale._pointLabels.length;
+    const opts = scale.options;
+    const { centerPointLabels , display  } = opts.pointLabels;
+    const itemOpts = {
+        extra: getTickBackdropHeight(opts) / 2,
+        additionalAngle: centerPointLabels ? helpers_segment.PI / valueCount : 0
+    };
+    let area;
+    for(let i = 0; i < valueCount; i++){
+        itemOpts.padding = padding[i];
+        itemOpts.size = labelSizes[i];
+        const item = createPointLabelItem(scale, i, itemOpts);
+        items.push(item);
+        if (display === 'auto') {
+            item.visible = isNotOverlapped(item, area);
+            if (item.visible) {
+                area = item;
+            }
+        }
+    }
+    return items;
+}
+function getTextAlignForAngle(angle) {
+    if (angle === 0 || angle === 180) {
+        return 'center';
+    } else if (angle < 180) {
+        return 'left';
+    }
+    return 'right';
+}
+function leftForTextAlign(x, w, align) {
+    if (align === 'right') {
+        x -= w;
+    } else if (align === 'center') {
+        x -= w / 2;
+    }
+    return x;
+}
+function yForAngle(y, h, angle) {
+    if (angle === 90 || angle === 270) {
+        y -= h / 2;
+    } else if (angle > 270 || angle < 90) {
+        y -= h;
+    }
+    return y;
+}
+function drawPointLabelBox(ctx, opts, item) {
+    const { left , top , right , bottom  } = item;
+    const { backdropColor  } = opts;
+    if (!helpers_segment.isNullOrUndef(backdropColor)) {
+        const borderRadius = helpers_segment.toTRBLCorners(opts.borderRadius);
+        const padding = helpers_segment.toPadding(opts.backdropPadding);
+        ctx.fillStyle = backdropColor;
+        const backdropLeft = left - padding.left;
+        const backdropTop = top - padding.top;
+        const backdropWidth = right - left + padding.width;
+        const backdropHeight = bottom - top + padding.height;
+        if (Object.values(borderRadius).some((v)=>v !== 0)) {
+            ctx.beginPath();
+            helpers_segment.addRoundedRectPath(ctx, {
+                x: backdropLeft,
+                y: backdropTop,
+                w: backdropWidth,
+                h: backdropHeight,
+                radius: borderRadius
+            });
+            ctx.fill();
+        } else {
+            ctx.fillRect(backdropLeft, backdropTop, backdropWidth, backdropHeight);
+        }
+    }
+}
+function drawPointLabels(scale, labelCount) {
+    const { ctx , options: { pointLabels  }  } = scale;
+    for(let i = labelCount - 1; i >= 0; i--){
+        const item = scale._pointLabelItems[i];
+        if (!item.visible) {
+            continue;
+        }
+        const optsAtIndex = pointLabels.setContext(scale.getPointLabelContext(i));
+        drawPointLabelBox(ctx, optsAtIndex, item);
+        const plFont = helpers_segment.toFont(optsAtIndex.font);
+        const { x , y , textAlign  } = item;
+        helpers_segment.renderText(ctx, scale._pointLabels[i], x, y + plFont.lineHeight / 2, plFont, {
+            color: optsAtIndex.color,
+            textAlign: textAlign,
+            textBaseline: 'middle'
+        });
+    }
+}
+function pathRadiusLine(scale, radius, circular, labelCount) {
+    const { ctx  } = scale;
+    if (circular) {
+        ctx.arc(scale.xCenter, scale.yCenter, radius, 0, helpers_segment.TAU);
+    } else {
+        let pointPosition = scale.getPointPosition(0, radius);
+        ctx.moveTo(pointPosition.x, pointPosition.y);
+        for(let i = 1; i < labelCount; i++){
+            pointPosition = scale.getPointPosition(i, radius);
+            ctx.lineTo(pointPosition.x, pointPosition.y);
+        }
+    }
+}
+function drawRadiusLine(scale, gridLineOpts, radius, labelCount, borderOpts) {
+    const ctx = scale.ctx;
+    const circular = gridLineOpts.circular;
+    const { color , lineWidth  } = gridLineOpts;
+    if (!circular && !labelCount || !color || !lineWidth || radius < 0) {
+        return;
+    }
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(borderOpts.dash || []);
+    ctx.lineDashOffset = borderOpts.dashOffset;
+    ctx.beginPath();
+    pathRadiusLine(scale, radius, circular, labelCount);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+}
+function createPointLabelContext(parent, index, label) {
+    return helpers_segment.createContext(parent, {
+        label,
+        index,
+        type: 'pointLabel'
+    });
+}
+class RadialLinearScale extends LinearScaleBase {
+    static id = 'radialLinear';
+ static defaults = {
+        display: true,
+        animate: true,
+        position: 'chartArea',
+        angleLines: {
+            display: true,
+            lineWidth: 1,
+            borderDash: [],
+            borderDashOffset: 0.0
+        },
+        grid: {
+            circular: false
+        },
+        startAngle: 0,
+        ticks: {
+            showLabelBackdrop: true,
+            callback: helpers_segment.Ticks.formatters.numeric
+        },
+        pointLabels: {
+            backdropColor: undefined,
+            backdropPadding: 2,
+            display: true,
+            font: {
+                size: 10
+            },
+            callback (label) {
+                return label;
+            },
+            padding: 5,
+            centerPointLabels: false
+        }
+    };
+    static defaultRoutes = {
+        'angleLines.color': 'borderColor',
+        'pointLabels.color': 'color',
+        'ticks.color': 'color'
+    };
+    static descriptors = {
+        angleLines: {
+            _fallback: 'grid'
+        }
+    };
+    constructor(cfg){
+        super(cfg);
+         this.xCenter = undefined;
+         this.yCenter = undefined;
+         this.drawingArea = undefined;
+         this._pointLabels = [];
+        this._pointLabelItems = [];
+    }
+    setDimensions() {
+        const padding = this._padding = helpers_segment.toPadding(getTickBackdropHeight(this.options) / 2);
+        const w = this.width = this.maxWidth - padding.width;
+        const h = this.height = this.maxHeight - padding.height;
+        this.xCenter = Math.floor(this.left + w / 2 + padding.left);
+        this.yCenter = Math.floor(this.top + h / 2 + padding.top);
+        this.drawingArea = Math.floor(Math.min(w, h) / 2);
+    }
+    determineDataLimits() {
+        const { min , max  } = this.getMinMax(false);
+        this.min = helpers_segment.isNumberFinite(min) && !isNaN(min) ? min : 0;
+        this.max = helpers_segment.isNumberFinite(max) && !isNaN(max) ? max : 0;
+        this.handleTickRangeOptions();
+    }
+ computeTickLimit() {
+        return Math.ceil(this.drawingArea / getTickBackdropHeight(this.options));
+    }
+    generateTickLabels(ticks) {
+        LinearScaleBase.prototype.generateTickLabels.call(this, ticks);
+        this._pointLabels = this.getLabels().map((value, index)=>{
+            const label = helpers_segment.callback(this.options.pointLabels.callback, [
+                value,
+                index
+            ], this);
+            return label || label === 0 ? label : '';
+        }).filter((v, i)=>this.chart.getDataVisibility(i));
+    }
+    fit() {
+        const opts = this.options;
+        if (opts.display && opts.pointLabels.display) {
+            fitWithPointLabels(this);
+        } else {
+            this.setCenterPoint(0, 0, 0, 0);
+        }
+    }
+    setCenterPoint(leftMovement, rightMovement, topMovement, bottomMovement) {
+        this.xCenter += Math.floor((leftMovement - rightMovement) / 2);
+        this.yCenter += Math.floor((topMovement - bottomMovement) / 2);
+        this.drawingArea -= Math.min(this.drawingArea / 2, Math.max(leftMovement, rightMovement, topMovement, bottomMovement));
+    }
+    getIndexAngle(index) {
+        const angleMultiplier = helpers_segment.TAU / (this._pointLabels.length || 1);
+        const startAngle = this.options.startAngle || 0;
+        return helpers_segment._normalizeAngle(index * angleMultiplier + helpers_segment.toRadians(startAngle));
+    }
+    getDistanceFromCenterForValue(value) {
+        if (helpers_segment.isNullOrUndef(value)) {
+            return NaN;
+        }
+        const scalingFactor = this.drawingArea / (this.max - this.min);
+        if (this.options.reverse) {
+            return (this.max - value) * scalingFactor;
+        }
+        return (value - this.min) * scalingFactor;
+    }
+    getValueForDistanceFromCenter(distance) {
+        if (helpers_segment.isNullOrUndef(distance)) {
+            return NaN;
+        }
+        const scaledDistance = distance / (this.drawingArea / (this.max - this.min));
+        return this.options.reverse ? this.max - scaledDistance : this.min + scaledDistance;
+    }
+    getPointLabelContext(index) {
+        const pointLabels = this._pointLabels || [];
+        if (index >= 0 && index < pointLabels.length) {
+            const pointLabel = pointLabels[index];
+            return createPointLabelContext(this.getContext(), index, pointLabel);
+        }
+    }
+    getPointPosition(index, distanceFromCenter, additionalAngle = 0) {
+        const angle = this.getIndexAngle(index) - helpers_segment.HALF_PI + additionalAngle;
+        return {
+            x: Math.cos(angle) * distanceFromCenter + this.xCenter,
+            y: Math.sin(angle) * distanceFromCenter + this.yCenter,
+            angle
+        };
+    }
+    getPointPositionForValue(index, value) {
+        return this.getPointPosition(index, this.getDistanceFromCenterForValue(value));
+    }
+    getBasePosition(index) {
+        return this.getPointPositionForValue(index || 0, this.getBaseValue());
+    }
+    getPointLabelPosition(index) {
+        const { left , top , right , bottom  } = this._pointLabelItems[index];
+        return {
+            left,
+            top,
+            right,
+            bottom
+        };
+    }
+ drawBackground() {
+        const { backgroundColor , grid: { circular  }  } = this.options;
+        if (backgroundColor) {
+            const ctx = this.ctx;
+            ctx.save();
+            ctx.beginPath();
+            pathRadiusLine(this, this.getDistanceFromCenterForValue(this._endValue), circular, this._pointLabels.length);
+            ctx.closePath();
+            ctx.fillStyle = backgroundColor;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+ drawGrid() {
+        const ctx = this.ctx;
+        const opts = this.options;
+        const { angleLines , grid , border  } = opts;
+        const labelCount = this._pointLabels.length;
+        let i, offset, position;
+        if (opts.pointLabels.display) {
+            drawPointLabels(this, labelCount);
+        }
+        if (grid.display) {
+            this.ticks.forEach((tick, index)=>{
+                if (index !== 0 || index === 0 && this.min < 0) {
+                    offset = this.getDistanceFromCenterForValue(tick.value);
+                    const context = this.getContext(index);
+                    const optsAtIndex = grid.setContext(context);
+                    const optsAtIndexBorder = border.setContext(context);
+                    drawRadiusLine(this, optsAtIndex, offset, labelCount, optsAtIndexBorder);
+                }
+            });
+        }
+        if (angleLines.display) {
+            ctx.save();
+            for(i = labelCount - 1; i >= 0; i--){
+                const optsAtIndex = angleLines.setContext(this.getPointLabelContext(i));
+                const { color , lineWidth  } = optsAtIndex;
+                if (!lineWidth || !color) {
+                    continue;
+                }
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = color;
+                ctx.setLineDash(optsAtIndex.borderDash);
+                ctx.lineDashOffset = optsAtIndex.borderDashOffset;
+                offset = this.getDistanceFromCenterForValue(opts.reverse ? this.min : this.max);
+                position = this.getPointPosition(i, offset);
+                ctx.beginPath();
+                ctx.moveTo(this.xCenter, this.yCenter);
+                ctx.lineTo(position.x, position.y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    }
+ drawBorder() {}
+ drawLabels() {
+        const ctx = this.ctx;
+        const opts = this.options;
+        const tickOpts = opts.ticks;
+        if (!tickOpts.display) {
+            return;
+        }
+        const startAngle = this.getIndexAngle(0);
+        let offset, width;
+        ctx.save();
+        ctx.translate(this.xCenter, this.yCenter);
+        ctx.rotate(startAngle);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        this.ticks.forEach((tick, index)=>{
+            if (index === 0 && this.min >= 0 && !opts.reverse) {
+                return;
+            }
+            const optsAtIndex = tickOpts.setContext(this.getContext(index));
+            const tickFont = helpers_segment.toFont(optsAtIndex.font);
+            offset = this.getDistanceFromCenterForValue(this.ticks[index].value);
+            if (optsAtIndex.showLabelBackdrop) {
+                ctx.font = tickFont.string;
+                width = ctx.measureText(tick.label).width;
+                ctx.fillStyle = optsAtIndex.backdropColor;
+                const padding = helpers_segment.toPadding(optsAtIndex.backdropPadding);
+                ctx.fillRect(-width / 2 - padding.left, -offset - tickFont.size / 2 - padding.top, width + padding.width, tickFont.size + padding.height);
+            }
+            helpers_segment.renderText(ctx, tick.label, 0, -offset, tickFont, {
+                color: optsAtIndex.color,
+                strokeColor: optsAtIndex.textStrokeColor,
+                strokeWidth: optsAtIndex.textStrokeWidth
+            });
+        });
+        ctx.restore();
+    }
+ drawTitle() {}
+}
+
+const INTERVALS = {
+    millisecond: {
+        common: true,
+        size: 1,
+        steps: 1000
+    },
+    second: {
+        common: true,
+        size: 1000,
+        steps: 60
+    },
+    minute: {
+        common: true,
+        size: 60000,
+        steps: 60
+    },
+    hour: {
+        common: true,
+        size: 3600000,
+        steps: 24
+    },
+    day: {
+        common: true,
+        size: 86400000,
+        steps: 30
+    },
+    week: {
+        common: false,
+        size: 604800000,
+        steps: 4
+    },
+    month: {
+        common: true,
+        size: 2.628e9,
+        steps: 12
+    },
+    quarter: {
+        common: false,
+        size: 7.884e9,
+        steps: 4
+    },
+    year: {
+        common: true,
+        size: 3.154e10
+    }
+};
+ const UNITS =  /* #__PURE__ */ Object.keys(INTERVALS);
+ function sorter(a, b) {
+    return a - b;
+}
+ function parse(scale, input) {
+    if (helpers_segment.isNullOrUndef(input)) {
+        return null;
+    }
+    const adapter = scale._adapter;
+    const { parser , round , isoWeekday  } = scale._parseOpts;
+    let value = input;
+    if (typeof parser === 'function') {
+        value = parser(value);
+    }
+    if (!helpers_segment.isNumberFinite(value)) {
+        value = typeof parser === 'string' ? adapter.parse(value, parser) : adapter.parse(value);
+    }
+    if (value === null) {
+        return null;
+    }
+    if (round) {
+        value = round === 'week' && (helpers_segment.isNumber(isoWeekday) || isoWeekday === true) ? adapter.startOf(value, 'isoWeek', isoWeekday) : adapter.startOf(value, round);
+    }
+    return +value;
+}
+ function determineUnitForAutoTicks(minUnit, min, max, capacity) {
+    const ilen = UNITS.length;
+    for(let i = UNITS.indexOf(minUnit); i < ilen - 1; ++i){
+        const interval = INTERVALS[UNITS[i]];
+        const factor = interval.steps ? interval.steps : Number.MAX_SAFE_INTEGER;
+        if (interval.common && Math.ceil((max - min) / (factor * interval.size)) <= capacity) {
+            return UNITS[i];
+        }
+    }
+    return UNITS[ilen - 1];
+}
+ function determineUnitForFormatting(scale, numTicks, minUnit, min, max) {
+    for(let i = UNITS.length - 1; i >= UNITS.indexOf(minUnit); i--){
+        const unit = UNITS[i];
+        if (INTERVALS[unit].common && scale._adapter.diff(max, min, unit) >= numTicks - 1) {
+            return unit;
+        }
+    }
+    return UNITS[minUnit ? UNITS.indexOf(minUnit) : 0];
+}
+ function determineMajorUnit(unit) {
+    for(let i = UNITS.indexOf(unit) + 1, ilen = UNITS.length; i < ilen; ++i){
+        if (INTERVALS[UNITS[i]].common) {
+            return UNITS[i];
+        }
+    }
+}
+ function addTick(ticks, time, timestamps) {
+    if (!timestamps) {
+        ticks[time] = true;
+    } else if (timestamps.length) {
+        const { lo , hi  } = helpers_segment._lookup(timestamps, time);
+        const timestamp = timestamps[lo] >= time ? timestamps[lo] : timestamps[hi];
+        ticks[timestamp] = true;
+    }
+}
+ function setMajorTicks(scale, ticks, map, majorUnit) {
+    const adapter = scale._adapter;
+    const first = +adapter.startOf(ticks[0].value, majorUnit);
+    const last = ticks[ticks.length - 1].value;
+    let major, index;
+    for(major = first; major <= last; major = +adapter.add(major, 1, majorUnit)){
+        index = map[major];
+        if (index >= 0) {
+            ticks[index].major = true;
+        }
+    }
+    return ticks;
+}
+ function ticksFromTimestamps(scale, values, majorUnit) {
+    const ticks = [];
+     const map = {};
+    const ilen = values.length;
+    let i, value;
+    for(i = 0; i < ilen; ++i){
+        value = values[i];
+        map[value] = i;
+        ticks.push({
+            value,
+            major: false
+        });
+    }
+    return ilen === 0 || !majorUnit ? ticks : setMajorTicks(scale, ticks, map, majorUnit);
+}
+class TimeScale extends Scale {
+    static id = 'time';
+ static defaults = {
+ bounds: 'data',
+        adapters: {},
+        time: {
+            parser: false,
+            unit: false,
+            round: false,
+            isoWeekday: false,
+            minUnit: 'millisecond',
+            displayFormats: {}
+        },
+        ticks: {
+ source: 'auto',
+            callback: false,
+            major: {
+                enabled: false
+            }
+        }
+    };
+ constructor(props){
+        super(props);
+         this._cache = {
+            data: [],
+            labels: [],
+            all: []
+        };
+         this._unit = 'day';
+         this._majorUnit = undefined;
+        this._offsets = {};
+        this._normalized = false;
+        this._parseOpts = undefined;
+    }
+    init(scaleOpts, opts = {}) {
+        const time = scaleOpts.time || (scaleOpts.time = {});
+         const adapter = this._adapter = new adapters._date(scaleOpts.adapters.date);
+        adapter.init(opts);
+        helpers_segment.mergeIf(time.displayFormats, adapter.formats());
+        this._parseOpts = {
+            parser: time.parser,
+            round: time.round,
+            isoWeekday: time.isoWeekday
+        };
+        super.init(scaleOpts);
+        this._normalized = opts.normalized;
+    }
+ parse(raw, index) {
+        if (raw === undefined) {
+            return null;
+        }
+        return parse(this, raw);
+    }
+    beforeLayout() {
+        super.beforeLayout();
+        this._cache = {
+            data: [],
+            labels: [],
+            all: []
+        };
+    }
+    determineDataLimits() {
+        const options = this.options;
+        const adapter = this._adapter;
+        const unit = options.time.unit || 'day';
+        let { min , max , minDefined , maxDefined  } = this.getUserBounds();
+ function _applyBounds(bounds) {
+            if (!minDefined && !isNaN(bounds.min)) {
+                min = Math.min(min, bounds.min);
+            }
+            if (!maxDefined && !isNaN(bounds.max)) {
+                max = Math.max(max, bounds.max);
+            }
+        }
+        if (!minDefined || !maxDefined) {
+            _applyBounds(this._getLabelBounds());
+            if (options.bounds !== 'ticks' || options.ticks.source !== 'labels') {
+                _applyBounds(this.getMinMax(false));
+            }
+        }
+        min = helpers_segment.isNumberFinite(min) && !isNaN(min) ? min : +adapter.startOf(Date.now(), unit);
+        max = helpers_segment.isNumberFinite(max) && !isNaN(max) ? max : +adapter.endOf(Date.now(), unit) + 1;
+        this.min = Math.min(min, max - 1);
+        this.max = Math.max(min + 1, max);
+    }
+ _getLabelBounds() {
+        const arr = this.getLabelTimestamps();
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
+        if (arr.length) {
+            min = arr[0];
+            max = arr[arr.length - 1];
+        }
+        return {
+            min,
+            max
+        };
+    }
+ buildTicks() {
+        const options = this.options;
+        const timeOpts = options.time;
+        const tickOpts = options.ticks;
+        const timestamps = tickOpts.source === 'labels' ? this.getLabelTimestamps() : this._generate();
+        if (options.bounds === 'ticks' && timestamps.length) {
+            this.min = this._userMin || timestamps[0];
+            this.max = this._userMax || timestamps[timestamps.length - 1];
+        }
+        const min = this.min;
+        const max = this.max;
+        const ticks = helpers_segment._filterBetween(timestamps, min, max);
+        this._unit = timeOpts.unit || (tickOpts.autoSkip ? determineUnitForAutoTicks(timeOpts.minUnit, this.min, this.max, this._getLabelCapacity(min)) : determineUnitForFormatting(this, ticks.length, timeOpts.minUnit, this.min, this.max));
+        this._majorUnit = !tickOpts.major.enabled || this._unit === 'year' ? undefined : determineMajorUnit(this._unit);
+        this.initOffsets(timestamps);
+        if (options.reverse) {
+            ticks.reverse();
+        }
+        return ticksFromTimestamps(this, ticks, this._majorUnit);
+    }
+    afterAutoSkip() {
+        if (this.options.offsetAfterAutoskip) {
+            this.initOffsets(this.ticks.map((tick)=>+tick.value));
+        }
+    }
+ initOffsets(timestamps = []) {
+        let start = 0;
+        let end = 0;
+        let first, last;
+        if (this.options.offset && timestamps.length) {
+            first = this.getDecimalForValue(timestamps[0]);
+            if (timestamps.length === 1) {
+                start = 1 - first;
+            } else {
+                start = (this.getDecimalForValue(timestamps[1]) - first) / 2;
+            }
+            last = this.getDecimalForValue(timestamps[timestamps.length - 1]);
+            if (timestamps.length === 1) {
+                end = last;
+            } else {
+                end = (last - this.getDecimalForValue(timestamps[timestamps.length - 2])) / 2;
+            }
+        }
+        const limit = timestamps.length < 3 ? 0.5 : 0.25;
+        start = helpers_segment._limitValue(start, 0, limit);
+        end = helpers_segment._limitValue(end, 0, limit);
+        this._offsets = {
+            start,
+            end,
+            factor: 1 / (start + 1 + end)
+        };
+    }
+ _generate() {
+        const adapter = this._adapter;
+        const min = this.min;
+        const max = this.max;
+        const options = this.options;
+        const timeOpts = options.time;
+        const minor = timeOpts.unit || determineUnitForAutoTicks(timeOpts.minUnit, min, max, this._getLabelCapacity(min));
+        const stepSize = helpers_segment.valueOrDefault(options.ticks.stepSize, 1);
+        const weekday = minor === 'week' ? timeOpts.isoWeekday : false;
+        const hasWeekday = helpers_segment.isNumber(weekday) || weekday === true;
+        const ticks = {};
+        let first = min;
+        let time, count;
+        if (hasWeekday) {
+            first = +adapter.startOf(first, 'isoWeek', weekday);
+        }
+        first = +adapter.startOf(first, hasWeekday ? 'day' : minor);
+        if (adapter.diff(max, min, minor) > 100000 * stepSize) {
+            throw new Error(min + ' and ' + max + ' are too far apart with stepSize of ' + stepSize + ' ' + minor);
+        }
+        const timestamps = options.ticks.source === 'data' && this.getDataTimestamps();
+        for(time = first, count = 0; time < max; time = +adapter.add(time, stepSize, minor), count++){
+            addTick(ticks, time, timestamps);
+        }
+        if (time === max || options.bounds === 'ticks' || count === 1) {
+            addTick(ticks, time, timestamps);
+        }
+        return Object.keys(ticks).sort(sorter).map((x)=>+x);
+    }
+ getLabelForValue(value) {
+        const adapter = this._adapter;
+        const timeOpts = this.options.time;
+        if (timeOpts.tooltipFormat) {
+            return adapter.format(value, timeOpts.tooltipFormat);
+        }
+        return adapter.format(value, timeOpts.displayFormats.datetime);
+    }
+ format(value, format) {
+        const options = this.options;
+        const formats = options.time.displayFormats;
+        const unit = this._unit;
+        const fmt = format || formats[unit];
+        return this._adapter.format(value, fmt);
+    }
+ _tickFormatFunction(time, index, ticks, format) {
+        const options = this.options;
+        const formatter = options.ticks.callback;
+        if (formatter) {
+            return helpers_segment.callback(formatter, [
+                time,
+                index,
+                ticks
+            ], this);
+        }
+        const formats = options.time.displayFormats;
+        const unit = this._unit;
+        const majorUnit = this._majorUnit;
+        const minorFormat = unit && formats[unit];
+        const majorFormat = majorUnit && formats[majorUnit];
+        const tick = ticks[index];
+        const major = majorUnit && majorFormat && tick && tick.major;
+        return this._adapter.format(time, format || (major ? majorFormat : minorFormat));
+    }
+ generateTickLabels(ticks) {
+        let i, ilen, tick;
+        for(i = 0, ilen = ticks.length; i < ilen; ++i){
+            tick = ticks[i];
+            tick.label = this._tickFormatFunction(tick.value, i, ticks);
+        }
+    }
+ getDecimalForValue(value) {
+        return value === null ? NaN : (value - this.min) / (this.max - this.min);
+    }
+ getPixelForValue(value) {
+        const offsets = this._offsets;
+        const pos = this.getDecimalForValue(value);
+        return this.getPixelForDecimal((offsets.start + pos) * offsets.factor);
+    }
+ getValueForPixel(pixel) {
+        const offsets = this._offsets;
+        const pos = this.getDecimalForPixel(pixel) / offsets.factor - offsets.end;
+        return this.min + pos * (this.max - this.min);
+    }
+ _getLabelSize(label) {
+        const ticksOpts = this.options.ticks;
+        const tickLabelWidth = this.ctx.measureText(label).width;
+        const angle = helpers_segment.toRadians(this.isHorizontal() ? ticksOpts.maxRotation : ticksOpts.minRotation);
+        const cosRotation = Math.cos(angle);
+        const sinRotation = Math.sin(angle);
+        const tickFontSize = this._resolveTickFontOptions(0).size;
+        return {
+            w: tickLabelWidth * cosRotation + tickFontSize * sinRotation,
+            h: tickLabelWidth * sinRotation + tickFontSize * cosRotation
+        };
+    }
+ _getLabelCapacity(exampleTime) {
+        const timeOpts = this.options.time;
+        const displayFormats = timeOpts.displayFormats;
+        const format = displayFormats[timeOpts.unit] || displayFormats.millisecond;
+        const exampleLabel = this._tickFormatFunction(exampleTime, 0, ticksFromTimestamps(this, [
+            exampleTime
+        ], this._majorUnit), format);
+        const size = this._getLabelSize(exampleLabel);
+        const capacity = Math.floor(this.isHorizontal() ? this.width / size.w : this.height / size.h) - 1;
+        return capacity > 0 ? capacity : 1;
+    }
+ getDataTimestamps() {
+        let timestamps = this._cache.data || [];
+        let i, ilen;
+        if (timestamps.length) {
+            return timestamps;
+        }
+        const metas = this.getMatchingVisibleMetas();
+        if (this._normalized && metas.length) {
+            return this._cache.data = metas[0].controller.getAllParsedValues(this);
+        }
+        for(i = 0, ilen = metas.length; i < ilen; ++i){
+            timestamps = timestamps.concat(metas[i].controller.getAllParsedValues(this));
+        }
+        return this._cache.data = this.normalize(timestamps);
+    }
+ getLabelTimestamps() {
+        const timestamps = this._cache.labels || [];
+        let i, ilen;
+        if (timestamps.length) {
+            return timestamps;
+        }
+        const labels = this.getLabels();
+        for(i = 0, ilen = labels.length; i < ilen; ++i){
+            timestamps.push(parse(this, labels[i]));
+        }
+        return this._cache.labels = this._normalized ? timestamps : this.normalize(timestamps);
+    }
+ normalize(values) {
+        return helpers_segment._arrayUnique(values.sort(sorter));
+    }
+}
+
+function interpolate(table, val, reverse) {
+    let lo = 0;
+    let hi = table.length - 1;
+    let prevSource, nextSource, prevTarget, nextTarget;
+    if (reverse) {
+        if (val >= table[lo].pos && val <= table[hi].pos) {
+            ({ lo , hi  } = helpers_segment._lookupByKey(table, 'pos', val));
+        }
+        ({ pos: prevSource , time: prevTarget  } = table[lo]);
+        ({ pos: nextSource , time: nextTarget  } = table[hi]);
+    } else {
+        if (val >= table[lo].time && val <= table[hi].time) {
+            ({ lo , hi  } = helpers_segment._lookupByKey(table, 'time', val));
+        }
+        ({ time: prevSource , pos: prevTarget  } = table[lo]);
+        ({ time: nextSource , pos: nextTarget  } = table[hi]);
+    }
+    const span = nextSource - prevSource;
+    return span ? prevTarget + (nextTarget - prevTarget) * (val - prevSource) / span : prevTarget;
+}
+class TimeSeriesScale extends TimeScale {
+    static id = 'timeseries';
+ static defaults = TimeScale.defaults;
+ constructor(props){
+        super(props);
+         this._table = [];
+         this._minPos = undefined;
+         this._tableRange = undefined;
+    }
+ initOffsets() {
+        const timestamps = this._getTimestampsForTable();
+        const table = this._table = this.buildLookupTable(timestamps);
+        this._minPos = interpolate(table, this.min);
+        this._tableRange = interpolate(table, this.max) - this._minPos;
+        super.initOffsets(timestamps);
+    }
+ buildLookupTable(timestamps) {
+        const { min , max  } = this;
+        const items = [];
+        const table = [];
+        let i, ilen, prev, curr, next;
+        for(i = 0, ilen = timestamps.length; i < ilen; ++i){
+            curr = timestamps[i];
+            if (curr >= min && curr <= max) {
+                items.push(curr);
+            }
+        }
+        if (items.length < 2) {
+            return [
+                {
+                    time: min,
+                    pos: 0
+                },
+                {
+                    time: max,
+                    pos: 1
+                }
+            ];
+        }
+        for(i = 0, ilen = items.length; i < ilen; ++i){
+            next = items[i + 1];
+            prev = items[i - 1];
+            curr = items[i];
+            if (Math.round((next + prev) / 2) !== curr) {
+                table.push({
+                    time: curr,
+                    pos: i / (ilen - 1)
+                });
+            }
+        }
+        return table;
+    }
+ _generate() {
+        const min = this.min;
+        const max = this.max;
+        let timestamps = super.getDataTimestamps();
+        if (!timestamps.includes(min) || !timestamps.length) {
+            timestamps.splice(0, 0, min);
+        }
+        if (!timestamps.includes(max) || timestamps.length === 1) {
+            timestamps.push(max);
+        }
+        return timestamps.sort((a, b)=>a - b);
+    }
+ _getTimestampsForTable() {
+        let timestamps = this._cache.all || [];
+        if (timestamps.length) {
+            return timestamps;
+        }
+        const data = this.getDataTimestamps();
+        const label = this.getLabelTimestamps();
+        if (data.length && label.length) {
+            timestamps = this.normalize(data.concat(label));
+        } else {
+            timestamps = data.length ? data : label;
+        }
+        timestamps = this._cache.all = timestamps;
+        return timestamps;
+    }
+ getDecimalForValue(value) {
+        return (interpolate(this._table, value) - this._minPos) / this._tableRange;
+    }
+ getValueForPixel(pixel) {
+        const offsets = this._offsets;
+        const decimal = this.getDecimalForPixel(pixel) / offsets.factor - offsets.end;
+        return interpolate(this._table, decimal * this._tableRange + this._minPos, true);
+    }
+}
+
+var scales = /*#__PURE__*/Object.freeze({
+__proto__: null,
+CategoryScale: CategoryScale,
+LinearScale: LinearScale,
+LogarithmicScale: LogarithmicScale,
+RadialLinearScale: RadialLinearScale,
+TimeScale: TimeScale,
+TimeSeriesScale: TimeSeriesScale
+});
+
+const registerables = [
+    controllers,
+    elements,
+    plugins,
+    scales
+];
+
+exports.Ticks = helpers_segment.Ticks;
+exports.defaults = helpers_segment.defaults;
+exports.Animation = Animation;
+exports.Animations = Animations;
+exports.ArcElement = ArcElement;
+exports.BarController = BarController;
+exports.BarElement = BarElement;
+exports.BasePlatform = BasePlatform;
+exports.BasicPlatform = BasicPlatform;
+exports.BubbleController = BubbleController;
+exports.CategoryScale = CategoryScale;
+exports.Chart = Chart;
+exports.Colors = plugin_colors;
+exports.DatasetController = DatasetController;
+exports.Decimation = plugin_decimation;
+exports.DomPlatform = DomPlatform;
+exports.DoughnutController = DoughnutController;
+exports.Element = Element;
+exports.Filler = index;
+exports.Interaction = Interaction;
+exports.Legend = plugin_legend;
+exports.LineController = LineController;
+exports.LineElement = LineElement;
+exports.LinearScale = LinearScale;
+exports.LogarithmicScale = LogarithmicScale;
+exports.PieController = PieController;
+exports.PointElement = PointElement;
+exports.PolarAreaController = PolarAreaController;
+exports.RadarController = RadarController;
+exports.RadialLinearScale = RadialLinearScale;
+exports.Scale = Scale;
+exports.ScatterController = ScatterController;
+exports.SubTitle = plugin_subtitle;
+exports.TimeScale = TimeScale;
+exports.TimeSeriesScale = TimeSeriesScale;
+exports.Title = plugin_title;
+exports.Tooltip = plugin_tooltip;
+exports._adapters = adapters;
+exports._detectPlatform = _detectPlatform;
+exports.animator = animator;
+exports.controllers = controllers;
+exports.elements = elements;
+exports.layouts = layouts;
+exports.plugins = plugins;
+exports.registerables = registerables;
+exports.registry = registry;
+exports.scales = scales;
+
+
+},{"./chunks/helpers.segment.cjs":9,"@kurkle/color":2}],9:[function(require,module,exports){
+/*!
+ * Chart.js v4.4.8
+ * https://www.chartjs.org
+ * (c) 2025 Chart.js Contributors
+ * Released under the MIT License
+ */
+'use strict';
+
+var color$1 = require('@kurkle/color');
+
+/**
+ * @namespace Chart.helpers
+ */ /**
+ * An empty function that can be used, for example, for optional callback.
+ */ function noop() {
+/* noop */ }
+/**
+ * Returns a unique id, sequentially generated from a global variable.
+ */ const uid = (()=>{
+    let id = 0;
+    return ()=>id++;
+})();
+/**
+ * Returns true if `value` is neither null nor undefined, else returns false.
+ * @param value - The value to test.
+ * @since 2.7.0
+ */ function isNullOrUndef(value) {
+    return value === null || value === undefined;
+}
+/**
+ * Returns true if `value` is an array (including typed arrays), else returns false.
+ * @param value - The value to test.
+ * @function
+ */ function isArray(value) {
+    if (Array.isArray && Array.isArray(value)) {
+        return true;
+    }
+    const type = Object.prototype.toString.call(value);
+    if (type.slice(0, 7) === '[object' && type.slice(-6) === 'Array]') {
+        return true;
+    }
+    return false;
+}
+/**
+ * Returns true if `value` is an object (excluding null), else returns false.
+ * @param value - The value to test.
+ * @since 2.7.0
+ */ function isObject(value) {
+    return value !== null && Object.prototype.toString.call(value) === '[object Object]';
+}
+/**
+ * Returns true if `value` is a finite number, else returns false
+ * @param value  - The value to test.
+ */ function isNumberFinite(value) {
+    return (typeof value === 'number' || value instanceof Number) && isFinite(+value);
+}
+/**
+ * Returns `value` if finite, else returns `defaultValue`.
+ * @param value - The value to return if defined.
+ * @param defaultValue - The value to return if `value` is not finite.
+ */ function finiteOrDefault(value, defaultValue) {
+    return isNumberFinite(value) ? value : defaultValue;
+}
+/**
+ * Returns `value` if defined, else returns `defaultValue`.
+ * @param value - The value to return if defined.
+ * @param defaultValue - The value to return if `value` is undefined.
+ */ function valueOrDefault(value, defaultValue) {
+    return typeof value === 'undefined' ? defaultValue : value;
+}
+const toPercentage = (value, dimension)=>typeof value === 'string' && value.endsWith('%') ? parseFloat(value) / 100 : +value / dimension;
+const toDimension = (value, dimension)=>typeof value === 'string' && value.endsWith('%') ? parseFloat(value) / 100 * dimension : +value;
+/**
+ * Calls `fn` with the given `args` in the scope defined by `thisArg` and returns the
+ * value returned by `fn`. If `fn` is not a function, this method returns undefined.
+ * @param fn - The function to call.
+ * @param args - The arguments with which `fn` should be called.
+ * @param [thisArg] - The value of `this` provided for the call to `fn`.
+ */ function callback(fn, args, thisArg) {
+    if (fn && typeof fn.call === 'function') {
+        return fn.apply(thisArg, args);
+    }
+}
+function each(loopable, fn, thisArg, reverse) {
+    let i, len, keys;
+    if (isArray(loopable)) {
+        len = loopable.length;
+        if (reverse) {
+            for(i = len - 1; i >= 0; i--){
+                fn.call(thisArg, loopable[i], i);
+            }
+        } else {
+            for(i = 0; i < len; i++){
+                fn.call(thisArg, loopable[i], i);
+            }
+        }
+    } else if (isObject(loopable)) {
+        keys = Object.keys(loopable);
+        len = keys.length;
+        for(i = 0; i < len; i++){
+            fn.call(thisArg, loopable[keys[i]], keys[i]);
+        }
+    }
+}
+/**
+ * Returns true if the `a0` and `a1` arrays have the same content, else returns false.
+ * @param a0 - The array to compare
+ * @param a1 - The array to compare
+ * @private
+ */ function _elementsEqual(a0, a1) {
+    let i, ilen, v0, v1;
+    if (!a0 || !a1 || a0.length !== a1.length) {
+        return false;
+    }
+    for(i = 0, ilen = a0.length; i < ilen; ++i){
+        v0 = a0[i];
+        v1 = a1[i];
+        if (v0.datasetIndex !== v1.datasetIndex || v0.index !== v1.index) {
+            return false;
+        }
+    }
+    return true;
+}
+/**
+ * Returns a deep copy of `source` without keeping references on objects and arrays.
+ * @param source - The value to clone.
+ */ function clone(source) {
+    if (isArray(source)) {
+        return source.map(clone);
+    }
+    if (isObject(source)) {
+        const target = Object.create(null);
+        const keys = Object.keys(source);
+        const klen = keys.length;
+        let k = 0;
+        for(; k < klen; ++k){
+            target[keys[k]] = clone(source[keys[k]]);
+        }
+        return target;
+    }
+    return source;
+}
+function isValidKey(key) {
+    return [
+        '__proto__',
+        'prototype',
+        'constructor'
+    ].indexOf(key) === -1;
+}
+/**
+ * The default merger when Chart.helpers.merge is called without merger option.
+ * Note(SB): also used by mergeConfig and mergeScaleConfig as fallback.
+ * @private
+ */ function _merger(key, target, source, options) {
+    if (!isValidKey(key)) {
+        return;
+    }
+    const tval = target[key];
+    const sval = source[key];
+    if (isObject(tval) && isObject(sval)) {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        merge(tval, sval, options);
+    } else {
+        target[key] = clone(sval);
+    }
+}
+function merge(target, source, options) {
+    const sources = isArray(source) ? source : [
+        source
+    ];
+    const ilen = sources.length;
+    if (!isObject(target)) {
+        return target;
+    }
+    options = options || {};
+    const merger = options.merger || _merger;
+    let current;
+    for(let i = 0; i < ilen; ++i){
+        current = sources[i];
+        if (!isObject(current)) {
+            continue;
+        }
+        const keys = Object.keys(current);
+        for(let k = 0, klen = keys.length; k < klen; ++k){
+            merger(keys[k], target, current, options);
+        }
+    }
+    return target;
+}
+function mergeIf(target, source) {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    return merge(target, source, {
+        merger: _mergerIf
+    });
+}
+/**
+ * Merges source[key] in target[key] only if target[key] is undefined.
+ * @private
+ */ function _mergerIf(key, target, source) {
+    if (!isValidKey(key)) {
+        return;
+    }
+    const tval = target[key];
+    const sval = source[key];
+    if (isObject(tval) && isObject(sval)) {
+        mergeIf(tval, sval);
+    } else if (!Object.prototype.hasOwnProperty.call(target, key)) {
+        target[key] = clone(sval);
+    }
+}
+/**
+ * @private
+ */ function _deprecated(scope, value, previous, current) {
+    if (value !== undefined) {
+        console.warn(scope + ': "' + previous + '" is deprecated. Please use "' + current + '" instead');
+    }
+}
+// resolveObjectKey resolver cache
+const keyResolvers = {
+    // Chart.helpers.core resolveObjectKey should resolve empty key to root object
+    '': (v)=>v,
+    // default resolvers
+    x: (o)=>o.x,
+    y: (o)=>o.y
+};
+/**
+ * @private
+ */ function _splitKey(key) {
+    const parts = key.split('.');
+    const keys = [];
+    let tmp = '';
+    for (const part of parts){
+        tmp += part;
+        if (tmp.endsWith('\\')) {
+            tmp = tmp.slice(0, -1) + '.';
+        } else {
+            keys.push(tmp);
+            tmp = '';
+        }
+    }
+    return keys;
+}
+function _getKeyResolver(key) {
+    const keys = _splitKey(key);
+    return (obj)=>{
+        for (const k of keys){
+            if (k === '') {
+                break;
+            }
+            obj = obj && obj[k];
+        }
+        return obj;
+    };
+}
+function resolveObjectKey(obj, key) {
+    const resolver = keyResolvers[key] || (keyResolvers[key] = _getKeyResolver(key));
+    return resolver(obj);
+}
+/**
+ * @private
+ */ function _capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+const defined = (value)=>typeof value !== 'undefined';
+const isFunction = (value)=>typeof value === 'function';
+// Adapted from https://stackoverflow.com/questions/31128855/comparing-ecma6-sets-for-equality#31129384
+const setsEqual = (a, b)=>{
+    if (a.size !== b.size) {
+        return false;
+    }
+    for (const item of a){
+        if (!b.has(item)) {
+            return false;
+        }
+    }
+    return true;
+};
+/**
+ * @param e - The event
+ * @private
+ */ function _isClickEvent(e) {
+    return e.type === 'mouseup' || e.type === 'click' || e.type === 'contextmenu';
+}
+
+/**
+ * @alias Chart.helpers.math
+ * @namespace
+ */ const PI = Math.PI;
+const TAU = 2 * PI;
+const PITAU = TAU + PI;
+const INFINITY = Number.POSITIVE_INFINITY;
+const RAD_PER_DEG = PI / 180;
+const HALF_PI = PI / 2;
+const QUARTER_PI = PI / 4;
+const TWO_THIRDS_PI = PI * 2 / 3;
+const log10 = Math.log10;
+const sign = Math.sign;
+function almostEquals(x, y, epsilon) {
+    return Math.abs(x - y) < epsilon;
+}
+/**
+ * Implementation of the nice number algorithm used in determining where axis labels will go
+ */ function niceNum(range) {
+    const roundedRange = Math.round(range);
+    range = almostEquals(range, roundedRange, range / 1000) ? roundedRange : range;
+    const niceRange = Math.pow(10, Math.floor(log10(range)));
+    const fraction = range / niceRange;
+    const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+    return niceFraction * niceRange;
+}
+/**
+ * Returns an array of factors sorted from 1 to sqrt(value)
+ * @private
+ */ function _factorize(value) {
+    const result = [];
+    const sqrt = Math.sqrt(value);
+    let i;
+    for(i = 1; i < sqrt; i++){
+        if (value % i === 0) {
+            result.push(i);
+            result.push(value / i);
+        }
+    }
+    if (sqrt === (sqrt | 0)) {
+        result.push(sqrt);
+    }
+    result.sort((a, b)=>a - b).pop();
+    return result;
+}
+/**
+ * Verifies that attempting to coerce n to string or number won't throw a TypeError.
+ */ function isNonPrimitive(n) {
+    return typeof n === 'symbol' || typeof n === 'object' && n !== null && !(Symbol.toPrimitive in n || 'toString' in n || 'valueOf' in n);
+}
+function isNumber(n) {
+    return !isNonPrimitive(n) && !isNaN(parseFloat(n)) && isFinite(n);
+}
+function almostWhole(x, epsilon) {
+    const rounded = Math.round(x);
+    return rounded - epsilon <= x && rounded + epsilon >= x;
+}
+/**
+ * @private
+ */ function _setMinAndMaxByKey(array, target, property) {
+    let i, ilen, value;
+    for(i = 0, ilen = array.length; i < ilen; i++){
+        value = array[i][property];
+        if (!isNaN(value)) {
+            target.min = Math.min(target.min, value);
+            target.max = Math.max(target.max, value);
+        }
+    }
+}
+function toRadians(degrees) {
+    return degrees * (PI / 180);
+}
+function toDegrees(radians) {
+    return radians * (180 / PI);
+}
+/**
+ * Returns the number of decimal places
+ * i.e. the number of digits after the decimal point, of the value of this Number.
+ * @param x - A number.
+ * @returns The number of decimal places.
+ * @private
+ */ function _decimalPlaces(x) {
+    if (!isNumberFinite(x)) {
+        return;
+    }
+    let e = 1;
+    let p = 0;
+    while(Math.round(x * e) / e !== x){
+        e *= 10;
+        p++;
+    }
+    return p;
+}
+// Gets the angle from vertical upright to the point about a centre.
+function getAngleFromPoint(centrePoint, anglePoint) {
+    const distanceFromXCenter = anglePoint.x - centrePoint.x;
+    const distanceFromYCenter = anglePoint.y - centrePoint.y;
+    const radialDistanceFromCenter = Math.sqrt(distanceFromXCenter * distanceFromXCenter + distanceFromYCenter * distanceFromYCenter);
+    let angle = Math.atan2(distanceFromYCenter, distanceFromXCenter);
+    if (angle < -0.5 * PI) {
+        angle += TAU; // make sure the returned angle is in the range of (-PI/2, 3PI/2]
+    }
+    return {
+        angle,
+        distance: radialDistanceFromCenter
+    };
+}
+function distanceBetweenPoints(pt1, pt2) {
+    return Math.sqrt(Math.pow(pt2.x - pt1.x, 2) + Math.pow(pt2.y - pt1.y, 2));
+}
+/**
+ * Shortest distance between angles, in either direction.
+ * @private
+ */ function _angleDiff(a, b) {
+    return (a - b + PITAU) % TAU - PI;
+}
+/**
+ * Normalize angle to be between 0 and 2*PI
+ * @private
+ */ function _normalizeAngle(a) {
+    return (a % TAU + TAU) % TAU;
+}
+/**
+ * @private
+ */ function _angleBetween(angle, start, end, sameAngleIsFullCircle) {
+    const a = _normalizeAngle(angle);
+    const s = _normalizeAngle(start);
+    const e = _normalizeAngle(end);
+    const angleToStart = _normalizeAngle(s - a);
+    const angleToEnd = _normalizeAngle(e - a);
+    const startToAngle = _normalizeAngle(a - s);
+    const endToAngle = _normalizeAngle(a - e);
+    return a === s || a === e || sameAngleIsFullCircle && s === e || angleToStart > angleToEnd && startToAngle < endToAngle;
+}
+/**
+ * Limit `value` between `min` and `max`
+ * @param value
+ * @param min
+ * @param max
+ * @private
+ */ function _limitValue(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+/**
+ * @param {number} value
+ * @private
+ */ function _int16Range(value) {
+    return _limitValue(value, -32768, 32767);
+}
+/**
+ * @param value
+ * @param start
+ * @param end
+ * @param [epsilon]
+ * @private
+ */ function _isBetween(value, start, end, epsilon = 1e-6) {
+    return value >= Math.min(start, end) - epsilon && value <= Math.max(start, end) + epsilon;
+}
+
+function _lookup(table, value, cmp) {
+    cmp = cmp || ((index)=>table[index] < value);
+    let hi = table.length - 1;
+    let lo = 0;
+    let mid;
+    while(hi - lo > 1){
+        mid = lo + hi >> 1;
+        if (cmp(mid)) {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    return {
+        lo,
+        hi
+    };
+}
+/**
+ * Binary search
+ * @param table - the table search. must be sorted!
+ * @param key - property name for the value in each entry
+ * @param value - value to find
+ * @param last - lookup last index
+ * @private
+ */ const _lookupByKey = (table, key, value, last)=>_lookup(table, value, last ? (index)=>{
+        const ti = table[index][key];
+        return ti < value || ti === value && table[index + 1][key] === value;
+    } : (index)=>table[index][key] < value);
+/**
+ * Reverse binary search
+ * @param table - the table search. must be sorted!
+ * @param key - property name for the value in each entry
+ * @param value - value to find
+ * @private
+ */ const _rlookupByKey = (table, key, value)=>_lookup(table, value, (index)=>table[index][key] >= value);
+/**
+ * Return subset of `values` between `min` and `max` inclusive.
+ * Values are assumed to be in sorted order.
+ * @param values - sorted array of values
+ * @param min - min value
+ * @param max - max value
+ */ function _filterBetween(values, min, max) {
+    let start = 0;
+    let end = values.length;
+    while(start < end && values[start] < min){
+        start++;
+    }
+    while(end > start && values[end - 1] > max){
+        end--;
+    }
+    return start > 0 || end < values.length ? values.slice(start, end) : values;
+}
+const arrayEvents = [
+    'push',
+    'pop',
+    'shift',
+    'splice',
+    'unshift'
+];
+function listenArrayEvents(array, listener) {
+    if (array._chartjs) {
+        array._chartjs.listeners.push(listener);
+        return;
+    }
+    Object.defineProperty(array, '_chartjs', {
+        configurable: true,
+        enumerable: false,
+        value: {
+            listeners: [
+                listener
+            ]
+        }
+    });
+    arrayEvents.forEach((key)=>{
+        const method = '_onData' + _capitalize(key);
+        const base = array[key];
+        Object.defineProperty(array, key, {
+            configurable: true,
+            enumerable: false,
+            value (...args) {
+                const res = base.apply(this, args);
+                array._chartjs.listeners.forEach((object)=>{
+                    if (typeof object[method] === 'function') {
+                        object[method](...args);
+                    }
+                });
+                return res;
+            }
+        });
+    });
+}
+function unlistenArrayEvents(array, listener) {
+    const stub = array._chartjs;
+    if (!stub) {
+        return;
+    }
+    const listeners = stub.listeners;
+    const index = listeners.indexOf(listener);
+    if (index !== -1) {
+        listeners.splice(index, 1);
+    }
+    if (listeners.length > 0) {
+        return;
+    }
+    arrayEvents.forEach((key)=>{
+        delete array[key];
+    });
+    delete array._chartjs;
+}
+/**
+ * @param items
+ */ function _arrayUnique(items) {
+    const set = new Set(items);
+    if (set.size === items.length) {
+        return items;
+    }
+    return Array.from(set);
+}
+
+function fontString(pixelSize, fontStyle, fontFamily) {
+    return fontStyle + ' ' + pixelSize + 'px ' + fontFamily;
+}
+/**
+* Request animation polyfill
+*/ const requestAnimFrame = function() {
+    if (typeof window === 'undefined') {
+        return function(callback) {
+            return callback();
+        };
+    }
+    return window.requestAnimationFrame;
+}();
+/**
+ * Throttles calling `fn` once per animation frame
+ * Latest arguments are used on the actual call
+ */ function throttled(fn, thisArg) {
+    let argsToUse = [];
+    let ticking = false;
+    return function(...args) {
+        // Save the args for use later
+        argsToUse = args;
+        if (!ticking) {
+            ticking = true;
+            requestAnimFrame.call(window, ()=>{
+                ticking = false;
+                fn.apply(thisArg, argsToUse);
+            });
+        }
+    };
+}
+/**
+ * Debounces calling `fn` for `delay` ms
+ */ function debounce(fn, delay) {
+    let timeout;
+    return function(...args) {
+        if (delay) {
+            clearTimeout(timeout);
+            timeout = setTimeout(fn, delay, args);
+        } else {
+            fn.apply(this, args);
+        }
+        return delay;
+    };
+}
+/**
+ * Converts 'start' to 'left', 'end' to 'right' and others to 'center'
+ * @private
+ */ const _toLeftRightCenter = (align)=>align === 'start' ? 'left' : align === 'end' ? 'right' : 'center';
+/**
+ * Returns `start`, `end` or `(start + end) / 2` depending on `align`. Defaults to `center`
+ * @private
+ */ const _alignStartEnd = (align, start, end)=>align === 'start' ? start : align === 'end' ? end : (start + end) / 2;
+/**
+ * Returns `left`, `right` or `(left + right) / 2` depending on `align`. Defaults to `left`
+ * @private
+ */ const _textX = (align, left, right, rtl)=>{
+    const check = rtl ? 'left' : 'right';
+    return align === check ? right : align === 'center' ? (left + right) / 2 : left;
+};
+/**
+ * Return start and count of visible points.
+ * @private
+ */ function _getStartAndCountOfVisiblePoints(meta, points, animationsDisabled) {
+    const pointCount = points.length;
+    let start = 0;
+    let count = pointCount;
+    if (meta._sorted) {
+        const { iScale , vScale , _parsed  } = meta;
+        const spanGaps = meta.dataset ? meta.dataset.options ? meta.dataset.options.spanGaps : null : null;
+        const axis = iScale.axis;
+        const { min , max , minDefined , maxDefined  } = iScale.getUserBounds();
+        if (minDefined) {
+            start = Math.min(// @ts-expect-error Need to type _parsed
+            _lookupByKey(_parsed, axis, min).lo, // @ts-expect-error Need to fix types on _lookupByKey
+            animationsDisabled ? pointCount : _lookupByKey(points, axis, iScale.getPixelForValue(min)).lo);
+            if (spanGaps) {
+                const distanceToDefinedLo = _parsed.slice(0, start + 1).reverse().findIndex((point)=>!isNullOrUndef(point[vScale.axis]));
+                start -= Math.max(0, distanceToDefinedLo);
+            }
+            start = _limitValue(start, 0, pointCount - 1);
+        }
+        if (maxDefined) {
+            let end = Math.max(// @ts-expect-error Need to type _parsed
+            _lookupByKey(_parsed, iScale.axis, max, true).hi + 1, // @ts-expect-error Need to fix types on _lookupByKey
+            animationsDisabled ? 0 : _lookupByKey(points, axis, iScale.getPixelForValue(max), true).hi + 1);
+            if (spanGaps) {
+                const distanceToDefinedHi = _parsed.slice(end - 1).findIndex((point)=>!isNullOrUndef(point[vScale.axis]));
+                end += Math.max(0, distanceToDefinedHi);
+            }
+            count = _limitValue(end, start, pointCount) - start;
+        } else {
+            count = pointCount - start;
+        }
+    }
+    return {
+        start,
+        count
+    };
+}
+/**
+ * Checks if the scale ranges have changed.
+ * @param {object} meta - dataset meta.
+ * @returns {boolean}
+ * @private
+ */ function _scaleRangesChanged(meta) {
+    const { xScale , yScale , _scaleRanges  } = meta;
+    const newRanges = {
+        xmin: xScale.min,
+        xmax: xScale.max,
+        ymin: yScale.min,
+        ymax: yScale.max
+    };
+    if (!_scaleRanges) {
+        meta._scaleRanges = newRanges;
+        return true;
+    }
+    const changed = _scaleRanges.xmin !== xScale.min || _scaleRanges.xmax !== xScale.max || _scaleRanges.ymin !== yScale.min || _scaleRanges.ymax !== yScale.max;
+    Object.assign(_scaleRanges, newRanges);
+    return changed;
+}
+
+const atEdge = (t)=>t === 0 || t === 1;
+const elasticIn = (t, s, p)=>-(Math.pow(2, 10 * (t -= 1)) * Math.sin((t - s) * TAU / p));
+const elasticOut = (t, s, p)=>Math.pow(2, -10 * t) * Math.sin((t - s) * TAU / p) + 1;
+/**
+ * Easing functions adapted from Robert Penner's easing equations.
+ * @namespace Chart.helpers.easing.effects
+ * @see http://www.robertpenner.com/easing/
+ */ const effects = {
+    linear: (t)=>t,
+    easeInQuad: (t)=>t * t,
+    easeOutQuad: (t)=>-t * (t - 2),
+    easeInOutQuad: (t)=>(t /= 0.5) < 1 ? 0.5 * t * t : -0.5 * (--t * (t - 2) - 1),
+    easeInCubic: (t)=>t * t * t,
+    easeOutCubic: (t)=>(t -= 1) * t * t + 1,
+    easeInOutCubic: (t)=>(t /= 0.5) < 1 ? 0.5 * t * t * t : 0.5 * ((t -= 2) * t * t + 2),
+    easeInQuart: (t)=>t * t * t * t,
+    easeOutQuart: (t)=>-((t -= 1) * t * t * t - 1),
+    easeInOutQuart: (t)=>(t /= 0.5) < 1 ? 0.5 * t * t * t * t : -0.5 * ((t -= 2) * t * t * t - 2),
+    easeInQuint: (t)=>t * t * t * t * t,
+    easeOutQuint: (t)=>(t -= 1) * t * t * t * t + 1,
+    easeInOutQuint: (t)=>(t /= 0.5) < 1 ? 0.5 * t * t * t * t * t : 0.5 * ((t -= 2) * t * t * t * t + 2),
+    easeInSine: (t)=>-Math.cos(t * HALF_PI) + 1,
+    easeOutSine: (t)=>Math.sin(t * HALF_PI),
+    easeInOutSine: (t)=>-0.5 * (Math.cos(PI * t) - 1),
+    easeInExpo: (t)=>t === 0 ? 0 : Math.pow(2, 10 * (t - 1)),
+    easeOutExpo: (t)=>t === 1 ? 1 : -Math.pow(2, -10 * t) + 1,
+    easeInOutExpo: (t)=>atEdge(t) ? t : t < 0.5 ? 0.5 * Math.pow(2, 10 * (t * 2 - 1)) : 0.5 * (-Math.pow(2, -10 * (t * 2 - 1)) + 2),
+    easeInCirc: (t)=>t >= 1 ? t : -(Math.sqrt(1 - t * t) - 1),
+    easeOutCirc: (t)=>Math.sqrt(1 - (t -= 1) * t),
+    easeInOutCirc: (t)=>(t /= 0.5) < 1 ? -0.5 * (Math.sqrt(1 - t * t) - 1) : 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1),
+    easeInElastic: (t)=>atEdge(t) ? t : elasticIn(t, 0.075, 0.3),
+    easeOutElastic: (t)=>atEdge(t) ? t : elasticOut(t, 0.075, 0.3),
+    easeInOutElastic (t) {
+        const s = 0.1125;
+        const p = 0.45;
+        return atEdge(t) ? t : t < 0.5 ? 0.5 * elasticIn(t * 2, s, p) : 0.5 + 0.5 * elasticOut(t * 2 - 1, s, p);
+    },
+    easeInBack (t) {
+        const s = 1.70158;
+        return t * t * ((s + 1) * t - s);
+    },
+    easeOutBack (t) {
+        const s = 1.70158;
+        return (t -= 1) * t * ((s + 1) * t + s) + 1;
+    },
+    easeInOutBack (t) {
+        let s = 1.70158;
+        if ((t /= 0.5) < 1) {
+            return 0.5 * (t * t * (((s *= 1.525) + 1) * t - s));
+        }
+        return 0.5 * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2);
+    },
+    easeInBounce: (t)=>1 - effects.easeOutBounce(1 - t),
+    easeOutBounce (t) {
+        const m = 7.5625;
+        const d = 2.75;
+        if (t < 1 / d) {
+            return m * t * t;
+        }
+        if (t < 2 / d) {
+            return m * (t -= 1.5 / d) * t + 0.75;
+        }
+        if (t < 2.5 / d) {
+            return m * (t -= 2.25 / d) * t + 0.9375;
+        }
+        return m * (t -= 2.625 / d) * t + 0.984375;
+    },
+    easeInOutBounce: (t)=>t < 0.5 ? effects.easeInBounce(t * 2) * 0.5 : effects.easeOutBounce(t * 2 - 1) * 0.5 + 0.5
+};
+
+function isPatternOrGradient(value) {
+    if (value && typeof value === 'object') {
+        const type = value.toString();
+        return type === '[object CanvasPattern]' || type === '[object CanvasGradient]';
+    }
+    return false;
+}
+function color(value) {
+    return isPatternOrGradient(value) ? value : new color$1.Color(value);
+}
+function getHoverColor(value) {
+    return isPatternOrGradient(value) ? value : new color$1.Color(value).saturate(0.5).darken(0.1).hexString();
+}
+
+const numbers = [
+    'x',
+    'y',
+    'borderWidth',
+    'radius',
+    'tension'
+];
+const colors = [
+    'color',
+    'borderColor',
+    'backgroundColor'
+];
+function applyAnimationsDefaults(defaults) {
+    defaults.set('animation', {
+        delay: undefined,
+        duration: 1000,
+        easing: 'easeOutQuart',
+        fn: undefined,
+        from: undefined,
+        loop: undefined,
+        to: undefined,
+        type: undefined
+    });
+    defaults.describe('animation', {
+        _fallback: false,
+        _indexable: false,
+        _scriptable: (name)=>name !== 'onProgress' && name !== 'onComplete' && name !== 'fn'
+    });
+    defaults.set('animations', {
+        colors: {
+            type: 'color',
+            properties: colors
+        },
+        numbers: {
+            type: 'number',
+            properties: numbers
+        }
+    });
+    defaults.describe('animations', {
+        _fallback: 'animation'
+    });
+    defaults.set('transitions', {
+        active: {
+            animation: {
+                duration: 400
+            }
+        },
+        resize: {
+            animation: {
+                duration: 0
+            }
+        },
+        show: {
+            animations: {
+                colors: {
+                    from: 'transparent'
+                },
+                visible: {
+                    type: 'boolean',
+                    duration: 0
+                }
+            }
+        },
+        hide: {
+            animations: {
+                colors: {
+                    to: 'transparent'
+                },
+                visible: {
+                    type: 'boolean',
+                    easing: 'linear',
+                    fn: (v)=>v | 0
+                }
+            }
+        }
+    });
+}
+
+function applyLayoutsDefaults(defaults) {
+    defaults.set('layout', {
+        autoPadding: true,
+        padding: {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+        }
+    });
+}
+
+const intlCache = new Map();
+function getNumberFormat(locale, options) {
+    options = options || {};
+    const cacheKey = locale + JSON.stringify(options);
+    let formatter = intlCache.get(cacheKey);
+    if (!formatter) {
+        formatter = new Intl.NumberFormat(locale, options);
+        intlCache.set(cacheKey, formatter);
+    }
+    return formatter;
+}
+function formatNumber(num, locale, options) {
+    return getNumberFormat(locale, options).format(num);
+}
+
+const formatters = {
+ values (value) {
+        return isArray(value) ?  value : '' + value;
+    },
+ numeric (tickValue, index, ticks) {
+        if (tickValue === 0) {
+            return '0';
+        }
+        const locale = this.chart.options.locale;
+        let notation;
+        let delta = tickValue;
+        if (ticks.length > 1) {
+            const maxTick = Math.max(Math.abs(ticks[0].value), Math.abs(ticks[ticks.length - 1].value));
+            if (maxTick < 1e-4 || maxTick > 1e+15) {
+                notation = 'scientific';
+            }
+            delta = calculateDelta(tickValue, ticks);
+        }
+        const logDelta = log10(Math.abs(delta));
+        const numDecimal = isNaN(logDelta) ? 1 : Math.max(Math.min(-1 * Math.floor(logDelta), 20), 0);
+        const options = {
+            notation,
+            minimumFractionDigits: numDecimal,
+            maximumFractionDigits: numDecimal
+        };
+        Object.assign(options, this.options.ticks.format);
+        return formatNumber(tickValue, locale, options);
+    },
+ logarithmic (tickValue, index, ticks) {
+        if (tickValue === 0) {
+            return '0';
+        }
+        const remain = ticks[index].significand || tickValue / Math.pow(10, Math.floor(log10(tickValue)));
+        if ([
+            1,
+            2,
+            3,
+            5,
+            10,
+            15
+        ].includes(remain) || index > 0.8 * ticks.length) {
+            return formatters.numeric.call(this, tickValue, index, ticks);
+        }
+        return '';
+    }
+};
+function calculateDelta(tickValue, ticks) {
+    let delta = ticks.length > 3 ? ticks[2].value - ticks[1].value : ticks[1].value - ticks[0].value;
+    if (Math.abs(delta) >= 1 && tickValue !== Math.floor(tickValue)) {
+        delta = tickValue - Math.floor(tickValue);
+    }
+    return delta;
+}
+ var Ticks = {
+    formatters
+};
+
+function applyScaleDefaults(defaults) {
+    defaults.set('scale', {
+        display: true,
+        offset: false,
+        reverse: false,
+        beginAtZero: false,
+ bounds: 'ticks',
+        clip: true,
+ grace: 0,
+        grid: {
+            display: true,
+            lineWidth: 1,
+            drawOnChartArea: true,
+            drawTicks: true,
+            tickLength: 8,
+            tickWidth: (_ctx, options)=>options.lineWidth,
+            tickColor: (_ctx, options)=>options.color,
+            offset: false
+        },
+        border: {
+            display: true,
+            dash: [],
+            dashOffset: 0.0,
+            width: 1
+        },
+        title: {
+            display: false,
+            text: '',
+            padding: {
+                top: 4,
+                bottom: 4
+            }
+        },
+        ticks: {
+            minRotation: 0,
+            maxRotation: 50,
+            mirror: false,
+            textStrokeWidth: 0,
+            textStrokeColor: '',
+            padding: 3,
+            display: true,
+            autoSkip: true,
+            autoSkipPadding: 3,
+            labelOffset: 0,
+            callback: Ticks.formatters.values,
+            minor: {},
+            major: {},
+            align: 'center',
+            crossAlign: 'near',
+            showLabelBackdrop: false,
+            backdropColor: 'rgba(255, 255, 255, 0.75)',
+            backdropPadding: 2
+        }
+    });
+    defaults.route('scale.ticks', 'color', '', 'color');
+    defaults.route('scale.grid', 'color', '', 'borderColor');
+    defaults.route('scale.border', 'color', '', 'borderColor');
+    defaults.route('scale.title', 'color', '', 'color');
+    defaults.describe('scale', {
+        _fallback: false,
+        _scriptable: (name)=>!name.startsWith('before') && !name.startsWith('after') && name !== 'callback' && name !== 'parser',
+        _indexable: (name)=>name !== 'borderDash' && name !== 'tickBorderDash' && name !== 'dash'
+    });
+    defaults.describe('scales', {
+        _fallback: 'scale'
+    });
+    defaults.describe('scale.ticks', {
+        _scriptable: (name)=>name !== 'backdropPadding' && name !== 'callback',
+        _indexable: (name)=>name !== 'backdropPadding'
+    });
+}
+
+const overrides = Object.create(null);
+const descriptors = Object.create(null);
+ function getScope$1(node, key) {
+    if (!key) {
+        return node;
+    }
+    const keys = key.split('.');
+    for(let i = 0, n = keys.length; i < n; ++i){
+        const k = keys[i];
+        node = node[k] || (node[k] = Object.create(null));
+    }
+    return node;
+}
+function set(root, scope, values) {
+    if (typeof scope === 'string') {
+        return merge(getScope$1(root, scope), values);
+    }
+    return merge(getScope$1(root, ''), scope);
+}
+ class Defaults {
+    constructor(_descriptors, _appliers){
+        this.animation = undefined;
+        this.backgroundColor = 'rgba(0,0,0,0.1)';
+        this.borderColor = 'rgba(0,0,0,0.1)';
+        this.color = '#666';
+        this.datasets = {};
+        this.devicePixelRatio = (context)=>context.chart.platform.getDevicePixelRatio();
+        this.elements = {};
+        this.events = [
+            'mousemove',
+            'mouseout',
+            'click',
+            'touchstart',
+            'touchmove'
+        ];
+        this.font = {
+            family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+            size: 12,
+            style: 'normal',
+            lineHeight: 1.2,
+            weight: null
+        };
+        this.hover = {};
+        this.hoverBackgroundColor = (ctx, options)=>getHoverColor(options.backgroundColor);
+        this.hoverBorderColor = (ctx, options)=>getHoverColor(options.borderColor);
+        this.hoverColor = (ctx, options)=>getHoverColor(options.color);
+        this.indexAxis = 'x';
+        this.interaction = {
+            mode: 'nearest',
+            intersect: true,
+            includeInvisible: false
+        };
+        this.maintainAspectRatio = true;
+        this.onHover = null;
+        this.onClick = null;
+        this.parsing = true;
+        this.plugins = {};
+        this.responsive = true;
+        this.scale = undefined;
+        this.scales = {};
+        this.showLine = true;
+        this.drawActiveElementsOnTop = true;
+        this.describe(_descriptors);
+        this.apply(_appliers);
+    }
+ set(scope, values) {
+        return set(this, scope, values);
+    }
+ get(scope) {
+        return getScope$1(this, scope);
+    }
+ describe(scope, values) {
+        return set(descriptors, scope, values);
+    }
+    override(scope, values) {
+        return set(overrides, scope, values);
+    }
+ route(scope, name, targetScope, targetName) {
+        const scopeObject = getScope$1(this, scope);
+        const targetScopeObject = getScope$1(this, targetScope);
+        const privateName = '_' + name;
+        Object.defineProperties(scopeObject, {
+            [privateName]: {
+                value: scopeObject[name],
+                writable: true
+            },
+            [name]: {
+                enumerable: true,
+                get () {
+                    const local = this[privateName];
+                    const target = targetScopeObject[targetName];
+                    if (isObject(local)) {
+                        return Object.assign({}, target, local);
+                    }
+                    return valueOrDefault(local, target);
+                },
+                set (value) {
+                    this[privateName] = value;
+                }
+            }
+        });
+    }
+    apply(appliers) {
+        appliers.forEach((apply)=>apply(this));
+    }
+}
+var defaults = /* #__PURE__ */ new Defaults({
+    _scriptable: (name)=>!name.startsWith('on'),
+    _indexable: (name)=>name !== 'events',
+    hover: {
+        _fallback: 'interaction'
+    },
+    interaction: {
+        _scriptable: false,
+        _indexable: false
+    }
+}, [
+    applyAnimationsDefaults,
+    applyLayoutsDefaults,
+    applyScaleDefaults
+]);
+
+/**
+ * Converts the given font object into a CSS font string.
+ * @param font - A font object.
+ * @return The CSS font string. See https://developer.mozilla.org/en-US/docs/Web/CSS/font
+ * @private
+ */ function toFontString(font) {
+    if (!font || isNullOrUndef(font.size) || isNullOrUndef(font.family)) {
+        return null;
+    }
+    return (font.style ? font.style + ' ' : '') + (font.weight ? font.weight + ' ' : '') + font.size + 'px ' + font.family;
+}
+/**
+ * @private
+ */ function _measureText(ctx, data, gc, longest, string) {
+    let textWidth = data[string];
+    if (!textWidth) {
+        textWidth = data[string] = ctx.measureText(string).width;
+        gc.push(string);
+    }
+    if (textWidth > longest) {
+        longest = textWidth;
+    }
+    return longest;
+}
+/**
+ * @private
+ */ // eslint-disable-next-line complexity
+function _longestText(ctx, font, arrayOfThings, cache) {
+    cache = cache || {};
+    let data = cache.data = cache.data || {};
+    let gc = cache.garbageCollect = cache.garbageCollect || [];
+    if (cache.font !== font) {
+        data = cache.data = {};
+        gc = cache.garbageCollect = [];
+        cache.font = font;
+    }
+    ctx.save();
+    ctx.font = font;
+    let longest = 0;
+    const ilen = arrayOfThings.length;
+    let i, j, jlen, thing, nestedThing;
+    for(i = 0; i < ilen; i++){
+        thing = arrayOfThings[i];
+        // Undefined strings and arrays should not be measured
+        if (thing !== undefined && thing !== null && !isArray(thing)) {
+            longest = _measureText(ctx, data, gc, longest, thing);
+        } else if (isArray(thing)) {
+            // if it is an array lets measure each element
+            // to do maybe simplify this function a bit so we can do this more recursively?
+            for(j = 0, jlen = thing.length; j < jlen; j++){
+                nestedThing = thing[j];
+                // Undefined strings and arrays should not be measured
+                if (nestedThing !== undefined && nestedThing !== null && !isArray(nestedThing)) {
+                    longest = _measureText(ctx, data, gc, longest, nestedThing);
+                }
+            }
+        }
+    }
+    ctx.restore();
+    const gcLen = gc.length / 2;
+    if (gcLen > arrayOfThings.length) {
+        for(i = 0; i < gcLen; i++){
+            delete data[gc[i]];
+        }
+        gc.splice(0, gcLen);
+    }
+    return longest;
+}
+/**
+ * Returns the aligned pixel value to avoid anti-aliasing blur
+ * @param chart - The chart instance.
+ * @param pixel - A pixel value.
+ * @param width - The width of the element.
+ * @returns The aligned pixel value.
+ * @private
+ */ function _alignPixel(chart, pixel, width) {
+    const devicePixelRatio = chart.currentDevicePixelRatio;
+    const halfWidth = width !== 0 ? Math.max(width / 2, 0.5) : 0;
+    return Math.round((pixel - halfWidth) * devicePixelRatio) / devicePixelRatio + halfWidth;
+}
+/**
+ * Clears the entire canvas.
+ */ function clearCanvas(canvas, ctx) {
+    if (!ctx && !canvas) {
+        return;
+    }
+    ctx = ctx || canvas.getContext('2d');
+    ctx.save();
+    // canvas.width and canvas.height do not consider the canvas transform,
+    // while clearRect does
+    ctx.resetTransform();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+}
+function drawPoint(ctx, options, x, y) {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    drawPointLegend(ctx, options, x, y, null);
+}
+// eslint-disable-next-line complexity
+function drawPointLegend(ctx, options, x, y, w) {
+    let type, xOffset, yOffset, size, cornerRadius, width, xOffsetW, yOffsetW;
+    const style = options.pointStyle;
+    const rotation = options.rotation;
+    const radius = options.radius;
+    let rad = (rotation || 0) * RAD_PER_DEG;
+    if (style && typeof style === 'object') {
+        type = style.toString();
+        if (type === '[object HTMLImageElement]' || type === '[object HTMLCanvasElement]') {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rad);
+            ctx.drawImage(style, -style.width / 2, -style.height / 2, style.width, style.height);
+            ctx.restore();
+            return;
+        }
+    }
+    if (isNaN(radius) || radius <= 0) {
+        return;
+    }
+    ctx.beginPath();
+    switch(style){
+        // Default includes circle
+        default:
+            if (w) {
+                ctx.ellipse(x, y, w / 2, radius, 0, 0, TAU);
+            } else {
+                ctx.arc(x, y, radius, 0, TAU);
+            }
+            ctx.closePath();
+            break;
+        case 'triangle':
+            width = w ? w / 2 : radius;
+            ctx.moveTo(x + Math.sin(rad) * width, y - Math.cos(rad) * radius);
+            rad += TWO_THIRDS_PI;
+            ctx.lineTo(x + Math.sin(rad) * width, y - Math.cos(rad) * radius);
+            rad += TWO_THIRDS_PI;
+            ctx.lineTo(x + Math.sin(rad) * width, y - Math.cos(rad) * radius);
+            ctx.closePath();
+            break;
+        case 'rectRounded':
+            // NOTE: the rounded rect implementation changed to use `arc` instead of
+            // `quadraticCurveTo` since it generates better results when rect is
+            // almost a circle. 0.516 (instead of 0.5) produces results with visually
+            // closer proportion to the previous impl and it is inscribed in the
+            // circle with `radius`. For more details, see the following PRs:
+            // https://github.com/chartjs/Chart.js/issues/5597
+            // https://github.com/chartjs/Chart.js/issues/5858
+            cornerRadius = radius * 0.516;
+            size = radius - cornerRadius;
+            xOffset = Math.cos(rad + QUARTER_PI) * size;
+            xOffsetW = Math.cos(rad + QUARTER_PI) * (w ? w / 2 - cornerRadius : size);
+            yOffset = Math.sin(rad + QUARTER_PI) * size;
+            yOffsetW = Math.sin(rad + QUARTER_PI) * (w ? w / 2 - cornerRadius : size);
+            ctx.arc(x - xOffsetW, y - yOffset, cornerRadius, rad - PI, rad - HALF_PI);
+            ctx.arc(x + yOffsetW, y - xOffset, cornerRadius, rad - HALF_PI, rad);
+            ctx.arc(x + xOffsetW, y + yOffset, cornerRadius, rad, rad + HALF_PI);
+            ctx.arc(x - yOffsetW, y + xOffset, cornerRadius, rad + HALF_PI, rad + PI);
+            ctx.closePath();
+            break;
+        case 'rect':
+            if (!rotation) {
+                size = Math.SQRT1_2 * radius;
+                width = w ? w / 2 : size;
+                ctx.rect(x - width, y - size, 2 * width, 2 * size);
+                break;
+            }
+            rad += QUARTER_PI;
+        /* falls through */ case 'rectRot':
+            xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
+            xOffset = Math.cos(rad) * radius;
+            yOffset = Math.sin(rad) * radius;
+            yOffsetW = Math.sin(rad) * (w ? w / 2 : radius);
+            ctx.moveTo(x - xOffsetW, y - yOffset);
+            ctx.lineTo(x + yOffsetW, y - xOffset);
+            ctx.lineTo(x + xOffsetW, y + yOffset);
+            ctx.lineTo(x - yOffsetW, y + xOffset);
+            ctx.closePath();
+            break;
+        case 'crossRot':
+            rad += QUARTER_PI;
+        /* falls through */ case 'cross':
+            xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
+            xOffset = Math.cos(rad) * radius;
+            yOffset = Math.sin(rad) * radius;
+            yOffsetW = Math.sin(rad) * (w ? w / 2 : radius);
+            ctx.moveTo(x - xOffsetW, y - yOffset);
+            ctx.lineTo(x + xOffsetW, y + yOffset);
+            ctx.moveTo(x + yOffsetW, y - xOffset);
+            ctx.lineTo(x - yOffsetW, y + xOffset);
+            break;
+        case 'star':
+            xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
+            xOffset = Math.cos(rad) * radius;
+            yOffset = Math.sin(rad) * radius;
+            yOffsetW = Math.sin(rad) * (w ? w / 2 : radius);
+            ctx.moveTo(x - xOffsetW, y - yOffset);
+            ctx.lineTo(x + xOffsetW, y + yOffset);
+            ctx.moveTo(x + yOffsetW, y - xOffset);
+            ctx.lineTo(x - yOffsetW, y + xOffset);
+            rad += QUARTER_PI;
+            xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
+            xOffset = Math.cos(rad) * radius;
+            yOffset = Math.sin(rad) * radius;
+            yOffsetW = Math.sin(rad) * (w ? w / 2 : radius);
+            ctx.moveTo(x - xOffsetW, y - yOffset);
+            ctx.lineTo(x + xOffsetW, y + yOffset);
+            ctx.moveTo(x + yOffsetW, y - xOffset);
+            ctx.lineTo(x - yOffsetW, y + xOffset);
+            break;
+        case 'line':
+            xOffset = w ? w / 2 : Math.cos(rad) * radius;
+            yOffset = Math.sin(rad) * radius;
+            ctx.moveTo(x - xOffset, y - yOffset);
+            ctx.lineTo(x + xOffset, y + yOffset);
+            break;
+        case 'dash':
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(rad) * (w ? w / 2 : radius), y + Math.sin(rad) * radius);
+            break;
+        case false:
+            ctx.closePath();
+            break;
+    }
+    ctx.fill();
+    if (options.borderWidth > 0) {
+        ctx.stroke();
+    }
+}
+/**
+ * Returns true if the point is inside the rectangle
+ * @param point - The point to test
+ * @param area - The rectangle
+ * @param margin - allowed margin
+ * @private
+ */ function _isPointInArea(point, area, margin) {
+    margin = margin || 0.5; // margin - default is to match rounded decimals
+    return !area || point && point.x > area.left - margin && point.x < area.right + margin && point.y > area.top - margin && point.y < area.bottom + margin;
+}
+function clipArea(ctx, area) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+    ctx.clip();
+}
+function unclipArea(ctx) {
+    ctx.restore();
+}
+/**
+ * @private
+ */ function _steppedLineTo(ctx, previous, target, flip, mode) {
+    if (!previous) {
+        return ctx.lineTo(target.x, target.y);
+    }
+    if (mode === 'middle') {
+        const midpoint = (previous.x + target.x) / 2.0;
+        ctx.lineTo(midpoint, previous.y);
+        ctx.lineTo(midpoint, target.y);
+    } else if (mode === 'after' !== !!flip) {
+        ctx.lineTo(previous.x, target.y);
+    } else {
+        ctx.lineTo(target.x, previous.y);
+    }
+    ctx.lineTo(target.x, target.y);
+}
+/**
+ * @private
+ */ function _bezierCurveTo(ctx, previous, target, flip) {
+    if (!previous) {
+        return ctx.lineTo(target.x, target.y);
+    }
+    ctx.bezierCurveTo(flip ? previous.cp1x : previous.cp2x, flip ? previous.cp1y : previous.cp2y, flip ? target.cp2x : target.cp1x, flip ? target.cp2y : target.cp1y, target.x, target.y);
+}
+function setRenderOpts(ctx, opts) {
+    if (opts.translation) {
+        ctx.translate(opts.translation[0], opts.translation[1]);
+    }
+    if (!isNullOrUndef(opts.rotation)) {
+        ctx.rotate(opts.rotation);
+    }
+    if (opts.color) {
+        ctx.fillStyle = opts.color;
+    }
+    if (opts.textAlign) {
+        ctx.textAlign = opts.textAlign;
+    }
+    if (opts.textBaseline) {
+        ctx.textBaseline = opts.textBaseline;
+    }
+}
+function decorateText(ctx, x, y, line, opts) {
+    if (opts.strikethrough || opts.underline) {
+        /**
+     * Now that IE11 support has been dropped, we can use more
+     * of the TextMetrics object. The actual bounding boxes
+     * are unflagged in Chrome, Firefox, Edge, and Safari so they
+     * can be safely used.
+     * See https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics#Browser_compatibility
+     */ const metrics = ctx.measureText(line);
+        const left = x - metrics.actualBoundingBoxLeft;
+        const right = x + metrics.actualBoundingBoxRight;
+        const top = y - metrics.actualBoundingBoxAscent;
+        const bottom = y + metrics.actualBoundingBoxDescent;
+        const yDecoration = opts.strikethrough ? (top + bottom) / 2 : bottom;
+        ctx.strokeStyle = ctx.fillStyle;
+        ctx.beginPath();
+        ctx.lineWidth = opts.decorationWidth || 2;
+        ctx.moveTo(left, yDecoration);
+        ctx.lineTo(right, yDecoration);
+        ctx.stroke();
+    }
+}
+function drawBackdrop(ctx, opts) {
+    const oldColor = ctx.fillStyle;
+    ctx.fillStyle = opts.color;
+    ctx.fillRect(opts.left, opts.top, opts.width, opts.height);
+    ctx.fillStyle = oldColor;
+}
+/**
+ * Render text onto the canvas
+ */ function renderText(ctx, text, x, y, font, opts = {}) {
+    const lines = isArray(text) ? text : [
+        text
+    ];
+    const stroke = opts.strokeWidth > 0 && opts.strokeColor !== '';
+    let i, line;
+    ctx.save();
+    ctx.font = font.string;
+    setRenderOpts(ctx, opts);
+    for(i = 0; i < lines.length; ++i){
+        line = lines[i];
+        if (opts.backdrop) {
+            drawBackdrop(ctx, opts.backdrop);
+        }
+        if (stroke) {
+            if (opts.strokeColor) {
+                ctx.strokeStyle = opts.strokeColor;
+            }
+            if (!isNullOrUndef(opts.strokeWidth)) {
+                ctx.lineWidth = opts.strokeWidth;
+            }
+            ctx.strokeText(line, x, y, opts.maxWidth);
+        }
+        ctx.fillText(line, x, y, opts.maxWidth);
+        decorateText(ctx, x, y, line, opts);
+        y += Number(font.lineHeight);
+    }
+    ctx.restore();
+}
+/**
+ * Add a path of a rectangle with rounded corners to the current sub-path
+ * @param ctx - Context
+ * @param rect - Bounding rect
+ */ function addRoundedRectPath(ctx, rect) {
+    const { x , y , w , h , radius  } = rect;
+    // top left arc
+    ctx.arc(x + radius.topLeft, y + radius.topLeft, radius.topLeft, 1.5 * PI, PI, true);
+    // line from top left to bottom left
+    ctx.lineTo(x, y + h - radius.bottomLeft);
+    // bottom left arc
+    ctx.arc(x + radius.bottomLeft, y + h - radius.bottomLeft, radius.bottomLeft, PI, HALF_PI, true);
+    // line from bottom left to bottom right
+    ctx.lineTo(x + w - radius.bottomRight, y + h);
+    // bottom right arc
+    ctx.arc(x + w - radius.bottomRight, y + h - radius.bottomRight, radius.bottomRight, HALF_PI, 0, true);
+    // line from bottom right to top right
+    ctx.lineTo(x + w, y + radius.topRight);
+    // top right arc
+    ctx.arc(x + w - radius.topRight, y + radius.topRight, radius.topRight, 0, -HALF_PI, true);
+    // line from top right to top left
+    ctx.lineTo(x + radius.topLeft, y);
+}
+
+const LINE_HEIGHT = /^(normal|(\d+(?:\.\d+)?)(px|em|%)?)$/;
+const FONT_STYLE = /^(normal|italic|initial|inherit|unset|(oblique( -?[0-9]?[0-9]deg)?))$/;
+/**
+ * @alias Chart.helpers.options
+ * @namespace
+ */ /**
+ * Converts the given line height `value` in pixels for a specific font `size`.
+ * @param value - The lineHeight to parse (eg. 1.6, '14px', '75%', '1.6em').
+ * @param size - The font size (in pixels) used to resolve relative `value`.
+ * @returns The effective line height in pixels (size * 1.2 if value is invalid).
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/line-height
+ * @since 2.7.0
+ */ function toLineHeight(value, size) {
+    const matches = ('' + value).match(LINE_HEIGHT);
+    if (!matches || matches[1] === 'normal') {
+        return size * 1.2;
+    }
+    value = +matches[2];
+    switch(matches[3]){
+        case 'px':
+            return value;
+        case '%':
+            value /= 100;
+            break;
+    }
+    return size * value;
+}
+const numberOrZero = (v)=>+v || 0;
+function _readValueToProps(value, props) {
+    const ret = {};
+    const objProps = isObject(props);
+    const keys = objProps ? Object.keys(props) : props;
+    const read = isObject(value) ? objProps ? (prop)=>valueOrDefault(value[prop], value[props[prop]]) : (prop)=>value[prop] : ()=>value;
+    for (const prop of keys){
+        ret[prop] = numberOrZero(read(prop));
+    }
+    return ret;
+}
+/**
+ * Converts the given value into a TRBL object.
+ * @param value - If a number, set the value to all TRBL component,
+ *  else, if an object, use defined properties and sets undefined ones to 0.
+ *  x / y are shorthands for same value for left/right and top/bottom.
+ * @returns The padding values (top, right, bottom, left)
+ * @since 3.0.0
+ */ function toTRBL(value) {
+    return _readValueToProps(value, {
+        top: 'y',
+        right: 'x',
+        bottom: 'y',
+        left: 'x'
+    });
+}
+/**
+ * Converts the given value into a TRBL corners object (similar with css border-radius).
+ * @param value - If a number, set the value to all TRBL corner components,
+ *  else, if an object, use defined properties and sets undefined ones to 0.
+ * @returns The TRBL corner values (topLeft, topRight, bottomLeft, bottomRight)
+ * @since 3.0.0
+ */ function toTRBLCorners(value) {
+    return _readValueToProps(value, [
+        'topLeft',
+        'topRight',
+        'bottomLeft',
+        'bottomRight'
+    ]);
+}
+/**
+ * Converts the given value into a padding object with pre-computed width/height.
+ * @param value - If a number, set the value to all TRBL component,
+ *  else, if an object, use defined properties and sets undefined ones to 0.
+ *  x / y are shorthands for same value for left/right and top/bottom.
+ * @returns The padding values (top, right, bottom, left, width, height)
+ * @since 2.7.0
+ */ function toPadding(value) {
+    const obj = toTRBL(value);
+    obj.width = obj.left + obj.right;
+    obj.height = obj.top + obj.bottom;
+    return obj;
+}
+/**
+ * Parses font options and returns the font object.
+ * @param options - A object that contains font options to be parsed.
+ * @param fallback - A object that contains fallback font options.
+ * @return The font object.
+ * @private
+ */ function toFont(options, fallback) {
+    options = options || {};
+    fallback = fallback || defaults.font;
+    let size = valueOrDefault(options.size, fallback.size);
+    if (typeof size === 'string') {
+        size = parseInt(size, 10);
+    }
+    let style = valueOrDefault(options.style, fallback.style);
+    if (style && !('' + style).match(FONT_STYLE)) {
+        console.warn('Invalid font style specified: "' + style + '"');
+        style = undefined;
+    }
+    const font = {
+        family: valueOrDefault(options.family, fallback.family),
+        lineHeight: toLineHeight(valueOrDefault(options.lineHeight, fallback.lineHeight), size),
+        size,
+        style,
+        weight: valueOrDefault(options.weight, fallback.weight),
+        string: ''
+    };
+    font.string = toFontString(font);
+    return font;
+}
+/**
+ * Evaluates the given `inputs` sequentially and returns the first defined value.
+ * @param inputs - An array of values, falling back to the last value.
+ * @param context - If defined and the current value is a function, the value
+ * is called with `context` as first argument and the result becomes the new input.
+ * @param index - If defined and the current value is an array, the value
+ * at `index` become the new input.
+ * @param info - object to return information about resolution in
+ * @param info.cacheable - Will be set to `false` if option is not cacheable.
+ * @since 2.7.0
+ */ function resolve(inputs, context, index, info) {
+    let cacheable = true;
+    let i, ilen, value;
+    for(i = 0, ilen = inputs.length; i < ilen; ++i){
+        value = inputs[i];
+        if (value === undefined) {
+            continue;
+        }
+        if (context !== undefined && typeof value === 'function') {
+            value = value(context);
+            cacheable = false;
+        }
+        if (index !== undefined && isArray(value)) {
+            value = value[index % value.length];
+            cacheable = false;
+        }
+        if (value !== undefined) {
+            if (info && !cacheable) {
+                info.cacheable = false;
+            }
+            return value;
+        }
+    }
+}
+/**
+ * @param minmax
+ * @param grace
+ * @param beginAtZero
+ * @private
+ */ function _addGrace(minmax, grace, beginAtZero) {
+    const { min , max  } = minmax;
+    const change = toDimension(grace, (max - min) / 2);
+    const keepZero = (value, add)=>beginAtZero && value === 0 ? 0 : value + add;
+    return {
+        min: keepZero(min, -Math.abs(change)),
+        max: keepZero(max, change)
+    };
+}
+function createContext(parentContext, context) {
+    return Object.assign(Object.create(parentContext), context);
+}
+
+/**
+ * Creates a Proxy for resolving raw values for options.
+ * @param scopes - The option scopes to look for values, in resolution order
+ * @param prefixes - The prefixes for values, in resolution order.
+ * @param rootScopes - The root option scopes
+ * @param fallback - Parent scopes fallback
+ * @param getTarget - callback for getting the target for changed values
+ * @returns Proxy
+ * @private
+ */ function _createResolver(scopes, prefixes = [
+    ''
+], rootScopes, fallback, getTarget = ()=>scopes[0]) {
+    const finalRootScopes = rootScopes || scopes;
+    if (typeof fallback === 'undefined') {
+        fallback = _resolve('_fallback', scopes);
+    }
+    const cache = {
+        [Symbol.toStringTag]: 'Object',
+        _cacheable: true,
+        _scopes: scopes,
+        _rootScopes: finalRootScopes,
+        _fallback: fallback,
+        _getTarget: getTarget,
+        override: (scope)=>_createResolver([
+                scope,
+                ...scopes
+            ], prefixes, finalRootScopes, fallback)
+    };
+    return new Proxy(cache, {
+        /**
+     * A trap for the delete operator.
+     */ deleteProperty (target, prop) {
+            delete target[prop]; // remove from cache
+            delete target._keys; // remove cached keys
+            delete scopes[0][prop]; // remove from top level scope
+            return true;
+        },
+        /**
+     * A trap for getting property values.
+     */ get (target, prop) {
+            return _cached(target, prop, ()=>_resolveWithPrefixes(prop, prefixes, scopes, target));
+        },
+        /**
+     * A trap for Object.getOwnPropertyDescriptor.
+     * Also used by Object.hasOwnProperty.
+     */ getOwnPropertyDescriptor (target, prop) {
+            return Reflect.getOwnPropertyDescriptor(target._scopes[0], prop);
+        },
+        /**
+     * A trap for Object.getPrototypeOf.
+     */ getPrototypeOf () {
+            return Reflect.getPrototypeOf(scopes[0]);
+        },
+        /**
+     * A trap for the in operator.
+     */ has (target, prop) {
+            return getKeysFromAllScopes(target).includes(prop);
+        },
+        /**
+     * A trap for Object.getOwnPropertyNames and Object.getOwnPropertySymbols.
+     */ ownKeys (target) {
+            return getKeysFromAllScopes(target);
+        },
+        /**
+     * A trap for setting property values.
+     */ set (target, prop, value) {
+            const storage = target._storage || (target._storage = getTarget());
+            target[prop] = storage[prop] = value; // set to top level scope + cache
+            delete target._keys; // remove cached keys
+            return true;
+        }
+    });
+}
+/**
+ * Returns an Proxy for resolving option values with context.
+ * @param proxy - The Proxy returned by `_createResolver`
+ * @param context - Context object for scriptable/indexable options
+ * @param subProxy - The proxy provided for scriptable options
+ * @param descriptorDefaults - Defaults for descriptors
+ * @private
+ */ function _attachContext(proxy, context, subProxy, descriptorDefaults) {
+    const cache = {
+        _cacheable: false,
+        _proxy: proxy,
+        _context: context,
+        _subProxy: subProxy,
+        _stack: new Set(),
+        _descriptors: _descriptors(proxy, descriptorDefaults),
+        setContext: (ctx)=>_attachContext(proxy, ctx, subProxy, descriptorDefaults),
+        override: (scope)=>_attachContext(proxy.override(scope), context, subProxy, descriptorDefaults)
+    };
+    return new Proxy(cache, {
+        /**
+     * A trap for the delete operator.
+     */ deleteProperty (target, prop) {
+            delete target[prop]; // remove from cache
+            delete proxy[prop]; // remove from proxy
+            return true;
+        },
+        /**
+     * A trap for getting property values.
+     */ get (target, prop, receiver) {
+            return _cached(target, prop, ()=>_resolveWithContext(target, prop, receiver));
+        },
+        /**
+     * A trap for Object.getOwnPropertyDescriptor.
+     * Also used by Object.hasOwnProperty.
+     */ getOwnPropertyDescriptor (target, prop) {
+            return target._descriptors.allKeys ? Reflect.has(proxy, prop) ? {
+                enumerable: true,
+                configurable: true
+            } : undefined : Reflect.getOwnPropertyDescriptor(proxy, prop);
+        },
+        /**
+     * A trap for Object.getPrototypeOf.
+     */ getPrototypeOf () {
+            return Reflect.getPrototypeOf(proxy);
+        },
+        /**
+     * A trap for the in operator.
+     */ has (target, prop) {
+            return Reflect.has(proxy, prop);
+        },
+        /**
+     * A trap for Object.getOwnPropertyNames and Object.getOwnPropertySymbols.
+     */ ownKeys () {
+            return Reflect.ownKeys(proxy);
+        },
+        /**
+     * A trap for setting property values.
+     */ set (target, prop, value) {
+            proxy[prop] = value; // set to proxy
+            delete target[prop]; // remove from cache
+            return true;
+        }
+    });
+}
+/**
+ * @private
+ */ function _descriptors(proxy, defaults = {
+    scriptable: true,
+    indexable: true
+}) {
+    const { _scriptable =defaults.scriptable , _indexable =defaults.indexable , _allKeys =defaults.allKeys  } = proxy;
+    return {
+        allKeys: _allKeys,
+        scriptable: _scriptable,
+        indexable: _indexable,
+        isScriptable: isFunction(_scriptable) ? _scriptable : ()=>_scriptable,
+        isIndexable: isFunction(_indexable) ? _indexable : ()=>_indexable
+    };
+}
+const readKey = (prefix, name)=>prefix ? prefix + _capitalize(name) : name;
+const needsSubResolver = (prop, value)=>isObject(value) && prop !== 'adapters' && (Object.getPrototypeOf(value) === null || value.constructor === Object);
+function _cached(target, prop, resolve) {
+    if (Object.prototype.hasOwnProperty.call(target, prop) || prop === 'constructor') {
+        return target[prop];
+    }
+    const value = resolve();
+    // cache the resolved value
+    target[prop] = value;
+    return value;
+}
+function _resolveWithContext(target, prop, receiver) {
+    const { _proxy , _context , _subProxy , _descriptors: descriptors  } = target;
+    let value = _proxy[prop]; // resolve from proxy
+    // resolve with context
+    if (isFunction(value) && descriptors.isScriptable(prop)) {
+        value = _resolveScriptable(prop, value, target, receiver);
+    }
+    if (isArray(value) && value.length) {
+        value = _resolveArray(prop, value, target, descriptors.isIndexable);
+    }
+    if (needsSubResolver(prop, value)) {
+        // if the resolved value is an object, create a sub resolver for it
+        value = _attachContext(value, _context, _subProxy && _subProxy[prop], descriptors);
+    }
+    return value;
+}
+function _resolveScriptable(prop, getValue, target, receiver) {
+    const { _proxy , _context , _subProxy , _stack  } = target;
+    if (_stack.has(prop)) {
+        throw new Error('Recursion detected: ' + Array.from(_stack).join('->') + '->' + prop);
+    }
+    _stack.add(prop);
+    let value = getValue(_context, _subProxy || receiver);
+    _stack.delete(prop);
+    if (needsSubResolver(prop, value)) {
+        // When scriptable option returns an object, create a resolver on that.
+        value = createSubResolver(_proxy._scopes, _proxy, prop, value);
+    }
+    return value;
+}
+function _resolveArray(prop, value, target, isIndexable) {
+    const { _proxy , _context , _subProxy , _descriptors: descriptors  } = target;
+    if (typeof _context.index !== 'undefined' && isIndexable(prop)) {
+        return value[_context.index % value.length];
+    } else if (isObject(value[0])) {
+        // Array of objects, return array or resolvers
+        const arr = value;
+        const scopes = _proxy._scopes.filter((s)=>s !== arr);
+        value = [];
+        for (const item of arr){
+            const resolver = createSubResolver(scopes, _proxy, prop, item);
+            value.push(_attachContext(resolver, _context, _subProxy && _subProxy[prop], descriptors));
+        }
+    }
+    return value;
+}
+function resolveFallback(fallback, prop, value) {
+    return isFunction(fallback) ? fallback(prop, value) : fallback;
+}
+const getScope = (key, parent)=>key === true ? parent : typeof key === 'string' ? resolveObjectKey(parent, key) : undefined;
+function addScopes(set, parentScopes, key, parentFallback, value) {
+    for (const parent of parentScopes){
+        const scope = getScope(key, parent);
+        if (scope) {
+            set.add(scope);
+            const fallback = resolveFallback(scope._fallback, key, value);
+            if (typeof fallback !== 'undefined' && fallback !== key && fallback !== parentFallback) {
+                // When we reach the descriptor that defines a new _fallback, return that.
+                // The fallback will resume to that new scope.
+                return fallback;
+            }
+        } else if (scope === false && typeof parentFallback !== 'undefined' && key !== parentFallback) {
+            // Fallback to `false` results to `false`, when falling back to different key.
+            // For example `interaction` from `hover` or `plugins.tooltip` and `animation` from `animations`
+            return null;
+        }
+    }
+    return false;
+}
+function createSubResolver(parentScopes, resolver, prop, value) {
+    const rootScopes = resolver._rootScopes;
+    const fallback = resolveFallback(resolver._fallback, prop, value);
+    const allScopes = [
+        ...parentScopes,
+        ...rootScopes
+    ];
+    const set = new Set();
+    set.add(value);
+    let key = addScopesFromKey(set, allScopes, prop, fallback || prop, value);
+    if (key === null) {
+        return false;
+    }
+    if (typeof fallback !== 'undefined' && fallback !== prop) {
+        key = addScopesFromKey(set, allScopes, fallback, key, value);
+        if (key === null) {
+            return false;
+        }
+    }
+    return _createResolver(Array.from(set), [
+        ''
+    ], rootScopes, fallback, ()=>subGetTarget(resolver, prop, value));
+}
+function addScopesFromKey(set, allScopes, key, fallback, item) {
+    while(key){
+        key = addScopes(set, allScopes, key, fallback, item);
+    }
+    return key;
+}
+function subGetTarget(resolver, prop, value) {
+    const parent = resolver._getTarget();
+    if (!(prop in parent)) {
+        parent[prop] = {};
+    }
+    const target = parent[prop];
+    if (isArray(target) && isObject(value)) {
+        // For array of objects, the object is used to store updated values
+        return value;
+    }
+    return target || {};
+}
+function _resolveWithPrefixes(prop, prefixes, scopes, proxy) {
+    let value;
+    for (const prefix of prefixes){
+        value = _resolve(readKey(prefix, prop), scopes);
+        if (typeof value !== 'undefined') {
+            return needsSubResolver(prop, value) ? createSubResolver(scopes, proxy, prop, value) : value;
+        }
+    }
+}
+function _resolve(key, scopes) {
+    for (const scope of scopes){
+        if (!scope) {
+            continue;
+        }
+        const value = scope[key];
+        if (typeof value !== 'undefined') {
+            return value;
+        }
+    }
+}
+function getKeysFromAllScopes(target) {
+    let keys = target._keys;
+    if (!keys) {
+        keys = target._keys = resolveKeysFromAllScopes(target._scopes);
+    }
+    return keys;
+}
+function resolveKeysFromAllScopes(scopes) {
+    const set = new Set();
+    for (const scope of scopes){
+        for (const key of Object.keys(scope).filter((k)=>!k.startsWith('_'))){
+            set.add(key);
+        }
+    }
+    return Array.from(set);
+}
+function _parseObjectDataRadialScale(meta, data, start, count) {
+    const { iScale  } = meta;
+    const { key ='r'  } = this._parsing;
+    const parsed = new Array(count);
+    let i, ilen, index, item;
+    for(i = 0, ilen = count; i < ilen; ++i){
+        index = i + start;
+        item = data[index];
+        parsed[i] = {
+            r: iScale.parse(resolveObjectKey(item, key), index)
+        };
+    }
+    return parsed;
+}
+
+const EPSILON = Number.EPSILON || 1e-14;
+const getPoint = (points, i)=>i < points.length && !points[i].skip && points[i];
+const getValueAxis = (indexAxis)=>indexAxis === 'x' ? 'y' : 'x';
+function splineCurve(firstPoint, middlePoint, afterPoint, t) {
+    // Props to Rob Spencer at scaled innovation for his post on splining between points
+    // http://scaledinnovation.com/analytics/splines/aboutSplines.html
+    // This function must also respect "skipped" points
+    const previous = firstPoint.skip ? middlePoint : firstPoint;
+    const current = middlePoint;
+    const next = afterPoint.skip ? middlePoint : afterPoint;
+    const d01 = distanceBetweenPoints(current, previous);
+    const d12 = distanceBetweenPoints(next, current);
+    let s01 = d01 / (d01 + d12);
+    let s12 = d12 / (d01 + d12);
+    // If all points are the same, s01 & s02 will be inf
+    s01 = isNaN(s01) ? 0 : s01;
+    s12 = isNaN(s12) ? 0 : s12;
+    const fa = t * s01; // scaling factor for triangle Ta
+    const fb = t * s12;
+    return {
+        previous: {
+            x: current.x - fa * (next.x - previous.x),
+            y: current.y - fa * (next.y - previous.y)
+        },
+        next: {
+            x: current.x + fb * (next.x - previous.x),
+            y: current.y + fb * (next.y - previous.y)
+        }
+    };
+}
+/**
+ * Adjust tangents to ensure monotonic properties
+ */ function monotoneAdjust(points, deltaK, mK) {
+    const pointsLen = points.length;
+    let alphaK, betaK, tauK, squaredMagnitude, pointCurrent;
+    let pointAfter = getPoint(points, 0);
+    for(let i = 0; i < pointsLen - 1; ++i){
+        pointCurrent = pointAfter;
+        pointAfter = getPoint(points, i + 1);
+        if (!pointCurrent || !pointAfter) {
+            continue;
+        }
+        if (almostEquals(deltaK[i], 0, EPSILON)) {
+            mK[i] = mK[i + 1] = 0;
+            continue;
+        }
+        alphaK = mK[i] / deltaK[i];
+        betaK = mK[i + 1] / deltaK[i];
+        squaredMagnitude = Math.pow(alphaK, 2) + Math.pow(betaK, 2);
+        if (squaredMagnitude <= 9) {
+            continue;
+        }
+        tauK = 3 / Math.sqrt(squaredMagnitude);
+        mK[i] = alphaK * tauK * deltaK[i];
+        mK[i + 1] = betaK * tauK * deltaK[i];
+    }
+}
+function monotoneCompute(points, mK, indexAxis = 'x') {
+    const valueAxis = getValueAxis(indexAxis);
+    const pointsLen = points.length;
+    let delta, pointBefore, pointCurrent;
+    let pointAfter = getPoint(points, 0);
+    for(let i = 0; i < pointsLen; ++i){
+        pointBefore = pointCurrent;
+        pointCurrent = pointAfter;
+        pointAfter = getPoint(points, i + 1);
+        if (!pointCurrent) {
+            continue;
+        }
+        const iPixel = pointCurrent[indexAxis];
+        const vPixel = pointCurrent[valueAxis];
+        if (pointBefore) {
+            delta = (iPixel - pointBefore[indexAxis]) / 3;
+            pointCurrent[`cp1${indexAxis}`] = iPixel - delta;
+            pointCurrent[`cp1${valueAxis}`] = vPixel - delta * mK[i];
+        }
+        if (pointAfter) {
+            delta = (pointAfter[indexAxis] - iPixel) / 3;
+            pointCurrent[`cp2${indexAxis}`] = iPixel + delta;
+            pointCurrent[`cp2${valueAxis}`] = vPixel + delta * mK[i];
+        }
+    }
+}
+/**
+ * This function calculates Bézier control points in a similar way than |splineCurve|,
+ * but preserves monotonicity of the provided data and ensures no local extremums are added
+ * between the dataset discrete points due to the interpolation.
+ * See : https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
+ */ function splineCurveMonotone(points, indexAxis = 'x') {
+    const valueAxis = getValueAxis(indexAxis);
+    const pointsLen = points.length;
+    const deltaK = Array(pointsLen).fill(0);
+    const mK = Array(pointsLen);
+    // Calculate slopes (deltaK) and initialize tangents (mK)
+    let i, pointBefore, pointCurrent;
+    let pointAfter = getPoint(points, 0);
+    for(i = 0; i < pointsLen; ++i){
+        pointBefore = pointCurrent;
+        pointCurrent = pointAfter;
+        pointAfter = getPoint(points, i + 1);
+        if (!pointCurrent) {
+            continue;
+        }
+        if (pointAfter) {
+            const slopeDelta = pointAfter[indexAxis] - pointCurrent[indexAxis];
+            // In the case of two points that appear at the same x pixel, slopeDeltaX is 0
+            deltaK[i] = slopeDelta !== 0 ? (pointAfter[valueAxis] - pointCurrent[valueAxis]) / slopeDelta : 0;
+        }
+        mK[i] = !pointBefore ? deltaK[i] : !pointAfter ? deltaK[i - 1] : sign(deltaK[i - 1]) !== sign(deltaK[i]) ? 0 : (deltaK[i - 1] + deltaK[i]) / 2;
+    }
+    monotoneAdjust(points, deltaK, mK);
+    monotoneCompute(points, mK, indexAxis);
+}
+function capControlPoint(pt, min, max) {
+    return Math.max(Math.min(pt, max), min);
+}
+function capBezierPoints(points, area) {
+    let i, ilen, point, inArea, inAreaPrev;
+    let inAreaNext = _isPointInArea(points[0], area);
+    for(i = 0, ilen = points.length; i < ilen; ++i){
+        inAreaPrev = inArea;
+        inArea = inAreaNext;
+        inAreaNext = i < ilen - 1 && _isPointInArea(points[i + 1], area);
+        if (!inArea) {
+            continue;
+        }
+        point = points[i];
+        if (inAreaPrev) {
+            point.cp1x = capControlPoint(point.cp1x, area.left, area.right);
+            point.cp1y = capControlPoint(point.cp1y, area.top, area.bottom);
+        }
+        if (inAreaNext) {
+            point.cp2x = capControlPoint(point.cp2x, area.left, area.right);
+            point.cp2y = capControlPoint(point.cp2y, area.top, area.bottom);
+        }
+    }
+}
+/**
+ * @private
+ */ function _updateBezierControlPoints(points, options, area, loop, indexAxis) {
+    let i, ilen, point, controlPoints;
+    // Only consider points that are drawn in case the spanGaps option is used
+    if (options.spanGaps) {
+        points = points.filter((pt)=>!pt.skip);
+    }
+    if (options.cubicInterpolationMode === 'monotone') {
+        splineCurveMonotone(points, indexAxis);
+    } else {
+        let prev = loop ? points[points.length - 1] : points[0];
+        for(i = 0, ilen = points.length; i < ilen; ++i){
+            point = points[i];
+            controlPoints = splineCurve(prev, point, points[Math.min(i + 1, ilen - (loop ? 0 : 1)) % ilen], options.tension);
+            point.cp1x = controlPoints.previous.x;
+            point.cp1y = controlPoints.previous.y;
+            point.cp2x = controlPoints.next.x;
+            point.cp2y = controlPoints.next.y;
+            prev = point;
+        }
+    }
+    if (options.capBezierPoints) {
+        capBezierPoints(points, area);
+    }
+}
+
+/**
+ * @private
+ */ function _isDomSupported() {
+    return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+/**
+ * @private
+ */ function _getParentNode(domNode) {
+    let parent = domNode.parentNode;
+    if (parent && parent.toString() === '[object ShadowRoot]') {
+        parent = parent.host;
+    }
+    return parent;
+}
+/**
+ * convert max-width/max-height values that may be percentages into a number
+ * @private
+ */ function parseMaxStyle(styleValue, node, parentProperty) {
+    let valueInPixels;
+    if (typeof styleValue === 'string') {
+        valueInPixels = parseInt(styleValue, 10);
+        if (styleValue.indexOf('%') !== -1) {
+            // percentage * size in dimension
+            valueInPixels = valueInPixels / 100 * node.parentNode[parentProperty];
+        }
+    } else {
+        valueInPixels = styleValue;
+    }
+    return valueInPixels;
+}
+const getComputedStyle = (element)=>element.ownerDocument.defaultView.getComputedStyle(element, null);
+function getStyle(el, property) {
+    return getComputedStyle(el).getPropertyValue(property);
+}
+const positions = [
+    'top',
+    'right',
+    'bottom',
+    'left'
+];
+function getPositionedStyle(styles, style, suffix) {
+    const result = {};
+    suffix = suffix ? '-' + suffix : '';
+    for(let i = 0; i < 4; i++){
+        const pos = positions[i];
+        result[pos] = parseFloat(styles[style + '-' + pos + suffix]) || 0;
+    }
+    result.width = result.left + result.right;
+    result.height = result.top + result.bottom;
+    return result;
+}
+const useOffsetPos = (x, y, target)=>(x > 0 || y > 0) && (!target || !target.shadowRoot);
+/**
+ * @param e
+ * @param canvas
+ * @returns Canvas position
+ */ function getCanvasPosition(e, canvas) {
+    const touches = e.touches;
+    const source = touches && touches.length ? touches[0] : e;
+    const { offsetX , offsetY  } = source;
+    let box = false;
+    let x, y;
+    if (useOffsetPos(offsetX, offsetY, e.target)) {
+        x = offsetX;
+        y = offsetY;
+    } else {
+        const rect = canvas.getBoundingClientRect();
+        x = source.clientX - rect.left;
+        y = source.clientY - rect.top;
+        box = true;
+    }
+    return {
+        x,
+        y,
+        box
+    };
+}
+/**
+ * Gets an event's x, y coordinates, relative to the chart area
+ * @param event
+ * @param chart
+ * @returns x and y coordinates of the event
+ */ function getRelativePosition(event, chart) {
+    if ('native' in event) {
+        return event;
+    }
+    const { canvas , currentDevicePixelRatio  } = chart;
+    const style = getComputedStyle(canvas);
+    const borderBox = style.boxSizing === 'border-box';
+    const paddings = getPositionedStyle(style, 'padding');
+    const borders = getPositionedStyle(style, 'border', 'width');
+    const { x , y , box  } = getCanvasPosition(event, canvas);
+    const xOffset = paddings.left + (box && borders.left);
+    const yOffset = paddings.top + (box && borders.top);
+    let { width , height  } = chart;
+    if (borderBox) {
+        width -= paddings.width + borders.width;
+        height -= paddings.height + borders.height;
+    }
+    return {
+        x: Math.round((x - xOffset) / width * canvas.width / currentDevicePixelRatio),
+        y: Math.round((y - yOffset) / height * canvas.height / currentDevicePixelRatio)
+    };
+}
+function getContainerSize(canvas, width, height) {
+    let maxWidth, maxHeight;
+    if (width === undefined || height === undefined) {
+        const container = canvas && _getParentNode(canvas);
+        if (!container) {
+            width = canvas.clientWidth;
+            height = canvas.clientHeight;
+        } else {
+            const rect = container.getBoundingClientRect(); // this is the border box of the container
+            const containerStyle = getComputedStyle(container);
+            const containerBorder = getPositionedStyle(containerStyle, 'border', 'width');
+            const containerPadding = getPositionedStyle(containerStyle, 'padding');
+            width = rect.width - containerPadding.width - containerBorder.width;
+            height = rect.height - containerPadding.height - containerBorder.height;
+            maxWidth = parseMaxStyle(containerStyle.maxWidth, container, 'clientWidth');
+            maxHeight = parseMaxStyle(containerStyle.maxHeight, container, 'clientHeight');
+        }
+    }
+    return {
+        width,
+        height,
+        maxWidth: maxWidth || INFINITY,
+        maxHeight: maxHeight || INFINITY
+    };
+}
+const round1 = (v)=>Math.round(v * 10) / 10;
+// eslint-disable-next-line complexity
+function getMaximumSize(canvas, bbWidth, bbHeight, aspectRatio) {
+    const style = getComputedStyle(canvas);
+    const margins = getPositionedStyle(style, 'margin');
+    const maxWidth = parseMaxStyle(style.maxWidth, canvas, 'clientWidth') || INFINITY;
+    const maxHeight = parseMaxStyle(style.maxHeight, canvas, 'clientHeight') || INFINITY;
+    const containerSize = getContainerSize(canvas, bbWidth, bbHeight);
+    let { width , height  } = containerSize;
+    if (style.boxSizing === 'content-box') {
+        const borders = getPositionedStyle(style, 'border', 'width');
+        const paddings = getPositionedStyle(style, 'padding');
+        width -= paddings.width + borders.width;
+        height -= paddings.height + borders.height;
+    }
+    width = Math.max(0, width - margins.width);
+    height = Math.max(0, aspectRatio ? width / aspectRatio : height - margins.height);
+    width = round1(Math.min(width, maxWidth, containerSize.maxWidth));
+    height = round1(Math.min(height, maxHeight, containerSize.maxHeight));
+    if (width && !height) {
+        // https://github.com/chartjs/Chart.js/issues/4659
+        // If the canvas has width, but no height, default to aspectRatio of 2 (canvas default)
+        height = round1(width / 2);
+    }
+    const maintainHeight = bbWidth !== undefined || bbHeight !== undefined;
+    if (maintainHeight && aspectRatio && containerSize.height && height > containerSize.height) {
+        height = containerSize.height;
+        width = round1(Math.floor(height * aspectRatio));
+    }
+    return {
+        width,
+        height
+    };
+}
+/**
+ * @param chart
+ * @param forceRatio
+ * @param forceStyle
+ * @returns True if the canvas context size or transformation has changed.
+ */ function retinaScale(chart, forceRatio, forceStyle) {
+    const pixelRatio = forceRatio || 1;
+    const deviceHeight = Math.floor(chart.height * pixelRatio);
+    const deviceWidth = Math.floor(chart.width * pixelRatio);
+    chart.height = Math.floor(chart.height);
+    chart.width = Math.floor(chart.width);
+    const canvas = chart.canvas;
+    // If no style has been set on the canvas, the render size is used as display size,
+    // making the chart visually bigger, so let's enforce it to the "correct" values.
+    // See https://github.com/chartjs/Chart.js/issues/3575
+    if (canvas.style && (forceStyle || !canvas.style.height && !canvas.style.width)) {
+        canvas.style.height = `${chart.height}px`;
+        canvas.style.width = `${chart.width}px`;
+    }
+    if (chart.currentDevicePixelRatio !== pixelRatio || canvas.height !== deviceHeight || canvas.width !== deviceWidth) {
+        chart.currentDevicePixelRatio = pixelRatio;
+        canvas.height = deviceHeight;
+        canvas.width = deviceWidth;
+        chart.ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        return true;
+    }
+    return false;
+}
+/**
+ * Detects support for options object argument in addEventListener.
+ * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Safely_detecting_option_support
+ * @private
+ */ const supportsEventListenerOptions = function() {
+    let passiveSupported = false;
+    try {
+        const options = {
+            get passive () {
+                passiveSupported = true;
+                return false;
+            }
+        };
+        if (_isDomSupported()) {
+            window.addEventListener('test', null, options);
+            window.removeEventListener('test', null, options);
+        }
+    } catch (e) {
+    // continue regardless of error
+    }
+    return passiveSupported;
+}();
+/**
+ * The "used" size is the final value of a dimension property after all calculations have
+ * been performed. This method uses the computed style of `element` but returns undefined
+ * if the computed style is not expressed in pixels. That can happen in some cases where
+ * `element` has a size relative to its parent and this last one is not yet displayed,
+ * for example because of `display: none` on a parent node.
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/used_value
+ * @returns Size in pixels or undefined if unknown.
+ */ function readUsedSize(element, property) {
+    const value = getStyle(element, property);
+    const matches = value && value.match(/^(\d+)(\.\d+)?px$/);
+    return matches ? +matches[1] : undefined;
+}
+
+/**
+ * @private
+ */ function _pointInLine(p1, p2, t, mode) {
+    return {
+        x: p1.x + t * (p2.x - p1.x),
+        y: p1.y + t * (p2.y - p1.y)
+    };
+}
+/**
+ * @private
+ */ function _steppedInterpolation(p1, p2, t, mode) {
+    return {
+        x: p1.x + t * (p2.x - p1.x),
+        y: mode === 'middle' ? t < 0.5 ? p1.y : p2.y : mode === 'after' ? t < 1 ? p1.y : p2.y : t > 0 ? p2.y : p1.y
+    };
+}
+/**
+ * @private
+ */ function _bezierInterpolation(p1, p2, t, mode) {
+    const cp1 = {
+        x: p1.cp2x,
+        y: p1.cp2y
+    };
+    const cp2 = {
+        x: p2.cp1x,
+        y: p2.cp1y
+    };
+    const a = _pointInLine(p1, cp1, t);
+    const b = _pointInLine(cp1, cp2, t);
+    const c = _pointInLine(cp2, p2, t);
+    const d = _pointInLine(a, b, t);
+    const e = _pointInLine(b, c, t);
+    return _pointInLine(d, e, t);
+}
+
+const getRightToLeftAdapter = function(rectX, width) {
+    return {
+        x (x) {
+            return rectX + rectX + width - x;
+        },
+        setWidth (w) {
+            width = w;
+        },
+        textAlign (align) {
+            if (align === 'center') {
+                return align;
+            }
+            return align === 'right' ? 'left' : 'right';
+        },
+        xPlus (x, value) {
+            return x - value;
+        },
+        leftForLtr (x, itemWidth) {
+            return x - itemWidth;
+        }
+    };
+};
+const getLeftToRightAdapter = function() {
+    return {
+        x (x) {
+            return x;
+        },
+        setWidth (w) {},
+        textAlign (align) {
+            return align;
+        },
+        xPlus (x, value) {
+            return x + value;
+        },
+        leftForLtr (x, _itemWidth) {
+            return x;
+        }
+    };
+};
+function getRtlAdapter(rtl, rectX, width) {
+    return rtl ? getRightToLeftAdapter(rectX, width) : getLeftToRightAdapter();
+}
+function overrideTextDirection(ctx, direction) {
+    let style, original;
+    if (direction === 'ltr' || direction === 'rtl') {
+        style = ctx.canvas.style;
+        original = [
+            style.getPropertyValue('direction'),
+            style.getPropertyPriority('direction')
+        ];
+        style.setProperty('direction', direction, 'important');
+        ctx.prevTextDirection = original;
+    }
+}
+function restoreTextDirection(ctx, original) {
+    if (original !== undefined) {
+        delete ctx.prevTextDirection;
+        ctx.canvas.style.setProperty('direction', original[0], original[1]);
+    }
+}
+
+function propertyFn(property) {
+    if (property === 'angle') {
+        return {
+            between: _angleBetween,
+            compare: _angleDiff,
+            normalize: _normalizeAngle
+        };
+    }
+    return {
+        between: _isBetween,
+        compare: (a, b)=>a - b,
+        normalize: (x)=>x
+    };
+}
+function normalizeSegment({ start , end , count , loop , style  }) {
+    return {
+        start: start % count,
+        end: end % count,
+        loop: loop && (end - start + 1) % count === 0,
+        style
+    };
+}
+function getSegment(segment, points, bounds) {
+    const { property , start: startBound , end: endBound  } = bounds;
+    const { between , normalize  } = propertyFn(property);
+    const count = points.length;
+    let { start , end , loop  } = segment;
+    let i, ilen;
+    if (loop) {
+        start += count;
+        end += count;
+        for(i = 0, ilen = count; i < ilen; ++i){
+            if (!between(normalize(points[start % count][property]), startBound, endBound)) {
+                break;
+            }
+            start--;
+            end--;
+        }
+        start %= count;
+        end %= count;
+    }
+    if (end < start) {
+        end += count;
+    }
+    return {
+        start,
+        end,
+        loop,
+        style: segment.style
+    };
+}
+ function _boundSegment(segment, points, bounds) {
+    if (!bounds) {
+        return [
+            segment
+        ];
+    }
+    const { property , start: startBound , end: endBound  } = bounds;
+    const count = points.length;
+    const { compare , between , normalize  } = propertyFn(property);
+    const { start , end , loop , style  } = getSegment(segment, points, bounds);
+    const result = [];
+    let inside = false;
+    let subStart = null;
+    let value, point, prevValue;
+    const startIsBefore = ()=>between(startBound, prevValue, value) && compare(startBound, prevValue) !== 0;
+    const endIsBefore = ()=>compare(endBound, value) === 0 || between(endBound, prevValue, value);
+    const shouldStart = ()=>inside || startIsBefore();
+    const shouldStop = ()=>!inside || endIsBefore();
+    for(let i = start, prev = start; i <= end; ++i){
+        point = points[i % count];
+        if (point.skip) {
+            continue;
+        }
+        value = normalize(point[property]);
+        if (value === prevValue) {
+            continue;
+        }
+        inside = between(value, startBound, endBound);
+        if (subStart === null && shouldStart()) {
+            subStart = compare(value, startBound) === 0 ? i : prev;
+        }
+        if (subStart !== null && shouldStop()) {
+            result.push(normalizeSegment({
+                start: subStart,
+                end: i,
+                loop,
+                count,
+                style
+            }));
+            subStart = null;
+        }
+        prev = i;
+        prevValue = value;
+    }
+    if (subStart !== null) {
+        result.push(normalizeSegment({
+            start: subStart,
+            end,
+            loop,
+            count,
+            style
+        }));
+    }
+    return result;
+}
+ function _boundSegments(line, bounds) {
+    const result = [];
+    const segments = line.segments;
+    for(let i = 0; i < segments.length; i++){
+        const sub = _boundSegment(segments[i], line.points, bounds);
+        if (sub.length) {
+            result.push(...sub);
+        }
+    }
+    return result;
+}
+ function findStartAndEnd(points, count, loop, spanGaps) {
+    let start = 0;
+    let end = count - 1;
+    if (loop && !spanGaps) {
+        while(start < count && !points[start].skip){
+            start++;
+        }
+    }
+    while(start < count && points[start].skip){
+        start++;
+    }
+    start %= count;
+    if (loop) {
+        end += start;
+    }
+    while(end > start && points[end % count].skip){
+        end--;
+    }
+    end %= count;
+    return {
+        start,
+        end
+    };
+}
+ function solidSegments(points, start, max, loop) {
+    const count = points.length;
+    const result = [];
+    let last = start;
+    let prev = points[start];
+    let end;
+    for(end = start + 1; end <= max; ++end){
+        const cur = points[end % count];
+        if (cur.skip || cur.stop) {
+            if (!prev.skip) {
+                loop = false;
+                result.push({
+                    start: start % count,
+                    end: (end - 1) % count,
+                    loop
+                });
+                start = last = cur.stop ? end : null;
+            }
+        } else {
+            last = end;
+            if (prev.skip) {
+                start = end;
+            }
+        }
+        prev = cur;
+    }
+    if (last !== null) {
+        result.push({
+            start: start % count,
+            end: last % count,
+            loop
+        });
+    }
+    return result;
+}
+ function _computeSegments(line, segmentOptions) {
+    const points = line.points;
+    const spanGaps = line.options.spanGaps;
+    const count = points.length;
+    if (!count) {
+        return [];
+    }
+    const loop = !!line._loop;
+    const { start , end  } = findStartAndEnd(points, count, loop, spanGaps);
+    if (spanGaps === true) {
+        return splitByStyles(line, [
+            {
+                start,
+                end,
+                loop
+            }
+        ], points, segmentOptions);
+    }
+    const max = end < start ? end + count : end;
+    const completeLoop = !!line._fullLoop && start === 0 && end === count - 1;
+    return splitByStyles(line, solidSegments(points, start, max, completeLoop), points, segmentOptions);
+}
+ function splitByStyles(line, segments, points, segmentOptions) {
+    if (!segmentOptions || !segmentOptions.setContext || !points) {
+        return segments;
+    }
+    return doSplitByStyles(line, segments, points, segmentOptions);
+}
+ function doSplitByStyles(line, segments, points, segmentOptions) {
+    const chartContext = line._chart.getContext();
+    const baseStyle = readStyle(line.options);
+    const { _datasetIndex: datasetIndex , options: { spanGaps  }  } = line;
+    const count = points.length;
+    const result = [];
+    let prevStyle = baseStyle;
+    let start = segments[0].start;
+    let i = start;
+    function addStyle(s, e, l, st) {
+        const dir = spanGaps ? -1 : 1;
+        if (s === e) {
+            return;
+        }
+        s += count;
+        while(points[s % count].skip){
+            s -= dir;
+        }
+        while(points[e % count].skip){
+            e += dir;
+        }
+        if (s % count !== e % count) {
+            result.push({
+                start: s % count,
+                end: e % count,
+                loop: l,
+                style: st
+            });
+            prevStyle = st;
+            start = e % count;
+        }
+    }
+    for (const segment of segments){
+        start = spanGaps ? start : segment.start;
+        let prev = points[start % count];
+        let style;
+        for(i = start + 1; i <= segment.end; i++){
+            const pt = points[i % count];
+            style = readStyle(segmentOptions.setContext(createContext(chartContext, {
+                type: 'segment',
+                p0: prev,
+                p1: pt,
+                p0DataIndex: (i - 1) % count,
+                p1DataIndex: i % count,
+                datasetIndex
+            })));
+            if (styleChanged(style, prevStyle)) {
+                addStyle(start, i - 1, segment.loop, prevStyle);
+            }
+            prev = pt;
+            prevStyle = style;
+        }
+        if (start < i - 1) {
+            addStyle(start, i - 1, segment.loop, prevStyle);
+        }
+    }
+    return result;
+}
+function readStyle(options) {
+    return {
+        backgroundColor: options.backgroundColor,
+        borderCapStyle: options.borderCapStyle,
+        borderDash: options.borderDash,
+        borderDashOffset: options.borderDashOffset,
+        borderJoinStyle: options.borderJoinStyle,
+        borderWidth: options.borderWidth,
+        borderColor: options.borderColor
+    };
+}
+function styleChanged(style, prevStyle) {
+    if (!prevStyle) {
+        return false;
+    }
+    const cache = [];
+    const replacer = function(key, value) {
+        if (!isPatternOrGradient(value)) {
+            return value;
+        }
+        if (!cache.includes(value)) {
+            cache.push(value);
+        }
+        return cache.indexOf(value);
+    };
+    return JSON.stringify(style, replacer) !== JSON.stringify(prevStyle, replacer);
+}
+
+exports.HALF_PI = HALF_PI;
+exports.INFINITY = INFINITY;
+exports.PI = PI;
+exports.PITAU = PITAU;
+exports.QUARTER_PI = QUARTER_PI;
+exports.RAD_PER_DEG = RAD_PER_DEG;
+exports.TAU = TAU;
+exports.TWO_THIRDS_PI = TWO_THIRDS_PI;
+exports.Ticks = Ticks;
+exports._addGrace = _addGrace;
+exports._alignPixel = _alignPixel;
+exports._alignStartEnd = _alignStartEnd;
+exports._angleBetween = _angleBetween;
+exports._angleDiff = _angleDiff;
+exports._arrayUnique = _arrayUnique;
+exports._attachContext = _attachContext;
+exports._bezierCurveTo = _bezierCurveTo;
+exports._bezierInterpolation = _bezierInterpolation;
+exports._boundSegment = _boundSegment;
+exports._boundSegments = _boundSegments;
+exports._capitalize = _capitalize;
+exports._computeSegments = _computeSegments;
+exports._createResolver = _createResolver;
+exports._decimalPlaces = _decimalPlaces;
+exports._deprecated = _deprecated;
+exports._descriptors = _descriptors;
+exports._elementsEqual = _elementsEqual;
+exports._factorize = _factorize;
+exports._filterBetween = _filterBetween;
+exports._getParentNode = _getParentNode;
+exports._getStartAndCountOfVisiblePoints = _getStartAndCountOfVisiblePoints;
+exports._int16Range = _int16Range;
+exports._isBetween = _isBetween;
+exports._isClickEvent = _isClickEvent;
+exports._isDomSupported = _isDomSupported;
+exports._isPointInArea = _isPointInArea;
+exports._limitValue = _limitValue;
+exports._longestText = _longestText;
+exports._lookup = _lookup;
+exports._lookupByKey = _lookupByKey;
+exports._measureText = _measureText;
+exports._merger = _merger;
+exports._mergerIf = _mergerIf;
+exports._normalizeAngle = _normalizeAngle;
+exports._parseObjectDataRadialScale = _parseObjectDataRadialScale;
+exports._pointInLine = _pointInLine;
+exports._readValueToProps = _readValueToProps;
+exports._rlookupByKey = _rlookupByKey;
+exports._scaleRangesChanged = _scaleRangesChanged;
+exports._setMinAndMaxByKey = _setMinAndMaxByKey;
+exports._splitKey = _splitKey;
+exports._steppedInterpolation = _steppedInterpolation;
+exports._steppedLineTo = _steppedLineTo;
+exports._textX = _textX;
+exports._toLeftRightCenter = _toLeftRightCenter;
+exports._updateBezierControlPoints = _updateBezierControlPoints;
+exports.addRoundedRectPath = addRoundedRectPath;
+exports.almostEquals = almostEquals;
+exports.almostWhole = almostWhole;
+exports.callback = callback;
+exports.clearCanvas = clearCanvas;
+exports.clipArea = clipArea;
+exports.clone = clone;
+exports.color = color;
+exports.createContext = createContext;
+exports.debounce = debounce;
+exports.defaults = defaults;
+exports.defined = defined;
+exports.descriptors = descriptors;
+exports.distanceBetweenPoints = distanceBetweenPoints;
+exports.drawPoint = drawPoint;
+exports.drawPointLegend = drawPointLegend;
+exports.each = each;
+exports.effects = effects;
+exports.finiteOrDefault = finiteOrDefault;
+exports.fontString = fontString;
+exports.formatNumber = formatNumber;
+exports.getAngleFromPoint = getAngleFromPoint;
+exports.getHoverColor = getHoverColor;
+exports.getMaximumSize = getMaximumSize;
+exports.getRelativePosition = getRelativePosition;
+exports.getRtlAdapter = getRtlAdapter;
+exports.getStyle = getStyle;
+exports.isArray = isArray;
+exports.isFunction = isFunction;
+exports.isNullOrUndef = isNullOrUndef;
+exports.isNumber = isNumber;
+exports.isNumberFinite = isNumberFinite;
+exports.isObject = isObject;
+exports.isPatternOrGradient = isPatternOrGradient;
+exports.listenArrayEvents = listenArrayEvents;
+exports.log10 = log10;
+exports.merge = merge;
+exports.mergeIf = mergeIf;
+exports.niceNum = niceNum;
+exports.noop = noop;
+exports.overrideTextDirection = overrideTextDirection;
+exports.overrides = overrides;
+exports.readUsedSize = readUsedSize;
+exports.renderText = renderText;
+exports.requestAnimFrame = requestAnimFrame;
+exports.resolve = resolve;
+exports.resolveObjectKey = resolveObjectKey;
+exports.restoreTextDirection = restoreTextDirection;
+exports.retinaScale = retinaScale;
+exports.setsEqual = setsEqual;
+exports.sign = sign;
+exports.splineCurve = splineCurve;
+exports.splineCurveMonotone = splineCurveMonotone;
+exports.supportsEventListenerOptions = supportsEventListenerOptions;
+exports.throttled = throttled;
+exports.toDegrees = toDegrees;
+exports.toDimension = toDimension;
+exports.toFont = toFont;
+exports.toFontString = toFontString;
+exports.toLineHeight = toLineHeight;
+exports.toPadding = toPadding;
+exports.toPercentage = toPercentage;
+exports.toRadians = toRadians;
+exports.toTRBL = toTRBL;
+exports.toTRBLCorners = toTRBLCorners;
+exports.uid = uid;
+exports.unclipArea = unclipArea;
+exports.unlistenArrayEvents = unlistenArrayEvents;
+exports.valueOrDefault = valueOrDefault;
+
+
+},{"@kurkle/color":2}],10:[function(require,module,exports){
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).dayjs=e()}(this,(function(){"use strict";var t=1e3,e=6e4,n=36e5,r="millisecond",i="second",s="minute",u="hour",a="day",o="week",c="month",f="quarter",h="year",d="date",l="Invalid Date",$=/^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/,y=/\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,M={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_"),ordinal:function(t){var e=["th","st","nd","rd"],n=t%100;return"["+t+(e[(n-20)%10]||e[n]||e[0])+"]"}},m=function(t,e,n){var r=String(t);return!r||r.length>=e?t:""+Array(e+1-r.length).join(n)+t},v={s:m,z:function(t){var e=-t.utcOffset(),n=Math.abs(e),r=Math.floor(n/60),i=n%60;return(e<=0?"+":"-")+m(r,2,"0")+":"+m(i,2,"0")},m:function t(e,n){if(e.date()<n.date())return-t(n,e);var r=12*(n.year()-e.year())+(n.month()-e.month()),i=e.clone().add(r,c),s=n-i<0,u=e.clone().add(r+(s?-1:1),c);return+(-(r+(n-i)/(s?i-u:u-i))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(t){return{M:c,y:h,w:o,d:a,D:d,h:u,m:s,s:i,ms:r,Q:f}[t]||String(t||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},g="en",D={};D[g]=M;var p="$isDayjsObject",S=function(t){return t instanceof _||!(!t||!t[p])},w=function t(e,n,r){var i;if(!e)return g;if("string"==typeof e){var s=e.toLowerCase();D[s]&&(i=s),n&&(D[s]=n,i=s);var u=e.split("-");if(!i&&u.length>1)return t(u[0])}else{var a=e.name;D[a]=e,i=a}return!r&&i&&(g=i),i||!r&&g},O=function(t,e){if(S(t))return t.clone();var n="object"==typeof e?e:{};return n.date=t,n.args=arguments,new _(n)},b=v;b.l=w,b.i=S,b.w=function(t,e){return O(t,{locale:e.$L,utc:e.$u,x:e.$x,$offset:e.$offset})};var _=function(){function M(t){this.$L=w(t.locale,null,!0),this.parse(t),this.$x=this.$x||t.x||{},this[p]=!0}var m=M.prototype;return m.parse=function(t){this.$d=function(t){var e=t.date,n=t.utc;if(null===e)return new Date(NaN);if(b.u(e))return new Date;if(e instanceof Date)return new Date(e);if("string"==typeof e&&!/Z$/i.test(e)){var r=e.match($);if(r){var i=r[2]-1||0,s=(r[7]||"0").substring(0,3);return n?new Date(Date.UTC(r[1],i,r[3]||1,r[4]||0,r[5]||0,r[6]||0,s)):new Date(r[1],i,r[3]||1,r[4]||0,r[5]||0,r[6]||0,s)}}return new Date(e)}(t),this.init()},m.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds()},m.$utils=function(){return b},m.isValid=function(){return!(this.$d.toString()===l)},m.isSame=function(t,e){var n=O(t);return this.startOf(e)<=n&&n<=this.endOf(e)},m.isAfter=function(t,e){return O(t)<this.startOf(e)},m.isBefore=function(t,e){return this.endOf(e)<O(t)},m.$g=function(t,e,n){return b.u(t)?this[e]:this.set(n,t)},m.unix=function(){return Math.floor(this.valueOf()/1e3)},m.valueOf=function(){return this.$d.getTime()},m.startOf=function(t,e){var n=this,r=!!b.u(e)||e,f=b.p(t),l=function(t,e){var i=b.w(n.$u?Date.UTC(n.$y,e,t):new Date(n.$y,e,t),n);return r?i:i.endOf(a)},$=function(t,e){return b.w(n.toDate()[t].apply(n.toDate("s"),(r?[0,0,0,0]:[23,59,59,999]).slice(e)),n)},y=this.$W,M=this.$M,m=this.$D,v="set"+(this.$u?"UTC":"");switch(f){case h:return r?l(1,0):l(31,11);case c:return r?l(1,M):l(0,M+1);case o:var g=this.$locale().weekStart||0,D=(y<g?y+7:y)-g;return l(r?m-D:m+(6-D),M);case a:case d:return $(v+"Hours",0);case u:return $(v+"Minutes",1);case s:return $(v+"Seconds",2);case i:return $(v+"Milliseconds",3);default:return this.clone()}},m.endOf=function(t){return this.startOf(t,!1)},m.$set=function(t,e){var n,o=b.p(t),f="set"+(this.$u?"UTC":""),l=(n={},n[a]=f+"Date",n[d]=f+"Date",n[c]=f+"Month",n[h]=f+"FullYear",n[u]=f+"Hours",n[s]=f+"Minutes",n[i]=f+"Seconds",n[r]=f+"Milliseconds",n)[o],$=o===a?this.$D+(e-this.$W):e;if(o===c||o===h){var y=this.clone().set(d,1);y.$d[l]($),y.init(),this.$d=y.set(d,Math.min(this.$D,y.daysInMonth())).$d}else l&&this.$d[l]($);return this.init(),this},m.set=function(t,e){return this.clone().$set(t,e)},m.get=function(t){return this[b.p(t)]()},m.add=function(r,f){var d,l=this;r=Number(r);var $=b.p(f),y=function(t){var e=O(l);return b.w(e.date(e.date()+Math.round(t*r)),l)};if($===c)return this.set(c,this.$M+r);if($===h)return this.set(h,this.$y+r);if($===a)return y(1);if($===o)return y(7);var M=(d={},d[s]=e,d[u]=n,d[i]=t,d)[$]||1,m=this.$d.getTime()+r*M;return b.w(m,this)},m.subtract=function(t,e){return this.add(-1*t,e)},m.format=function(t){var e=this,n=this.$locale();if(!this.isValid())return n.invalidDate||l;var r=t||"YYYY-MM-DDTHH:mm:ssZ",i=b.z(this),s=this.$H,u=this.$m,a=this.$M,o=n.weekdays,c=n.months,f=n.meridiem,h=function(t,n,i,s){return t&&(t[n]||t(e,r))||i[n].slice(0,s)},d=function(t){return b.s(s%12||12,t,"0")},$=f||function(t,e,n){var r=t<12?"AM":"PM";return n?r.toLowerCase():r};return r.replace(y,(function(t,r){return r||function(t){switch(t){case"YY":return String(e.$y).slice(-2);case"YYYY":return b.s(e.$y,4,"0");case"M":return a+1;case"MM":return b.s(a+1,2,"0");case"MMM":return h(n.monthsShort,a,c,3);case"MMMM":return h(c,a);case"D":return e.$D;case"DD":return b.s(e.$D,2,"0");case"d":return String(e.$W);case"dd":return h(n.weekdaysMin,e.$W,o,2);case"ddd":return h(n.weekdaysShort,e.$W,o,3);case"dddd":return o[e.$W];case"H":return String(s);case"HH":return b.s(s,2,"0");case"h":return d(1);case"hh":return d(2);case"a":return $(s,u,!0);case"A":return $(s,u,!1);case"m":return String(u);case"mm":return b.s(u,2,"0");case"s":return String(e.$s);case"ss":return b.s(e.$s,2,"0");case"SSS":return b.s(e.$ms,3,"0");case"Z":return i}return null}(t)||i.replace(":","")}))},m.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},m.diff=function(r,d,l){var $,y=this,M=b.p(d),m=O(r),v=(m.utcOffset()-this.utcOffset())*e,g=this-m,D=function(){return b.m(y,m)};switch(M){case h:$=D()/12;break;case c:$=D();break;case f:$=D()/3;break;case o:$=(g-v)/6048e5;break;case a:$=(g-v)/864e5;break;case u:$=g/n;break;case s:$=g/e;break;case i:$=g/t;break;default:$=g}return l?$:b.a($)},m.daysInMonth=function(){return this.endOf(c).$D},m.$locale=function(){return D[this.$L]},m.locale=function(t,e){if(!t)return this.$L;var n=this.clone(),r=w(t,e,!0);return r&&(n.$L=r),n},m.clone=function(){return b.w(this.$d,this)},m.toDate=function(){return new Date(this.valueOf())},m.toJSON=function(){return this.isValid()?this.toISOString():null},m.toISOString=function(){return this.$d.toISOString()},m.toString=function(){return this.$d.toUTCString()},M}(),k=_.prototype;return O.prototype=k,[["$ms",r],["$s",i],["$m",s],["$H",u],["$W",a],["$M",c],["$y",h],["$D",d]].forEach((function(t){k[t[1]]=function(e){return this.$g(e,t[0],t[1])}})),O.extend=function(t,e){return t.$i||(t(e,_,O),t.$i=!0),O},O.locale=w,O.isDayjs=S,O.unix=function(t){return O(1e3*t)},O.en=D[g],O.Ls=D,O.p={},O}));
+},{}],11:[function(require,module,exports){
+!function(r,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(r="undefined"!=typeof globalThis?globalThis:r||self).dayjs_plugin_relativeTime=e()}(this,(function(){"use strict";return function(r,e,t){r=r||{};var n=e.prototype,o={future:"in %s",past:"%s ago",s:"a few seconds",m:"a minute",mm:"%d minutes",h:"an hour",hh:"%d hours",d:"a day",dd:"%d days",M:"a month",MM:"%d months",y:"a year",yy:"%d years"};function i(r,e,t,o){return n.fromToBase(r,e,t,o)}t.en.relativeTime=o,n.fromToBase=function(e,n,i,d,u){for(var f,a,s,l=i.$locale().relativeTime||o,h=r.thresholds||[{l:"s",r:44,d:"second"},{l:"m",r:89},{l:"mm",r:44,d:"minute"},{l:"h",r:89},{l:"hh",r:21,d:"hour"},{l:"d",r:35},{l:"dd",r:25,d:"day"},{l:"M",r:45},{l:"MM",r:10,d:"month"},{l:"y",r:17},{l:"yy",d:"year"}],m=h.length,c=0;c<m;c+=1){var y=h[c];y.d&&(f=d?t(e).diff(i,y.d,!0):i.diff(e,y.d,!0));var p=(r.rounding||Math.round)(Math.abs(f));if(s=f>0,p<=y.r||!y.r){p<=1&&c>0&&(y=h[c-1]);var v=l[y.l];u&&(p=u(""+p)),a="string"==typeof v?v.replace("%d",p):v(p,n,y.l,s);break}}if(n)return a;var M=s?l.future:l.past;return"function"==typeof M?M(a):M.replace("%s",a)},n.to=function(r,e){return i(r,e,this,!0)},n.from=function(r,e){return i(r,e,this)};var d=function(r){return r.$u?t.utc():t()};n.toNow=function(r){return this.to(d(this),r)},n.fromNow=function(r){return this.from(d(this),r)}}}));
+},{}],12:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -2750,7 +17817,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":7,"_process":239}],7:[function(require,module,exports){
+},{"./common":13,"_process":187}],13:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3026,7 +18093,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":238}],8:[function(require,module,exports){
+},{"ms":186}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasCORS = void 0;
@@ -3042,7 +18109,7 @@ catch (err) {
 }
 exports.hasCORS = value;
 
-},{}],9:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 // imported from https://github.com/galkn/querystring
 /**
@@ -3083,7 +18150,7 @@ function decode(qs) {
 }
 exports.decode = decode;
 
-},{}],10:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = void 0;
@@ -3138,7 +18205,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],11:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // imported from https://github.com/unshiftio/yeast
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3195,7 +18262,7 @@ exports.yeast = yeast;
 for (; i < length; i++)
     map[alphabet[i]] = i;
 
-},{}],12:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.globalThisShim = void 0;
@@ -3211,7 +18278,7 @@ exports.globalThisShim = (() => {
     }
 })();
 
-},{}],13:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nextTick = exports.parse = exports.installTimerFunctions = exports.transports = exports.Transport = exports.protocol = exports.Socket = void 0;
@@ -3229,7 +18296,7 @@ Object.defineProperty(exports, "parse", { enumerable: true, get: function () { r
 var websocket_constructor_js_1 = require("./transports/websocket-constructor.js");
 Object.defineProperty(exports, "nextTick", { enumerable: true, get: function () { return websocket_constructor_js_1.nextTick; } });
 
-},{"./contrib/parseuri.js":10,"./socket.js":14,"./transport.js":15,"./transports/index.js":16,"./transports/websocket-constructor.js":18,"./util.js":21}],14:[function(require,module,exports){
+},{"./contrib/parseuri.js":16,"./socket.js":20,"./transport.js":21,"./transports/index.js":22,"./transports/websocket-constructor.js":24,"./util.js":27}],20:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -3844,7 +18911,7 @@ class Socket extends component_emitter_1.Emitter {
 exports.Socket = Socket;
 Socket.protocol = engine_io_parser_1.protocol;
 
-},{"./contrib/parseqs.js":9,"./contrib/parseuri.js":10,"./transports/index.js":16,"./util.js":21,"@socket.io/component-emitter":2,"debug":6,"engine.io-parser":26}],15:[function(require,module,exports){
+},{"./contrib/parseqs.js":15,"./contrib/parseuri.js":16,"./transports/index.js":22,"./util.js":27,"@socket.io/component-emitter":3,"debug":12,"engine.io-parser":32}],21:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -3972,7 +19039,7 @@ class Transport extends component_emitter_1.Emitter {
 }
 exports.Transport = Transport;
 
-},{"./util.js":21,"@socket.io/component-emitter":2,"debug":6,"engine.io-parser":26}],16:[function(require,module,exports){
+},{"./util.js":27,"@socket.io/component-emitter":3,"debug":12,"engine.io-parser":32}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transports = void 0;
@@ -3983,7 +19050,7 @@ exports.transports = {
     polling: polling_js_1.Polling
 };
 
-},{"./polling.js":17,"./websocket.js":19}],17:[function(require,module,exports){
+},{"./polling.js":23,"./websocket.js":25}],23:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -4412,7 +19479,7 @@ function unloadHandler() {
     }
 }
 
-},{"../contrib/parseqs.js":9,"../contrib/yeast.js":11,"../globalThis.js":12,"../transport.js":15,"../util.js":21,"./xmlhttprequest.js":20,"@socket.io/component-emitter":2,"debug":6,"engine.io-parser":26}],18:[function(require,module,exports){
+},{"../contrib/parseqs.js":15,"../contrib/yeast.js":17,"../globalThis.js":18,"../transport.js":21,"../util.js":27,"./xmlhttprequest.js":26,"@socket.io/component-emitter":3,"debug":12,"engine.io-parser":32}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultBinaryType = exports.usingBrowserWebSocket = exports.WebSocket = exports.nextTick = void 0;
@@ -4430,7 +19497,7 @@ exports.WebSocket = globalThis_js_1.globalThisShim.WebSocket || globalThis_js_1.
 exports.usingBrowserWebSocket = true;
 exports.defaultBinaryType = "arraybuffer";
 
-},{"../globalThis.js":12}],19:[function(require,module,exports){
+},{"../globalThis.js":18}],25:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -4632,7 +19699,7 @@ class WS extends transport_js_1.Transport {
 exports.WS = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../contrib/parseqs.js":9,"../contrib/yeast.js":11,"../transport.js":15,"../util.js":21,"./websocket-constructor.js":18,"buffer":5,"debug":6,"engine.io-parser":26}],20:[function(require,module,exports){
+},{"../contrib/parseqs.js":15,"../contrib/yeast.js":17,"../transport.js":21,"../util.js":27,"./websocket-constructor.js":24,"buffer":6,"debug":12,"engine.io-parser":32}],26:[function(require,module,exports){
 "use strict";
 // browser shim for xmlhttprequest module
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -4657,7 +19724,7 @@ function XHR(opts) {
 }
 exports.XHR = XHR;
 
-},{"../contrib/has-cors.js":8,"../globalThis.js":12}],21:[function(require,module,exports){
+},{"../contrib/has-cors.js":14,"../globalThis.js":18}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.byteLength = exports.installTimerFunctions = exports.pick = void 0;
@@ -4717,7 +19784,7 @@ function utf8Length(str) {
     return length;
 }
 
-},{"./globalThis.js":12}],22:[function(require,module,exports){
+},{"./globalThis.js":18}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ERROR_PACKET = exports.PACKET_TYPES_REVERSE = exports.PACKET_TYPES = void 0;
@@ -4738,7 +19805,7 @@ Object.keys(PACKET_TYPES).forEach(key => {
 const ERROR_PACKET = { type: "error", data: "parser error" };
 exports.ERROR_PACKET = ERROR_PACKET;
 
-},{}],23:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decode = exports.encode = void 0;
@@ -4787,7 +19854,7 @@ const decode = (base64) => {
 };
 exports.decode = decode;
 
-},{}],24:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const commons_js_1 = require("./commons.js");
@@ -4840,7 +19907,7 @@ const mapBinary = (data, binaryType) => {
 };
 exports.default = decodePacket;
 
-},{"./commons.js":22,"./contrib/base64-arraybuffer.js":23}],25:[function(require,module,exports){
+},{"./commons.js":28,"./contrib/base64-arraybuffer.js":29}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const commons_js_1 = require("./commons.js");
@@ -4885,7 +19952,7 @@ const encodeBlobAsBase64 = (data, callback) => {
 };
 exports.default = encodePacket;
 
-},{"./commons.js":22}],26:[function(require,module,exports){
+},{"./commons.js":28}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePayload = exports.decodePacket = exports.encodePayload = exports.encodePacket = exports.protocol = void 0;
@@ -4925,7 +19992,7 @@ const decodePayload = (encodedPayload, binaryType) => {
 exports.decodePayload = decodePayload;
 exports.protocol = 4;
 
-},{"./decodePacket.js":24,"./encodePacket.js":25}],27:[function(require,module,exports){
+},{"./decodePacket.js":30,"./encodePacket.js":31}],33:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5424,7 +20491,7 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],28:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -5454,7 +20521,7 @@ function hash(s, h = hash.BASE) {
 exports.default = hash;
 module.exports = hash;
 
-},{}],29:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5522,7 +20589,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars.runtime":30,"./handlebars/compiler/ast":32,"./handlebars/compiler/base":33,"./handlebars/compiler/compiler":35,"./handlebars/compiler/javascript-compiler":37,"./handlebars/compiler/visitor":40,"./handlebars/no-conflict":57}],30:[function(require,module,exports){
+},{"./handlebars.runtime":36,"./handlebars/compiler/ast":38,"./handlebars/compiler/base":39,"./handlebars/compiler/compiler":41,"./handlebars/compiler/javascript-compiler":43,"./handlebars/compiler/visitor":46,"./handlebars/no-conflict":63}],36:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5590,7 +20657,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":31,"./handlebars/exception":44,"./handlebars/no-conflict":57,"./handlebars/runtime":58,"./handlebars/safe-string":59,"./handlebars/utils":60}],31:[function(require,module,exports){
+},{"./handlebars/base":37,"./handlebars/exception":50,"./handlebars/no-conflict":63,"./handlebars/runtime":64,"./handlebars/safe-string":65,"./handlebars/utils":66}],37:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5708,7 +20775,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":42,"./exception":44,"./helpers":45,"./internal/proto-access":54,"./logger":56,"./utils":60}],32:[function(require,module,exports){
+},{"./decorators":48,"./exception":50,"./helpers":51,"./internal/proto-access":60,"./logger":62,"./utils":66}],38:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5741,7 +20808,7 @@ exports['default'] = AST;
 module.exports = exports['default'];
 
 
-},{}],33:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5800,7 +20867,7 @@ function parse(input, options) {
 }
 
 
-},{"../utils":60,"./helpers":36,"./parser":38,"./whitespace-control":41}],34:[function(require,module,exports){
+},{"../utils":66,"./helpers":42,"./parser":44,"./whitespace-control":47}],40:[function(require,module,exports){
 /* global define */
 'use strict';
 
@@ -5970,7 +21037,7 @@ exports['default'] = CodeGen;
 module.exports = exports['default'];
 
 
-},{"../utils":60,"source-map":72}],35:[function(require,module,exports){
+},{"../utils":66,"source-map":78}],41:[function(require,module,exports){
 /* eslint-disable new-cap */
 
 'use strict';
@@ -6538,7 +21605,7 @@ function transformLiteralToPath(sexpr) {
 }
 
 
-},{"../exception":44,"../utils":60,"./ast":32}],36:[function(require,module,exports){
+},{"../exception":50,"../utils":66,"./ast":38}],42:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6768,7 +21835,7 @@ function preparePartialBlock(open, program, close, locInfo) {
 }
 
 
-},{"../exception":44}],37:[function(require,module,exports){
+},{"../exception":50}],43:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7929,7 +22996,7 @@ exports['default'] = JavaScriptCompiler;
 module.exports = exports['default'];
 
 
-},{"../base":31,"../exception":44,"../utils":60,"./code-gen":34}],38:[function(require,module,exports){
+},{"../base":37,"../exception":50,"../utils":66,"./code-gen":40}],44:[function(require,module,exports){
 // File ignored in coverage tests via setting in .istanbul.yml
 /* Jison generated parser */
 "use strict";
@@ -8668,7 +23735,7 @@ var handlebars = (function () {
 module.exports = exports["default"];
 
 
-},{}],39:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /* eslint-disable new-cap */
 'use strict';
 
@@ -8856,7 +23923,7 @@ PrintVisitor.prototype.HashPair = function (pair) {
 /* eslint-enable new-cap */
 
 
-},{"./visitor":40}],40:[function(require,module,exports){
+},{"./visitor":46}],46:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -8998,7 +24065,7 @@ exports['default'] = Visitor;
 module.exports = exports['default'];
 
 
-},{"../exception":44}],41:[function(require,module,exports){
+},{"../exception":50}],47:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9221,7 +24288,7 @@ exports['default'] = WhitespaceControl;
 module.exports = exports['default'];
 
 
-},{"./visitor":40}],42:[function(require,module,exports){
+},{"./visitor":46}],48:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9239,7 +24306,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":43}],43:[function(require,module,exports){
+},{"./decorators/inline":49}],49:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9270,7 +24337,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":60}],44:[function(require,module,exports){
+},{"../utils":66}],50:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9336,7 +24403,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],45:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9394,7 +24461,7 @@ function moveHelperToHooks(instance, helperName, keepHelper) {
 }
 
 
-},{"./helpers/block-helper-missing":46,"./helpers/each":47,"./helpers/helper-missing":48,"./helpers/if":49,"./helpers/log":50,"./helpers/lookup":51,"./helpers/with":52}],46:[function(require,module,exports){
+},{"./helpers/block-helper-missing":52,"./helpers/each":53,"./helpers/helper-missing":54,"./helpers/if":55,"./helpers/log":56,"./helpers/lookup":57,"./helpers/with":58}],52:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9435,7 +24502,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":60}],47:[function(require,module,exports){
+},{"../utils":66}],53:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -9543,7 +24610,7 @@ module.exports = exports['default'];
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../exception":44,"../utils":60}],48:[function(require,module,exports){
+},{"../exception":50,"../utils":66}],54:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9570,7 +24637,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":44}],49:[function(require,module,exports){
+},{"../exception":50}],55:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9618,7 +24685,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":44,"../utils":60}],50:[function(require,module,exports){
+},{"../exception":50,"../utils":66}],56:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9646,7 +24713,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],51:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9664,7 +24731,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],52:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9709,7 +24776,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":44,"../utils":60}],53:[function(require,module,exports){
+},{"../exception":50,"../utils":66}],59:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9733,7 +24800,7 @@ function createNewLookupObject() {
 }
 
 
-},{"../utils":60}],54:[function(require,module,exports){
+},{"../utils":66}],60:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9808,7 +24875,7 @@ function resetLoggedProperties() {
 }
 
 
-},{"../logger":56,"./create-new-lookup-object":53}],55:[function(require,module,exports){
+},{"../logger":62,"./create-new-lookup-object":59}],61:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9829,7 +24896,7 @@ function wrapHelper(helper, transformOptionsFn) {
 }
 
 
-},{}],56:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -9878,7 +24945,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":60}],57:[function(require,module,exports){
+},{"./utils":66}],63:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -9901,7 +24968,7 @@ module.exports = exports['default'];
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],58:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -10275,7 +25342,7 @@ function passLookupPropertyOption(helper, container) {
 }
 
 
-},{"./base":31,"./exception":44,"./helpers":45,"./internal/proto-access":54,"./internal/wrapHelper":55,"./utils":60}],59:[function(require,module,exports){
+},{"./base":37,"./exception":50,"./helpers":51,"./internal/proto-access":60,"./internal/wrapHelper":61,"./utils":66}],65:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -10292,7 +25359,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],60:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -10418,7 +25485,7 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],61:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 // USAGE:
 // var handlebars = require('handlebars');
 /* eslint-disable no-var */
@@ -10445,7 +25512,7 @@ if (typeof require !== 'undefined' && require.extensions) {
   require.extensions['.hbs'] = extension;
 }
 
-},{"../dist/cjs/handlebars":29,"../dist/cjs/handlebars/compiler/printer":39,"fs":4}],62:[function(require,module,exports){
+},{"../dist/cjs/handlebars":35,"../dist/cjs/handlebars/compiler/printer":45,"fs":5}],68:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -10568,7 +25635,7 @@ ArraySet.prototype.toArray = function ArraySet_toArray() {
 
 exports.ArraySet = ArraySet;
 
-},{"./util":71}],63:[function(require,module,exports){
+},{"./util":77}],69:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -10710,7 +25777,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
   aOutParam.rest = aIndex;
 };
 
-},{"./base64":64}],64:[function(require,module,exports){
+},{"./base64":70}],70:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -10779,7 +25846,7 @@ exports.decode = function (charCode) {
   return -1;
 };
 
-},{}],65:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -10892,7 +25959,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
   return index;
 };
 
-},{}],66:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -10973,7 +26040,7 @@ MappingList.prototype.toArray = function MappingList_toArray() {
 
 exports.MappingList = MappingList;
 
-},{"./util":71}],67:[function(require,module,exports){
+},{"./util":77}],73:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -11089,7 +26156,7 @@ exports.quickSort = function (ary, comparator) {
   doQuickSort(ary, comparator, 0, ary.length - 1);
 };
 
-},{}],68:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -12236,7 +27303,7 @@ IndexedSourceMapConsumer.prototype._parseMappings =
 
 exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
-},{"./array-set":62,"./base64-vlq":63,"./binary-search":65,"./quick-sort":67,"./util":71}],69:[function(require,module,exports){
+},{"./array-set":68,"./base64-vlq":69,"./binary-search":71,"./quick-sort":73,"./util":77}],75:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -12663,7 +27730,7 @@ SourceMapGenerator.prototype.toString =
 
 exports.SourceMapGenerator = SourceMapGenerator;
 
-},{"./array-set":62,"./base64-vlq":63,"./mapping-list":66,"./util":71}],70:[function(require,module,exports){
+},{"./array-set":68,"./base64-vlq":69,"./mapping-list":72,"./util":77}],76:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13078,7 +28145,7 @@ SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSou
 
 exports.SourceNode = SourceNode;
 
-},{"./source-map-generator":69,"./util":71}],71:[function(require,module,exports){
+},{"./source-map-generator":75,"./util":77}],77:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13568,7 +28635,7 @@ function computeSourceURL(sourceRoot, sourceURL, sourceMapURL) {
 }
 exports.computeSourceURL = computeSourceURL;
 
-},{}],72:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -13578,7 +28645,7 @@ exports.SourceMapGenerator = require('./lib/source-map-generator').SourceMapGene
 exports.SourceMapConsumer = require('./lib/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./lib/source-node').SourceNode;
 
-},{"./lib/source-map-consumer":68,"./lib/source-map-generator":69,"./lib/source-node":70}],73:[function(require,module,exports){
+},{"./lib/source-map-consumer":74,"./lib/source-map-generator":75,"./lib/source-node":76}],79:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -13665,16 +28732,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],74:[function(require,module,exports){
-var getNative = require('./_getNative'),
-    root = require('./_root');
-
-/* Built-in method references that are verified to be native. */
-var DataView = getNative(root, 'DataView');
-
-module.exports = DataView;
-
-},{"./_getNative":144,"./_root":186}],75:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 var hashClear = require('./_hashClear'),
     hashDelete = require('./_hashDelete'),
     hashGet = require('./_hashGet'),
@@ -13708,7 +28766,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":153,"./_hashDelete":154,"./_hashGet":155,"./_hashHas":156,"./_hashSet":157}],76:[function(require,module,exports){
+},{"./_hashClear":123,"./_hashDelete":124,"./_hashGet":125,"./_hashHas":126,"./_hashSet":127}],81:[function(require,module,exports){
 var listCacheClear = require('./_listCacheClear'),
     listCacheDelete = require('./_listCacheDelete'),
     listCacheGet = require('./_listCacheGet'),
@@ -13742,7 +28800,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":167,"./_listCacheDelete":168,"./_listCacheGet":169,"./_listCacheHas":170,"./_listCacheSet":171}],77:[function(require,module,exports){
+},{"./_listCacheClear":133,"./_listCacheDelete":134,"./_listCacheGet":135,"./_listCacheHas":136,"./_listCacheSet":137}],82:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
 
@@ -13751,7 +28809,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":144,"./_root":186}],78:[function(require,module,exports){
+},{"./_getNative":118,"./_root":149}],83:[function(require,module,exports){
 var mapCacheClear = require('./_mapCacheClear'),
     mapCacheDelete = require('./_mapCacheDelete'),
     mapCacheGet = require('./_mapCacheGet'),
@@ -13785,54 +28843,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":172,"./_mapCacheDelete":173,"./_mapCacheGet":174,"./_mapCacheHas":175,"./_mapCacheSet":176}],79:[function(require,module,exports){
-var getNative = require('./_getNative'),
-    root = require('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Promise = getNative(root, 'Promise');
-
-module.exports = Promise;
-
-},{"./_getNative":144,"./_root":186}],80:[function(require,module,exports){
-var getNative = require('./_getNative'),
-    root = require('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Set = getNative(root, 'Set');
-
-module.exports = Set;
-
-},{"./_getNative":144,"./_root":186}],81:[function(require,module,exports){
-var ListCache = require('./_ListCache'),
-    stackClear = require('./_stackClear'),
-    stackDelete = require('./_stackDelete'),
-    stackGet = require('./_stackGet'),
-    stackHas = require('./_stackHas'),
-    stackSet = require('./_stackSet');
-
-/**
- * Creates a stack cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Stack(entries) {
-  var data = this.__data__ = new ListCache(entries);
-  this.size = data.size;
-}
-
-// Add methods to `Stack`.
-Stack.prototype.clear = stackClear;
-Stack.prototype['delete'] = stackDelete;
-Stack.prototype.get = stackGet;
-Stack.prototype.has = stackHas;
-Stack.prototype.set = stackSet;
-
-module.exports = Stack;
-
-},{"./_ListCache":76,"./_stackClear":189,"./_stackDelete":190,"./_stackGet":191,"./_stackHas":192,"./_stackSet":193}],82:[function(require,module,exports){
+},{"./_mapCacheClear":138,"./_mapCacheDelete":139,"./_mapCacheGet":140,"./_mapCacheHas":141,"./_mapCacheSet":142}],84:[function(require,module,exports){
 var root = require('./_root');
 
 /** Built-in value references. */
@@ -13840,24 +28851,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":186}],83:[function(require,module,exports){
-var root = require('./_root');
-
-/** Built-in value references. */
-var Uint8Array = root.Uint8Array;
-
-module.exports = Uint8Array;
-
-},{"./_root":186}],84:[function(require,module,exports){
-var getNative = require('./_getNative'),
-    root = require('./_root');
-
-/* Built-in method references that are verified to be native. */
-var WeakMap = getNative(root, 'WeakMap');
-
-module.exports = WeakMap;
-
-},{"./_getNative":144,"./_root":186}],85:[function(require,module,exports){
+},{"./_root":149}],85:[function(require,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -13882,108 +28876,6 @@ module.exports = apply;
 
 },{}],86:[function(require,module,exports){
 /**
- * A specialized version of `_.forEach` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns `array`.
- */
-function arrayEach(array, iteratee) {
-  var index = -1,
-      length = array == null ? 0 : array.length;
-
-  while (++index < length) {
-    if (iteratee(array[index], index, array) === false) {
-      break;
-    }
-  }
-  return array;
-}
-
-module.exports = arrayEach;
-
-},{}],87:[function(require,module,exports){
-/**
- * A specialized version of `_.filter` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} predicate The function invoked per iteration.
- * @returns {Array} Returns the new filtered array.
- */
-function arrayFilter(array, predicate) {
-  var index = -1,
-      length = array == null ? 0 : array.length,
-      resIndex = 0,
-      result = [];
-
-  while (++index < length) {
-    var value = array[index];
-    if (predicate(value, index, array)) {
-      result[resIndex++] = value;
-    }
-  }
-  return result;
-}
-
-module.exports = arrayFilter;
-
-},{}],88:[function(require,module,exports){
-var baseTimes = require('./_baseTimes'),
-    isArguments = require('./isArguments'),
-    isArray = require('./isArray'),
-    isBuffer = require('./isBuffer'),
-    isIndex = require('./_isIndex'),
-    isTypedArray = require('./isTypedArray');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Creates an array of the enumerable property names of the array-like `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @param {boolean} inherited Specify returning inherited property names.
- * @returns {Array} Returns the array of property names.
- */
-function arrayLikeKeys(value, inherited) {
-  var isArr = isArray(value),
-      isArg = !isArr && isArguments(value),
-      isBuff = !isArr && !isArg && isBuffer(value),
-      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
-      skipIndexes = isArr || isArg || isBuff || isType,
-      result = skipIndexes ? baseTimes(value.length, String) : [],
-      length = result.length;
-
-  for (var key in value) {
-    if ((inherited || hasOwnProperty.call(value, key)) &&
-        !(skipIndexes && (
-           // Safari 9 has enumerable `arguments.length` in strict mode.
-           key == 'length' ||
-           // Node.js 0.10 has enumerable non-index properties on buffers.
-           (isBuff && (key == 'offset' || key == 'parent')) ||
-           // PhantomJS 2 has enumerable non-index properties on typed arrays.
-           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
-           // Skip index properties.
-           isIndex(key, length)
-        ))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = arrayLikeKeys;
-
-},{"./_baseTimes":119,"./_isIndex":162,"./isArguments":208,"./isArray":209,"./isBuffer":211,"./isTypedArray":221}],89:[function(require,module,exports){
-/**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
  *
@@ -14005,7 +28897,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],90:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -14027,7 +28919,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],91:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var baseProperty = require('./_baseProperty');
 
 /**
@@ -14041,7 +28933,7 @@ var asciiSize = baseProperty('length');
 
 module.exports = asciiSize;
 
-},{"./_baseProperty":115}],92:[function(require,module,exports){
+},{"./_baseProperty":103}],89:[function(require,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -14055,7 +28947,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],93:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var baseAssignValue = require('./_baseAssignValue'),
     eq = require('./eq');
 
@@ -14085,7 +28977,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":97,"./eq":204}],94:[function(require,module,exports){
+},{"./_baseAssignValue":92,"./eq":163}],91:[function(require,module,exports){
 var eq = require('./eq');
 
 /**
@@ -14108,45 +29000,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":204}],95:[function(require,module,exports){
-var copyObject = require('./_copyObject'),
-    keys = require('./keys');
-
-/**
- * The base implementation of `_.assign` without support for multiple sources
- * or `customizer` functions.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @returns {Object} Returns `object`.
- */
-function baseAssign(object, source) {
-  return object && copyObject(source, keys(source), object);
-}
-
-module.exports = baseAssign;
-
-},{"./_copyObject":133,"./keys":222}],96:[function(require,module,exports){
-var copyObject = require('./_copyObject'),
-    keysIn = require('./keysIn');
-
-/**
- * The base implementation of `_.assignIn` without support for multiple sources
- * or `customizer` functions.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @returns {Object} Returns `object`.
- */
-function baseAssignIn(object, source) {
-  return object && copyObject(source, keysIn(source), object);
-}
-
-module.exports = baseAssignIn;
-
-},{"./_copyObject":133,"./keysIn":223}],97:[function(require,module,exports){
+},{"./eq":163}],92:[function(require,module,exports){
 var defineProperty = require('./_defineProperty');
 
 /**
@@ -14173,207 +29027,31 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":138}],98:[function(require,module,exports){
-var Stack = require('./_Stack'),
-    arrayEach = require('./_arrayEach'),
-    assignValue = require('./_assignValue'),
-    baseAssign = require('./_baseAssign'),
-    baseAssignIn = require('./_baseAssignIn'),
-    cloneBuffer = require('./_cloneBuffer'),
-    copyArray = require('./_copyArray'),
-    copySymbols = require('./_copySymbols'),
-    copySymbolsIn = require('./_copySymbolsIn'),
-    getAllKeys = require('./_getAllKeys'),
-    getAllKeysIn = require('./_getAllKeysIn'),
-    getTag = require('./_getTag'),
-    initCloneArray = require('./_initCloneArray'),
-    initCloneByTag = require('./_initCloneByTag'),
-    initCloneObject = require('./_initCloneObject'),
-    isArray = require('./isArray'),
-    isBuffer = require('./isBuffer'),
-    isMap = require('./isMap'),
-    isObject = require('./isObject'),
-    isSet = require('./isSet'),
-    keys = require('./keys'),
-    keysIn = require('./keysIn');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1,
-    CLONE_FLAT_FLAG = 2,
-    CLONE_SYMBOLS_FLAG = 4;
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    arrayTag = '[object Array]',
-    boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    errorTag = '[object Error]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    objectTag = '[object Object]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    symbolTag = '[object Symbol]',
-    weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/** Used to identify `toStringTag` values supported by `_.clone`. */
-var cloneableTags = {};
-cloneableTags[argsTag] = cloneableTags[arrayTag] =
-cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
-cloneableTags[boolTag] = cloneableTags[dateTag] =
-cloneableTags[float32Tag] = cloneableTags[float64Tag] =
-cloneableTags[int8Tag] = cloneableTags[int16Tag] =
-cloneableTags[int32Tag] = cloneableTags[mapTag] =
-cloneableTags[numberTag] = cloneableTags[objectTag] =
-cloneableTags[regexpTag] = cloneableTags[setTag] =
-cloneableTags[stringTag] = cloneableTags[symbolTag] =
-cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
-cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
-cloneableTags[errorTag] = cloneableTags[funcTag] =
-cloneableTags[weakMapTag] = false;
-
+},{"./_defineProperty":114}],93:[function(require,module,exports){
 /**
- * The base implementation of `_.clone` and `_.cloneDeep` which tracks
- * traversed objects.
+ * The base implementation of `_.clamp` which doesn't coerce arguments.
  *
  * @private
- * @param {*} value The value to clone.
- * @param {boolean} bitmask The bitmask flags.
- *  1 - Deep clone
- *  2 - Flatten inherited properties
- *  4 - Clone symbols
- * @param {Function} [customizer] The function to customize cloning.
- * @param {string} [key] The key of `value`.
- * @param {Object} [object] The parent object of `value`.
- * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
- * @returns {*} Returns the cloned value.
+ * @param {number} number The number to clamp.
+ * @param {number} [lower] The lower bound.
+ * @param {number} upper The upper bound.
+ * @returns {number} Returns the clamped number.
  */
-function baseClone(value, bitmask, customizer, key, object, stack) {
-  var result,
-      isDeep = bitmask & CLONE_DEEP_FLAG,
-      isFlat = bitmask & CLONE_FLAT_FLAG,
-      isFull = bitmask & CLONE_SYMBOLS_FLAG;
-
-  if (customizer) {
-    result = object ? customizer(value, key, object, stack) : customizer(value);
-  }
-  if (result !== undefined) {
-    return result;
-  }
-  if (!isObject(value)) {
-    return value;
-  }
-  var isArr = isArray(value);
-  if (isArr) {
-    result = initCloneArray(value);
-    if (!isDeep) {
-      return copyArray(value, result);
+function baseClamp(number, lower, upper) {
+  if (number === number) {
+    if (upper !== undefined) {
+      number = number <= upper ? number : upper;
     }
-  } else {
-    var tag = getTag(value),
-        isFunc = tag == funcTag || tag == genTag;
-
-    if (isBuffer(value)) {
-      return cloneBuffer(value, isDeep);
-    }
-    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
-      result = (isFlat || isFunc) ? {} : initCloneObject(value);
-      if (!isDeep) {
-        return isFlat
-          ? copySymbolsIn(value, baseAssignIn(result, value))
-          : copySymbols(value, baseAssign(result, value));
-      }
-    } else {
-      if (!cloneableTags[tag]) {
-        return object ? value : {};
-      }
-      result = initCloneByTag(value, tag, isDeep);
+    if (lower !== undefined) {
+      number = number >= lower ? number : lower;
     }
   }
-  // Check for circular references and return its corresponding clone.
-  stack || (stack = new Stack);
-  var stacked = stack.get(value);
-  if (stacked) {
-    return stacked;
-  }
-  stack.set(value, result);
-
-  if (isSet(value)) {
-    value.forEach(function(subValue) {
-      result.add(baseClone(subValue, bitmask, customizer, subValue, value, stack));
-    });
-  } else if (isMap(value)) {
-    value.forEach(function(subValue, key) {
-      result.set(key, baseClone(subValue, bitmask, customizer, key, value, stack));
-    });
-  }
-
-  var keysFunc = isFull
-    ? (isFlat ? getAllKeysIn : getAllKeys)
-    : (isFlat ? keysIn : keys);
-
-  var props = isArr ? undefined : keysFunc(value);
-  arrayEach(props || value, function(subValue, key) {
-    if (props) {
-      key = subValue;
-      subValue = value[key];
-    }
-    // Recursively populate clone (susceptible to call stack limits).
-    assignValue(result, key, baseClone(subValue, bitmask, customizer, key, value, stack));
-  });
-  return result;
+  return number;
 }
 
-module.exports = baseClone;
+module.exports = baseClamp;
 
-},{"./_Stack":81,"./_arrayEach":86,"./_assignValue":93,"./_baseAssign":95,"./_baseAssignIn":96,"./_cloneBuffer":127,"./_copyArray":132,"./_copySymbols":134,"./_copySymbolsIn":135,"./_getAllKeys":141,"./_getAllKeysIn":142,"./_getTag":149,"./_initCloneArray":158,"./_initCloneByTag":159,"./_initCloneObject":160,"./isArray":209,"./isBuffer":211,"./isMap":214,"./isObject":215,"./isSet":219,"./keys":222,"./keysIn":223}],99:[function(require,module,exports){
-var isObject = require('./isObject');
-
-/** Built-in value references. */
-var objectCreate = Object.create;
-
-/**
- * The base implementation of `_.create` without support for assigning
- * properties to the created object.
- *
- * @private
- * @param {Object} proto The object to inherit from.
- * @returns {Object} Returns the new object.
- */
-var baseCreate = (function() {
-  function object() {}
-  return function(proto) {
-    if (!isObject(proto)) {
-      return {};
-    }
-    if (objectCreate) {
-      return objectCreate(proto);
-    }
-    object.prototype = proto;
-    var result = new object;
-    object.prototype = undefined;
-    return result;
-  };
-}());
-
-module.exports = baseCreate;
-
-},{"./isObject":215}],100:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 var arrayPush = require('./_arrayPush'),
     isFlattenable = require('./_isFlattenable');
 
@@ -14413,7 +29091,7 @@ function baseFlatten(array, depth, predicate, isStrict, result) {
 
 module.exports = baseFlatten;
 
-},{"./_arrayPush":90,"./_isFlattenable":161}],101:[function(require,module,exports){
+},{"./_arrayPush":87,"./_isFlattenable":128}],95:[function(require,module,exports){
 var castPath = require('./_castPath'),
     toKey = require('./_toKey');
 
@@ -14439,29 +29117,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":124,"./_toKey":197}],102:[function(require,module,exports){
-var arrayPush = require('./_arrayPush'),
-    isArray = require('./isArray');
-
-/**
- * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
- * `keysFunc` and `symbolsFunc` to get the enumerable property names and
- * symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Function} keysFunc The function to get the keys of `object`.
- * @param {Function} symbolsFunc The function to get the symbols of `object`.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function baseGetAllKeys(object, keysFunc, symbolsFunc) {
-  var result = keysFunc(object);
-  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
-}
-
-module.exports = baseGetAllKeys;
-
-},{"./_arrayPush":90,"./isArray":209}],103:[function(require,module,exports){
+},{"./_castPath":111,"./_toKey":155}],96:[function(require,module,exports){
 var Symbol = require('./_Symbol'),
     getRawTag = require('./_getRawTag'),
     objectToString = require('./_objectToString');
@@ -14491,7 +29147,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":82,"./_getRawTag":146,"./_objectToString":182}],104:[function(require,module,exports){
+},{"./_Symbol":84,"./_getRawTag":119,"./_objectToString":146}],97:[function(require,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -14506,7 +29162,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],105:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -14526,27 +29182,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":103,"./isObjectLike":216}],106:[function(require,module,exports){
-var getTag = require('./_getTag'),
-    isObjectLike = require('./isObjectLike');
-
-/** `Object#toString` result references. */
-var mapTag = '[object Map]';
-
-/**
- * The base implementation of `_.isMap` without Node.js optimizations.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a map, else `false`.
- */
-function baseIsMap(value) {
-  return isObjectLike(value) && getTag(value) == mapTag;
-}
-
-module.exports = baseIsMap;
-
-},{"./_getTag":149,"./isObjectLike":216}],107:[function(require,module,exports){
+},{"./_baseGetTag":96,"./isObjectLike":172}],99:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isMasked = require('./_isMasked'),
     isObject = require('./isObject'),
@@ -14595,7 +29231,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":165,"./_toSource":198,"./isFunction":212,"./isObject":215}],108:[function(require,module,exports){
+},{"./_isMasked":132,"./_toSource":156,"./isFunction":169,"./isObject":171}],100:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -14615,156 +29251,7 @@ function baseIsRegExp(value) {
 
 module.exports = baseIsRegExp;
 
-},{"./_baseGetTag":103,"./isObjectLike":216}],109:[function(require,module,exports){
-var getTag = require('./_getTag'),
-    isObjectLike = require('./isObjectLike');
-
-/** `Object#toString` result references. */
-var setTag = '[object Set]';
-
-/**
- * The base implementation of `_.isSet` without Node.js optimizations.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a set, else `false`.
- */
-function baseIsSet(value) {
-  return isObjectLike(value) && getTag(value) == setTag;
-}
-
-module.exports = baseIsSet;
-
-},{"./_getTag":149,"./isObjectLike":216}],110:[function(require,module,exports){
-var baseGetTag = require('./_baseGetTag'),
-    isLength = require('./isLength'),
-    isObjectLike = require('./isObjectLike');
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    arrayTag = '[object Array]',
-    boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    errorTag = '[object Error]',
-    funcTag = '[object Function]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    objectTag = '[object Object]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/** Used to identify `toStringTag` values of typed arrays. */
-var typedArrayTags = {};
-typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
-typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
-typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
-typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
-typedArrayTags[uint32Tag] = true;
-typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
-typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
-typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
-typedArrayTags[errorTag] = typedArrayTags[funcTag] =
-typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
-typedArrayTags[setTag] = typedArrayTags[stringTag] =
-typedArrayTags[weakMapTag] = false;
-
-/**
- * The base implementation of `_.isTypedArray` without Node.js optimizations.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- */
-function baseIsTypedArray(value) {
-  return isObjectLike(value) &&
-    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
-}
-
-module.exports = baseIsTypedArray;
-
-},{"./_baseGetTag":103,"./isLength":213,"./isObjectLike":216}],111:[function(require,module,exports){
-var isPrototype = require('./_isPrototype'),
-    nativeKeys = require('./_nativeKeys');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeys(object) {
-  if (!isPrototype(object)) {
-    return nativeKeys(object);
-  }
-  var result = [];
-  for (var key in Object(object)) {
-    if (hasOwnProperty.call(object, key) && key != 'constructor') {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = baseKeys;
-
-},{"./_isPrototype":166,"./_nativeKeys":179}],112:[function(require,module,exports){
-var isObject = require('./isObject'),
-    isPrototype = require('./_isPrototype'),
-    nativeKeysIn = require('./_nativeKeysIn');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeysIn(object) {
-  if (!isObject(object)) {
-    return nativeKeysIn(object);
-  }
-  var isProto = isPrototype(object),
-      result = [];
-
-  for (var key in object) {
-    if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = baseKeysIn;
-
-},{"./_isPrototype":166,"./_nativeKeysIn":180,"./isObject":215}],113:[function(require,module,exports){
+},{"./_baseGetTag":96,"./isObjectLike":172}],101:[function(require,module,exports){
 var basePickBy = require('./_basePickBy'),
     hasIn = require('./hasIn');
 
@@ -14785,7 +29272,7 @@ function basePick(object, paths) {
 
 module.exports = basePick;
 
-},{"./_basePickBy":114,"./hasIn":206}],114:[function(require,module,exports){
+},{"./_basePickBy":102,"./hasIn":165}],102:[function(require,module,exports){
 var baseGet = require('./_baseGet'),
     baseSet = require('./_baseSet'),
     castPath = require('./_castPath');
@@ -14817,7 +29304,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":101,"./_baseSet":116,"./_castPath":124}],115:[function(require,module,exports){
+},{"./_baseGet":95,"./_baseSet":104,"./_castPath":111}],103:[function(require,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -14833,7 +29320,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],116:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     castPath = require('./_castPath'),
     isIndex = require('./_isIndex'),
@@ -14886,7 +29373,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":93,"./_castPath":124,"./_isIndex":162,"./_toKey":197,"./isObject":215}],117:[function(require,module,exports){
+},{"./_assignValue":90,"./_castPath":111,"./_isIndex":129,"./_toKey":155,"./isObject":171}],105:[function(require,module,exports){
 var constant = require('./constant'),
     defineProperty = require('./_defineProperty'),
     identity = require('./identity');
@@ -14910,7 +29397,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":138,"./constant":202,"./identity":207}],118:[function(require,module,exports){
+},{"./_defineProperty":114,"./constant":161,"./identity":166}],106:[function(require,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -14943,29 +29430,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],119:[function(require,module,exports){
-/**
- * The base implementation of `_.times` without support for iteratee shorthands
- * or max array length checks.
- *
- * @private
- * @param {number} n The number of times to invoke `iteratee`.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the array of results.
- */
-function baseTimes(n, iteratee) {
-  var index = -1,
-      result = Array(n);
-
-  while (++index < n) {
-    result[index] = iteratee(index);
-  }
-  return result;
-}
-
-module.exports = baseTimes;
-
-},{}],120:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 var Symbol = require('./_Symbol'),
     arrayMap = require('./_arrayMap'),
     isArray = require('./isArray'),
@@ -15004,7 +29469,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":82,"./_arrayMap":89,"./isArray":209,"./isSymbol":220}],121:[function(require,module,exports){
+},{"./_Symbol":84,"./_arrayMap":86,"./isArray":168,"./isSymbol":174}],108:[function(require,module,exports){
 var trimmedEndIndex = require('./_trimmedEndIndex');
 
 /** Used to match leading whitespace. */
@@ -15025,7 +29490,7 @@ function baseTrim(string) {
 
 module.exports = baseTrim;
 
-},{"./_trimmedEndIndex":199}],122:[function(require,module,exports){
+},{"./_trimmedEndIndex":157}],109:[function(require,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -15041,7 +29506,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],123:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var castPath = require('./_castPath'),
     last = require('./last'),
     parent = require('./_parent'),
@@ -15063,7 +29528,7 @@ function baseUnset(object, path) {
 
 module.exports = baseUnset;
 
-},{"./_castPath":124,"./_parent":185,"./_toKey":197,"./last":224}],124:[function(require,module,exports){
+},{"./_castPath":111,"./_parent":148,"./_toKey":155,"./last":175}],111:[function(require,module,exports){
 var isArray = require('./isArray'),
     isKey = require('./_isKey'),
     stringToPath = require('./_stringToPath'),
@@ -15086,7 +29551,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":163,"./_stringToPath":196,"./isArray":209,"./toString":235}],125:[function(require,module,exports){
+},{"./_isKey":130,"./_stringToPath":154,"./isArray":168,"./toString":183}],112:[function(require,module,exports){
 var baseSlice = require('./_baseSlice');
 
 /**
@@ -15106,237 +29571,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":118}],126:[function(require,module,exports){
-var Uint8Array = require('./_Uint8Array');
-
-/**
- * Creates a clone of `arrayBuffer`.
- *
- * @private
- * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
- * @returns {ArrayBuffer} Returns the cloned array buffer.
- */
-function cloneArrayBuffer(arrayBuffer) {
-  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
-  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
-  return result;
-}
-
-module.exports = cloneArrayBuffer;
-
-},{"./_Uint8Array":83}],127:[function(require,module,exports){
-var root = require('./_root');
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined,
-    allocUnsafe = Buffer ? Buffer.allocUnsafe : undefined;
-
-/**
- * Creates a clone of  `buffer`.
- *
- * @private
- * @param {Buffer} buffer The buffer to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Buffer} Returns the cloned buffer.
- */
-function cloneBuffer(buffer, isDeep) {
-  if (isDeep) {
-    return buffer.slice();
-  }
-  var length = buffer.length,
-      result = allocUnsafe ? allocUnsafe(length) : new buffer.constructor(length);
-
-  buffer.copy(result);
-  return result;
-}
-
-module.exports = cloneBuffer;
-
-},{"./_root":186}],128:[function(require,module,exports){
-var cloneArrayBuffer = require('./_cloneArrayBuffer');
-
-/**
- * Creates a clone of `dataView`.
- *
- * @private
- * @param {Object} dataView The data view to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned data view.
- */
-function cloneDataView(dataView, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
-  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
-}
-
-module.exports = cloneDataView;
-
-},{"./_cloneArrayBuffer":126}],129:[function(require,module,exports){
-/** Used to match `RegExp` flags from their coerced string values. */
-var reFlags = /\w*$/;
-
-/**
- * Creates a clone of `regexp`.
- *
- * @private
- * @param {Object} regexp The regexp to clone.
- * @returns {Object} Returns the cloned regexp.
- */
-function cloneRegExp(regexp) {
-  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
-  result.lastIndex = regexp.lastIndex;
-  return result;
-}
-
-module.exports = cloneRegExp;
-
-},{}],130:[function(require,module,exports){
-var Symbol = require('./_Symbol');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
-
-/**
- * Creates a clone of the `symbol` object.
- *
- * @private
- * @param {Object} symbol The symbol object to clone.
- * @returns {Object} Returns the cloned symbol object.
- */
-function cloneSymbol(symbol) {
-  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
-}
-
-module.exports = cloneSymbol;
-
-},{"./_Symbol":82}],131:[function(require,module,exports){
-var cloneArrayBuffer = require('./_cloneArrayBuffer');
-
-/**
- * Creates a clone of `typedArray`.
- *
- * @private
- * @param {Object} typedArray The typed array to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned typed array.
- */
-function cloneTypedArray(typedArray, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
-  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
-}
-
-module.exports = cloneTypedArray;
-
-},{"./_cloneArrayBuffer":126}],132:[function(require,module,exports){
-/**
- * Copies the values of `source` to `array`.
- *
- * @private
- * @param {Array} source The array to copy values from.
- * @param {Array} [array=[]] The array to copy values to.
- * @returns {Array} Returns `array`.
- */
-function copyArray(source, array) {
-  var index = -1,
-      length = source.length;
-
-  array || (array = Array(length));
-  while (++index < length) {
-    array[index] = source[index];
-  }
-  return array;
-}
-
-module.exports = copyArray;
-
-},{}],133:[function(require,module,exports){
-var assignValue = require('./_assignValue'),
-    baseAssignValue = require('./_baseAssignValue');
-
-/**
- * Copies properties of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy properties from.
- * @param {Array} props The property identifiers to copy.
- * @param {Object} [object={}] The object to copy properties to.
- * @param {Function} [customizer] The function to customize copied values.
- * @returns {Object} Returns `object`.
- */
-function copyObject(source, props, object, customizer) {
-  var isNew = !object;
-  object || (object = {});
-
-  var index = -1,
-      length = props.length;
-
-  while (++index < length) {
-    var key = props[index];
-
-    var newValue = customizer
-      ? customizer(object[key], source[key], key, object, source)
-      : undefined;
-
-    if (newValue === undefined) {
-      newValue = source[key];
-    }
-    if (isNew) {
-      baseAssignValue(object, key, newValue);
-    } else {
-      assignValue(object, key, newValue);
-    }
-  }
-  return object;
-}
-
-module.exports = copyObject;
-
-},{"./_assignValue":93,"./_baseAssignValue":97}],134:[function(require,module,exports){
-var copyObject = require('./_copyObject'),
-    getSymbols = require('./_getSymbols');
-
-/**
- * Copies own symbols of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy symbols from.
- * @param {Object} [object={}] The object to copy symbols to.
- * @returns {Object} Returns `object`.
- */
-function copySymbols(source, object) {
-  return copyObject(source, getSymbols(source), object);
-}
-
-module.exports = copySymbols;
-
-},{"./_copyObject":133,"./_getSymbols":147}],135:[function(require,module,exports){
-var copyObject = require('./_copyObject'),
-    getSymbolsIn = require('./_getSymbolsIn');
-
-/**
- * Copies own and inherited symbols of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy symbols from.
- * @param {Object} [object={}] The object to copy symbols to.
- * @returns {Object} Returns `object`.
- */
-function copySymbolsIn(source, object) {
-  return copyObject(source, getSymbolsIn(source), object);
-}
-
-module.exports = copySymbolsIn;
-
-},{"./_copyObject":133,"./_getSymbolsIn":148}],136:[function(require,module,exports){
+},{"./_baseSlice":106}],113:[function(require,module,exports){
 var root = require('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -15344,25 +29579,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":186}],137:[function(require,module,exports){
-var isPlainObject = require('./isPlainObject');
-
-/**
- * Used by `_.omit` to customize its `_.cloneDeep` use to only clone plain
- * objects.
- *
- * @private
- * @param {*} value The value to inspect.
- * @param {string} key The key of the property to inspect.
- * @returns {*} Returns the uncloned value or `undefined` to defer cloning to `_.cloneDeep`.
- */
-function customOmitClone(value) {
-  return isPlainObject(value) ? undefined : value;
-}
-
-module.exports = customOmitClone;
-
-},{"./isPlainObject":217}],138:[function(require,module,exports){
+},{"./_root":149}],114:[function(require,module,exports){
 var getNative = require('./_getNative');
 
 var defineProperty = (function() {
@@ -15375,7 +29592,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":144}],139:[function(require,module,exports){
+},{"./_getNative":118}],115:[function(require,module,exports){
 var flatten = require('./flatten'),
     overRest = require('./_overRest'),
     setToString = require('./_setToString');
@@ -15393,7 +29610,7 @@ function flatRest(func) {
 
 module.exports = flatRest;
 
-},{"./_overRest":184,"./_setToString":187,"./flatten":205}],140:[function(require,module,exports){
+},{"./_overRest":147,"./_setToString":150,"./flatten":164}],116:[function(require,module,exports){
 (function (global){(function (){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -15401,44 +29618,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],141:[function(require,module,exports){
-var baseGetAllKeys = require('./_baseGetAllKeys'),
-    getSymbols = require('./_getSymbols'),
-    keys = require('./keys');
-
-/**
- * Creates an array of own enumerable property names and symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function getAllKeys(object) {
-  return baseGetAllKeys(object, keys, getSymbols);
-}
-
-module.exports = getAllKeys;
-
-},{"./_baseGetAllKeys":102,"./_getSymbols":147,"./keys":222}],142:[function(require,module,exports){
-var baseGetAllKeys = require('./_baseGetAllKeys'),
-    getSymbolsIn = require('./_getSymbolsIn'),
-    keysIn = require('./keysIn');
-
-/**
- * Creates an array of own and inherited enumerable property names and
- * symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function getAllKeysIn(object) {
-  return baseGetAllKeys(object, keysIn, getSymbolsIn);
-}
-
-module.exports = getAllKeysIn;
-
-},{"./_baseGetAllKeys":102,"./_getSymbolsIn":148,"./keysIn":223}],143:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 var isKeyable = require('./_isKeyable');
 
 /**
@@ -15458,7 +29638,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":164}],144:[function(require,module,exports){
+},{"./_isKeyable":131}],118:[function(require,module,exports){
 var baseIsNative = require('./_baseIsNative'),
     getValue = require('./_getValue');
 
@@ -15477,15 +29657,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":107,"./_getValue":150}],145:[function(require,module,exports){
-var overArg = require('./_overArg');
-
-/** Built-in value references. */
-var getPrototype = overArg(Object.getPrototypeOf, Object);
-
-module.exports = getPrototype;
-
-},{"./_overArg":183}],146:[function(require,module,exports){
+},{"./_baseIsNative":99,"./_getValue":120}],119:[function(require,module,exports){
 var Symbol = require('./_Symbol');
 
 /** Used for built-in method references. */
@@ -15533,126 +29705,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":82}],147:[function(require,module,exports){
-var arrayFilter = require('./_arrayFilter'),
-    stubArray = require('./stubArray');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Built-in value references. */
-var propertyIsEnumerable = objectProto.propertyIsEnumerable;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeGetSymbols = Object.getOwnPropertySymbols;
-
-/**
- * Creates an array of the own enumerable symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of symbols.
- */
-var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
-  if (object == null) {
-    return [];
-  }
-  object = Object(object);
-  return arrayFilter(nativeGetSymbols(object), function(symbol) {
-    return propertyIsEnumerable.call(object, symbol);
-  });
-};
-
-module.exports = getSymbols;
-
-},{"./_arrayFilter":87,"./stubArray":230}],148:[function(require,module,exports){
-var arrayPush = require('./_arrayPush'),
-    getPrototype = require('./_getPrototype'),
-    getSymbols = require('./_getSymbols'),
-    stubArray = require('./stubArray');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeGetSymbols = Object.getOwnPropertySymbols;
-
-/**
- * Creates an array of the own and inherited enumerable symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of symbols.
- */
-var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
-  var result = [];
-  while (object) {
-    arrayPush(result, getSymbols(object));
-    object = getPrototype(object);
-  }
-  return result;
-};
-
-module.exports = getSymbolsIn;
-
-},{"./_arrayPush":90,"./_getPrototype":145,"./_getSymbols":147,"./stubArray":230}],149:[function(require,module,exports){
-var DataView = require('./_DataView'),
-    Map = require('./_Map'),
-    Promise = require('./_Promise'),
-    Set = require('./_Set'),
-    WeakMap = require('./_WeakMap'),
-    baseGetTag = require('./_baseGetTag'),
-    toSource = require('./_toSource');
-
-/** `Object#toString` result references. */
-var mapTag = '[object Map]',
-    objectTag = '[object Object]',
-    promiseTag = '[object Promise]',
-    setTag = '[object Set]',
-    weakMapTag = '[object WeakMap]';
-
-var dataViewTag = '[object DataView]';
-
-/** Used to detect maps, sets, and weakmaps. */
-var dataViewCtorString = toSource(DataView),
-    mapCtorString = toSource(Map),
-    promiseCtorString = toSource(Promise),
-    setCtorString = toSource(Set),
-    weakMapCtorString = toSource(WeakMap);
-
-/**
- * Gets the `toStringTag` of `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-var getTag = baseGetTag;
-
-// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
-if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
-    (Map && getTag(new Map) != mapTag) ||
-    (Promise && getTag(Promise.resolve()) != promiseTag) ||
-    (Set && getTag(new Set) != setTag) ||
-    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
-  getTag = function(value) {
-    var result = baseGetTag(value),
-        Ctor = result == objectTag ? value.constructor : undefined,
-        ctorString = Ctor ? toSource(Ctor) : '';
-
-    if (ctorString) {
-      switch (ctorString) {
-        case dataViewCtorString: return dataViewTag;
-        case mapCtorString: return mapTag;
-        case promiseCtorString: return promiseTag;
-        case setCtorString: return setTag;
-        case weakMapCtorString: return weakMapTag;
-      }
-    }
-    return result;
-  };
-}
-
-module.exports = getTag;
-
-},{"./_DataView":74,"./_Map":77,"./_Promise":79,"./_Set":80,"./_WeakMap":84,"./_baseGetTag":103,"./_toSource":198}],150:[function(require,module,exports){
+},{"./_Symbol":84}],120:[function(require,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -15667,7 +29720,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],151:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 var castPath = require('./_castPath'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray'),
@@ -15708,7 +29761,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":124,"./_isIndex":162,"./_toKey":197,"./isArguments":208,"./isArray":209,"./isLength":213}],152:[function(require,module,exports){
+},{"./_castPath":111,"./_isIndex":129,"./_toKey":155,"./isArguments":167,"./isArray":168,"./isLength":170}],122:[function(require,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -15736,7 +29789,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],153:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /**
@@ -15753,7 +29806,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":178}],154:[function(require,module,exports){
+},{"./_nativeCreate":144}],124:[function(require,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -15772,7 +29825,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],155:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -15804,7 +29857,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":178}],156:[function(require,module,exports){
+},{"./_nativeCreate":144}],126:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -15829,7 +29882,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":178}],157:[function(require,module,exports){
+},{"./_nativeCreate":144}],127:[function(require,module,exports){
 var nativeCreate = require('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -15854,134 +29907,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":178}],158:[function(require,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Initializes an array clone.
- *
- * @private
- * @param {Array} array The array to clone.
- * @returns {Array} Returns the initialized clone.
- */
-function initCloneArray(array) {
-  var length = array.length,
-      result = new array.constructor(length);
-
-  // Add properties assigned by `RegExp#exec`.
-  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
-    result.index = array.index;
-    result.input = array.input;
-  }
-  return result;
-}
-
-module.exports = initCloneArray;
-
-},{}],159:[function(require,module,exports){
-var cloneArrayBuffer = require('./_cloneArrayBuffer'),
-    cloneDataView = require('./_cloneDataView'),
-    cloneRegExp = require('./_cloneRegExp'),
-    cloneSymbol = require('./_cloneSymbol'),
-    cloneTypedArray = require('./_cloneTypedArray');
-
-/** `Object#toString` result references. */
-var boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    symbolTag = '[object Symbol]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/**
- * Initializes an object clone based on its `toStringTag`.
- *
- * **Note:** This function only supports cloning values with tags of
- * `Boolean`, `Date`, `Error`, `Map`, `Number`, `RegExp`, `Set`, or `String`.
- *
- * @private
- * @param {Object} object The object to clone.
- * @param {string} tag The `toStringTag` of the object to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneByTag(object, tag, isDeep) {
-  var Ctor = object.constructor;
-  switch (tag) {
-    case arrayBufferTag:
-      return cloneArrayBuffer(object);
-
-    case boolTag:
-    case dateTag:
-      return new Ctor(+object);
-
-    case dataViewTag:
-      return cloneDataView(object, isDeep);
-
-    case float32Tag: case float64Tag:
-    case int8Tag: case int16Tag: case int32Tag:
-    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
-      return cloneTypedArray(object, isDeep);
-
-    case mapTag:
-      return new Ctor;
-
-    case numberTag:
-    case stringTag:
-      return new Ctor(object);
-
-    case regexpTag:
-      return cloneRegExp(object);
-
-    case setTag:
-      return new Ctor;
-
-    case symbolTag:
-      return cloneSymbol(object);
-  }
-}
-
-module.exports = initCloneByTag;
-
-},{"./_cloneArrayBuffer":126,"./_cloneDataView":128,"./_cloneRegExp":129,"./_cloneSymbol":130,"./_cloneTypedArray":131}],160:[function(require,module,exports){
-var baseCreate = require('./_baseCreate'),
-    getPrototype = require('./_getPrototype'),
-    isPrototype = require('./_isPrototype');
-
-/**
- * Initializes an object clone.
- *
- * @private
- * @param {Object} object The object to clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneObject(object) {
-  return (typeof object.constructor == 'function' && !isPrototype(object))
-    ? baseCreate(getPrototype(object))
-    : {};
-}
-
-module.exports = initCloneObject;
-
-},{"./_baseCreate":99,"./_getPrototype":145,"./_isPrototype":166}],161:[function(require,module,exports){
+},{"./_nativeCreate":144}],128:[function(require,module,exports){
 var Symbol = require('./_Symbol'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray');
@@ -16003,7 +29929,7 @@ function isFlattenable(value) {
 
 module.exports = isFlattenable;
 
-},{"./_Symbol":82,"./isArguments":208,"./isArray":209}],162:[function(require,module,exports){
+},{"./_Symbol":84,"./isArguments":167,"./isArray":168}],129:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -16030,7 +29956,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],163:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var isArray = require('./isArray'),
     isSymbol = require('./isSymbol');
 
@@ -16061,7 +29987,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":209,"./isSymbol":220}],164:[function(require,module,exports){
+},{"./isArray":168,"./isSymbol":174}],131:[function(require,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -16078,7 +30004,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],165:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 var coreJsData = require('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -16100,27 +30026,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":136}],166:[function(require,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Checks if `value` is likely a prototype object.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
- */
-function isPrototype(value) {
-  var Ctor = value && value.constructor,
-      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
-
-  return value === proto;
-}
-
-module.exports = isPrototype;
-
-},{}],167:[function(require,module,exports){
+},{"./_coreJsData":113}],133:[function(require,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -16135,7 +30041,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],168:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -16172,7 +30078,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":94}],169:[function(require,module,exports){
+},{"./_assocIndexOf":91}],135:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16193,7 +30099,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":94}],170:[function(require,module,exports){
+},{"./_assocIndexOf":91}],136:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16211,7 +30117,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":94}],171:[function(require,module,exports){
+},{"./_assocIndexOf":91}],137:[function(require,module,exports){
 var assocIndexOf = require('./_assocIndexOf');
 
 /**
@@ -16239,7 +30145,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":94}],172:[function(require,module,exports){
+},{"./_assocIndexOf":91}],138:[function(require,module,exports){
 var Hash = require('./_Hash'),
     ListCache = require('./_ListCache'),
     Map = require('./_Map');
@@ -16262,7 +30168,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":75,"./_ListCache":76,"./_Map":77}],173:[function(require,module,exports){
+},{"./_Hash":80,"./_ListCache":81,"./_Map":82}],139:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16282,7 +30188,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":143}],174:[function(require,module,exports){
+},{"./_getMapData":117}],140:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16300,7 +30206,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":143}],175:[function(require,module,exports){
+},{"./_getMapData":117}],141:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16318,7 +30224,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":143}],176:[function(require,module,exports){
+},{"./_getMapData":117}],142:[function(require,module,exports){
 var getMapData = require('./_getMapData');
 
 /**
@@ -16342,7 +30248,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":143}],177:[function(require,module,exports){
+},{"./_getMapData":117}],143:[function(require,module,exports){
 var memoize = require('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -16370,7 +30276,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":225}],178:[function(require,module,exports){
+},{"./memoize":176}],144:[function(require,module,exports){
 var getNative = require('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -16378,37 +30284,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":144}],179:[function(require,module,exports){
-var overArg = require('./_overArg');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeKeys = overArg(Object.keys, Object);
-
-module.exports = nativeKeys;
-
-},{"./_overArg":183}],180:[function(require,module,exports){
-/**
- * This function is like
- * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * except that it includes inherited enumerable properties.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function nativeKeysIn(object) {
-  var result = [];
-  if (object != null) {
-    for (var key in Object(object)) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = nativeKeysIn;
-
-},{}],181:[function(require,module,exports){
+},{"./_getNative":118}],145:[function(require,module,exports){
 var freeGlobal = require('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -16440,7 +30316,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":140}],182:[function(require,module,exports){
+},{"./_freeGlobal":116}],146:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -16464,24 +30340,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],183:[function(require,module,exports){
-/**
- * Creates a unary function that invokes `func` with its argument transformed.
- *
- * @private
- * @param {Function} func The function to wrap.
- * @param {Function} transform The argument transform.
- * @returns {Function} Returns the new function.
- */
-function overArg(func, transform) {
-  return function(arg) {
-    return func(transform(arg));
-  };
-}
-
-module.exports = overArg;
-
-},{}],184:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 var apply = require('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -16519,7 +30378,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":85}],185:[function(require,module,exports){
+},{"./_apply":85}],148:[function(require,module,exports){
 var baseGet = require('./_baseGet'),
     baseSlice = require('./_baseSlice');
 
@@ -16537,7 +30396,7 @@ function parent(object, path) {
 
 module.exports = parent;
 
-},{"./_baseGet":101,"./_baseSlice":118}],186:[function(require,module,exports){
+},{"./_baseGet":95,"./_baseSlice":106}],149:[function(require,module,exports){
 var freeGlobal = require('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -16548,7 +30407,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":140}],187:[function(require,module,exports){
+},{"./_freeGlobal":116}],150:[function(require,module,exports){
 var baseSetToString = require('./_baseSetToString'),
     shortOut = require('./_shortOut');
 
@@ -16564,7 +30423,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":117,"./_shortOut":188}],188:[function(require,module,exports){
+},{"./_baseSetToString":105,"./_shortOut":151}],151:[function(require,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -16603,112 +30462,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],189:[function(require,module,exports){
-var ListCache = require('./_ListCache');
-
-/**
- * Removes all key-value entries from the stack.
- *
- * @private
- * @name clear
- * @memberOf Stack
- */
-function stackClear() {
-  this.__data__ = new ListCache;
-  this.size = 0;
-}
-
-module.exports = stackClear;
-
-},{"./_ListCache":76}],190:[function(require,module,exports){
-/**
- * Removes `key` and its value from the stack.
- *
- * @private
- * @name delete
- * @memberOf Stack
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function stackDelete(key) {
-  var data = this.__data__,
-      result = data['delete'](key);
-
-  this.size = data.size;
-  return result;
-}
-
-module.exports = stackDelete;
-
-},{}],191:[function(require,module,exports){
-/**
- * Gets the stack value for `key`.
- *
- * @private
- * @name get
- * @memberOf Stack
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function stackGet(key) {
-  return this.__data__.get(key);
-}
-
-module.exports = stackGet;
-
-},{}],192:[function(require,module,exports){
-/**
- * Checks if a stack value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Stack
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function stackHas(key) {
-  return this.__data__.has(key);
-}
-
-module.exports = stackHas;
-
-},{}],193:[function(require,module,exports){
-var ListCache = require('./_ListCache'),
-    Map = require('./_Map'),
-    MapCache = require('./_MapCache');
-
-/** Used as the size to enable large array optimizations. */
-var LARGE_ARRAY_SIZE = 200;
-
-/**
- * Sets the stack `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Stack
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the stack cache instance.
- */
-function stackSet(key, value) {
-  var data = this.__data__;
-  if (data instanceof ListCache) {
-    var pairs = data.__data__;
-    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
-      pairs.push([key, value]);
-      this.size = ++data.size;
-      return this;
-    }
-    data = this.__data__ = new MapCache(pairs);
-  }
-  data.set(key, value);
-  this.size = data.size;
-  return this;
-}
-
-module.exports = stackSet;
-
-},{"./_ListCache":76,"./_Map":77,"./_MapCache":78}],194:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 var asciiSize = require('./_asciiSize'),
     hasUnicode = require('./_hasUnicode'),
     unicodeSize = require('./_unicodeSize');
@@ -16728,7 +30482,7 @@ function stringSize(string) {
 
 module.exports = stringSize;
 
-},{"./_asciiSize":91,"./_hasUnicode":152,"./_unicodeSize":200}],195:[function(require,module,exports){
+},{"./_asciiSize":88,"./_hasUnicode":122,"./_unicodeSize":158}],153:[function(require,module,exports){
 var asciiToArray = require('./_asciiToArray'),
     hasUnicode = require('./_hasUnicode'),
     unicodeToArray = require('./_unicodeToArray');
@@ -16748,7 +30502,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":92,"./_hasUnicode":152,"./_unicodeToArray":201}],196:[function(require,module,exports){
+},{"./_asciiToArray":89,"./_hasUnicode":122,"./_unicodeToArray":159}],154:[function(require,module,exports){
 var memoizeCapped = require('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -16777,7 +30531,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":177}],197:[function(require,module,exports){
+},{"./_memoizeCapped":143}],155:[function(require,module,exports){
 var isSymbol = require('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -16800,7 +30554,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":220}],198:[function(require,module,exports){
+},{"./isSymbol":174}],156:[function(require,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -16828,7 +30582,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],199:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /** Used to match a single whitespace character. */
 var reWhitespace = /\s/;
 
@@ -16849,7 +30603,7 @@ function trimmedEndIndex(string) {
 
 module.exports = trimmedEndIndex;
 
-},{}],200:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -16895,7 +30649,7 @@ function unicodeSize(string) {
 
 module.exports = unicodeSize;
 
-},{}],201:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -16937,7 +30691,48 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],202:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
+var baseClamp = require('./_baseClamp'),
+    toNumber = require('./toNumber');
+
+/**
+ * Clamps `number` within the inclusive `lower` and `upper` bounds.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Number
+ * @param {number} number The number to clamp.
+ * @param {number} [lower] The lower bound.
+ * @param {number} upper The upper bound.
+ * @returns {number} Returns the clamped number.
+ * @example
+ *
+ * _.clamp(-10, -5, 5);
+ * // => -5
+ *
+ * _.clamp(10, -5, 5);
+ * // => 5
+ */
+function clamp(number, lower, upper) {
+  if (upper === undefined) {
+    upper = lower;
+    lower = undefined;
+  }
+  if (upper !== undefined) {
+    upper = toNumber(upper);
+    upper = upper === upper ? upper : 0;
+  }
+  if (lower !== undefined) {
+    lower = toNumber(lower);
+    lower = lower === lower ? lower : 0;
+  }
+  return baseClamp(toNumber(number), lower, upper);
+}
+
+module.exports = clamp;
+
+},{"./_baseClamp":93,"./toNumber":182}],161:[function(require,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -16965,7 +30760,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],203:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 var isObject = require('./isObject'),
     now = require('./now'),
     toNumber = require('./toNumber');
@@ -17158,7 +30953,7 @@ function debounce(func, wait, options) {
 
 module.exports = debounce;
 
-},{"./isObject":215,"./now":226,"./toNumber":234}],204:[function(require,module,exports){
+},{"./isObject":171,"./now":177,"./toNumber":182}],163:[function(require,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -17197,7 +30992,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],205:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 var baseFlatten = require('./_baseFlatten');
 
 /**
@@ -17221,7 +31016,7 @@ function flatten(array) {
 
 module.exports = flatten;
 
-},{"./_baseFlatten":100}],206:[function(require,module,exports){
+},{"./_baseFlatten":94}],165:[function(require,module,exports){
 var baseHasIn = require('./_baseHasIn'),
     hasPath = require('./_hasPath');
 
@@ -17257,7 +31052,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":104,"./_hasPath":151}],207:[function(require,module,exports){
+},{"./_baseHasIn":97,"./_hasPath":121}],166:[function(require,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -17280,7 +31075,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],208:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 var baseIsArguments = require('./_baseIsArguments'),
     isObjectLike = require('./isObjectLike');
 
@@ -17318,7 +31113,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":105,"./isObjectLike":216}],209:[function(require,module,exports){
+},{"./_baseIsArguments":98,"./isObjectLike":172}],168:[function(require,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -17346,82 +31141,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],210:[function(require,module,exports){
-var isFunction = require('./isFunction'),
-    isLength = require('./isLength');
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-module.exports = isArrayLike;
-
-},{"./isFunction":212,"./isLength":213}],211:[function(require,module,exports){
-var root = require('./_root'),
-    stubFalse = require('./stubFalse');
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
-
-/**
- * Checks if `value` is a buffer.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
- * @example
- *
- * _.isBuffer(new Buffer(2));
- * // => true
- *
- * _.isBuffer(new Uint8Array(2));
- * // => false
- */
-var isBuffer = nativeIsBuffer || stubFalse;
-
-module.exports = isBuffer;
-
-},{"./_root":186,"./stubFalse":231}],212:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObject = require('./isObject');
 
@@ -17460,7 +31180,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":103,"./isObject":215}],213:[function(require,module,exports){
+},{"./_baseGetTag":96,"./isObject":171}],170:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -17497,36 +31217,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],214:[function(require,module,exports){
-var baseIsMap = require('./_baseIsMap'),
-    baseUnary = require('./_baseUnary'),
-    nodeUtil = require('./_nodeUtil');
-
-/* Node.js helper references. */
-var nodeIsMap = nodeUtil && nodeUtil.isMap;
-
-/**
- * Checks if `value` is classified as a `Map` object.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a map, else `false`.
- * @example
- *
- * _.isMap(new Map);
- * // => true
- *
- * _.isMap(new WeakMap);
- * // => false
- */
-var isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap;
-
-module.exports = isMap;
-
-},{"./_baseIsMap":106,"./_baseUnary":122,"./_nodeUtil":181}],215:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -17559,7 +31250,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],216:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -17590,71 +31281,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],217:[function(require,module,exports){
-var baseGetTag = require('./_baseGetTag'),
-    getPrototype = require('./_getPrototype'),
-    isObjectLike = require('./isObjectLike');
-
-/** `Object#toString` result references. */
-var objectTag = '[object Object]';
-
-/** Used for built-in method references. */
-var funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/** Used to infer the `Object` constructor. */
-var objectCtorString = funcToString.call(Object);
-
-/**
- * Checks if `value` is a plain object, that is, an object created by the
- * `Object` constructor or one with a `[[Prototype]]` of `null`.
- *
- * @static
- * @memberOf _
- * @since 0.8.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- * }
- *
- * _.isPlainObject(new Foo);
- * // => false
- *
- * _.isPlainObject([1, 2, 3]);
- * // => false
- *
- * _.isPlainObject({ 'x': 0, 'y': 0 });
- * // => true
- *
- * _.isPlainObject(Object.create(null));
- * // => true
- */
-function isPlainObject(value) {
-  if (!isObjectLike(value) || baseGetTag(value) != objectTag) {
-    return false;
-  }
-  var proto = getPrototype(value);
-  if (proto === null) {
-    return true;
-  }
-  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
-  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
-    funcToString.call(Ctor) == objectCtorString;
-}
-
-module.exports = isPlainObject;
-
-},{"./_baseGetTag":103,"./_getPrototype":145,"./isObjectLike":216}],218:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 var baseIsRegExp = require('./_baseIsRegExp'),
     baseUnary = require('./_baseUnary'),
     nodeUtil = require('./_nodeUtil');
@@ -17683,36 +31310,7 @@ var isRegExp = nodeIsRegExp ? baseUnary(nodeIsRegExp) : baseIsRegExp;
 
 module.exports = isRegExp;
 
-},{"./_baseIsRegExp":108,"./_baseUnary":122,"./_nodeUtil":181}],219:[function(require,module,exports){
-var baseIsSet = require('./_baseIsSet'),
-    baseUnary = require('./_baseUnary'),
-    nodeUtil = require('./_nodeUtil');
-
-/* Node.js helper references. */
-var nodeIsSet = nodeUtil && nodeUtil.isSet;
-
-/**
- * Checks if `value` is classified as a `Set` object.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a set, else `false`.
- * @example
- *
- * _.isSet(new Set);
- * // => true
- *
- * _.isSet(new WeakSet);
- * // => false
- */
-var isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet;
-
-module.exports = isSet;
-
-},{"./_baseIsSet":109,"./_baseUnary":122,"./_nodeUtil":181}],220:[function(require,module,exports){
+},{"./_baseIsRegExp":100,"./_baseUnary":109,"./_nodeUtil":145}],174:[function(require,module,exports){
 var baseGetTag = require('./_baseGetTag'),
     isObjectLike = require('./isObjectLike');
 
@@ -17743,109 +31341,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":103,"./isObjectLike":216}],221:[function(require,module,exports){
-var baseIsTypedArray = require('./_baseIsTypedArray'),
-    baseUnary = require('./_baseUnary'),
-    nodeUtil = require('./_nodeUtil');
-
-/* Node.js helper references. */
-var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
-
-/**
- * Checks if `value` is classified as a typed array.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- * @example
- *
- * _.isTypedArray(new Uint8Array);
- * // => true
- *
- * _.isTypedArray([]);
- * // => false
- */
-var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
-
-module.exports = isTypedArray;
-
-},{"./_baseIsTypedArray":110,"./_baseUnary":122,"./_nodeUtil":181}],222:[function(require,module,exports){
-var arrayLikeKeys = require('./_arrayLikeKeys'),
-    baseKeys = require('./_baseKeys'),
-    isArrayLike = require('./isArrayLike');
-
-/**
- * Creates an array of the own enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects. See the
- * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * for more details.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keys(new Foo);
- * // => ['a', 'b'] (iteration order is not guaranteed)
- *
- * _.keys('hi');
- * // => ['0', '1']
- */
-function keys(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
-}
-
-module.exports = keys;
-
-},{"./_arrayLikeKeys":88,"./_baseKeys":111,"./isArrayLike":210}],223:[function(require,module,exports){
-var arrayLikeKeys = require('./_arrayLikeKeys'),
-    baseKeysIn = require('./_baseKeysIn'),
-    isArrayLike = require('./isArrayLike');
-
-/**
- * Creates an array of the own and inherited enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keysIn(new Foo);
- * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
- */
-function keysIn(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
-}
-
-module.exports = keysIn;
-
-},{"./_arrayLikeKeys":88,"./_baseKeysIn":112,"./isArrayLike":210}],224:[function(require,module,exports){
+},{"./_baseGetTag":96,"./isObjectLike":172}],175:[function(require,module,exports){
 /**
  * Gets the last element of `array`.
  *
@@ -17867,7 +31363,7 @@ function last(array) {
 
 module.exports = last;
 
-},{}],225:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 var MapCache = require('./_MapCache');
 
 /** Error message constants. */
@@ -17942,7 +31438,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":78}],226:[function(require,module,exports){
+},{"./_MapCache":83}],177:[function(require,module,exports){
 var root = require('./_root');
 
 /**
@@ -17967,66 +31463,7 @@ var now = function() {
 
 module.exports = now;
 
-},{"./_root":186}],227:[function(require,module,exports){
-var arrayMap = require('./_arrayMap'),
-    baseClone = require('./_baseClone'),
-    baseUnset = require('./_baseUnset'),
-    castPath = require('./_castPath'),
-    copyObject = require('./_copyObject'),
-    customOmitClone = require('./_customOmitClone'),
-    flatRest = require('./_flatRest'),
-    getAllKeysIn = require('./_getAllKeysIn');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1,
-    CLONE_FLAT_FLAG = 2,
-    CLONE_SYMBOLS_FLAG = 4;
-
-/**
- * The opposite of `_.pick`; this method creates an object composed of the
- * own and inherited enumerable property paths of `object` that are not omitted.
- *
- * **Note:** This method is considerably slower than `_.pick`.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The source object.
- * @param {...(string|string[])} [paths] The property paths to omit.
- * @returns {Object} Returns the new object.
- * @example
- *
- * var object = { 'a': 1, 'b': '2', 'c': 3 };
- *
- * _.omit(object, ['a', 'c']);
- * // => { 'b': '2' }
- */
-var omit = flatRest(function(object, paths) {
-  var result = {};
-  if (object == null) {
-    return result;
-  }
-  var isDeep = false;
-  paths = arrayMap(paths, function(path) {
-    path = castPath(path, object);
-    isDeep || (isDeep = path.length > 1);
-    return path;
-  });
-  copyObject(object, getAllKeysIn(object), result);
-  if (isDeep) {
-    result = baseClone(result, CLONE_DEEP_FLAG | CLONE_FLAT_FLAG | CLONE_SYMBOLS_FLAG, customOmitClone);
-  }
-  var length = paths.length;
-  while (length--) {
-    baseUnset(result, paths[length]);
-  }
-  return result;
-});
-
-module.exports = omit;
-
-},{"./_arrayMap":89,"./_baseClone":98,"./_baseUnset":123,"./_castPath":124,"./_copyObject":133,"./_customOmitClone":137,"./_flatRest":139,"./_getAllKeysIn":142}],228:[function(require,module,exports){
+},{"./_root":149}],178:[function(require,module,exports){
 var basePick = require('./_basePick'),
     flatRest = require('./_flatRest');
 
@@ -18053,7 +31490,7 @@ var pick = flatRest(function(object, paths) {
 
 module.exports = pick;
 
-},{"./_basePick":113,"./_flatRest":139}],229:[function(require,module,exports){
+},{"./_basePick":101,"./_flatRest":115}],179:[function(require,module,exports){
 var baseSet = require('./_baseSet');
 
 /**
@@ -18090,52 +31527,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":116}],230:[function(require,module,exports){
-/**
- * This method returns a new empty array.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {Array} Returns the new empty array.
- * @example
- *
- * var arrays = _.times(2, _.stubArray);
- *
- * console.log(arrays);
- * // => [[], []]
- *
- * console.log(arrays[0] === arrays[1]);
- * // => false
- */
-function stubArray() {
-  return [];
-}
-
-module.exports = stubArray;
-
-},{}],231:[function(require,module,exports){
-/**
- * This method returns `false`.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {boolean} Returns `false`.
- * @example
- *
- * _.times(2, _.stubFalse);
- * // => [false, false]
- */
-function stubFalse() {
-  return false;
-}
-
-module.exports = stubFalse;
-
-},{}],232:[function(require,module,exports){
+},{"./_baseSet":104}],180:[function(require,module,exports){
 var toNumber = require('./toNumber');
 
 /** Used as references for various `Number` constants. */
@@ -18179,7 +31571,7 @@ function toFinite(value) {
 
 module.exports = toFinite;
 
-},{"./toNumber":234}],233:[function(require,module,exports){
+},{"./toNumber":182}],181:[function(require,module,exports){
 var toFinite = require('./toFinite');
 
 /**
@@ -18217,7 +31609,7 @@ function toInteger(value) {
 
 module.exports = toInteger;
 
-},{"./toFinite":232}],234:[function(require,module,exports){
+},{"./toFinite":180}],182:[function(require,module,exports){
 var baseTrim = require('./_baseTrim'),
     isObject = require('./isObject'),
     isSymbol = require('./isSymbol');
@@ -18283,7 +31675,7 @@ function toNumber(value) {
 
 module.exports = toNumber;
 
-},{"./_baseTrim":121,"./isObject":215,"./isSymbol":220}],235:[function(require,module,exports){
+},{"./_baseTrim":108,"./isObject":171,"./isSymbol":174}],183:[function(require,module,exports){
 var baseToString = require('./_baseToString');
 
 /**
@@ -18313,7 +31705,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":120}],236:[function(require,module,exports){
+},{"./_baseToString":107}],184:[function(require,module,exports){
 var baseToString = require('./_baseToString'),
     castSlice = require('./_castSlice'),
     hasUnicode = require('./_hasUnicode'),
@@ -18426,7 +31818,7 @@ function truncate(string, options) {
 
 module.exports = truncate;
 
-},{"./_baseToString":120,"./_castSlice":125,"./_hasUnicode":152,"./_stringSize":194,"./_stringToArray":195,"./isObject":215,"./isRegExp":218,"./toInteger":233,"./toString":235}],237:[function(require,module,exports){
+},{"./_baseToString":107,"./_castSlice":112,"./_hasUnicode":122,"./_stringSize":152,"./_stringToArray":153,"./isObject":171,"./isRegExp":173,"./toInteger":181,"./toString":183}],185:[function(require,module,exports){
 var baseUnset = require('./_baseUnset');
 
 /**
@@ -18462,7 +31854,7 @@ function unset(object, path) {
 
 module.exports = unset;
 
-},{"./_baseUnset":123}],238:[function(require,module,exports){
+},{"./_baseUnset":110}],186:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -18626,7 +32018,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],239:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -18812,7 +32204,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],240:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 "use strict";
 /**
  * Initialize backoff timer with `opts`.
@@ -18884,7 +32276,7 @@ Backoff.prototype.setJitter = function (jitter) {
     this.jitter = jitter;
 };
 
-},{}],241:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -18955,7 +32347,7 @@ Object.defineProperty(exports, "protocol", { enumerable: true, get: function () 
 
 module.exports = lookup;
 
-},{"./manager.js":242,"./socket.js":244,"./url.js":245,"debug":6,"socket.io-parser":247}],242:[function(require,module,exports){
+},{"./manager.js":190,"./socket.js":192,"./url.js":193,"debug":12,"socket.io-parser":195}],190:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19360,7 +32752,7 @@ class Manager extends component_emitter_1.Emitter {
 }
 exports.Manager = Manager;
 
-},{"./contrib/backo2.js":240,"./on.js":243,"./socket.js":244,"@socket.io/component-emitter":2,"debug":6,"engine.io-client":13,"socket.io-parser":247}],243:[function(require,module,exports){
+},{"./contrib/backo2.js":188,"./on.js":191,"./socket.js":192,"@socket.io/component-emitter":3,"debug":12,"engine.io-client":19,"socket.io-parser":195}],191:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -19372,7 +32764,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],244:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20100,7 +33492,7 @@ class Socket extends component_emitter_1.Emitter {
 }
 exports.Socket = Socket;
 
-},{"./on.js":243,"@socket.io/component-emitter":2,"debug":6,"socket.io-parser":247}],245:[function(require,module,exports){
+},{"./on.js":191,"@socket.io/component-emitter":3,"debug":12,"socket.io-parser":195}],193:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20172,7 +33564,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":6,"engine.io-client":13}],246:[function(require,module,exports){
+},{"debug":12,"engine.io-client":19}],194:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -20262,7 +33654,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary.js":248}],247:[function(require,module,exports){
+},{"./is-binary.js":196}],195:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -20562,7 +33954,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary.js":246,"./is-binary.js":248,"@socket.io/component-emitter":2,"debug":6}],248:[function(require,module,exports){
+},{"./binary.js":194,"./is-binary.js":196,"@socket.io/component-emitter":3,"debug":12}],196:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -20619,7 +34011,302 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],249:[function(require,module,exports){
+},{}],197:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const relativeTime_1 = __importDefault(require("dayjs/plugin/relativeTime"));
+const dayjs_1 = __importDefault(require("dayjs"));
+dayjs_1.default.extend(relativeTime_1.default);
+
+},{"dayjs":10,"dayjs/plugin/relativeTime":11}],198:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChartComponent = void 0;
+const auto_1 = __importDefault(require("chart.js/auto"));
+const clamp_1 = __importDefault(require("lodash/clamp"));
+const unset_1 = __importDefault(require("lodash/unset"));
+const panel_component_1 = require("../panel.component");
+const common_1 = require("../../../../utils/common");
+const utils_1 = require("../../utils");
+const models_1 = require("../../models");
+const calculateLegendsLimit = (size) => (0, common_1.cast)({
+    L: 20,
+    M: 10,
+    S: 7,
+    XS: 5,
+})[size];
+const calculatePointsLimit = (size) => (0, common_1.cast)({
+    L: 200,
+    M: 100,
+    S: 60,
+    XS: 40,
+})[size];
+class ChartComponent extends models_1.Component {
+    constructor(provided) {
+        super();
+        this.provided = provided;
+        this.counter = (0, common_1.buildCounter)();
+        this.aliases = {};
+        this.stack = [];
+        this.points = new Map();
+        this.labels = new Set();
+        this.limits = {
+            legend: calculateLegendsLimit(this.provided.width ?? 'L'),
+            point: this.provided.limit ?? calculatePointsLimit(this.provided.width ?? 'L'),
+        };
+        this.source = new auto_1.default(document.createElement('canvas'), {
+            type: 'line',
+            data: {
+                labels: (0, common_1.cast)([]),
+                datasets: [],
+            },
+            options: {
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                        },
+                        ticks: {
+                            maxTicksLimit: this.limits.legend * 2,
+                        },
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                        },
+                        ticks: {
+                            maxTicksLimit: this.limits.legend,
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxHeight: 5,
+                            boxWidth: 5,
+                        },
+                    },
+                },
+            },
+        });
+        this.panel = panel_component_1.PanelComponent.build({ ...this.provided, class: 'chart' }).replace(this.source.canvas);
+        this.replace(this.panel);
+    }
+    provide(points) {
+        points.forEach((point) => {
+            if (this.provided.mode === 'aggregation') {
+                const id = this.aliases[point.legend] ?? this.counter();
+                const target = this.points.get(id) ?? (0, common_1.cast)({ legend: point.legend, values: {} });
+                if (!this.aliases[point.legend]) {
+                    this.aliases[point.legend] = id;
+                    this.points.set(id, target);
+                    this.stack.push(id);
+                }
+                return Object.entries(point.values).forEach(([label, value]) => {
+                    target.values[label] = (target.values[label] ?? 0) + value;
+                    this.labels.add(label);
+                });
+            }
+            const id = this.counter();
+            this.stack.push(id);
+            this.points.set(id, point);
+            Object.keys(point.values).forEach((label) => this.labels.add(label));
+        });
+        this.stack.slice(0, (0, clamp_1.default)(this.stack.length - this.limits.point, 0, Infinity)).forEach((id) => {
+            const point = this.points.get(id);
+            if (point) {
+                (0, unset_1.default)(this.aliases, point.legend);
+            }
+            this.points.delete(id);
+            this.stack.shift();
+        });
+        const iterated = [...this.points.values()];
+        this.source.data = {
+            labels: iterated.map((point) => point.legend),
+            datasets: [...this.labels.values()].map((label) => ({
+                label,
+                data: Array(iterated.length).fill(null).map((value, index) => iterated[index].values[label] ?? null),
+                tension: 0.3,
+                pointRadius: 2,
+                pointHitRadius: 20,
+                pointHoverRadius: 5,
+                borderWidth: 1,
+                borderColor: (0, utils_1.calculateColor)(label),
+                backgroundColor: (0, utils_1.calculateColor)(label),
+            })),
+        };
+        this.source.update('none');
+        return this;
+    }
+    clear() {
+        this.source.reset();
+        this.points.clear();
+        this.labels.clear();
+        this.aliases = {};
+        this.stack = [];
+        return this;
+    }
+    static build(provided) {
+        return new ChartComponent(provided);
+    }
+}
+exports.ChartComponent = ChartComponent;
+
+},{"../../../../utils/common":248,"../../models":233,"../../utils":247,"../panel.component":213,"chart.js/auto":7,"lodash/clamp":160,"lodash/unset":185}],199:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CheckboxAreaComponent = void 0;
+const events_1 = __importDefault(require("events"));
+const handlebars_1 = __importDefault(require("handlebars"));
+const panel_component_1 = require("../panel.component");
+const item_component_1 = require("./item.component");
+const models_1 = require("../../models");
+const common_1 = require("../../../../utils/common");
+const template = handlebars_1.default.compile(require('./template.hbs'));
+class CheckboxAreaComponent extends models_1.Component {
+    constructor(provided) {
+        super();
+        this.provided = provided;
+        this.buttons = {
+            all: item_component_1.CheckboxAreaButtonComponent.build({ name: 'ALL', isEnabled: true }),
+            provided: (0, common_1.cast)({}),
+        };
+        this.events = new events_1.default();
+        this.panel = new panel_component_1.PanelComponent({ ...this.provided, class: 'checkbox-area' }).append(template(this.provided));
+        this.area = new models_1.Component(this.panel.element.querySelector('div.buttons')).append(this.buttons.all);
+        this.replace(this.panel);
+        this.buttons.all.on('enable', (button, trigger) => trigger === 'click' ? this.extract().forEach((button) => button.enable()) : null);
+        this.buttons.all.on('disable', (button, trigger) => trigger === 'click' ? this.extract().forEach((button) => button.disable()) : null);
+    }
+    extract() {
+        return Object.values(this.buttons.provided);
+    }
+    provide(...provided) {
+        provided.forEach((predicate) => {
+            const button = predicate instanceof item_component_1.CheckboxAreaButtonComponent
+                ? predicate
+                : item_component_1.CheckboxAreaButtonComponent.build(predicate);
+            this.buttons.provided[button.name] = button;
+            this.area.append(button);
+            button.on('enable', (button, trigger) => {
+                if (this.extract().every((nested) => nested.isEnabled)) {
+                    this.buttons.all.enable();
+                }
+                if (trigger !== 'silent') {
+                    this.emit('enable', button);
+                }
+            });
+            button.on('disable', (button, trigger) => {
+                if (this.extract().some((nested) => !nested.isEnabled)) {
+                    this.buttons.all.disable();
+                }
+                if (trigger !== 'silent') {
+                    this.emit('disable', button);
+                }
+            });
+        });
+        return this;
+    }
+    clear() {
+        this.extract().forEach((button) => button.delete());
+        this.buttons.provided = {};
+        return this;
+    }
+    on(event, handler) {
+        this.events.on(event, handler);
+        return this;
+    }
+    once(event, handler) {
+        this.events.once(event, handler);
+        return this;
+    }
+    emit(event, ...args) {
+        this.events.emit(event, ...args);
+        return this;
+    }
+    static build(provided) {
+        return new CheckboxAreaComponent(provided);
+    }
+}
+exports.CheckboxAreaComponent = CheckboxAreaComponent;
+
+},{"../../../../utils/common":248,"../../models":233,"../panel.component":213,"./item.component":200,"./template.hbs":201,"events":33,"handlebars":67}],200:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CheckboxAreaButtonComponent = void 0;
+const events_1 = __importDefault(require("events"));
+const utils_1 = require("../../utils");
+const models_1 = require("../../models");
+class CheckboxAreaButtonComponent extends models_1.Component {
+    constructor(configuration) {
+        super(`
+      <button
+        style="${configuration?.colorify ? `color: ${(0, utils_1.calculateColor)(configuration.name)}` : ''}"
+        class="${configuration.isEnabled ? 'checked' : ''}"
+      >${configuration.name}</button>
+    `);
+        this.configuration = configuration;
+        this.events = new events_1.default();
+        this.element.addEventListener('click', () => this.isEnabled ? this.disable('click') : this.enable('click'));
+    }
+    get name() {
+        return this.configuration.name;
+    }
+    get isEnabled() {
+        return this.element.classList.contains('checked');
+    }
+    enable(trigger = 'auto') {
+        if (this.isEnabled) {
+            return this;
+        }
+        this.element.classList.add('checked');
+        return this.emit('enable', this, trigger);
+    }
+    disable(trigger = 'auto') {
+        if (!this.isEnabled) {
+            return this;
+        }
+        this.element.classList.remove('checked');
+        return this.emit('disable', this, trigger);
+    }
+    on(event, handler) {
+        this.events.on(event, handler);
+        return this;
+    }
+    once(event, handler) {
+        this.events.once(event, handler);
+        return this;
+    }
+    emit(event, ...args) {
+        this.events.emit(event, ...args);
+        return this;
+    }
+    static build(configuration) {
+        return new CheckboxAreaButtonComponent(configuration);
+    }
+}
+exports.CheckboxAreaButtonComponent = CheckboxAreaButtonComponent;
+
+},{"../../models":233,"../../utils":247,"events":33}],201:[function(require,module,exports){
+module.exports = `
+  <div class="buttons"></div>
+`
+
+},{}],202:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CurtainComponent = void 0;
@@ -20638,7 +34325,7 @@ class CurtainComponent extends models_1.Component {
 }
 exports.CurtainComponent = CurtainComponent;
 
-},{"../../models":280}],250:[function(require,module,exports){
+},{"../../models":233}],203:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20647,16 +34334,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmptyComponent = void 0;
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class EmptyComponent extends models_1.Component {
     static build() {
-        return new EmptyComponent(render({}));
+        return new EmptyComponent(template({}));
     }
 }
 exports.EmptyComponent = EmptyComponent;
 
-},{"../../models":280,"./template.hbs":251,"handlebars":61}],251:[function(require,module,exports){
+},{"../../models":233,"./template.hbs":204,"handlebars":67}],204:[function(require,module,exports){
 module.exports = `
   <div class="empty">
     <i class="fas fa-hourglass-start"></i>
@@ -20664,7 +34350,7 @@ module.exports = `
   </div>
 `
 
-},{}],252:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20676,8 +34362,7 @@ const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
 const viewer_component_1 = require("../viewer.component");
 const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class ExpectationComponent extends models_1.Component {
     constructor(data) {
         super();
@@ -20689,7 +34374,7 @@ class ExpectationComponent extends models_1.Component {
         return Object.assign(this, { data });
     }
     refresh() {
-        this.replace(render(this.data)).append(this.viewer);
+        this.replace(template(this.data)).append(this.viewer);
         this.viewer.provide((0, pick_1.default)(this.data, ['id', 'type', 'transports', 'schema']));
         models_1.Button
             .build(this.element.querySelector('button.activity'))
@@ -20719,14 +34404,14 @@ class ExpectationComponent extends models_1.Component {
 }
 exports.ExpectationComponent = ExpectationComponent;
 
-},{"../../context":268,"../../models":280,"../viewer.component":266,"./template.hbs":253,"handlebars":61,"lodash/pick":228}],253:[function(require,module,exports){
+},{"../../context":221,"../../models":233,"../viewer.component":219,"./template.hbs":206,"handlebars":67,"lodash/pick":178}],206:[function(require,module,exports){
 module.exports = `
   <div class="container expectation" id="{{id}}">
     <div class="meta">{{> expectationMeta this}}</div>
   </div>
 `
 
-},{}],254:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20737,11 +34422,10 @@ const events_1 = __importDefault(require("events"));
 const set_1 = __importDefault(require("lodash/set"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class HeaderComponent extends models_1.Component {
     constructor(tabs) {
-        super(render({
+        super(template({
             tabs: tabs.map((tab) => tab.type === 'section'
                 ? Object.assign(tab, { id: tab.entity.id, isSelected: !tab.entity.isHidden })
                 : tab),
@@ -20780,7 +34464,7 @@ class HeaderComponent extends models_1.Component {
 }
 exports.HeaderComponent = HeaderComponent;
 
-},{"../../models":280,"./template.hbs":255,"events":27,"handlebars":61,"lodash/set":229}],255:[function(require,module,exports){
+},{"../../models":233,"./template.hbs":208,"events":33,"handlebars":67,"lodash/set":179}],208:[function(require,module,exports){
 module.exports = `
   <header>
     <div id="tabs">
@@ -20797,7 +34481,7 @@ module.exports = `
   </header>
 `
 
-},{}],256:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20807,8 +34491,7 @@ exports.HistoryComponent = void 0;
 const handlebars_1 = __importDefault(require("handlebars"));
 const viewer_component_1 = require("../viewer.component");
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class HistoryComponent extends models_1.Component {
     constructor(data) {
         super();
@@ -20820,7 +34503,7 @@ class HistoryComponent extends models_1.Component {
         return Object.assign(this, { data });
     }
     refresh() {
-        this.replace(render(this.data)).append(this.viewer);
+        this.replace(template(this.data)).append(this.viewer);
         this.viewer.provide({
             event: this.data.snapshot.event,
             transport: this.data.snapshot.transport,
@@ -20873,7 +34556,7 @@ class HistoryComponent extends models_1.Component {
 }
 exports.HistoryComponent = HistoryComponent;
 
-},{"../../models":280,"../viewer.component":266,"./template.hbs":257,"handlebars":61}],257:[function(require,module,exports){
+},{"../../models":233,"../viewer.component":219,"./template.hbs":210,"handlebars":67}],210:[function(require,module,exports){
 module.exports = `
   <div class="container history" id="{{id}}">
     <div class="meta">
@@ -20937,7 +34620,7 @@ module.exports = `
   </div>
 `
 
-},{}],258:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -20954,8 +34637,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(require("./checkbox-area.component"), exports);
 __exportStar(require("./expectation.component"), exports);
-__exportStar(require("./settings.component"), exports);
 __exportStar(require("./history.component"), exports);
 __exportStar(require("./curtain.component"), exports);
 __exportStar(require("./loader.component"), exports);
@@ -20963,8 +34646,10 @@ __exportStar(require("./popups.component"), exports);
 __exportStar(require("./search.component"), exports);
 __exportStar(require("./header.component"), exports);
 __exportStar(require("./empty.component"), exports);
+__exportStar(require("./chart.component"), exports);
+__exportStar(require("./panel.component"), exports);
 
-},{"./curtain.component":249,"./empty.component":250,"./expectation.component":252,"./header.component":254,"./history.component":256,"./loader.component":259,"./popups.component":260,"./search.component":262,"./settings.component":264}],259:[function(require,module,exports){
+},{"./chart.component":198,"./checkbox-area.component":199,"./curtain.component":202,"./empty.component":203,"./expectation.component":205,"./header.component":207,"./history.component":209,"./loader.component":212,"./panel.component":213,"./popups.component":215,"./search.component":217}],212:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoaderComponent = void 0;
@@ -20980,7 +34665,57 @@ class LoaderComponent extends curtain_component_1.CurtainComponent {
 }
 exports.LoaderComponent = LoaderComponent;
 
-},{"../curtain.component":249}],260:[function(require,module,exports){
+},{"../curtain.component":202}],213:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PanelComponent = void 0;
+const handlebars_1 = __importDefault(require("handlebars"));
+const models_1 = require("../../models");
+const template = handlebars_1.default.compile(require('./template.hbs'));
+class PanelComponent extends models_1.Component {
+    constructor(provided) {
+        super(template(provided));
+        this.content = new models_1.Component(this.element.querySelector('div.content'));
+    }
+    clear() {
+        this.content.clear();
+        return this;
+    }
+    append(predicate) {
+        this.content.append(predicate);
+        return this;
+    }
+    prepend(predicate) {
+        this.content.prepend(predicate);
+        return this;
+    }
+    replace(predicate) {
+        this.content.replace(predicate);
+        return this;
+    }
+    static build(configuration) {
+        return new PanelComponent(configuration);
+    }
+}
+exports.PanelComponent = PanelComponent;
+
+},{"../../models":233,"./template.hbs":214,"handlebars":67}],214:[function(require,module,exports){
+module.exports = `
+  <div class="panel {{class}} {{#if width}}width-{{width}}{{else}}width-L{{/if}} {{#if height}}height-{{height}}{{else}}height-L{{/if}}">
+    <p class="title">
+      {{#if icon}}<i class="{{icon}}"></i>{{/if}}
+      <span class="title">{{{title}}}</span>
+      {{#if description}}<span class="description">{{{description}}}</span>{{/if}}
+    </p>
+
+    <div class="content"></div>
+  </div>
+`
+
+},{}],215:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20989,15 +34724,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PopupsComponent = void 0;
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class PopupsComponent extends models_1.Component {
     constructor() {
         super();
         this.element.classList.add('popups');
     }
     push(message, options = {}) {
-        const popup = this.compileHtmlStringToElement(render({ message, level: options.level ?? 'info' }));
+        const popup = this.compileHtmlStringToElement(template({ message, level: options.level ?? 'info' }));
         this.element.prepend(popup);
         setTimeout(() => popup.remove(), 3000);
     }
@@ -21007,18 +34741,18 @@ class PopupsComponent extends models_1.Component {
 }
 exports.PopupsComponent = PopupsComponent;
 
-},{"../../models":280,"./template.hbs":261,"handlebars":61}],261:[function(require,module,exports){
+},{"../../models":233,"./template.hbs":216,"handlebars":67}],216:[function(require,module,exports){
 module.exports = `
   <div class="popup-message {{level}}">
     {{#compare level 'eq' 'info'}}<i class="fas fa-check"></i>{{/compare}}
     {{#compare level 'eq' 'warning'}}<i class="fas fa-exclamation-triangle"></i>{{/compare}}
     {{#compare level 'eq' 'error'}}<i class="fas fa-times"></i>{{/compare}}
 
-    <span>{{message}}</span>
+    <span>{{{message}}}</span>
   </div>
 `
 
-},{}],262:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21029,25 +34763,29 @@ const events_1 = require("events");
 const debounce_1 = __importDefault(require("lodash/debounce"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class SearchComponent extends models_1.Component {
     constructor(options) {
-        super(render({ title: options?.title ?? 'Type something' }));
+        super(template({ title: options?.title ?? 'Type something' }));
         this.options = options;
         this.events = new events_1.EventEmitter();
         this.input = this.element.querySelector('input');
         this.button = this.element.querySelector('button');
         this.button.classList.add('hidden');
         this.button.addEventListener('click', () => this.clear());
-        this.on('input', () => this.button.classList.remove('hidden'));
+        this.on('input', () => {
+            this.button.classList.remove('hidden');
+            this.element.classList.add('filled');
+        });
+        this.on('clear', () => {
+            this.button.classList.add('hidden');
+            this.element.classList.remove('filled');
+        });
         this.input.addEventListener('keydown', (0, debounce_1.default)(() => this.input.value ? this.emit('input', this.input.value) : this.clear(), 350));
     }
     clear() {
         this.input.value = '';
-        this.button.classList.add('hidden');
-        this.emit('clear');
-        return this;
+        return this.emit('clear');
     }
     on(event, handler) {
         this.events.on(event, handler);
@@ -21067,7 +34805,7 @@ class SearchComponent extends models_1.Component {
 }
 exports.SearchComponent = SearchComponent;
 
-},{"../../models":280,"./template.hbs":263,"events":27,"handlebars":61,"lodash/debounce":203}],263:[function(require,module,exports){
+},{"../../models":233,"./template.hbs":218,"events":33,"handlebars":67,"lodash/debounce":162}],218:[function(require,module,exports){
 module.exports = `
   <div class="search">
     <i class="fas fa-search"></i>
@@ -21076,89 +34814,7 @@ module.exports = `
   </div>
 `
 
-},{}],264:[function(require,module,exports){
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SettingsComponent = void 0;
-const handlebars_1 = __importDefault(require("handlebars"));
-const models_1 = require("../../models");
-const common_1 = require("../../../../utils/common");
-const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
-class SettingsComponent extends models_1.Component {
-    constructor() {
-        super();
-        this.filters = this.compileEmptyFilters();
-    }
-    resetFilters() {
-        this.filters = this.compileEmptyFilters();
-        return this;
-    }
-    refresh() {
-        this.clear().append(render({
-            groups: {
-                all: {
-                    isEnabled: this.filters.groups ? this.filters.groups.size === context_1.default.shared.groups.size : true,
-                },
-                segmented: [...context_1.default.shared.groups].map((group) => ({
-                    name: group,
-                    isEnabled: this.filters.groups?.has(group) ?? true,
-                })),
-            },
-        }));
-        const groupsFilterButtons = {
-            all: this.element.querySelector('div#groups-filter button#all'),
-            segmented: this.element.querySelectorAll('div#groups-filter button:not(#all)'),
-        };
-        groupsFilterButtons.all.addEventListener('click', (event) => {
-            const isChecked = event.target.classList.toggle('checked');
-            this.filters.groups = isChecked ? new Set(context_1.default.shared.groups.values()) : new Set();
-            groupsFilterButtons.segmented.forEach((element) => isChecked ? element.classList.add('checked') : element.classList.remove('checked'));
-        });
-        groupsFilterButtons.segmented.forEach((element) => element.addEventListener('click', () => {
-            const isChecked = element.classList.toggle('checked');
-            this.filters.groups = this.filters.groups ?? new Set(context_1.default.shared.groups.values());
-            isChecked ? this.filters.groups.add(element.id) : this.filters.groups.delete(element.id);
-            this.filters.groups.size === context_1.default.shared.groups.size
-                ? groupsFilterButtons.all.classList.add('checked')
-                : groupsFilterButtons.all.classList.remove('checked');
-        }));
-        return this;
-    }
-    compileEmptyFilters() {
-        return {
-            groups: (0, common_1.cast)(null),
-        };
-    }
-    static build() {
-        return new SettingsComponent();
-    }
-}
-exports.SettingsComponent = SettingsComponent;
-
-},{"../../../../utils/common":292,"../../context":268,"../../models":280,"./template.hbs":265,"handlebars":61}],265:[function(require,module,exports){
-module.exports = `
-  <div class="settings">
-    <div id="groups-filter" class="container">
-      <p><i class="fas fa-filter"></i> Groups filter <span>(hides/shows expectations and history in GUI)</span></p>
-      <div class="panel">
-          <div class="buttons">
-          <button id="all" class="{{#if groups.all.isEnabled}}checked{{/if}}">ALL</button>
-
-          {{#each groups.segmented}}
-            <button id="{{name}}" class="{{#if isEnabled}}checked{{/if}}" style="color: {{toColor name}};">{{name}}</button>
-          {{/each}}
-        </div>
-      </div>
-    </div>
-  </div>
-`
-
-},{}],266:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21169,11 +34825,10 @@ const json_formatter_1 = __importDefault(require("../../../../../../../packages/
 const handlebars_1 = __importDefault(require("handlebars"));
 const models_1 = require("../../models");
 const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const template = handlebars_1.default.compile(require('./template.hbs'));
 class ViewerComponent extends models_1.Component {
     constructor(options) {
-        super(render({}));
+        super(template({}));
         this.options = options;
         this.instance = new json_formatter_1.default({}, this.options?.depth ?? 3, {
             theme: 'custom',
@@ -21191,15 +34846,19 @@ class ViewerComponent extends models_1.Component {
 }
 exports.ViewerComponent = ViewerComponent;
 
-},{"../../../../../../../packages/json-formatter":1,"../../context":268,"../../models":280,"./template.hbs":267,"handlebars":61}],267:[function(require,module,exports){
+},{"../../../../../../../packages/json-formatter":1,"../../context":221,"../../models":233,"./template.hbs":220,"handlebars":67}],220:[function(require,module,exports){
 module.exports = `
   <div class="viewer container"></div>
 `
 
-},{}],268:[function(require,module,exports){
+},{}],221:[function(require,module,exports){
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_client_1 = require("socket.io-client");
+const events_1 = __importDefault(require("events"));
 const models_1 = require("./models");
 const common_1 = require("../../utils/common");
 const io = (0, socket_io_client_1.io)({
@@ -21223,6 +34882,19 @@ class Context {
         };
         this.storage = models_1.DynamicStorage.build('void', document.body);
         this.shared = {};
+        this.events = new events_1.default();
+    }
+    on(event, handler) {
+        this.events.on(event, handler);
+        return this;
+    }
+    once(event, handler) {
+        this.events.once(event, handler);
+        return this;
+    }
+    emit(event, ...args) {
+        this.events.emit(event, ...args);
+        return this;
     }
     assignConfig(config) {
         return Object.assign(this, { config });
@@ -21236,7 +34908,7 @@ class Context {
 }
 exports.default = new Context();
 
-},{"../../utils/common":292,"./models":280,"socket.io-client":241}],269:[function(require,module,exports){
+},{"../../utils/common":248,"./models":233,"events":33,"socket.io-client":189}],222:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21266,7 +34938,7 @@ exports.toLocaleTime = (0, utils_1.buildHandlebarsHelper)(() => (timestamp) => n
 exports.toSeconds = (0, utils_1.buildHandlebarsHelper)(() => (ms) => (ms / 1000).toFixed(3));
 exports.toColor = (0, utils_1.buildHandlebarsHelper)(() => (text) => (0, utils_2.calculateColor)(text));
 
-},{"../utils":291,"./utils":274,"lodash/truncate":236}],270:[function(require,module,exports){
+},{"../utils":247,"./utils":227,"lodash/truncate":184}],223:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -21315,7 +34987,7 @@ exports.default = {
     },
 };
 
-},{"./helpers":269,"./partials":272,"handlebars":61}],271:[function(require,module,exports){
+},{"./helpers":222,"./partials":225,"handlebars":67}],224:[function(require,module,exports){
 module.exports = `
   <div class="segment">
     {{#compare format 'neq' 'short'}}
@@ -21370,14 +35042,14 @@ module.exports = `
   {{/with}}
 `
 
-},{}],272:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.truncated = exports.expectationMeta = void 0;
 exports.expectationMeta = require('./expectation-meta.hbs');
 exports.truncated = require('./truncated.hbs');
 
-},{"./expectation-meta.hbs":271,"./truncated.hbs":273}],273:[function(require,module,exports){
+},{"./expectation-meta.hbs":224,"./truncated.hbs":226}],226:[function(require,module,exports){
 module.exports = `
   {{#if (compare value.length 'gt' length)}}
     <span class="truncated">
@@ -21389,7 +35061,7 @@ module.exports = `
   {{/if}}
 `
 
-},{}],274:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildHandlebarsHelper = void 0;
@@ -21400,7 +35072,7 @@ const buildHandlebarsHelper = (handler) => {
 };
 exports.buildHandlebarsHelper = buildHandlebarsHelper;
 
-},{}],275:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Button = void 0;
@@ -21433,7 +35105,7 @@ class Button {
 }
 exports.Button = Button;
 
-},{}],276:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ClientStorage = void 0;
@@ -21458,7 +35130,7 @@ class ClientStorage {
 }
 exports.ClientStorage = ClientStorage;
 
-},{}],277:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = void 0;
@@ -21466,7 +35138,7 @@ class Component {
     constructor(predicate) {
         this.element = document.createElement('div');
         if (predicate) {
-            this.element = typeof predicate === 'string' ? this.compileHtmlStringToElement(predicate) : predicate;
+            this.element = this.compilePredicateToElement(predicate);
         }
     }
     get isHidden() {
@@ -21488,27 +35160,15 @@ class Component {
         return this;
     }
     append(predicate) {
-        this.element.append(predicate instanceof Component
-            ? predicate.element
-            : typeof predicate === 'string'
-                ? this.compileHtmlStringToElement(predicate)
-                : predicate);
+        this.element.append(this.compilePredicateToElement(predicate));
         return this;
     }
     prepend(predicate) {
-        this.element.prepend(predicate instanceof Component
-            ? predicate.element
-            : typeof predicate === 'string'
-                ? this.compileHtmlStringToElement(predicate)
-                : predicate);
+        this.element.prepend(this.compilePredicateToElement(predicate));
         return this;
     }
     replace(predicate) {
-        const element = predicate instanceof Component
-            ? predicate.element
-            : typeof predicate === 'string'
-                ? this.compileHtmlStringToElement(predicate)
-                : predicate;
+        const element = this.compilePredicateToElement(predicate);
         this.element.after(element);
         if (this.isHidden) {
             element.classList.add('hidden');
@@ -21523,13 +35183,18 @@ class Component {
         this.element.remove();
         return this;
     }
+    compilePredicateToElement(predicate) {
+        return predicate instanceof Component
+            ? predicate.element
+            : typeof predicate === 'string' ? this.compileHtmlStringToElement(predicate) : predicate;
+    }
     compileHtmlStringToElement(content) {
         return new DOMParser().parseFromString(content, 'text/html').body.firstElementChild;
     }
 }
 exports.Component = Component;
 
-},{}],278:[function(require,module,exports){
+},{}],231:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21566,7 +35231,7 @@ class DynamicStorage {
 }
 exports.DynamicStorage = DynamicStorage;
 
-},{"../utils":291,"./client-storage":276,"./form":279,"lodash/set":229}],279:[function(require,module,exports){
+},{"../utils":247,"./client-storage":229,"./form":232,"lodash/set":179}],232:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21624,13 +35289,13 @@ class Form extends component_1.Component {
             .forEach(([path, value, input]) => (0, set_1.default)(input, 'value', Array.isArray(value) ? value.join(input.getAttribute('list') ?? ',') : (value ?? '')));
         return this;
     }
-    static build(element) {
-        return new Form(element);
+    static build(predicate) {
+        return new Form(predicate);
     }
 }
 exports.Form = Form;
 
-},{"../utils":291,"./component":277,"lodash/set":229}],280:[function(require,module,exports){
+},{"../utils":247,"./component":230,"lodash/set":179}],233:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -21653,7 +35318,7 @@ __exportStar(require("./section"), exports);
 __exportStar(require("./button"), exports);
 __exportStar(require("./form"), exports);
 
-},{"./button":275,"./component":277,"./dynamic-storage":278,"./form":279,"./section":281}],281:[function(require,module,exports){
+},{"./button":228,"./component":230,"./dynamic-storage":231,"./form":232,"./section":234}],234:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21663,14 +35328,30 @@ exports.Section = void 0;
 const events_1 = __importDefault(require("events"));
 const dynamic_storage_1 = require("./dynamic-storage");
 const component_1 = require("./component");
+const button_1 = require("./button");
 class Section extends component_1.Component {
     constructor(element) {
         super();
         this.element = element;
-        this.storage = dynamic_storage_1.DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage'));
         this.content = new component_1.Component(this.element.querySelector('div.content'));
-        this.events = new events_1.default();
+        this.controls = {
+            main: new component_1.Component(this.element.querySelector('div.controls div.main')),
+            additional: new component_1.Component(this.element.querySelector('div.controls div.additional')),
+        };
+        this.storage = dynamic_storage_1.DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage'));
         this.meta = {};
+        this.events = new events_1.default();
+        const expander = this.element.querySelector('div.controls button#expand');
+        if (expander) {
+            button_1.Button.build(expander).handle(() => {
+                if (this.controls.additional.isHidden) {
+                    this.controls.additional.show();
+                    return expander.classList.add('toggled');
+                }
+                this.controls.additional.hide();
+                return expander.classList.remove('toggled');
+            });
+        }
     }
     assignMeta(meta) {
         return Object.assign(this, { meta });
@@ -21703,32 +35384,78 @@ class Section extends component_1.Component {
 }
 exports.Section = Section;
 
-},{"./component":277,"./dynamic-storage":278,"events":27}],282:[function(require,module,exports){
+},{"./button":228,"./component":230,"./dynamic-storage":231,"events":33}],235:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dayjs_1 = __importDefault(require("dayjs"));
 const handlebars_1 = __importDefault(require("handlebars"));
+const components_1 = require("../../components");
 const models_1 = require("../../models");
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const context_1 = __importDefault(require("../../context"));
+const template = handlebars_1.default.compile(require('./template.hbs'));
+const charts = {
+    memory: components_1.ChartComponent.build({
+        title: 'Server memory usage',
+        icon: 'fas fa-memory',
+        description: 'updates every 5 seconds',
+        width: 'M',
+    }),
+    cache: components_1.ChartComponent.build({
+        title: 'Cache memory usage',
+        icon: 'fas fa-database',
+        description: 'updates every 10 minutes',
+        width: 'M',
+    }),
+    containers: components_1.ChartComponent.build({
+        title: 'Registred containers',
+        icon: 'fas fa-box',
+        description: 'updates every 5 seconds',
+        width: 'S',
+    }),
+    rate: components_1.ChartComponent.build({
+        title: 'Requests rate',
+        icon: 'fas fa-rocket',
+        mode: 'aggregation',
+        description: 'updates instantly',
+        width: 'S',
+    }),
+};
 exports.default = models_1.Section
-    .build(render({}))
-    .assignMeta({ icon: 'fas fa-chart-line' });
+    .build(template({}))
+    .assignMeta({ icon: 'fas fa-chart-line' })
+    .once('initialize', (section) => {
+    section.content.append(charts.memory);
+    section.content.append(charts.cache);
+    section.content.append(charts.containers);
+    section.content.append(charts.rate);
+    context_1.default.services.io.subscribe('metric:registred', ({ name, point: { timestamp, values } }) => name in charts
+        ? charts[name].provide([{ values, legend: (0, dayjs_1.default)(timestamp).format('HH:mm') }])
+        : null);
+})
+    .on('initialize', async () => {
+    charts.containers.clear();
+    charts.memory.clear();
+    charts.cache.clear();
+    charts.rate.clear();
+    const { data } = await context_1.default.services.io.exec('metrics:get');
+    charts.memory.provide(data.memory.map(({ timestamp, values }) => ({ values, legend: (0, dayjs_1.default)(timestamp).format('HH:mm') })));
+    charts.cache.provide(data.cache.map(({ timestamp, values }) => ({ values, legend: (0, dayjs_1.default)(timestamp).format('HH:mm') })));
+    charts.rate.provide(data.rate.map(({ timestamp, values }) => ({ values, legend: (0, dayjs_1.default)(timestamp).format('HH:mm') })));
+    charts.containers.provide(data.containers.map(({ timestamp, values }) => ({ values, legend: (0, dayjs_1.default)(timestamp).format('HH:mm') })));
+});
 
-},{"../../models":280,"./template.hbs":283,"handlebars":61}],283:[function(require,module,exports){
+},{"../../components":211,"../../context":221,"../../models":233,"./template.hbs":236,"dayjs":10,"handlebars":67}],236:[function(require,module,exports){
 module.exports = `
   <section id="analytics">
     <div class="storage"></div>
-    <div class="content">
-      <i class="fas fa-hammer"></i>
-      <p>Soon</p>
-    </div>
+    <div class="content container"></div>
   </section>
 `
 
-},{}],284:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21739,28 +35466,46 @@ const components_1 = require("../../components");
 const models_1 = require("../../models");
 const common_1 = require("../../../../utils/common");
 const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
-const empty = components_1.EmptyComponent.build();
+const template = handlebars_1.default.compile(require('./template.hbs'));
 const storage = new Map();
-const state = { search: (0, common_1.cast)(null) };
-const search = components_1.SearchComponent
-    .build({ title: 'Search expectations' })
-    .on('clear', () => {
-    state.search = null;
-    refresh();
-})
-    .on('input', (value) => {
-    state.search = value;
-    refresh();
-});
-const filter = (list) => {
-    let filtred = list;
-    if (context_1.default.shared.settings.filters.groups) {
-        filtred = filtred.filter((expectation) => context_1.default.shared.settings.filters.groups.has(expectation.data.group));
+const empty = components_1.EmptyComponent.build();
+const controls = {
+    state: {
+        filters: {
+            search: (0, common_1.cast)(null),
+            groups: (0, common_1.cast)(null),
+        },
+    },
+    search: components_1.SearchComponent
+        .build({ title: 'Search expectations' })
+        .on('clear', () => {
+        controls.state.filters.search = null;
+        refresh();
+    })
+        .on('input', (value) => {
+        controls.state.filters.search = value;
+        refresh();
+    }),
+    filter: components_1.CheckboxAreaComponent.build({
+        title: 'Groups filter',
+        description: 'shows/hides items in the list below',
+        width: 'M',
+        icon: 'fas fa-filter',
+    }),
+    switcher: components_1.CheckboxAreaComponent.build({
+        title: 'Groups switcher',
+        description: 'turnes on/off items in the list below',
+        width: 'M',
+        icon: 'fas fa-power-off',
+    }),
+};
+const filter = (provided) => {
+    let filtred = provided;
+    if (controls.state.filters.groups) {
+        filtred = filtred.filter((expectation) => controls.state.filters.groups.includes(expectation.data.group));
     }
-    if (state.search) {
-        filtred = filtred.filter((expectation) => expectation.match(state.search));
+    if (controls.state.filters.search) {
+        filtred = filtred.filter((expectation) => expectation.match(controls.state.filters.search));
     }
     return filtred;
 };
@@ -21770,32 +35515,44 @@ const refresh = (list = [...storage.values()]) => {
         shown.length ? empty.hide() : empty.show();
     }
 };
+const toggle = (groups) => (groups ?? context_1.default.shared.groups).forEach((group) => {
+    const filtred = [...storage.values()].filter((expectation) => expectation.data.group === group);
+    filtred.every((expectation) => !expectation.data.isEnabled)
+        ? controls.switcher.buttons.provided[group]?.disable('silent')
+        : controls.switcher.buttons.provided[group]?.enable('silent');
+});
 exports.default = models_1.Section
-    .build(render({}))
+    .build(template({}))
     .assignMeta({ name: 'Expectations', icon: 'fas fa-magic' })
-    .on('select', () => refresh())
-    .on('initialize', async (section) => {
-    context_1.default.shared.groups.clear();
-    section.content.clear();
-    storage.clear();
-    const { data } = await context_1.default.services.io.exec('expectations:get-list');
-    data.forEach((expectation) => {
-        const component = components_1.ExpectationComponent.build(expectation);
-        storage.set(expectation.id, component);
-        context_1.default.shared.groups.add(expectation.group);
-        section.content.append(component);
-    });
-    refresh();
-})
     .once('initialize', (section) => {
-    section.prepend(empty);
-    section.prepend(search);
+    section.append(empty);
+    section.controls.main.append(controls.search);
+    section.controls.additional.append(controls.filter);
+    section.controls.additional.append(controls.switcher);
+    context_1.default.on('group:register', (name) => {
+        controls.switcher.provide({ name, isEnabled: true, colorify: true });
+        controls.filter.provide({ name, isEnabled: true, colorify: true });
+    });
+    controls.switcher.on('enable', (item) => context_1.default.services.io.exec('expectations:group:update', { name: item.name, set: { isEnabled: true } }));
+    controls.switcher.on('disable', (item) => context_1.default.services.io.exec('expectations:group:update', { name: item.name, set: { isEnabled: false } }));
+    controls.filter.on('enable', () => {
+        controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
+        refresh();
+    });
+    controls.filter.on('disable', () => {
+        controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
+        refresh();
+    });
     context_1.default.services.io.subscribe('expectation:added', (data) => {
         const expectation = components_1.ExpectationComponent.build(data);
         storage.set(data.id, expectation);
-        context_1.default.shared.groups.add(data.group);
         section.content.append(expectation);
+        if (!context_1.default.shared.groups.has(data.group)) {
+            context_1.default.shared.groups.add(data.group);
+            context_1.default.emit('group:register', data.group);
+        }
         refresh([expectation]);
+        toggle([expectation.data.group]);
     });
     context_1.default.services.io.subscribe('expectation:updated', (data) => {
         const expectation = storage.get(data.id) ?? components_1.ExpectationComponent.build(data);
@@ -21806,114 +35563,207 @@ exports.default = models_1.Section
             section.content.append(expectation);
             refresh([expectation]);
         }
+        if (!context_1.default.shared.groups.has(data.group)) {
+            context_1.default.shared.groups.add(data.group);
+            context_1.default.emit('group:register', data.group);
+        }
         storage.set(data.id, expectation);
-        context_1.default.shared.groups.add(data.group);
+        toggle([expectation.data.group]);
     });
+})
+    .on('initialize', async (section) => {
+    context_1.default.shared.groups.clear();
+    section.content.clear();
+    controls.switcher.clear();
+    controls.filter.clear();
+    storage.clear();
+    const { data } = await context_1.default.services.io.exec('expectations:get-list');
+    data.forEach((expectation) => {
+        const component = components_1.ExpectationComponent.build(expectation);
+        if (!context_1.default.shared.groups.has(expectation.group)) {
+            context_1.default.shared.groups.add(expectation.group);
+            context_1.default.emit('group:register', expectation.group);
+        }
+        storage.set(expectation.id, component);
+        section.content.append(component);
+    });
+    refresh();
+    toggle();
 });
 
-},{"../../../../utils/common":292,"../../components":258,"../../context":268,"../../models":280,"./template.hbs":285,"handlebars":61}],285:[function(require,module,exports){
+},{"../../../../utils/common":248,"../../components":211,"../../context":221,"../../models":233,"./template.hbs":238,"handlebars":67}],238:[function(require,module,exports){
 module.exports = `
   <section id="expectations">
     <div class="storage"></div>
+
+    <div class="controls">
+      <div class="main">
+        <button class="icon-only" id="expand"><i class="fas fa-chevron-down"></i></button>
+      </div>
+
+      <div class="additional container hidden"></div>
+    </div>
+
     <div class="content"></div>
   </section>
 `
 
-},{}],286:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const handlebars_1 = __importDefault(require("handlebars"));
-const components_1 = require("../../components");
 const models_1 = require("../../models");
 const common_1 = require("../../../../utils/common");
+const components_1 = require("../../components");
 const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const templates = {
+    section: handlebars_1.default.compile(require('./templates/section.hbs')),
+    actions: handlebars_1.default.compile(require('./templates/actions.hbs')),
+};
 const empty = components_1.EmptyComponent.build();
-const storage = new Map();
-const stack = [];
-const state = { search: (0, common_1.cast)(null) };
-const search = components_1.SearchComponent
-    .build({ title: 'Search history' })
-    .on('clear', () => {
-    state.search = null;
-    refresh();
-})
-    .on('input', (value) => {
-    state.search = value;
-    refresh();
-});
+const controls = {
+    state: {
+        storage: new Map(),
+        stack: (0, common_1.cast)([]),
+        filters: {
+            search: (0, common_1.cast)(null),
+            groups: (0, common_1.cast)(null),
+        },
+    },
+    search: components_1.SearchComponent
+        .build({ title: 'Search history' })
+        .on('clear', () => {
+        controls.state.filters.search = null;
+        refresh();
+    })
+        .on('input', (value) => {
+        controls.state.filters.search = value;
+        refresh();
+    }),
+    filter: components_1.CheckboxAreaComponent.build({
+        title: 'Groups filter',
+        description: 'shows/hides items in the list below',
+        width: 'M',
+        icon: 'fas fa-filter',
+    }),
+    actions: components_1.PanelComponent
+        .build({
+        title: 'Actions',
+        class: 'actions',
+        width: 'M',
+        icon: 'fas fa-sliders-h',
+    })
+        .append(templates.actions({})),
+};
 const filter = (list) => {
     let filtred = list;
-    if (context_1.default.shared.settings.filters.groups) {
-        filtred = filtred.filter((history) => context_1.default.shared.settings.filters.groups.has(history.data.group));
+    if (controls.state.filters.groups) {
+        filtred = filtred.filter((history) => controls.state.filters.groups.includes(history.data.group));
     }
-    if (state.search) {
-        filtred = filtred.filter((history) => history.match(state.search));
+    if (controls.state.filters.search) {
+        filtred = filtred.filter((history) => history.match(controls.state.filters.search));
     }
     return filtred;
 };
-const refresh = (list = [...storage.values()]) => {
+const refresh = (list = [...controls.state.storage.values()]) => {
     const shown = filter(list.map((history) => history.hide())).map((history) => history.show());
-    if (list.length === storage.size) {
+    if (list.length === controls.state.storage.size) {
         shown.length ? empty.hide() : empty.show();
     }
 };
 exports.default = models_1.Section
-    .build(render({}))
+    .build(templates.section({}))
     .assignMeta({ name: 'History', icon: 'fas fa-history' })
-    .on('select', () => refresh())
-    .on('initialize', async (section) => {
-    section.content.clear();
-    storage.clear();
-    stack.splice(0, stack.length);
-    const { data } = await context_1.default.services.io.exec('history:get-list');
-    data.forEach((history) => {
-        const component = components_1.HistoryComponent.build(history);
-        storage.set(history.id, component);
-        stack.push(history.id);
-        section.content.append(component);
-    });
-    refresh();
-})
     .once('initialize', (section) => {
-    section.prepend(empty);
-    section.prepend(search);
+    section.append(empty);
+    section.controls.main.append(controls.search);
+    section.controls.additional.append(controls.filter);
+    section.controls.additional.append(controls.actions);
+    models_1.Button.build(controls.actions.element.querySelector('button#clear')).handle(async () => {
+        if (!controls.state.stack.length) {
+            return context_1.default.shared.popups.push('Nothing to clear', { level: 'warning' });
+        }
+        await context_1.default.services.io.exec('history:delete');
+        controls.state.storage.clear();
+        controls.state.stack = [];
+        section.content.clear();
+        context_1.default.shared.popups.push('History has cleared');
+        refresh();
+    });
+    context_1.default.on('group:register', (name) => controls.filter.provide({ name, isEnabled: true, colorify: true }));
+    controls.filter.on('enable', () => {
+        controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
+        refresh();
+    });
+    controls.filter.on('disable', () => {
+        controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
+        refresh();
+    });
     context_1.default.services.io.subscribe('history:added', (data) => {
         const history = components_1.HistoryComponent.build(data);
-        storage.set(data.id, history);
-        stack.push(data.id);
-        if (stack.length > context_1.default.config.history.limit * context_1.default.shared.groups.size) {
-            const id = stack.shift();
-            storage.get(id)?.delete();
-            storage.delete(id);
+        controls.state.storage.set(data.id, history);
+        controls.state.stack.push(data.id);
+        if (controls.state.stack.length > context_1.default.config.history.limit * context_1.default.shared.groups.size) {
+            const id = controls.state.stack.shift();
+            controls.state.storage.get(id)?.delete();
+            controls.state.storage.delete(id);
         }
         section.content.prepend(history);
         refresh([history]);
     });
     context_1.default.services.io.subscribe('history:updated', (data) => {
-        const history = storage.get(data.id) ?? components_1.HistoryComponent.build(data);
-        storage.has(data.id) ? history.provide(data).refresh() : stack.push(data.id);
-        storage.set(data.id, history);
+        const history = controls.state.storage.get(data.id) ?? components_1.HistoryComponent.build(data);
+        controls.state.storage.has(data.id) ? history.provide(data).refresh() : controls.state.stack.push(data.id);
+        controls.state.storage.set(data.id, history);
         if (!section.element.querySelector(`div.history[id="${data.id}"]`)) {
             section.content.prepend(history);
             refresh([history]);
         }
     });
+})
+    .on('initialize', async (section) => {
+    controls.filter.clear();
+    controls.state.stack = [];
+    section.content.clear();
+    controls.state.storage.clear();
+    const { data } = await context_1.default.services.io.exec('history:get-list');
+    data.forEach((history) => {
+        const component = components_1.HistoryComponent.build(history);
+        controls.state.storage.set(history.id, component);
+        controls.state.stack.push(history.id);
+        section.content.append(component);
+    });
+    refresh();
 });
 
-},{"../../../../utils/common":292,"../../components":258,"../../context":268,"../../models":280,"./template.hbs":287,"handlebars":61}],287:[function(require,module,exports){
+},{"../../../../utils/common":248,"../../components":211,"../../context":221,"../../models":233,"./templates/actions.hbs":240,"./templates/section.hbs":241,"handlebars":67}],240:[function(require,module,exports){
+module.exports = `
+  <div class="buttons">
+    <button id="clear"><i class="fas fa-trash-alt"></i>Clear list</button>
+  </div>
+`
+
+},{}],241:[function(require,module,exports){
 module.exports = `
   <section id="history">
     <div class="storage"></div>
+
+    <div class="controls">
+      <div class="main">
+        <button class="icon-only" id="expand"><i class="fas fa-chevron-down"></i></button>
+      </div>
+
+      <div class="additional container hidden"></div>
+    </div>
+
     <div class="content"></div>
   </section>
 `
 
-},{}],288:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21929,40 +35779,81 @@ Object.defineProperty(exports, "settings", { enumerable: true, get: function () 
 var history_section_1 = require("./history.section");
 Object.defineProperty(exports, "history", { enumerable: true, get: function () { return __importDefault(history_section_1).default; } });
 
-},{"./analytics.section":282,"./expectations.section":284,"./history.section":286,"./settings.section":289}],289:[function(require,module,exports){
+},{"./analytics.section":235,"./expectations.section":237,"./history.section":239,"./settings.section":243}],243:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const handlebars_1 = __importDefault(require("handlebars"));
+const components_1 = require("../../components");
 const models_1 = require("../../models");
 const context_1 = __importDefault(require("../../context"));
-const template = require('./template.hbs');
-const render = handlebars_1.default.compile(template);
+const templates = {
+    section: handlebars_1.default.compile(require('./templates/section.hbs')),
+    cache: handlebars_1.default.compile(require('./templates/cache.hbs')),
+    stats: handlebars_1.default.compile(require('./templates/stats.hbs')),
+};
+const panels = {
+    stats: components_1.PanelComponent.build({
+        title: 'Stats',
+        icon: 'fas fa-server',
+        class: 'stats',
+        height: 'XS',
+        width: 'M',
+    }),
+    cache: components_1.PanelComponent
+        .build({
+        title: 'Cache',
+        icon: 'fas fa-database',
+        class: 'cache',
+        height: 'XS',
+        width: 'M',
+    })
+        .replace(templates.cache({})),
+};
 exports.default = models_1.Section
-    .build(render({}))
+    .build(templates.section({}))
     .assignMeta({ icon: 'fas fa-cog' })
+    .once('initialize', async (section) => {
+    const form = models_1.Form.build(section.content);
+    section.content.append(panels.stats);
+    section.content.append(panels.cache);
+    models_1.Button.build(panels.cache.element.querySelector('button#delete')).handle(async () => {
+        const { data } = await context_1.default.services.io.exec('cache:delete', form.extract().cache);
+        context_1.default.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
+    });
+})
     .on('select', async () => {
-    context_1.default.shared.settings.refresh();
-})
-    .on('initialize', () => {
-    context_1.default.shared.settings.resetFilters();
-    context_1.default.shared.settings.refresh();
-})
-    .once('initialize', (section) => {
-    section.append(context_1.default.shared.settings);
+    const { data } = await context_1.default.services.io.exec('stats');
+    panels.stats.replace(templates.stats(data));
 });
 
-},{"../../context":268,"../../models":280,"./template.hbs":290,"handlebars":61}],290:[function(require,module,exports){
+},{"../../components":211,"../../context":221,"../../models":233,"./templates/cache.hbs":244,"./templates/section.hbs":245,"./templates/stats.hbs":246,"handlebars":67}],244:[function(require,module,exports){
+module.exports = `
+  <div class="content">
+    <div class="input size-L" title="prefix"><input type="text" data-key="cache.prefix" value="*"></div>
+    <button id="delete"><i class="fas fa-trash-alt"></i>Delete</button>
+  </div>
+`
+
+},{}],245:[function(require,module,exports){
 module.exports = `
   <section id="settings">
     <div class="storage"></div>
-    <div class="content"></div>
+    <div class="content container"></div>
   </section>
 `
 
-},{}],291:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
+module.exports = `
+  <div class="content">
+    <p class="version"><span>Version</span><b>{{version}}</b></p>
+    <p class="version"><span>Uptime</span><b>{{uptime}}</b></p>
+  </div>
+`
+
+},{}],247:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -21983,7 +35874,7 @@ exports.buildCounter = buildCounter;
 const calculateColor = (text) => `hsl(${Math.floor((0, fnv1a_1.default)(text)) / 5 % 360}, 100%, 74%)`;
 exports.calculateColor = calculateColor;
 
-},{"fnv1a":28,"lodash/isObject":215}],292:[function(require,module,exports){
+},{"fnv1a":34,"lodash/isObject":171}],248:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCounter = exports.flattenArrayed = exports.cast = exports.wait = void 0;
@@ -22014,20 +35905,18 @@ exports.flattenArrayed = flattenArrayed;
 const buildCounter = (initial = 0, step = 1) => (value = step) => (initial += value);
 exports.buildCounter = buildCounter;
 
-},{}],293:[function(require,module,exports){
+},{}],249:[function(require,module,exports){
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-var _unset2 = _interopRequireDefault(require("lodash/unset"));
-var _omit2 = _interopRequireDefault(require("lodash/omit"));
-var _set2 = _interopRequireDefault(require("lodash/set"));
+require("../../extensions");
 var components = _interopRequireWildcard(require("./components"));
 var sections = _interopRequireWildcard(require("./sections"));
 var _handlebars = _interopRequireDefault(require("./handlebars"));
 var _context2 = _interopRequireDefault(require("./context"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 function _regeneratorRuntime() { "use strict"; _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return generator._invoke = function (innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; }(innerFn, self, context), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == _typeof(value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; this._invoke = function (method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); }; } function maybeInvokeDelegate(delegate, context) { var method = delegate.iterator[context.method]; if (undefined === method) { if (context.delegate = null, "throw" === context.method) { if (delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method)) return ContinueSentinel; context.method = "throw", context.arg = new TypeError("The iterator does not provide a 'throw' method"); } return ContinueSentinel; } var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) { if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; } return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, define(Gp, "constructor", GeneratorFunctionPrototype), define(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (object) { var keys = []; for (var key in object) { keys.push(key); } return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) { "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); } }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -22055,10 +35944,8 @@ var header = components.HeaderComponent.build([{
   section.show().select();
 });
 _context2["default"].switchStorage(sections.expectations.storage).share({
-  sections: sections,
-  groups: new Set(),
   popups: components.PopupsComponent.build(),
-  settings: components.SettingsComponent.build()
+  groups: new Set()
 });
 document.body.prepend(header.element);
 document.body.append(loader.element);
@@ -22095,4 +35982,4 @@ _context2["default"].instances.io.on('connect', _asyncToGenerator(_regeneratorRu
   }, _callee);
 })));
 
-},{"./components":258,"./context":268,"./handlebars":270,"./sections":288,"lodash/omit":227,"lodash/set":229,"lodash/unset":237}]},{},[293]);
+},{"../../extensions":197,"./components":211,"./context":221,"./handlebars":223,"./sections":242}]},{},[249]);

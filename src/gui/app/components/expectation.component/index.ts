@@ -8,8 +8,7 @@ import { ViewerComponent } from '../viewer.component';
 
 import context from '../../context';
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 export class ExpectationComponent extends Component {
   public viewer = ViewerComponent.build({ depth: 3 }).hide();
@@ -24,7 +23,7 @@ export class ExpectationComponent extends Component {
   }
 
   public refresh(): this {
-    this.replace(render(this.data)).append(this.viewer);
+    this.replace(template(this.data)).append(this.viewer);
     this.viewer.provide(_pick(this.data, ['id', 'type', 'transports', 'schema']));
 
     Button

@@ -25,7 +25,7 @@ div.popups {
 
   div.popup-message {
     display: flex;
-    background-color: $color-main;
+    background-color: lighten($color-dark, 80);
     color: $color-dark;
     padding: 10px 15px;
     width: 240px;
@@ -38,7 +38,7 @@ div.popups {
     animation: popup 3s ease-in-out forwards;
 
     &.error { background-color: $color-red }
-    &.warning { background-color: $color-yellow }
+    &.warning { background-color: $color-main }
 
     span { flex-basis: 90%; }
 

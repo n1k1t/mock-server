@@ -3,7 +3,7 @@ import _set from 'lodash/set';
 
 import { convertObjectToKeyValueCouples } from '../utils';
 import { PartialDeep } from '../../../types';
-import { Component } from './component';
+import { Component, TElementPredicate } from './component';
 
 type TInputType = 'text' | 'number' | 'password' | 'checkbox';
 
@@ -70,7 +70,7 @@ export class Form<T extends object = object> extends Component {
     return this;
   }
 
-  static build<T extends object>(element: Element) {
-    return new Form<T>(element);
+  static build<T extends object>(predicate: TElementPredicate) {
+    return new Form<T>(predicate);
   }
 }

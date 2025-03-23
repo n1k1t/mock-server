@@ -1,3 +1,3 @@
+export * from './http.transport';
+export * from './ws.transport';
 export * from './internal';
-export * from './http';
-export * from './ws';

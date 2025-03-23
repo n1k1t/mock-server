@@ -30,6 +30,10 @@ body {
   padding-bottom: 100px;
 }
 
+div {
+  vertical-align: top;
+}
+
 button {
   position: relative;
   border: none;
@@ -45,6 +49,11 @@ button {
     float: left;
     margin-right: 5px;
     pointer-events: none;
+  }
+
+  &.icon-only i {
+    margin-right: 0;
+    font-size: 16px;
   }
 
   &.checked {
@@ -66,22 +75,59 @@ button {
 
 section {
   margin-top: 50px;
+
+  div.controls {
+    margin-bottom: 50px;
+
+    div.main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      button#expand {
+        background-color: rgba(#fff, .03);
+        color: $color-main;
+        margin: 0;
+        margin-right: 5px;
+
+        i { padding: 10px }
+
+        &.toggled {
+          color: rgba(#fff, .5);
+          transform: rotate(180deg);
+        }
+      }
+
+      div.search {
+        margin: 0;
+      }
+    }
+
+    div.additional {
+      width: calc(100% - 35px);
+
+      div.panel div.panel {
+        padding: 0;
+        background-color: transparent;
+      }
+    }
+  }
 }
 
 div.container {
   max-width: 1300px;
   margin: auto;
   border-radius: 5px;
-  padding: 10px;
+  padding: 10px 20px;
   margin-top: 20px;
   overflow: hidden;
   position: relative;
 }
 
-*.panel {
-  border-radius: 5px;
-  padding: 10px;
-  background-color: rgba(#fff, .05);
+div.buttons {
+  display: flex;
+  align-items: center;
+  justify-self: center;
 }
 
 div.input {
@@ -91,6 +137,7 @@ div.input {
 
   padding: 5px 10px;
   border-radius: 10px;
+  margin-bottom: 5px;
 
   input {
     border: none;
@@ -141,5 +188,29 @@ div.input {
 
   &.required:before {
     margin-left: 12px;
+  }
+
+  &.size-L {
+    max-width: 450px;
+    width: calc(90% - 20px);
+  }
+
+  &.size-M {
+    max-width: 250px;
+    width: calc(70% - 20px);
+  }
+
+  &.size-S {
+    max-width: 410px;
+    width: calc(33.33% - 25px);
+  }
+
+  &.size-XS {
+    max-width: 305px;
+    width: calc(25% - 25px);
+  }
+
+  & + button {
+    margin-left: 10px;
   }
 }

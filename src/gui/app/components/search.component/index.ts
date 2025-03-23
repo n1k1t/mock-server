@@ -10,8 +10,7 @@ interface IEvents {
   clear: [];
 }
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 export class SearchComponent extends Component {
   private events = new EventEmitter();
@@ -20,12 +19,20 @@ export class SearchComponent extends Component {
   private button = this.element.querySelector('button')!;
 
   constructor(public options?: { title?: string }) {
-    super(render({ title: options?.title ?? 'Type something' }));
+    super(template({ title: options?.title ?? 'Type something' }));
 
     this.button.classList.add('hidden');
     this.button.addEventListener('click', () => this.clear());
 
-    this.on('input', () => this.button.classList.remove('hidden'));
+    this.on('input', () => {
+      this.button.classList.remove('hidden');
+      this.element.classList.add('filled');
+    });
+
+    this.on('clear', () => {
+      this.button.classList.add('hidden');
+      this.element.classList.remove('filled');
+    });
 
     this.input.addEventListener('keydown', _debouce(
       () => this.input.value ? this.emit('input', this.input.value) : this.clear(),
@@ -35,11 +42,7 @@ export class SearchComponent extends Component {
 
   public clear(): this {
     this.input.value = '';
-
-    this.button.classList.add('hidden');
-    this.emit('clear');
-
-    return this;
+    return this.emit('clear');
   }
 
   public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {

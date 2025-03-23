@@ -20,5 +20,4 @@ export default Endpoint
     }
 
     reply.ok(await provider.client.createExpectation(incoming.data))
-  })
-  .compile();
+  });

@@ -4,8 +4,7 @@ import hbs from 'handlebars';
 import { Component } from '../../models';
 import context from '../../context';
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 export class ViewerComponent extends Component {
   public instance = new JsonFormatter({}, this.options?.depth ?? 3, {
@@ -14,7 +13,7 @@ export class ViewerComponent extends Component {
   });
 
   constructor(public options?: { depth?: number }) {
-    super(render({}));
+    super(template({}));
     this.provide({});
   }
 

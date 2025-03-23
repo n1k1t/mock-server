@@ -16,7 +16,7 @@ div.search {
     margin: 0 15px;
   }
 
-  &:hover {
+  &:hover, &.filled {
     opacity: 1;
   }
 

@@ -5,8 +5,7 @@ import hbs from 'handlebars';
 import { Component, Section } from '../../models';
 import { TFunction } from '../../../../types';
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 type TTab = { type: 'section', entity: Section } | { type: 'separator' };
 
@@ -24,7 +23,7 @@ export class HeaderComponent extends Component {
 
   constructor(public tabs: TTab[]) {
     super(
-      render({
+      template({
         tabs: tabs.map(
           (tab) => tab.type === 'section'
             ? Object.assign(tab, { id: tab.entity.id, isSelected: !tab.entity.isHidden })

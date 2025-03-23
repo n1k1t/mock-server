@@ -6,8 +6,7 @@ import type { History } from '../../../../server';
 import { ViewerComponent } from '../viewer.component';
 import { Component } from '../../models';
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 export class HistoryComponent extends Component {
   public viewer = ViewerComponent.build({ depth: 2 }).hide();
@@ -22,7 +21,7 @@ export class HistoryComponent extends Component {
   }
 
   public refresh(): this {
-    this.replace(render(this.data)).append(this.viewer);
+    this.replace(template(this.data)).append(this.viewer);
 
     this.viewer.provide({
       event: this.data.snapshot.event,

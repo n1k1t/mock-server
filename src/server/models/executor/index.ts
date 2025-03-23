@@ -84,7 +84,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       .prepare(context)
       .catch((error) => logger.error('Got error while execution [prepare] method', error?.stack ?? error));
 
-    context.provider.exchanges.io.publish('expectation:updated', expectation.toPlain());
+    context.provider.server.exchanges.io.publish('expectation:updated', expectation.toPlain());
     logger.info('Expectation has matched as', `"${expectation.name}" [${expectation.id}]`);
 
     if (context.history?.hasStatus('registred')) {
@@ -93,7 +93,8 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         .actualizeSnapshot(context.snapshot)
         .assign({ expectation: context.expectation });
 
-      context.provider.exchanges.io.publish('history:added', context.history.toPlain());
+      context.provider.server.exchanges.io.publish('history:added', context.history.toPlain());
+      context.provider.server.services.metrics.register('rate', { count: 1 });
     }
 
     if (!context.hasStatus('handling')) {
@@ -155,7 +156,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           },
         });
 
-        context.provider.exchanges.io.publish('history:updated', context.history.toPlain());
+        context.provider.server.exchanges.io.publish('history:updated', context.history.toPlain());
       }
     }
 
@@ -179,7 +180,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     const snapshot = context.snapshot.assign({ cache: context.compileCacheConfiguration() });
 
     if (snapshot.cache.isEnabled) {
-      const cached = await context.provider.databases.redis!.get(snapshot.cache.key).catch((error) => {
+      const cached = await context.provider.server.databases.redis!.get(snapshot.cache.key).catch((error) => {
         logger.error('Got error while redis get', error?.stack ?? error);
         return null;
       });
@@ -281,7 +282,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       });
 
       if (zipped) {
-        await context.provider.databases.redis!.setex(
+        await context.provider.server.databases.redis!.setex(
           <string>snapshot.cache.key,
           snapshot.cache.ttl!,
           zipped.toString('base64')

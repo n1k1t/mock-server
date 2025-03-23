@@ -12,18 +12,18 @@ import config from '../../config';
 
 export default ClientMethod
   .build<{
-    incoming: NonNullable<TEndpoints['expectationUpdate']['incoming']['data']>;
-    outgoing: TEndpoints['expectationUpdate']['outgoing']['data'] | null;
+    incoming: NonNullable<TEndpoints['expectationsUpdate']['incoming']['data']>;
+    outgoing: TEndpoints['expectationsUpdate']['outgoing']['data'] | null;
   }>()
   .register('remote', (instance) => async (body) => {
     const response = await instance
-      .request<TEndpoints['expectationUpdate']['outgoing']>({
+      .request<TEndpoints['expectationsUpdate']['outgoing']>({
         data: {
           id: body.id,
           body: prepareExpectationBodyToRequest(body.set),
         },
 
-        ...cast<TEndpoints['expectationUpdate']['location']>({
+        ...cast<TEndpoints['expectationsUpdate']['location']>({
           url: `${config.get('routes').internal.root}/expectations`,
           method: 'PUT',
         }),
@@ -40,6 +40,7 @@ export default ClientMethod
 
     const updated = Expectation.build(
       Object.assign(merge(found.configuration, body.set ?? {}, { arrayMerge: (target, source) => source }), {
+        name: found.name,
         meta: found.meta,
         id: found.id,
       })
@@ -51,7 +52,7 @@ export default ClientMethod
     }
 
     provider.storages.expectations.set(body.id, updated);
-    provider.exchanges.io.publish('expectation:updated', updated.toPlain());
+    provider.server?.exchanges.io.publish('expectation:updated', updated.toPlain());
 
     return updated.toPlain();
   });

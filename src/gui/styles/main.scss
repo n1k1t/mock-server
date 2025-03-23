@@ -135,6 +135,7 @@ div.history, div.expectation {
       width: 60px;
       text-align: center;
       font-size: 12px;
+      padding: 9px 15px;
     }
 
     span.calls-count, span.name, span.time {
@@ -222,13 +223,19 @@ div.history, div.expectation {
 
   @media screen and (max-width: $screen-medium) {
     div.meta {
-      background-color: lighten($color-dark, 3);
+      background-color: lighten($color-dark, 2);
       padding: 5px;
       padding-bottom: 0;
       margin-bottom: 5px;
 
-      div.segment:first-child { width: 100%; }
       span.arrow:nth-child(1), span.arrow:nth-child(2) { display: none }
+
+      div.segment:first-child {
+        width: 100%;
+
+        span:not(.path) { background-color: transparent }
+        span.time { padding: 9px 5px; }
+      }
     }
 
     &:hover div.meta {

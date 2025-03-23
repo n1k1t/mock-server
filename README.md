@@ -1,8 +1,16 @@
-# Mock server
+<div align='center'>
+  <h1>Mock server</h1>
+  <p>Mock, match, modify and manipulate a HTTP request/response payload using flexible expectations with types</p>
 
-Mock, match, modify and manipulate a HTTP request/response payload using flexible expectations with types
+  <img src="https://raw.githubusercontent.com/n1k1t/mock-server/refs/heads/master/images/preview.png?raw=true" />
 
-![screenshot](screenshots/preview.png)
+  <br />
+  <br />
+
+  ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+  ![npm version](https://badge.fury.io/js/@n1k1t%2Fmock-server.svg)
+  ![Dynamic XML Badge](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fgithub.com%2Fn1k1t%2Fmock-server%2Fblob%2Fmaster%2Fcoverage%2Fcobertura-coverage.xml%3Fraw%3Dtrue&query=round(%2Fcoverage%2F%40line-rate%20*%201000)%20div%201000&label=coverage)
+</div>
 
 # Navigation
 
@@ -37,9 +45,15 @@ Mock, match, modify and manipulate a HTTP request/response payload using flexibl
 
 # Basics
 
+## Install
+
+```bash
+npm i @n1k1t/mock-server
+```
+
 ## How it works
 
-![screenshot](screenshots/strategy.png)
+![screenshot](https://raw.githubusercontent.com/n1k1t/mock-server/refs/heads/master/images/strategy.png?raw=true)
 
 According on the picture above, main idea is to generate or modify response from some backend service. The mock server provides many scenarios to do that
 
@@ -60,13 +74,6 @@ According on the picture above, main idea is to generate or modify response from
     1. The mock server matches a request payload with registred expectations
     2. Next is forwarding a request payload to `localhost:8081/...`
     3. Using response fetched from `localhost:8081/...` the mock server builds a response
-
-
-## Install
-
-```bash
-npm i @n1k1t/mock-server
-```
 
 ## Start
 
@@ -97,8 +104,6 @@ The mock server provides built-in web panel to track everything that is going th
 By default it can be found on `/_system/gui` of a host of mock server. Example: `localhost:8080/_system/gui`
 
 Also it provides convenient util to navigate through payload of expectations and requests payload
-
-![screenshot](screenshots/history.png)
 
 ## Mock
 

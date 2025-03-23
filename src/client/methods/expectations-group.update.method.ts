@@ -30,7 +30,7 @@ export default ClientMethod
 
       const plain = expectation.toPlain();
 
-      provider.exchanges.io.publish('expectation:updated', plain);
+      provider.server?.exchanges.io.publish('expectation:updated', plain);
       return plain;
     })
   );

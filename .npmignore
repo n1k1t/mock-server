@@ -1,13 +1,25 @@
+discardedTests.txt
+keploy.yml
+
 .editorconfig
 .gitignore
+.nvmrc
+.env
 
+discardedTests.txt
 task-processor.ts
+keploy-logs.txt
 tsconfig.json
+keploy.yml
 
 .vscode/
 .husky/
+
+coverage/
+images/
+test/
 bin/
 src/
-test/
-coverage/
-screenshots/
+
+/**/*.tsbuildinfo
+/lib/**/*.spec.*

@@ -1,23 +1,14 @@
 import type { Server } from 'socket.io';
 
-import type { Expectation } from '../../../expectations';
-import type { History } from '../history';
-
-export interface ISocketIoExchangeEventToPayloadMap {
-  'expectation:added': Expectation<any>['TPlain'];
-  'expectation:updated': Expectation<any>['TPlain'];
-
-  'history:added': History['TPlain'];
-  'history:updated': History['TPlain'];
-}
-
-export interface ISocketIoExchangeService {
-  publish: <K extends keyof ISocketIoExchangeEventToPayloadMap>(
+export interface ISocketIoExchangeService<TSchema extends object> {
+  publish: <K extends keyof TSchema & string>(
     channel: K,
-    payload: ISocketIoExchangeEventToPayloadMap[K]
+    payload: TSchema[K]
   ) => unknown;
 }
 
-export const buildSocketIoExchange = (io: Pick<Server, 'emit'>): ISocketIoExchangeService => ({
+export const buildSocketIoExchange = <TSchema extends object>(
+  io: Pick<Server, 'emit'>
+): ISocketIoExchangeService<TSchema> => ({
   publish: (eventName: string, ...payload: unknown[]) => io.emit(eventName, ...payload),
 });

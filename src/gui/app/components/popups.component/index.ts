@@ -5,8 +5,7 @@ export interface IPopupPushOptions {
   level?: 'info' | 'warning' | 'error';
 }
 
-const template = require('./template.hbs');
-const render = hbs.compile(template);
+const template = hbs.compile(require('./template.hbs'));
 
 export class PopupsComponent extends Component {
   constructor() {
@@ -15,7 +14,7 @@ export class PopupsComponent extends Component {
   }
 
   public push(message: string, options: IPopupPushOptions = {}) {
-    const popup = this.compileHtmlStringToElement(render({ message, level: options.level ?? 'info' }));
+    const popup = this.compileHtmlStringToElement(template({ message, level: options.level ?? 'info' }));
 
     this.element.prepend(popup);
     setTimeout(() => popup.remove(), 3000);

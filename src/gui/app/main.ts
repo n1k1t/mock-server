@@ -1,6 +1,4 @@
-import _unset from 'lodash/unset';
-import _omit from 'lodash/omit';
-import _set from 'lodash/set';
+import '../../extensions';
 
 import * as components from './components';
 import * as sections from './sections';
@@ -29,11 +27,8 @@ const header = components.HeaderComponent
 context
   .switchStorage(sections.expectations.storage)
   .share({
-    sections,
-
-    groups: new Set(),
     popups: components.PopupsComponent.build(),
-    settings: components.SettingsComponent.build(),
+    groups: new Set(),
   });
 
 document.body.prepend(header.element);

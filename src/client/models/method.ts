@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios';
 
-import type { TFunction } from '../../types';
+import type { SetPartialKeys, TFunction } from '../../types';
 import type { Provider } from '../../server/models';
 
 import { cast } from '../../utils';
@@ -17,7 +17,7 @@ export interface IClientMethodSchema {
 
 export interface IClientMethodHandlers<TSchema extends IClientMethodSchema> {
   remote: THandler<AxiosInstance, TSchema>;
-  onsite: THandler<Provider, TSchema>;
+  onsite: THandler<SetPartialKeys<Provider, 'server'>, TSchema>;
 }
 
 export class ClientMethod<TSchema extends IClientMethodSchema> {

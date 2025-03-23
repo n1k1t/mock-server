@@ -1,11 +1,15 @@
+import '../extensions';
+
+import _ from 'lodash';
+
 import { Redis, RedisOptions } from 'ioredis';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import _ from 'lodash';
 
-import { buildSocketIoExchange, Provider, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
-import { IServerContext, TDefaultServerContext } from './types';
+import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
+import { IIoExchangeSchema, IServerContext, TDefaultServerContext } from './types';
+import { AnalyticsService, MetricsService } from './services';
 import { Logger } from '../logger';
 import {
   buildHttpListener,
@@ -54,16 +58,18 @@ export class MockServer<
   }>
 > {
   public TContext!: TContext;
+
+  public timestamp = Date.now();
   public authority = `http://${this.configuration.host}:${this.configuration.port}`;
 
-  public databases: Provider['databases'] = {
+  public databases = {
     redis: this.configuration.databases?.redis
       ? new Redis({ keyPrefix: 'mock:', ...this.configuration.databases?.redis })
       : null,
   };
 
-  public exchanges: Provider['exchanges'] = {
-    io: buildSocketIoExchange({ emit: () => false }),
+  public exchanges = {
+    io: buildSocketIoExchange<IIoExchangeSchema>({ emit: () => false }),
   };
 
   public providers = new ProvidersStorage<TContext>(this);
@@ -76,6 +82,11 @@ export class MockServer<
   public http = createServer(buildHttpListener(this.router));
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
   public io = new Server(this.http);
+
+  public services = {
+    analytics: AnalyticsService.build(this),
+    metrics: MetricsService.build(this),
+  };
 
   private internal = {
     transports: {
@@ -135,6 +146,29 @@ export class MockServer<
       () => server.unbindExpiredContainers(),
       (configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
     );
+
+    setInterval(
+      () => server.services.metrics.register('memory', { mbs: process.memoryUsage().heapUsed / 1024 / 1024 }),
+      5 * 1000
+    );
+
+    setInterval(
+      () => server.services.metrics.register('containers', {
+        count: [...server.providers.values()].reduce((acc, provider) => acc + provider.storages.containers.size, 0),
+      }),
+      5 * 1000
+    );
+
+    if (server.databases.redis) {
+      setInterval(async () => {
+        const redis = await server.services.analytics.calculateRedisUsage();
+
+        server.services.metrics.register('cache', {
+          redis_mbs: redis.bytes / 1024 / 1024,
+          redis_count: redis.count,
+        });
+      }, 10 * 60 * 1000);
+    }
 
     return server;
   }

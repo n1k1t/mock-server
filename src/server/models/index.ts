@@ -4,6 +4,7 @@ export * from './providers';
 export * from './exchanges';
 export * from './executor';
 export * from './endpoint';
+export * from './service';
 export * from './history';
 export * from './context';
 export * from './router';

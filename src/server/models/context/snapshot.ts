@@ -33,7 +33,7 @@ export class RequestContextSnapshot<TContext extends IServerContext<any> = IServ
       outgoing?: Omit<IRequestContextOutgoing, 'dataRaw'> & {
         dataRaw?: string;
       };
-    }
+    };
 
     container?: Container['TPlain'];
     error?: RequestContextSnapshot['error'];

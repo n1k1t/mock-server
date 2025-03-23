@@ -67,7 +67,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
       outgoing: this.outgoing ?? { type: this.incoming.type, status: 0, headers: {} },
 
       storage: this.provider.storages.containers,
-      cache: { isEnabled: this.provider.databases.redis !== null },
+      cache: { isEnabled: this.provider.server.databases.redis !== null },
     });
 
     snapshot.incoming.stream = this.streams.incoming.asObservable();
@@ -123,7 +123,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
 
     if (this.history?.hasStatus('pending')) {
       this.history.actualizeSnapshot(this.snapshot.assign({ outgoing: this.outgoing })).complete();
-      this.provider.exchanges.io.publish('history:updated', this.history.toPlain());
+      this.provider.server.exchanges.io.publish('history:updated', this.history.toPlain());
     }
 
     return this.switchStatus('completed');

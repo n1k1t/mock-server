@@ -1,0 +1,19 @@
+div.checkbox-area {
+  div.buttons {
+    width: 100%;
+  }
+
+  button {
+    background-color: rgba(#fff, .05);
+    font-weight: normal;
+  }
+
+  button:not(.checked) {
+    background-color: rgba(#fff, 0);
+    color: rgba(#fff, .4) !important;
+  }
+
+  button.checked {
+    pointer-events: all;
+  }
+}

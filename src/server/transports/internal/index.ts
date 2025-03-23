@@ -1,2 +1,2 @@
-export * from './socket-io';
-export * from './http';
+export * from './http.transport';
+export * from './io.transport';

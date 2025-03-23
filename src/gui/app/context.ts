@@ -1,27 +1,28 @@
 import { io as connectIo } from 'socket.io-client';
+import EventEmitter from 'events';
 
-import type { ISocketIoExchangeEventToPayloadMap } from '../../server';
-import type { PopupsComponent, SettingsComponent } from './components';
+import type { IIoExchangeSchema } from '../../server';
+import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
 import type { Config } from '../../config/model';
 
-import type * as sections from './sections';
-
 import { DynamicStorage } from './models';
+import { TFunction } from '../../types';
 import { cast } from '../../utils/common';
 
-type ExtractWsEndpointPath<K extends keyof TEndpoints> = NonNullable<TEndpoints[K]['io']> extends { path: infer R }
+type ExtractWsEndpointPath<K extends keyof TEndpoints> = TEndpoints[K]['io'] extends { path: infer R }
   ? R extends string ? R : never
   : never;
 
 type TWsEndpoints = { [K in keyof TEndpoints as ExtractWsEndpointPath<K>]-?: TEndpoints[K] };
 
-interface IContextShared {
-  sections: typeof sections;
-  groups: Set<string>;
+interface IEvents {
+  'group:register': [string];
+}
 
+interface IContextShared {
   popups: PopupsComponent;
-  settings: SettingsComponent;
+  groups: Set<string>;
 }
 
 const io = connectIo({
@@ -47,14 +48,31 @@ class Context {
       ): Promise<TWsEndpoints[K]['outgoing']> => new Promise((resolve) => io.emit(path, body, resolve)),
 
       subscribe: <
-        K extends keyof ISocketIoExchangeEventToPayloadMap,
-        T extends ISocketIoExchangeEventToPayloadMap[K]
+        K extends keyof IIoExchangeSchema,
+        T extends IIoExchangeSchema[K]
       >(channel: K, handler: (payload: T) => unknown) => io.on(<string>channel, handler)
     },
   };
 
   public storage = DynamicStorage.build('void', document.body);
   public shared = <IContextShared>{};
+
+  private events = new EventEmitter();
+
+  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+    this.events.on(event, handler);
+    return this;
+  }
+
+  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+    this.events.once(event, handler);
+    return this;
+  }
+
+  public emit<K extends keyof IEvents>(event: K, ...args: IEvents[K]) {
+    this.events.emit(event, ...args);
+    return this;
+  }
 
   public assignConfig(config: Context['config']) {
     return Object.assign(this, { config });

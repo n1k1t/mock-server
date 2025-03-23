@@ -61,5 +61,4 @@ export default Endpoint
 
     createReadStream(path.join(statics.public.dir, parsed.dir, parsed.base)).pipe(context.response);
     return context.assign({ outgoing: { type: 'plain', status: 200, headers: {} } }).complete();
-  })
-  .compile();
+  });

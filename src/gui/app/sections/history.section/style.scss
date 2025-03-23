@@ -1,1 +1,10 @@
-section#history {}
+section#history {
+  div.actions {
+    button {
+      background-color: $color-main;
+      color: $color-dark;
+    }
+
+    button#clear { background-color: $color-red }
+  }
+}
