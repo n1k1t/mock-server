@@ -1,6 +1,6 @@
 {
   "name": "@n1k1t/mock-server",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "description": "Powerful util to setup mocks over HTTP APIs",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
