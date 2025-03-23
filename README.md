@@ -80,7 +80,7 @@ According on the picture above, main idea is to generate or modify response from
 ### CLI
 
 ```bash
-npx @n1k1t/mock-server -h localhost -p 8080
+npx mock -h localhost -p 8080
 ```
 
 ### JavaScript
