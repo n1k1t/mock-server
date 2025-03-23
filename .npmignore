@@ -23,3 +23,5 @@ src/
 
 /**/*.tsbuildinfo
 /lib/**/*.spec.*
+
+!/public/images/**/*
