@@ -21,7 +21,7 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
 
     await endpoint?.handler?.(context);
 
-    if (context.hasStatus('completed')) {
+    if (context.hasStatuses(['completed'])) {
       return context;
     }
 

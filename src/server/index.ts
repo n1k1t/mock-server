@@ -107,12 +107,12 @@ export class MockServer<
   }
 
   public unbindExpiredContainers() {
-    for (const provider of this.providers.values()) {
+    this.providers.extract().forEach((provider) =>
       provider.storages.containers.getExpired().forEach((container) => {
         container.unbind();
         logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
-      });
-    }
+      })
+    )
   }
 
   static async start<
@@ -154,7 +154,7 @@ export class MockServer<
 
     setInterval(
       () => server.services.metrics.register('containers', {
-        count: [...server.providers.values()].reduce((acc, provider) => acc + provider.storages.containers.size, 0),
+        count: server.providers.extract().reduce((acc, provider) => acc + provider.storages.containers.size, 0),
       }),
       5 * 1000
     );

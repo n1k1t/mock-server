@@ -7,7 +7,8 @@ export default Endpoint
   .bindToIo(<const>{ path: 'expectations:get-list' })
   .assignHandler(({ reply, server }) =>
     reply.ok(
-      [...server.providers.values()]
+      server.providers
+        .extract()
         .reduce<Expectation[]>((acc, provider) => acc.concat([...provider.storages.expectations.values()]), [])
         .map((expectation) => expectation.toPlain())
     )

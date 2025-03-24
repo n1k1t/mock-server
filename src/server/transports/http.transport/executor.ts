@@ -34,7 +34,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
     const expectation = context.provider.storages.expectations.match(context.snapshot);
 
-    if (!expectation) {
+    if (!expectation && context.hasStatuses(['handling'])) {
       context.assign({
         outgoing: await this.reply(context, {
           type: 'plain',

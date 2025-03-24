@@ -30,4 +30,9 @@ export class HistoryStorage extends Map<string, History> {
 
     return this;
   }
+
+  clear(): void {
+    this.stack = [];
+    super.clear();
+  }
 }

@@ -21,7 +21,7 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
       if (!context) {
         return response.destroy();
       }
-      if (!context.hasStatus('handling')) {
+      if (!context.hasStatuses(['registred', 'handling'])) {
         break;
       }
 
@@ -29,15 +29,15 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
         .wrap(context.meta, () => transport.executor.match(context))
         .catch((error) => logger.error('Got error while expectation matching', error?.stack ?? error));
 
-      if (!context.hasStatus('handling')) {
+      if (!context.hasStatuses(['registred', 'handling'])) {
         break;
       }
       if (!expectation) {
-        continue
+        continue;
       }
 
       await metaStorage
-        .wrap(context.meta, () => transport.executor.exec(context, { expectation }))
+        .wrap(context.meta, () => transport.executor.exec(context.handle(), { expectation }))
         .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
 
       break;

@@ -29,7 +29,7 @@ const handle = async (
   if (!context) {
     return signals.close;
   }
-  if (!context.hasStatus('handling')) {
+  if (!context.hasStatuses(['registred', 'handling'])) {
     return signals.break;
   }
 
@@ -37,7 +37,7 @@ const handle = async (
     .wrap(context.meta, () => match.transport.executor.match(context))
     .catch((error) => logger.error(`Got error while [ws:${event}] expectation matching`, error?.stack ?? error));
 
-  if (!context.hasStatus('handling')) {
+  if (!context.hasStatuses(['registred', 'handling'])) {
     return signals.break;
   }
   if (!expectation) {
@@ -45,7 +45,7 @@ const handle = async (
   }
 
   await metaStorage
-    .wrap(context.meta, () => match.transport.executor.exec(context, { expectation }))
+    .wrap(context.meta, () => match.transport.executor.exec(context.handle(), { expectation }))
     .catch((error) => logger.error(`Got error while [ws:${event}] execution`, error?.stack ?? error));
 
   return signals.close;

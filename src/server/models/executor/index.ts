@@ -97,7 +97,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       context.provider.server.services.metrics.register('rate', { count: 1 });
     }
 
-    if (!context.hasStatus('handling')) {
+    if (!context.hasStatuses(['handling'])) {
       return context;
     }
 
@@ -160,7 +160,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       }
     }
 
-    if (!context.hasStatus('handling')) {
+    if (!context.hasStatuses(['handling'])) {
       return context;
     }
 

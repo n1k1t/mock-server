@@ -13,13 +13,22 @@ export class ProvidersStorage<TContext extends IServerContext<any>> extends Map<
     super();
   }
 
+  public extract(): Provider[] {
+    return [...this.values(), this.default];
+  }
+
   public register(provider: Provider<TContext>): this {
+    provider.assign({ server: this.server });
+
+    if (this.default === provider) {
+      return this;
+    }
     if (this.has(provider.group)) {
       logger.info(`Provider group [${provider.group}] is already registred. Using existent...`);
       return this;
     }
 
     logger.info(`Provider group [${provider.group}] has registred`);
-    return this.set(provider.group, provider.assign({ server: this.server }));
+    return this.set(provider.group, provider);
   }
 }

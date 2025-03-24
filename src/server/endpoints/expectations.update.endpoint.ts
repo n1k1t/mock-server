@@ -19,10 +19,7 @@ export default Endpoint
       return reply.validationError();
     }
 
-    const provider = server.providers.default.storages.expectations.has(incoming.data.id)
-      ? server.providers.default
-      : [...server.providers.values()].find((provider) => provider.storages.expectations.has(incoming.data!.id));
-
+    const provider = server.providers.extract().find((provider) => provider.storages.expectations.has(incoming.data!.id));
     if (!provider) {
       return reply.notFound();
     }

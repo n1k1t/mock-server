@@ -23,7 +23,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
   public abstract incoming: IRequestContextIncoming;
   public abstract snapshot: RequestContextSnapshot<TContext>;
 
-  public status = cast<'handling' | 'skipped' | 'completed'>('handling');
+  public status = cast<'registred' | 'handling' | 'skipped' | 'completed'>('registred');
 
   public streams = {
     incoming: new ReplaySubject(Infinity, 5000),
@@ -51,8 +51,8 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     return this;
   }
 
-  public hasStatus(status: RequestContext['status']): boolean {
-    return this.status === status;
+  public hasStatuses(status: RequestContext['status'][]): boolean {
+    return status.includes(this.status);
   }
 
   /** Compiles snapshot of own payload to work with expectations */
@@ -108,9 +108,14 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
     return this.switchStatus('skipped');
   }
 
+  /** Marks context as handling */
+  public handle() {
+    return this.switchStatus('handling');
+  }
+
   /** Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history */
   public complete() {
-    if (this.hasStatus('completed')) {
+    if (this.hasStatuses(['completed'])) {
       return this;
     }
 

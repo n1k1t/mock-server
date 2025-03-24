@@ -24,24 +24,6 @@ export class WsRequestContext extends RequestContext<IServerContext<{
     public incoming: IRequestContextIncoming
   ) {
     super(provider, { event, transport: 'ws' });
-
-    metaStorage.wrap(this.meta, () => {
-      event === 'message'
-        ? logger.info(`Incoming WS ${event} [${incoming.path}] got message`, incoming.data)
-        : logger.info(`Incoming WS ${event} [${incoming.path}]`);
-
-      if (event === 'connection') {
-        this.streams.incoming.subscribe({
-          error: () => null,
-          next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] got message`, data),
-        });
-      }
-
-      this.streams.outgoing.subscribe({
-        error: () => null,
-        next: (data) => logger.info(`Incoming WS ${event} [${incoming.path}] has sent`, data),
-      });
-    });
   }
 
   public compileSnapshot() {
@@ -51,6 +33,26 @@ export class WsRequestContext extends RequestContext<IServerContext<{
     snapshot.incoming.method = this.event === 'message' ? 'MSG' : 'CON';
 
     return snapshot;
+  }
+
+  public handle(): this {
+    this.event === 'message'
+      ? logger.info(`Incoming WS ${event} [${this.incoming.path}] got message`, this.incoming.data)
+      : logger.info(`Incoming WS ${event} [${this.incoming.path}]`);
+
+    if (this.event === 'connection') {
+      this.streams.incoming.subscribe({
+        error: () => null,
+        next: (data) => logger.info(`Incoming WS ${this.event} [${this.incoming.path}] got message`, data),
+      });
+    }
+
+    this.streams.outgoing.subscribe({
+      error: () => null,
+      next: (data) => logger.info(`Incoming WS ${this.event} [${this.incoming.path}] has sent`, data),
+    });
+
+    return super.handle();
   }
 
   public skip(): this {

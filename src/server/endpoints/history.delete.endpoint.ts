@@ -5,6 +5,6 @@ export default Endpoint
   .bindToHttp(<const>{ method: 'DELETE', path: '/history' })
   .bindToIo(<const>{ path: 'history:delete' })
   .assignHandler(({ reply, server }) => {
-    [...server.providers.values()].forEach((provider) => provider.storages.history.clear());
+    server.providers.extract().forEach((provider) => provider.storages.history.clear());
     reply.ok(null);
   });
