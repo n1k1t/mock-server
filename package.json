@@ -11,7 +11,7 @@
     "test": "NODE_ENV=test TZ=UTC npx jest",
     "start": "node lib/src/index",
     "start:dev": "npx webpack watch --mode development",
-    "gui:build": "exit 0",
+    "gui:build": "npx webpack --mode production",
     "gui:build:check": "exit 0",
     "server:build": "rm -rf lib && npx tsc",
     "server:build:check": "npx tsc --noEmit",
