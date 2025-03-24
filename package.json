@@ -15,6 +15,7 @@
     "gui:build:check": "exit 0",
     "server:build": "rm -rf lib && npx tsc",
     "server:build:check": "npx tsc --noEmit",
+    "build": "npm run server:build && npm run gui:build",
     "build:check": "npm run server:build:check && npm run gui:build:check",
     "prepare": "npx husky",
     "preversion": "npm run build:check && npm test",
