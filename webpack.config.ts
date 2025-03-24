@@ -1,5 +1,6 @@
 import LiveReloadPlugin from 'webpack-livereload-plugin';
 import path from 'path';
+import fs from 'fs/promises';
 
 import { Configuration } from 'webpack';
 
@@ -20,11 +21,10 @@ export default cast<TFunction<Configuration[], [object, Pick<Configuration, 'mod
   return [
     {
       name: 'app',
-      target: 'web',
 
       entry: path.join(__dirname, 'src', 'gui', 'app', 'main.ts'),
       output: {
-        filename: 'main.js',
+        filename: 'app.js',
         path: path.join(__dirname, 'public', 'scripts'),
       },
 
@@ -49,24 +49,48 @@ export default cast<TFunction<Configuration[], [object, Pick<Configuration, 'mod
 
       plugins: [new LiveReloadWebpackPlugin()],
     },
-    // {
-    //   name: 'app',
-    //   target: 'web',
+    {
+      name: 'styles',
 
-    //   entry: path.join(__dirname, 'src', 'gui', 'styles', 'main.scss'),
-    //   output: {
-    //     filename: 'main.css',
-    //     path: path.join(__dirname, 'public', 'styles'),
-    //   },
+      entry: path.join(__dirname, 'src', 'gui', 'styles', 'main.scss'),
+      output: {
+        filename: 'styles.js',
+        path: path.join(__dirname, 'public', 'scripts'),
+      },
 
-    //   module: {
-    //     rules: [{
-    //       test: /\.(sa|sc|c)ss$/i,
-    //       use: ['style-loader', 'css-loader', 'sass-loader'],
-    //     }],
-    //   },
+      module: {
+        rules: [{
+          test: /\.(sa|sc|c)ss$/i,
+          use: [
+            'style-loader',
+            'css-loader',
+            {
+              loader: 'sass-loader',
+              options: {
+                additionalData: async (content: string, additional: { context: string }) => {
+                  const lines = content.toString().split('\n');
+                  const imports = lines
+                    .map((line, index) => <const>[line, index])
+                    .filter(([line]) => line.includes('@import') && line.includes('*'))
+                    .map(([line, index]) => <const>[line.trim().replace(/\@import\s'|';/g, ''), index]);
 
-    //   plugins: [new LiveReloadWebpackPlugin()],
-    // }
+                  for (const [minimatch, index] of imports.reverse()) {
+                    lines.splice(index, 1);
+
+                    for await (const target of fs.glob(path.resolve(additional.context, minimatch))) {
+                      lines.push(`@import '${target}';`);
+                    }
+                  }
+
+                  return lines.join('\n');
+                },
+              },
+            },
+          ],
+        }],
+      },
+
+      plugins: [new LiveReloadWebpackPlugin()],
+    }
   ];
 });

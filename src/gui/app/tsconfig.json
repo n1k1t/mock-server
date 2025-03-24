@@ -8,6 +8,7 @@
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "isolatedModules": true,
 
     "strict": true,
     "strictNullChecks": true,

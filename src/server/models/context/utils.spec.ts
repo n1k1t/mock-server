@@ -75,4 +75,3 @@ test('test_extractHttpIncommingContext_missingBody', async () => {
   const result = await extractHttpIncommingContext(request);
   expect(result.data).toBeUndefined();
 });
-
