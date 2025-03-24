@@ -10,7 +10,7 @@
   "scripts": {
     "test": "NODE_ENV=test TZ=UTC npx jest",
     "start": "node lib/src/index",
-    "start:dev": "npx webpack watch --mode development",
+    "start:dev": "npx concurrently --names webpack,server -c gray,cyan \"npx webpack watch --mode development\" \"npx ts-node test\"",
     "gui:build": "npx webpack --mode production",
     "gui:build:check": "npx tsc --noEmit --project src/gui/app/tsconfig.json",
     "server:build": "rm -rf lib && npx tsc",
@@ -88,6 +88,7 @@
     "@types/webpack-livereload-plugin": "2.3.6",
     "@types/ws": "8.5.13",
     "chart.js": "4.4.8",
+    "concurrently": "9.1.2",
     "css-loader": "7.1.2",
     "fnv1a": "1.1.1",
     "husky": "9.1.7",
