@@ -1,5 +1,6 @@
 import type { Configuration } from 'webpack';
 
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import LiveReloadPlugin from 'webpack-livereload-plugin';
 import path from 'path';
 import fs from 'fs/promises';
@@ -18,7 +19,7 @@ export default cast<Configuration[]>([
 
     entry: path.join(__dirname, 'src', 'gui', 'app', 'main.ts'),
     output: {
-      filename: 'app.js',
+      filename: 'main.js',
       path: path.join(__dirname, 'public', 'scripts'),
     },
 
@@ -48,15 +49,14 @@ export default cast<Configuration[]>([
 
     entry: path.join(__dirname, 'src', 'gui', 'styles', 'main.scss'),
     output: {
-      filename: 'styles.js',
-      path: path.join(__dirname, 'public', 'scripts'),
+      path: path.join(__dirname, 'public', 'styles'),
     },
 
     module: {
       rules: [{
         test: /\.(sa|sc|c)ss$/i,
         use: [
-          'style-loader',
+          MiniCssExtractPlugin.loader,
           'css-loader',
           {
             loader: 'sass-loader',
@@ -84,6 +84,19 @@ export default cast<Configuration[]>([
       }],
     },
 
-    plugins: [new LiveReloadWebpackPlugin()],
+    plugins: [
+      {
+        apply(compiler) {
+          compiler.hooks.shouldEmit.tap('Remove styles from output', (compilation) =>
+            compilation
+              .getAssets()
+              .filter((asset) => asset.name.includes('.js'))
+              .forEach((asset) => compilation.deleteAsset(asset.name))
+          )
+        },
+      },
+      new MiniCssExtractPlugin({ filename: "[name].css", }),
+      new LiveReloadWebpackPlugin(),
+    ],
   },
 ]);

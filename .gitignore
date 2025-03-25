@@ -21,7 +21,9 @@ test/
 lib/
 
 public/scripts/**
+public/styles/**
 coverage/**
 
 !coverage/cobertura-coverage.xml
+!public/styles/fa-all.css
 !public/scripts/.gitkeep

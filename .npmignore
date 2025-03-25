@@ -1,15 +1,12 @@
-discardedTests.txt
-keploy.yml
-
 .editorconfig
 .gitignore
 .nvmrc
 .env
 
 discardedTests.txt
-webpack.config.ts
 task-processor.ts
 keploy-logs.txt
+webpack.config
 tsconfig.json
 keploy.yml
 
