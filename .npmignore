@@ -5,8 +5,8 @@
 
 discardedTests.txt
 task-processor.ts
+webpack.config.ts
 keploy-logs.txt
-webpack.config
 tsconfig.json
 keploy.yml
 
@@ -20,6 +20,7 @@ bin/
 src/
 
 /**/*.tsbuildinfo
+/lib/webpack.config.*
 /lib/**/*.spec.*
 
 !/public/images/**/*
