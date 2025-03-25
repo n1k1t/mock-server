@@ -1,4 +1,6 @@
 import { createReadStream } from 'fs';
+
+import mime from 'mime-types';
 import path from 'path';
 import fs from 'fs/promises';
 import _ from 'lodash';
@@ -54,11 +56,21 @@ export default Endpoint
     }
 
     const stats = await fs.stat(path.join(statics.public.dir, parsed.dir, parsed.base)).catch(() => null);
-
     if (!stats) {
       return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
     }
 
+    const outgoing: IRequestContextOutgoing = {
+      type: 'plain',
+      status: 200,
+
+      headers: {
+        'Content-Type': mime.contentType(parsed.ext) || '',
+      },
+    };
+
+    context.response.writeHead(outgoing.status, outgoing.headers);
     createReadStream(path.join(statics.public.dir, parsed.dir, parsed.base)).pipe(context.response);
-    return context.assign({ outgoing: { type: 'plain', status: 200, headers: {} } }).complete();
+
+    return context.assign({ outgoing }).complete();
   });

@@ -1,5 +1,5 @@
-import { io as connectIo } from 'socket.io-client';
 import EventEmitter from 'events';
+import io from 'socket.io-client';
 
 import type { IIoExchangeSchema } from '../../server';
 import type { PopupsComponent } from './components';
@@ -25,10 +25,6 @@ interface IContextShared {
   groups: Set<string>;
 }
 
-const io = connectIo({
-  path: `${location.pathname.split('/').slice(0, -3).join('/')}/socket.io/`
-});
-
 class Context {
   public config = cast<Pick<Config['storage'], 'history'>>({
     history: {
@@ -37,7 +33,9 @@ class Context {
   });
 
   public instances = {
-    io,
+    io: io(window.DEV?.io.origin ?? location.origin, {
+      path: window.DEV?.io.path ?? `${location.pathname.split('/').slice(0, -3).join('/')}/socket.io/`
+    }),
   };
 
   public services = {
@@ -45,12 +43,12 @@ class Context {
       exec: <K extends keyof TWsEndpoints & string>(
         path: K,
         body?: TWsEndpoints[K]['incoming']['data']
-      ): Promise<TWsEndpoints[K]['outgoing']> => new Promise((resolve) => io.emit(path, body, resolve)),
+      ): Promise<TWsEndpoints[K]['outgoing']> => new Promise((resolve) => this.instances.io.emit(path, body, resolve)),
 
       subscribe: <
         K extends keyof IIoExchangeSchema,
         T extends IIoExchangeSchema[K]
-      >(channel: K, handler: (payload: T) => unknown) => io.on(<string>channel, handler)
+      >(channel: K, handler: (payload: T) => unknown) => this.instances.io.on(<string>channel, handler)
     },
   };
 

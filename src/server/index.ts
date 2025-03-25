@@ -81,7 +81,12 @@ export class MockServer<
 
   public http = createServer(buildHttpListener(this.router));
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
-  public io = new Server(this.http);
+
+  public io = new Server(this.http, {
+    ...(process.env['NODE_ENV'] === 'development' && {
+      cors: { origin: '*' },
+    }),
+  });
 
   public services = {
     analytics: AnalyticsService.build(this),

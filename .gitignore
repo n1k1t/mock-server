@@ -17,13 +17,9 @@ npm-debug.log
 keploy.yml
 
 node_modules/
+public/
 test/
 lib/
 
-public/scripts/**
-public/styles/**
 coverage/**
-
 !coverage/cobertura-coverage.xml
-!public/styles/fa-all.css
-!public/scripts/.gitkeep
