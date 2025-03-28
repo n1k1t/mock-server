@@ -20,12 +20,12 @@ export class HistoryStorage extends Map<string, History> {
       this.delete(this.stack.shift()!);
     }
 
-    return history.switchStatus('registred');
+    return history.switchStatus('registered');
   }
 
   public unregister(history?: History): this {
     if (history) {
-      this.delete(history.switchStatus('unregistred').id);
+      this.delete(history.switchStatus('unregistered').id);
     }
 
     return this;

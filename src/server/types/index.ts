@@ -25,7 +25,7 @@ export interface IIoExchangeSchema {
   'history:added': History['TPlain'];
   'history:updated': History['TPlain'];
 
-  'metric:registred': {
+  'metric:registered': {
     name: string;
     point: TMetricPoint;
   };

@@ -68,7 +68,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         return context;
       }
 
-      if (context.history?.hasStatus('registred')) {
+      if (context.history?.hasStatus('registered')) {
         context.history.switchStatus('pending');
       }
 
@@ -87,7 +87,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     context.provider.server.exchanges.io.publish('expectation:updated', expectation.toPlain());
     logger.info('Expectation has matched as', `"${expectation.name}" [${expectation.id}]`);
 
-    if (context.history?.hasStatus('registred')) {
+    if (context.history?.hasStatus('registered')) {
       context.history
         .switchStatus('pending')
         .actualizeSnapshot(context.snapshot)

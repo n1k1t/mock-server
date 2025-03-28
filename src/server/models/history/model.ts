@@ -18,7 +18,7 @@ export class History {
   public group: string = this.configuration.group;
   public snapshot: SetRequiredKeys<RequestContextSnapshot, 'messages'> = this.configuration.snapshot;
 
-  public status = cast<'unregistred' | 'registred' | 'pending' | 'completed'>('unregistred');
+  public status = cast<'unregistered' | 'registered' | 'pending' | 'completed'>('unregistered');
   public expectation?: Expectation<any>;
 
   public timestamp: number = this.configuration.timestamp ?? Date.now();

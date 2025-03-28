@@ -62,7 +62,7 @@ According on the picture above, main idea is to generate or modify response from
 1. Start mock server (for example on `localhost:8080`)
 2. Register expectation using CLI (cURL) or application lib
 3. Make request to `localhost:8080/...`
-    1. The mock server matches a request payload with registred expectations
+    1. The mock server matches a request payload with registered expectations
     2. Build a response using an expectation configuration
 
 **In case of mocking with request forwarding:**
@@ -71,7 +71,7 @@ According on the picture above, main idea is to generate or modify response from
 1. Start mock server (for example on `localhost:8080`)
 2. Register expectation using CLI (cURL) or application lib
 3. Make request to `localhost:8080/...`
-    1. The mock server matches a request payload with registred expectations
+    1. The mock server matches a request payload with registered expectations
     2. Next is forwarding a request payload to `localhost:8081/...`
     3. Using response fetched from `localhost:8081/...` the mock server builds a response
 
@@ -1063,7 +1063,7 @@ console.log('Mock expectation has created', expectation.id);
 
 | Property | Nested | Type | Optional | Description |
 |--|--|--|--|--|
-| id | | `string` | | ID of a registred expectation |
+| id | | `string` | | ID of a registered expectation |
 | set | | `object` | | A payload to set |
 | | name | `string` | * | A preferred name for an expectation |
 | | schema | [Schema](#schema) | * | An expectation schema |

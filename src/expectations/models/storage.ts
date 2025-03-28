@@ -5,7 +5,7 @@ import { Expectation } from './expectation';
 import { Logger } from '../../logger';
 
 export type TExpectationsStorageRegisterationResult =
-  | { status: 'REGISTRED', expectation: Expectation<any> }
+  | { status: 'REGISTERED', expectation: Expectation<any> }
   | { status: 'ERROR', reasons: ValueError[] };
 
 const logger = Logger.build('Expectations.Storage');
@@ -22,7 +22,7 @@ export class ExpectationsStorage extends Map<string, Expectation> {
     logger.info(`Expectation [${expectation.name}] has registered in group [${expectation.group}]`);
     this.set(expectation.id, expectation);
 
-    return { status: 'REGISTRED', expectation };
+    return { status: 'REGISTERED', expectation };
   }
 
   public match(context: IExpectationSchemaContext): Expectation<any> | null {

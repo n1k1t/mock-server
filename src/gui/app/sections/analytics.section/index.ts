@@ -26,7 +26,7 @@ const charts = {
   }),
 
   containers: ChartComponent.build({
-    title: 'Registred containers',
+    title: 'Registered containers',
     icon: 'fas fa-box',
 
     description: 'updates every 5 seconds',
@@ -53,7 +53,7 @@ export default Section
     section.content.append(charts.containers);
     section.content.append(charts.rate);
 
-    context.services.io.subscribe('metric:registred', ({ name, point: { timestamp, values } }) =>
+    context.services.io.subscribe('metric:registered', ({ name, point: { timestamp, values } }) =>
       name in charts
         ? charts[<keyof typeof charts>name].provide([{ values, legend: dayjs(timestamp).format('HH:mm') }])
         : null

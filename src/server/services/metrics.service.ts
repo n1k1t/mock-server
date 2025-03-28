@@ -32,7 +32,7 @@ export class MetricsService extends Service {
     group.push(point);
     group.splice(0, _.clamp(group.length - this.limit, 0, Infinity));
 
-    this.server.exchanges.io.publish('metric:registred', { name, point });
+    this.server.exchanges.io.publish('metric:registered', { name, point });
     return this;
   }
 

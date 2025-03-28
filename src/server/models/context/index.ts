@@ -23,7 +23,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
   public abstract incoming: IRequestContextIncoming;
   public abstract snapshot: RequestContextSnapshot<TContext>;
 
-  public status = cast<'registred' | 'handling' | 'skipped' | 'completed'>('registred');
+  public status = cast<'registered' | 'handling' | 'skipped' | 'completed'>('registered');
 
   public streams = {
     incoming: new ReplaySubject(Infinity, 5000),

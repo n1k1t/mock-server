@@ -24,11 +24,11 @@ export class ProvidersStorage<TContext extends IServerContext<any>> extends Map<
       return this;
     }
     if (this.has(provider.group)) {
-      logger.info(`Provider group [${provider.group}] is already registred. Using existent...`);
+      logger.info(`Provider group [${provider.group}] is already registered. Using existent...`);
       return this;
     }
 
-    logger.info(`Provider group [${provider.group}] has registred`);
+    logger.info(`Provider group [${provider.group}] has registered`);
     return this.set(provider.group, provider);
   }
 }

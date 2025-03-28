@@ -21,7 +21,7 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
       if (!context) {
         return response.destroy();
       }
-      if (!context.hasStatuses(['registred', 'handling'])) {
+      if (!context.hasStatuses(['registered', 'handling'])) {
         break;
       }
 
@@ -29,7 +29,7 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
         .wrap(context.meta, () => transport.executor.match(context))
         .catch((error) => logger.error('Got error while expectation matching', error?.stack ?? error));
 
-      if (!context.hasStatuses(['registred', 'handling'])) {
+      if (!context.hasStatuses(['registered', 'handling'])) {
         break;
       }
       if (!expectation) {

@@ -29,7 +29,7 @@ const handle = async (
   if (!context) {
     return signals.close;
   }
-  if (!context.hasStatuses(['registred', 'handling'])) {
+  if (!context.hasStatuses(['registered', 'handling'])) {
     return signals.break;
   }
 
@@ -37,7 +37,7 @@ const handle = async (
     .wrap(context.meta, () => match.transport.executor.match(context))
     .catch((error) => logger.error(`Got error while [ws:${event}] expectation matching`, error?.stack ?? error));
 
-  if (!context.hasStatuses(['registred', 'handling'])) {
+  if (!context.hasStatuses(['registered', 'handling'])) {
     return signals.break;
   }
   if (!expectation) {
