@@ -1,6 +1,7 @@
-import { EventEmitter } from 'events';
 import _debouce from 'lodash/debounce';
 import hbs from 'handlebars';
+
+import { EventEmitter } from 'events';
 
 import { Component } from '../../models';
 import { TFunction } from '../../../../types';

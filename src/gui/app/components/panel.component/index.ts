@@ -4,14 +4,17 @@ import { Component, TElementPredicate } from '../../models';
 export type TPanelSize = 'XS' | 'S' | 'M' | 'L';
 
 export interface IPanelConfiguration {
-  title: string;
+  title?: {
+    text: string;
 
-  description?: string;
+    description?: string;
+    icon?: string;
+  };
+
   height?: TPanelSize;
   width?: TPanelSize;
 
   class?: string;
-  icon?: string;
 }
 
 const template = hbs.compile(require('./template.hbs'));
@@ -19,7 +22,7 @@ const template = hbs.compile(require('./template.hbs'));
 export class PanelComponent extends Component {
   private content = new Component(this.element.querySelector('div.content')!);
 
-  constructor(provided: IPanelConfiguration) {
+  constructor(provided: IPanelConfiguration = {}) {
     super(template(provided));
   }
 
@@ -43,7 +46,7 @@ export class PanelComponent extends Component {
     return this;
   }
 
-  static build(configuration: IPanelConfiguration) {
+  static build(configuration?: IPanelConfiguration) {
     return new PanelComponent(configuration);
   }
 }

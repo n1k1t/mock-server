@@ -31,17 +31,25 @@ const controls = {
     }),
 
   filter: CheckboxAreaComponent.build({
-    title: 'Groups filter',
-    description: 'shows/hides items in the list below',
+    title: {
+      text: 'Groups filter',
+      icon: 'fas fa-filter',
+
+      description: 'shows/hides items in the list below',
+    },
+
     width: 'M',
-    icon: 'fas fa-filter',
   }),
 
   switcher: CheckboxAreaComponent.build({
-    title: 'Groups switcher',
-    description: 'turnes on/off items in the list below',
+    title: {
+      text: 'Groups switcher',
+      icon: 'fas fa-power-off',
+
+      description: 'turnes on/off items in the list below',
+    },
+
     width: 'M',
-    icon: 'fas fa-power-off',
   }),
 };
 

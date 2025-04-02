@@ -1,4 +1,5 @@
-import '../../extensions';
+import relativeTimePlugin from 'dayjs/plugin/relativeTime';
+import dayjs from 'dayjs';
 
 import * as components from './components';
 import * as sections from './sections';
@@ -6,6 +7,7 @@ import * as sections from './sections';
 import handlebars from './handlebars';
 import context from './context';
 
+dayjs.extend(relativeTimePlugin);
 handlebars.init();
 
 const loader = components.LoaderComponent.build().show();

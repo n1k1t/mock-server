@@ -10,35 +10,47 @@ const template = hbs.compile(require('./template.hbs'));
 
 const charts = {
   memory: ChartComponent.build({
-    title: 'Server memory usage',
-    icon: 'fas fa-memory',
+    title: {
+      text: 'Server memory usage',
+      icon: 'fas fa-memory',
 
-    description: 'updates every 5 seconds',
+      description: 'updates every 5 seconds',
+    },
+
     width: 'M',
   }),
 
   cache: ChartComponent.build({
-    title: 'Cache memory usage',
-    icon: 'fas fa-database',
+    title: {
+      text: 'Cache memory usage',
+      icon: 'fas fa-database',
 
-    description: 'updates every 10 minutes',
+      description: 'updates every 10 minutes'
+    },
+
     width: 'M',
   }),
 
   containers: ChartComponent.build({
-    title: 'Registered containers',
-    icon: 'fas fa-box',
+    title: {
+      text: 'Registered containers',
+      icon: 'fas fa-box',
 
-    description: 'updates every 5 seconds',
+      description: 'updates every 5 seconds'
+    },
+
     width: 'S',
   }),
 
   rate: ChartComponent.build({
-    title: 'Requests rate',
-    icon: 'fas fa-rocket',
-    mode: 'aggregation',
+    title: {
+      text: 'Requests rate',
+      icon: 'fas fa-rocket',
 
-    description: 'updates instantly',
+      description: 'updates instantly',
+    },
+
+    mode: 'aggregation',
     width: 'S',
   }),
 };

@@ -26,6 +26,10 @@ export class MetricsService extends Service {
     name: K,
     values: MetricsService['points'][K][0]['values'],
   ): this {
+    if (!this.points[name]) {
+      throw new Error('Invalid metric name');
+    }
+
     const group: TMetricPoint[] = this.points[name];
     const point: TMetricPoint = { timestamp: Date.now(), values };
 

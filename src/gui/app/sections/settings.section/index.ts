@@ -13,8 +13,10 @@ const templates = {
 
 const panels = {
   stats: PanelComponent.build({
-    title: 'Stats',
-    icon: 'fas fa-server',
+    title: {
+      text: 'Stats',
+      icon: 'fas fa-server'
+    },
 
     class: 'stats',
 
@@ -24,8 +26,10 @@ const panels = {
 
   cache: PanelComponent
     .build({
-      title: 'Cache',
-      icon: 'fas fa-database',
+      title: {
+        text: 'Cache',
+        icon: 'fas fa-database',
+      },
 
       class: 'cache',
 

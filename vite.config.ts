@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { defineConfig } from 'vite';
 
-import { IDevContext } from './src/gui/app/types/dev';
+import { IDevContext } from './src/gui/app/types';
 import { cast } from './src/utils';
 
 export default defineConfig(({ mode }) => ({

@@ -12,7 +12,7 @@
     "start": "node lib/src/index",
     "start:dev": "NODE_ENV=development npx concurrently --names vite,server -c gray,cyan \"npx vite serve -l error\" \"npx ts-node test\"",
     "gui:build": "npx vite build --mode production",
-    "gui:build:check": "npx tsc --noEmit --project src/gui/app/tsconfig.json",
+    "gui:build:check": "npx tsc --noEmit --project src/gui/app",
     "server:build": "rm -rf lib && npx tsc",
     "server:build:check": "npx tsc --noEmit",
     "build": "npm run server:build && npm run gui:build",
@@ -35,7 +35,7 @@
     ],
     "collectCoverageFrom": [
       "<rootDir>/src/**/*.ts",
-      "!<rootDir>/src/gui/**/*.ts"
+      "!<rootDir>/src/gui/**"
     ],
     "setupFilesAfterEnv": [
       "jest-extended/all"
@@ -74,11 +74,12 @@
   "author": "n1k1t",
   "license": "MIT",
   "devDependencies": {
-    "@n1k1t/unit-generator": "0.1.3",
+    "@jest/globals": "29.7.0",
+    "@n1k1t/unit-generator": "0.1.12",
     "@types/commander": "2.12.2",
     "@types/express": "4.17.13",
     "@types/http-proxy": "1.17.9",
-    "@types/jest": "29.5.11",
+    "@types/jest": "^29.5.11",
     "@types/lodash": "4.14.184",
     "@types/mime-types": "2.1.4",
     "@types/minimatch": "5.1.2",

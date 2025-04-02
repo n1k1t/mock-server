@@ -11,11 +11,9 @@ export const flattenArrayed = <
     return <Q>payload.reduce((acc, nestedPayload) => acc.concat(flattenArrayed(<T>nestedPayload)), []);
   }
 
-  if (Array.isArray(payload)) {
-    return <Q>[payload];
-  }
-
-  return <Q>[[payload]];
+  return Array.isArray(payload)
+    ? <Q>[payload]
+    : <Q>[[payload]];
 };
 
 /**

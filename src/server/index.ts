@@ -1,5 +1,5 @@
-import '../extensions';
-
+import relativeTimePlugin from 'dayjs/plugin/relativeTime';
+import dayjs from 'dayjs';
 import _ from 'lodash';
 
 import { Redis, RedisOptions } from 'ioredis';
@@ -25,6 +25,8 @@ import config from '../config';
 export * from './transports';
 export * from './models';
 export * from './types';
+
+dayjs.extend(relativeTimePlugin);
 
 const logger = Logger.build('Server');
 

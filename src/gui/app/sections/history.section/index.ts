@@ -44,18 +44,25 @@ const controls = {
     }),
 
   filter: CheckboxAreaComponent.build({
-    title: 'Groups filter',
-    description: 'shows/hides items in the list below',
+    title: {
+      text: 'Groups filter',
+      icon: 'fas fa-filter',
+
+      description: 'shows/hides items in the list below'
+    },
+
     width: 'M',
-    icon: 'fas fa-filter',
   }),
 
   actions: PanelComponent
     .build({
-      title: 'Actions',
+      title: {
+        text: 'Actions',
+        icon: 'fas fa-sliders-h',
+      },
+
       class: 'actions',
       width: 'M',
-      icon: 'fas fa-sliders-h',
     })
     .append(templates.actions({})),
 };

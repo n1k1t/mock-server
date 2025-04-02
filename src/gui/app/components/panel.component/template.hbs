@@ -1,10 +1,12 @@
 export default `
-  <div class="panel {{class}} {{#if width}}width-{{width}}{{else}}width-L{{/if}} {{#if height}}height-{{height}}{{else}}height-L{{/if}}">
-    <p class="title">
-      {{#if icon}}<i class="{{icon}}"></i>{{/if}}
-      <span class="title">{{{title}}}</span>
-      {{#if description}}<span class="description">{{{description}}}</span>{{/if}}
-    </p>
+  <div class="panel {{class}} {{#if width}}width-{{width}}{{/if}} {{#if height}}height-{{height}}{{/if}}">
+    {{#if title}}
+      <p class="title">
+        {{#if title.icon}}<i class="{{title.icon}}"></i>{{/if}}
+        <span class="title">{{{title.text}}}</span>
+        {{#if title.description}}<span class="description">{{{title.description}}}</span>{{/if}}
+      </p>
+    {{/if}}
 
     <div class="content"></div>
   </div>
