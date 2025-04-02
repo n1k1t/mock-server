@@ -2,6 +2,7 @@ import { prepareExpectationBodyToRequest } from '../utils';
 import { Expectation } from '../../expectations';
 import { Client } from './client';
 
+
 interface IExpectationContext {
   incoming: {
     query: {
@@ -288,3 +289,28 @@ describe('Client.Models.Client', () => {
     ).resolves.toMatchSnapshot();
   });
 });
+
+// Test generated using Keploy
+it('should return pong on ping method', async () => {
+    const client = buildClient();
+    await expect(client.ping()).resolves.toEqual('pong');
+  });
+
+
+// Test generated using Keploy
+it('should return null on deleteExpectations method', async () => {
+    const client = buildClient();
+    await expect(client.deleteExpectations()).resolves.toBeNull();
+  });
+
+
+// Test generated using Keploy
+it('should update expectation with function predicate', async () => {
+    const client = buildClient();
+    const result = await client.updateExpectation((context) => ({
+      id: 'some-id',
+      set: { schema: {} },
+    }));
+    expect(result).toHaveProperty('id');
+  });
+
