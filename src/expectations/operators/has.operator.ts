@@ -1,8 +1,7 @@
 import minimatch from 'minimatch';
 import _ from 'lodash';
 
-import { checkIsLocationInContext, extractContextByLocation } from '../utils';
-import { extractWithJsonPathSafe } from '../../utils';
+import { checkIsLocationInContext, extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { PartialDeep, TFunction } from '../../types';
 import { ExpectationOperator } from '../models/operator';
 import {

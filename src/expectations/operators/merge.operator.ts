@@ -1,8 +1,7 @@
 import merge from 'deepmerge';
 import _ from 'lodash';
 
-import { extractContextByLocation } from '../utils';
-import { extractWithJsonPathSafe } from '../../utils';
+import { extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { ExpectationOperator } from '../models/operator';
 import { TFunction } from '../../types';
 import {

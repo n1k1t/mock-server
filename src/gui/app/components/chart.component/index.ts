@@ -1,10 +1,8 @@
 import Chart from 'chart.js/auto';
-
-import _clamp from 'lodash/clamp';
-import _unset from 'lodash/unset';
+import _ from 'lodash';
 
 import { IPanelConfiguration, PanelComponent, TPanelSize } from '../panel.component';
-import { buildCounter, cast } from '../../../../utils/common';
+import { buildCounter, cast } from '../../../../utils';
 import { calculateColor } from '../../utils';
 import { Component } from '../../models';
 
@@ -122,10 +120,10 @@ export class ChartComponent extends Component {
       Object.keys(point.values).forEach((label) => this.labels.add(label));
     });
 
-    this.stack.slice(0, _clamp(this.stack.length - this.limits.point, 0, Infinity)).forEach((id) => {
+    this.stack.slice(0, _.clamp(this.stack.length - this.limits.point, 0, Infinity)).forEach((id) => {
       const point = this.points.get(id);
       if (point) {
-        _unset(this.aliases, point.legend);
+        _.unset(this.aliases, point.legend);
       }
 
       this.points.delete(id);

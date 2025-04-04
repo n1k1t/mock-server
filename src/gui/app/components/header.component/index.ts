@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
-import _set from 'lodash/set';
 import hbs from 'handlebars';
+import _ from 'lodash';
 
 import { Component, Section } from '../../models';
 import { TFunction } from '../../../../types';
@@ -19,7 +19,7 @@ export class HeaderComponent extends Component {
   public sections = this.tabs
     .map((tab) => tab.type === 'section' ? tab.entity : null)
     .filter(Boolean)
-    .reduce<Record<string, Section>>((acc, section) => _set(acc, section!.id, section), {});
+    .reduce<Record<string, Section>>((acc, section) => _.set(acc, section!.id, section), {});
 
   constructor(public tabs: TTab[]) {
     super(

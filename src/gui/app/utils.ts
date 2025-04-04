@@ -1,12 +1,12 @@
-import _isObject from 'lodash/isObject';
 import hash from 'fnv1a';
+import _ from 'lodash';
 
 export const convertObjectToKeyValueCouples =
   (object: object, paths: string[], prefix: string = ''): [string, unknown][] =>
     Object.entries(object).reduce<[string, unknown][]>((acc, [key, value]) => {
       const path = `${prefix}${prefix ? '.' : ''}${key}`;
 
-      return _isObject(value) && !paths.includes(path)
+      return _.isObject(value) && !paths.includes(path)
         ? acc.concat(convertObjectToKeyValueCouples(value, paths, path))
         : acc.concat([[path, value]]);
     }, []);

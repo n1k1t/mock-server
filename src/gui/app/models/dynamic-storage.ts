@@ -1,4 +1,4 @@
-import _set from 'lodash/set';
+import _ from 'lodash';
 
 import { convertObjectToKeyValueCouples } from '../utils';
 import { ClientStorage } from './client-storage';
@@ -12,7 +12,7 @@ export class DynamicStorage<T extends object = object> {
 
   public sync(): this {
     const stored: [string, unknown][] = this.client.extract() ?? [];
-    this.form.assign(stored.reduce((acc, [path, value]) => _set(acc, path, value), {}));
+    this.form.assign(stored.reduce((acc, [path, value]) => _.set(acc, path, value), {}));
 
     return this;
   }

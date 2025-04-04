@@ -20,17 +20,3 @@ export const extractWithJsonPathSafe = (params: Omit<JSONPathOptions, 'resultTyp
     };
   }
 };
-
-export const parseJsonSafe = <T extends Record<string, unknown>>(serializedJson: string) => {
-  try {
-    return <const>{
-      status: 'OK',
-      result: <T>JSON.parse(serializedJson),
-    };
-  } catch(error) {
-    return <const>{
-      status: 'ERROR',
-      error: error instanceof Error ? error : new Error('Unknown'),
-    };
-  }
-};

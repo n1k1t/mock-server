@@ -1,6 +1,4 @@
-import { checkIsLocationInContext } from './utils';
-import { extractContextByLocation } from './utils';
-import { serializeExpectationSchema } from './utils';
+import { extractContextByLocation, checkIsLocationInContext } from './location';
 
 // Test generated using Keploy
 it('should return false for undefined location in context', () => {
@@ -31,22 +29,6 @@ it('should return null for invalid location', () => {
   const context = {};
   const result = extractContextByLocation(<any>'invalid.location', <any>context);
   expect(result).toBeNull();
-});
-
-// Test generated using Keploy
-it('should serialize $exec functions in the schema', () => {
-  const schema = {
-    $exec: () => {},
-    nested: {
-      $exec: () => {},
-      $has: {
-        $exec: () => {},
-      },
-    },
-  };
-  const result = serializeExpectationSchema(schema);
-  expect(result.nested.$exec).toBeDefined();
-  expect(result.nested.$has.$exec).toBeDefined();
 });
 
 // Test generated using Keploy

@@ -1,5 +1,5 @@
-import _debouce from 'lodash/debounce';
 import hbs from 'handlebars';
+import _ from 'lodash';
 
 import { EventEmitter } from 'events';
 
@@ -35,7 +35,7 @@ export class SearchComponent extends Component {
       this.element.classList.remove('filled');
     });
 
-    this.input.addEventListener('keydown', _debouce(
+    this.input.addEventListener('keydown', _.debounce(
       () => this.input.value ? this.emit('input', this.input.value) : this.clear(),
       350
     ));

@@ -1,4 +1,3 @@
-import _pick from 'lodash/pick';
 import hbs from 'handlebars';
 
 import type { History } from '../../../../server';

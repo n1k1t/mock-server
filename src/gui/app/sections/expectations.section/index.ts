@@ -2,7 +2,7 @@ import hbs from 'handlebars';
 
 import { CheckboxAreaComponent, EmptyComponent, ExpectationComponent, SearchComponent } from '../../components';
 import { Section } from '../../models';
-import { cast } from '../../../../utils/common';
+import { cast } from '../../../../utils';
 
 import context from '../../context';
 

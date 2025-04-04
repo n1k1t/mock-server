@@ -1,4 +1,4 @@
-import _truncate from 'lodash/truncate';
+import _ from 'lodash';
 
 import { buildHandlebarsHelper } from './utils';
 import { calculateColor } from '../utils';
@@ -25,7 +25,7 @@ export const compare = buildHandlebarsHelper<[string, TCompareMethod, string]>(
   }
 );
 
-export const truncate = buildHandlebarsHelper<[string, number]>(() => (text, length) => _truncate(text, { length }));
+export const truncate = buildHandlebarsHelper<[string, number]>(() => (text, length) => _.truncate(text, { length }));
 
 export const toLocaleTime = buildHandlebarsHelper<[number]>(() => (timestamp) => new Date(timestamp).toLocaleTimeString());
 export const toSeconds = buildHandlebarsHelper<[number]>(() => (ms) => (ms / 1000).toFixed(3));

@@ -1,9 +1,8 @@
-
-import _set from 'lodash/set';
+import _ from 'lodash';
 
 import { convertObjectToKeyValueCouples } from '../utils';
-import { PartialDeep } from '../../../types';
 import { Component, TElementPredicate } from './component';
+import { PartialDeep } from '../../../types';
 
 type TInputType = 'text' | 'number' | 'password' | 'checkbox';
 
@@ -47,16 +46,16 @@ export class Form<T extends object = object> extends Component {
           .map((nested) => castInputValue(type, nested))
           .filter((nested) => nested !== null);
 
-        return value.length ? _set(acc, key, value) : acc;
+        return value.length ? _.set(acc, key, value) : acc;
       }
 
       const value = castInputValue(type, input.value);
 
       if (type === 'checkbox' && 'checked' in input) {
-        return input.checked ? _set(acc, key, value ?? true) : acc;
+        return input.checked ? _.set(acc, key, value ?? true) : acc;
       }
 
-      return value !== null ? _set(acc, key, value) : acc;
+      return value !== null ? _.set(acc, key, value) : acc;
     }, <T>{});
   }
 
@@ -64,7 +63,7 @@ export class Form<T extends object = object> extends Component {
     convertObjectToKeyValueCouples(payload, this.paths)
       .map(([path, value]) => <const>[path, value, this.element.querySelector(`*[data-key="${path}"]`)!])
       .forEach(([path, value, input]) =>
-        _set(input, 'value', Array.isArray(value) ? value.join(input.getAttribute('list') ?? ',') : (value ?? ''))
+        _.set(input, 'value', Array.isArray(value) ? value.join(input.getAttribute('list') ?? ',') : (value ?? ''))
       );
 
     return this;

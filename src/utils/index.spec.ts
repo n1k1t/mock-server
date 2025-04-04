@@ -1,6 +1,4 @@
-import { flattenArrayed } from './common';
-import { buildCounter } from './common';
-import { wait } from './common';
+import { wait, buildCounter, flattenArrayed } from './index';
 
 // Test generated using Keploy
 test('wait resolves after specified duration', async () => {

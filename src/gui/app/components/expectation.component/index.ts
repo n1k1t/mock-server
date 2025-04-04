@@ -1,5 +1,5 @@
-import _pick from 'lodash/pick';
 import hbs from 'handlebars';
+import _ from 'lodash';
 
 import type { Expectation } from '../../../../expectations';
 
@@ -24,7 +24,7 @@ export class ExpectationComponent extends Component {
 
   public refresh(): this {
     this.replace(template(this.data)).append(this.viewer);
-    this.viewer.provide(_pick(this.data, ['id', 'type', 'transports', 'schema']));
+    this.viewer.provide(_.pick(this.data, ['id', 'type', 'transports', 'schema']));
 
     Button
       .build(this.element.querySelector('button.activity')!)

@@ -4,11 +4,11 @@ import io from 'socket.io-client';
 import type { IIoExchangeSchema } from '../../server';
 import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
+import type { TFunction } from '../../types';
 import type { Config } from '../../config/model';
 
 import { DynamicStorage } from './models';
-import { TFunction } from '../../types';
-import { cast } from '../../utils/common';
+import { cast } from '../../utils';
 
 type ExtractWsEndpointPath<K extends keyof TEndpoints> = TEndpoints[K]['io'] extends { path: infer R }
   ? R extends string ? R : never

@@ -5,7 +5,7 @@ import { IPanelConfiguration, PanelComponent } from '../panel.component';
 import { CheckboxAreaButtonComponent } from './item.component';
 import { TFunction } from '../../../../types';
 import { Component } from '../../models';
-import { cast } from '../../../../utils/common';
+import { cast } from '../../../../utils';
 
 interface IEvents {
   enable: [CheckboxAreaButtonComponent];

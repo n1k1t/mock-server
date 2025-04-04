@@ -58,14 +58,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: true,
     outDir: path.join(__dirname, 'public'),
-
-    rollupOptions: {
-      input: {
-        app: path.join(__dirname, 'src', 'gui', 'app', 'main.ts'),
-        index: path.join(__dirname, 'src', 'gui', 'index.html'),
-        styles: path.join(__dirname, 'src', 'gui', 'styles', 'main.scss'),
-      },
-    },
   },
 
   plugins: [nodePolyfills(), commonjs()],
