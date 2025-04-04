@@ -2,12 +2,12 @@ import axios from 'axios';
 import _ from 'lodash';
 
 import { IRemoteClientConnectOptions, TMethodsSchema } from './types';
-import { IServerContext } from '../server/types';
+import { IServerContext, TDefaultServerContext } from '../server/types';
 import { Client } from './models';
 
 import * as methods from './methods';
 
-export class RemoteClient<TContext extends IServerContext<any>> extends Client<TContext> {
+export class RemoteClient<TContext extends IServerContext<any> = TDefaultServerContext> extends Client<TContext> {
   get updateExpectationsGroup() {
     return this.methods.updateExpectationsGroup;
   }
@@ -25,7 +25,7 @@ export class RemoteClient<TContext extends IServerContext<any>> extends Client<T
     );
   }
 
-  static async connect<TContext extends IServerContext<any>>(options: IRemoteClientConnectOptions) {
+  static async connect<TContext extends IServerContext<any> = TDefaultServerContext>(options: IRemoteClientConnectOptions) {
     const client = new RemoteClient<TContext>(options);
 
     await client.ping();

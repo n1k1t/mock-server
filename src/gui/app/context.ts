@@ -5,7 +5,8 @@ import type { IIoExchangeSchema } from '../../server';
 import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
 import type { TFunction } from '../../types';
-import type { Config } from '../../config/model';
+
+import type config from '../../config';
 
 import { DynamicStorage } from './models';
 import { cast } from '../../utils';
@@ -26,7 +27,7 @@ interface IContextShared {
 }
 
 class Context {
-  public config = cast<Pick<Config['storage'], 'history'>>({
+  public config = cast<Pick<typeof config['storage'], 'history'>>({
     history: {
       limit: 100,
     },

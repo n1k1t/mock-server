@@ -1,5 +1,4 @@
 import { AxiosError } from 'axios';
-import rfdc from 'rfdc';
 import _ from 'lodash';
 
 import type { IRequestConfiguration } from './errors';

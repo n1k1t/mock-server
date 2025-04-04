@@ -1,14 +1,14 @@
 import _ from 'lodash';
 
+import type { Provider, IServerContext, TDefaultServerContext } from '../server';
 import type { TEndpoints, TMethodsSchema } from './types';
-import type { Provider, IServerContext } from '../server';
 import type { Expectation } from '../expectations';
 
 import { Client } from './models';
 
 import * as methods from './methods';
 
-export class OnsiteClient<TContext extends IServerContext<any> = IServerContext<any>> extends Client<TContext> {
+export class OnsiteClient<TContext extends IServerContext<any> = TDefaultServerContext> extends Client<TContext> {
   constructor(provider: Provider<any>) {
     super(
       Object
@@ -23,7 +23,7 @@ export class OnsiteClient<TContext extends IServerContext<any> = IServerContext<
     return this.methods.updateExpectationsGroup({ set: body });
   }
 
-  static build<TContext extends IServerContext<any>>(provider: Provider<any>) {
+  static build<TContext extends IServerContext<any> = TDefaultServerContext>(provider: Provider<any>) {
     return new OnsiteClient<TContext>(provider);
   }
 }

@@ -1,8 +1,8 @@
 import minimatch from 'minimatch';
 import _ from 'lodash';
 
+import type { MockServer, TDefaultServerContext } from '../index';
 import type { IServerContext } from '../types';
-import type { MockServer } from '../index';
 import type { Transport } from './transports';
 import type { Provider } from './providers';
 
@@ -73,7 +73,7 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     };
   }
 
-  static build<TContext extends IServerContext<any>>(server: MockServer): Router<TContext> {
+  static build<TContext extends IServerContext<any> = TDefaultServerContext>(server: MockServer): Router<TContext> {
     return new Router<TContext>(server);
   }
 }

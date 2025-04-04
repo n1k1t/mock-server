@@ -1,47 +1,24 @@
 import merge from 'deepmerge';
-import path from 'path';
+import { PartialDeep, SetRequiredKeys } from '../types';
 
-import type { PartialDeep, SetRequiredKeys } from '../types';
-import type { TLoggerLevel } from '../logger';
+export class Config<T extends object = object> {
+  public storage: T = merge(this.defaults, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));
 
-import { cast } from '../utils';
+  constructor(public defaults: T) {}
 
-const checkIsTypeScriptRuntime = (): boolean => path.parse(__filename).ext === '.ts';
-const getPathToRoot = (): string => path.resolve(__dirname, checkIsTypeScriptRuntime() ? '' : '../', '../../');
-
-export class Config {
-  public storage = merge(<const>{
-    statics: {
-      public: {
-        dir: path.resolve(getPathToRoot(), 'public'),
-      },
-    },
-
-    routes: {
-      internal: {
-        root: '/_system',
-        gui: '/gui',
-      },
-    },
-
-    history: {
-      limit: 100,
-    },
-
-    logger: {
-      level: cast<TLoggerLevel>('D'),
-    },
-  }, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));
-
-  public get<K extends keyof Config['storage']>(key: K): Config['storage'][K] {
+  public get<K extends keyof T>(key: K): T[K] {
     return this.storage[key];
   }
 
-  public has<K extends keyof Config['storage']>(key: K): this is SetRequiredKeys<Config['storage'], K> {
+  public has<K extends keyof T>(key: K): this is SetRequiredKeys<T, K> {
     return key in this.storage;
   }
 
-  public merge(payload: PartialDeep<Config['storage']>): this {
-    return Object.assign(this, { storage: merge(this.storage, payload, { arrayMerge: (target, source) => source }) });
+  public merge(payload: PartialDeep<T>): this {
+    return Object.assign(this, { storage: merge(this.storage, <T>payload, { arrayMerge: (target, source) => source }) });
+  }
+
+  static build<T extends object>(defaults: T) {
+    return new Config(defaults);
   }
 }

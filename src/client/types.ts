@@ -1,5 +1,5 @@
 import type { TFunction } from '../types';
-import type { Config } from '../config';
+import type config from '../config';
 
 import type * as endpoints from '../server/endpoints';
 import type * as methods from './methods';
@@ -24,7 +24,7 @@ export type TEndpoints = {
     outgoing: (typeof endpoints)[K]['TSchema']['outgoing'];
 
     location: {
-      url: `${Config['storage']['routes']['internal']['root']}${(typeof endpoints)[K]['http']['path']}`;
+      url: `${typeof config['storage']['routes']['internal']['root']}${(typeof endpoints)[K]['http']['path']}`;
       method: (typeof endpoints)[K]['http']['method'];
     };
   };
