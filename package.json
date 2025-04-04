@@ -18,7 +18,7 @@
     "build": "npm run server:build && npm run gui:build",
     "build:check": "npm run server:build:check && npm run gui:build:check",
     "prepare": "npx husky",
-    "preversion": "npm run build:check && npm test",
+    "preversion": "npm test",
     "version": "git add -A .",
     "postversion": "npm run build && git push && git push --tags"
   },
