@@ -1,37 +1,21 @@
-import relativeTimePlugin from 'dayjs/plugin/relativeTime';
-import dayjs from 'dayjs';
-
 import * as components from './components';
 import * as sections from './sections';
 
-import handlebars from './handlebars';
 import context from './context';
 
-dayjs.extend(relativeTimePlugin);
-handlebars.init();
-
 const loader = components.LoaderComponent.build().show();
-const header = components.HeaderComponent
-  .build([
-    { type: 'section', entity: sections.settings.hide() },
-    { type: 'section', entity: sections.analytics.hide() },
-    { type: 'separator' },
-    { type: 'section', entity: sections.expectations },
-    { type: 'section', entity: sections.history.hide() },
-  ])
-  .on('select', (section) => {
-    Object.values(header.sections).forEach((nested) => nested.hide());
+const header = components.HeaderComponent.build([
+  { type: 'section', entity: sections.settings.hide() },
+  { type: 'section', entity: sections.analytics.hide() },
+  { type: 'separator' },
+  { type: 'section', entity: sections.expectations },
+  { type: 'section', entity: sections.history.hide() },
+]);
 
-    context.switchStorage(section.storage);
-    section.show().select();
-  });
-
-context
-  .switchStorage(sections.expectations.storage)
-  .share({
-    popups: components.PopupsComponent.build(),
-    groups: new Set(),
-  });
+context.switchStorage(sections.expectations.storage).share({
+  popups: components.PopupsComponent.build(),
+  groups: new Set(),
+});
 
 document.body.prepend(header.element);
 document.body.append(loader.element);

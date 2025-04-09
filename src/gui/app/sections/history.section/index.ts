@@ -96,7 +96,7 @@ export default Section
     section.controls.additional.append(controls.filter);
     section.controls.additional.append(controls.actions);
 
-    Button.build(controls.actions.element.querySelector('button#clear')!).handle(async () => {
+    Button.build(controls.actions.element.querySelector('button#clear')).handle(async () => {
       if (!controls.state.stack.length) {
         return context.shared.popups.push('Nothing to clear', { level: 'warning' });
       }

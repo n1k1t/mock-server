@@ -52,7 +52,7 @@ export default Section
     section.content.append(panels.stats);
     section.content.append(panels.cache);
 
-    Button.build(panels.cache.element.querySelector('button#delete')!).handle(async () => {
+    Button.build(panels.cache.element.querySelector('button#delete')).handle(async () => {
       const { data } = await context.services.io.exec('cache:delete', form.extract().cache);
       context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
     });

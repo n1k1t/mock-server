@@ -8,7 +8,7 @@ import type { TFunction } from '../../types';
 
 import type config from '../../config';
 
-import { DynamicStorage } from './models';
+import { Context } from './models';
 import { cast } from '../../utils';
 
 type ExtractWsEndpointPath<K extends keyof TEndpoints> = TEndpoints[K]['io'] extends { path: infer R }
@@ -21,12 +21,10 @@ interface IEvents {
   'group:register': [string];
 }
 
-interface IContextShared {
+class MainContext extends Context<{
   popups: PopupsComponent;
   groups: Set<string>;
-}
-
-class Context {
+}> {
   public config = cast<Pick<typeof config['storage'], 'history'>>({
     history: {
       limit: 100,
@@ -53,9 +51,6 @@ class Context {
     },
   };
 
-  public storage = DynamicStorage.build('void', document.body);
-  public shared = <IContextShared>{};
-
   private events = new EventEmitter();
 
   public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
@@ -73,17 +68,9 @@ class Context {
     return this;
   }
 
-  public assignConfig(config: Context['config']) {
+  public assignConfig(config: MainContext['config']) {
     return Object.assign(this, { config });
-  }
-
-  public share(shared: IContextShared) {
-    return Object.assign(this, { shared });
-  }
-
-  public switchStorage(storage: DynamicStorage) {
-    return Object.assign(this, { storage });
   }
 }
 
-export default new Context();
+export default new MainContext();

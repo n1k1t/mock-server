@@ -1,8 +1,8 @@
 import EventEmitter from 'events';
 
+import { Component, TElementPredicate } from './component';
 import { DynamicStorage } from './dynamic-storage';
 import { TFunction } from '../../../types';
-import { Component } from './component';
 import { Button } from './button';
 
 interface IEvents {
@@ -12,31 +12,32 @@ interface IEvents {
 }
 
 export class Section extends Component {
-  public content = new Component(this.element.querySelector('div.content')!);
+  public content = new Component(this.element.querySelector('div.content'));
+  public isInitialized = false;
 
   public controls = {
-    main: new Component(this.element.querySelector('div.controls div.main')!),
-    additional: new Component(this.element.querySelector('div.controls div.additional')!),
+    main: new Component(this.element.querySelector('div.controls div.main')),
+    additional: new Component(this.element.querySelector('div.controls div.additional')),
   };
 
-  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage')!);
+  public storage = DynamicStorage.build(`config:${this.element.id}`, this.element.querySelector('div.storage'));
   public meta: { name?: string, icon?: string } = {};
 
   private events = new EventEmitter();
+  private expander = this.element.querySelector('div.controls button#expand');
 
-  constructor(public element: Element) {
-    super();
+  constructor(predicate: TElementPredicate) {
+    super(predicate);
 
-    const expander = this.element.querySelector('div.controls button#expand');
-    if (expander) {
-      Button.build(expander).handle(() => {
+    if (this.expander) {
+      Button.build(this.expander).handle(() => {
         if (this.controls.additional.isHidden) {
           this.controls.additional.show();
-          return expander.classList.add('toggled');
+          return this.expander!.classList.add('toggled');
         }
 
         this.controls.additional.hide();
-        return expander.classList.remove('toggled');
+        return this.expander!.classList.remove('toggled');
       });
     }
   }
@@ -46,7 +47,9 @@ export class Section extends Component {
   }
 
   public initialize() {
+    this.isInitialized = true;
     this.storage.sync();
+
     return this.emit('initialize', this);
   }
 
@@ -73,7 +76,7 @@ export class Section extends Component {
     return this;
   }
 
-  static build(predicate: Element | string) {
-    return new Section(typeof predicate === 'string' ? new Component(predicate).element : predicate);
+  static build(predicate: TElementPredicate) {
+    return new Section(predicate);
   }
 }

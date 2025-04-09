@@ -23,7 +23,7 @@ export class CheckboxAreaComponent extends Component {
   private events = new EventEmitter();
 
   private panel = new PanelComponent({ ...this.provided, class: 'checkbox-area' }).append(template(this.provided));
-  private area = new Component(this.panel.element.querySelector('div.buttons')!).append(this.buttons.all);
+  private area = new Component(this.panel.element.querySelector('div.buttons')).append(this.buttons.all);
 
   constructor(private provided: IPanelConfiguration) {
     super();

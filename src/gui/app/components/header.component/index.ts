@@ -5,6 +5,8 @@ import _ from 'lodash';
 import { Component, Section } from '../../models';
 import { TFunction } from '../../../../types';
 
+import context from '../../context';
+
 const template = hbs.compile(require('./template.hbs'));
 
 type TTab = { type: 'section', entity: Section } | { type: 'separator' };
@@ -14,12 +16,12 @@ interface IEvents {
 }
 
 export class HeaderComponent extends Component {
-  private events = new EventEmitter();
-
   public sections = this.tabs
     .map((tab) => tab.type === 'section' ? tab.entity : null)
     .filter(Boolean)
     .reduce<Record<string, Section>>((acc, section) => _.set(acc, section!.id, section), {});
+
+  private events = new EventEmitter();
 
   constructor(public tabs: TTab[]) {
     super(
@@ -32,18 +34,30 @@ export class HeaderComponent extends Component {
       })
     );
 
+    Object.values(this.sections).forEach((section) => section.on('select', () => {
+      const button = this.element.querySelector(`button#${section.id}`);
+
+      this.element.querySelectorAll('div#tabs button').forEach((element) => element.classList.remove('checked'));
+      button?.classList.add('checked');
+    }));
+
     this.element.querySelector('div#tabs')!.addEventListener('click', (source) => {
       const event = <Event & { target: Element }>source;
 
-      if (event.target?.nodeName !== 'BUTTON' || !this.sections[event.target.id]) {
-        return null;
-      }
-
-      event.target.parentNode?.querySelectorAll('button.checked').forEach((element) => element.classList.remove('checked'));
-      event.target.classList.add('checked');
-
-      this.emit('select', this.sections[event.target.id]);
+      event.target?.nodeName !== 'BUTTON' || !this.sections[event.target.id]
+        ? null
+        : this.emit('select', this.sections[event.target.id]);
     });
+
+    this.on('select', (section) => {
+      Object.values(this.sections).forEach((nested) => nested.hide());
+
+      context.switchStorage(section.storage);
+
+      !section.isInitialized
+        ? section.initialize().show().select()
+        : section.show().select();
+    })
   }
 
   public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {

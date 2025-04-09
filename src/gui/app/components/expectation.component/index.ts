@@ -27,7 +27,7 @@ export class ExpectationComponent extends Component {
     this.viewer.provide(_.pick(this.data, ['id', 'type', 'transports', 'schema']));
 
     Button
-      .build(this.element.querySelector('button.activity')!)
+      .build(this.element.querySelector('button.activity'))
       .handle(() => context.services.io.exec('expectations:update', {
         id: this.data.id,
         set: { isEnabled: !this.data.isEnabled },

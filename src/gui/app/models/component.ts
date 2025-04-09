@@ -1,4 +1,4 @@
-export type TElementPredicate = Component | Element | string;
+export type TElementPredicate = Component | Element | string | null;
 
 export class Component {
   public element: Element = document.createElement('div');
@@ -66,7 +66,11 @@ export class Component {
   protected compilePredicateToElement(predicate: TElementPredicate): Element {
     return predicate instanceof Component
       ? predicate.element
-      : typeof predicate === 'string' ? this.compileHtmlStringToElement(predicate) : predicate;
+      : typeof predicate === 'string'
+      ? this.compileHtmlStringToElement(predicate)
+      : predicate === null
+      ? document.createElement('div')
+      : predicate;
   }
 
   protected compileHtmlStringToElement(content: string): Element {

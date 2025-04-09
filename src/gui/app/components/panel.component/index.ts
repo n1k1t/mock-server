@@ -20,7 +20,7 @@ export interface IPanelConfiguration {
 const template = hbs.compile(require('./template.hbs'));
 
 export class PanelComponent extends Component {
-  private content = new Component(this.element.querySelector('div.content')!);
+  private content = new Component(this.element.querySelector('div.content'));
 
   constructor(provided: IPanelConfiguration = {}) {
     super(template(provided));
