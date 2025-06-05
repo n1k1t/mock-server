@@ -4,26 +4,23 @@
 .nvmrc
 .env
 
-discardedTests.txt
-task-processor.ts
-vite.config.ts
-keploy-logs.txt
-tsconfig.json
-keploy.yml
-
 .vscode/
 .husky/
 
-coverage/
-images/
-types/
-test/
-bin/
-src/
+./discardedTests.txt
+./task-processor.ts
+./vite.config.ts
+./keploy-logs.txt
+./tsconfig.json
+./keploy.yml
 
-**/*.tsbuildinfo
+./coverage/
+./images/
+./types/
+./test/
+./bin/
+./src/
 
-lib/vite.config.*
-lib/**/*.spec.*
-
-!lib/types/
+./**/*.tsbuildinfo
+./lib/vite.config.*
+./lib/**/*.spec.*
