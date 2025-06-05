@@ -25,3 +25,5 @@ src/
 
 lib/vite.config.*
 lib/**/*.spec.*
+
+!lib/types/
