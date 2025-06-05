@@ -1,4 +1,5 @@
 .editorconfig
+.unitignore
 .gitignore
 .nvmrc
 .env
@@ -15,10 +16,12 @@ keploy.yml
 
 coverage/
 images/
+types/
 test/
 bin/
 src/
 
-/**/*.tsbuildinfo
-/lib/vite.config.*
-/lib/**/*.spec.*
+**/*.tsbuildinfo
+
+lib/vite.config.*
+lib/**/*.spec.*
