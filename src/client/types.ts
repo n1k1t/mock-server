@@ -1,4 +1,4 @@
-import type { TFunction } from '../types';
+import type { TFunction } from '../../types';
 import type config from '../config';
 
 import type * as endpoints from '../server/endpoints';

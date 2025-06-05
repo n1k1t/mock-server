@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { IExpectationExecUtils, IExpectationSchemaContext, TExpectationMetaTag } from '../types';
 import { ExpectationOperator } from '../models/operator';
-import { TFunction } from '../../types';
+import { TFunction } from '../../../types';
 
 export default class ExecExpectationOperator<
   TContext extends IExpectationSchemaContext,

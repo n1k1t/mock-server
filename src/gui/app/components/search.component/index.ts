@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { EventEmitter } from 'events';
 
 import { Component } from '../../models';
-import { TFunction } from '../../../../types';
+import { TFunction } from '../../../../../types';
 
 interface IEvents {
   input: [string];

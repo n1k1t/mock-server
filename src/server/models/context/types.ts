@@ -1,7 +1,7 @@
 import type { Observable } from 'rxjs';
 
 import type { TRequestPayloadType } from '../../types';
-import type { SetRequiredKeys } from '../../../types';
+import type { SetRequiredKeys } from '../../../../types';
 
 export interface IRequestContextIncoming {
   type: TRequestPayloadType;

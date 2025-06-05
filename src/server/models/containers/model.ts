@@ -2,7 +2,7 @@ import merge from 'deepmerge';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
-import { PartialDeep, TFunction } from '../../../types';
+import { PartialDeep, TFunction } from '../../../../types';
 import { compileContainerLink } from './utils';
 
 const clone = rfdc();

@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import type { IIoExchangeSchema } from '../../server';
 import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
-import type { TFunction } from '../../types';
+import type { TFunction } from '../../../types';
 
 import type config from '../../config';
 

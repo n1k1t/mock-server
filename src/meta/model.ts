@@ -1,7 +1,7 @@
 import { v4 as genUid } from 'uuid';
 import _ from 'lodash';
 
-import type { PickWithType } from '../types';
+import type { PickWithType } from '../../types';
 
 export type TMetaContext = Partial<PickWithType<MetaContext, string | number | boolean>>;
 

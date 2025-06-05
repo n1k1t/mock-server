@@ -3,7 +3,7 @@ import hbs from 'handlebars';
 import _ from 'lodash';
 
 import { Component, Section } from '../../models';
-import { TFunction } from '../../../../types';
+import { TFunction } from '../../../../../types';
 
 import context from '../../context';
 

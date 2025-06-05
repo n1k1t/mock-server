@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { Endpoint, Executor, IRequestContextOutgoing } from '../../../models';
 import { InternalHttpRequestContext } from './context';
-import { SetRequiredKeys } from '../../../../types';
+import { SetRequiredKeys } from '../../../../../types';
 
 import * as endpoints from '../../../endpoints';
 import config from '../../../../config';

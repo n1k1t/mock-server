@@ -1,4 +1,4 @@
-import { TFunction } from '../../../types';
+import { TFunction } from '../../../../types';
 
 export class Button {
   private handlers: TFunction<Promise<unknown>, [Event]>[] = [];

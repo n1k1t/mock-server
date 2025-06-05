@@ -1,5 +1,5 @@
 import type { InternalHttpRequestContext, InternalSocketIoRequestContext } from '../transports';
-import type { SetRequiredKeys, TFunction } from '../../types';
+import type { SetRequiredKeys, TFunction } from '../../../types';
 
 export interface IEndpointResponse<T> {
   code: 'OK' | 'INTERNAL_ERROR' | 'VALIDATION_ERROR' | 'NOT_FOUND';

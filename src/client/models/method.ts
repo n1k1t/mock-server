@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios';
 
-import type { SetPartialKeys, TFunction } from '../../types';
+import type { SetPartialKeys, TFunction } from '../../../types';
 import type { Provider } from '../../server/models';
 
 import { cast } from '../../utils';

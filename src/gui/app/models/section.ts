@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 
 import { Component, TElementPredicate } from './component';
 import { DynamicStorage } from './dynamic-storage';
-import { TFunction } from '../../../types';
+import { TFunction } from '../../../../types';
 import { Button } from './button';
 
 interface IEvents {

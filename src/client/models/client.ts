@@ -1,7 +1,7 @@
 import type { Expectation, IExpectationSchemaInput } from '../../expectations';
 import type { IServerContext } from '../../server';
 import type { TMethodsSchema } from '../types';
-import type { TFunction } from '../../types';
+import type { TFunction } from '../../../types';
 
 import { compileExpectationOperators, ICompiledExpectationOperators } from '../helpers';
 

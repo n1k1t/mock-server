@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { ExpectationOperator } from '../models/operator';
-import { TFunction } from '../../types';
+import { TFunction } from '../../../types';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,

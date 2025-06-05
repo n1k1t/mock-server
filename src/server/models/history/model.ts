@@ -1,7 +1,7 @@
 import { v4 as genUid } from 'uuid';
 
 import type { IRequestContextMessage, RequestContextSnapshot } from '../../models';
-import type { SetRequiredKeys } from '../../../types';
+import type { SetRequiredKeys } from '../../../../types';
 import type { Expectation } from '../../../expectations';
 
 import { buildCounter, cast } from '../../../utils';

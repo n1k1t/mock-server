@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 
 import { calculateColor } from '../../utils';
 import { Component } from '../../models';
-import { TFunction } from '../../../../types';
+import { TFunction } from '../../../../../types';
 
 type TTrigger = 'click' | 'auto' | 'silent';
 

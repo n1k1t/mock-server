@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { calculateLogLevelWeight, colorifyLogLevel, serializeLogSegments } from './utils';
 import { TLoggerLevel, TLoggerSerializer } from './types';
-import { TFunction } from '../types';
+import { TFunction } from '../../types';
 
 import config from '../config';
 

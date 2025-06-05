@@ -1,5 +1,5 @@
 import merge from 'deepmerge';
-import { PartialDeep, SetRequiredKeys } from '../types';
+import { PartialDeep, SetRequiredKeys } from '../../types';
 
 export class Config<T extends object = object> {
   public storage: T = merge(this.defaults, JSON.parse(process.env['MOCK_CONFIG'] ?? '{}'));

@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import _ from 'lodash';
 import * as rxjs from 'rxjs';
 
-import { Constructable, TFunction } from '../../types';
+import { Constructable, TFunction } from '../../../types';
 import { metaStorage } from '../../meta';
 import { Logger } from '../../logger';
 import {

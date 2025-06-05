@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 
 import { MetaContext, TMetaContext } from './model';
-import { TFunction } from '../types';
+import { TFunction } from '../../types';
 
 export class MetaStorage {
   private storage = new AsyncLocalStorage<MetaContext>();

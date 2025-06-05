@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { convertObjectToKeyValueCouples } from '../utils';
 import { Component, TElementPredicate } from './component';
-import { PartialDeep } from '../../../types';
+import { PartialDeep } from '../../../../types';
 
 type TInputType = 'text' | 'number' | 'password' | 'checkbox';
 

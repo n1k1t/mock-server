@@ -3,7 +3,7 @@ import hbs from 'handlebars';
 
 import { IPanelConfiguration, PanelComponent } from '../panel.component';
 import { CheckboxAreaButtonComponent } from './item.component';
-import { TFunction } from '../../../../types';
+import { TFunction } from '../../../../../types';
 import { Component } from '../../models';
 import { cast } from '../../../../utils';
 

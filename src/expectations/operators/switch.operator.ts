@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
 import { extractContextByLocation } from '../utils';
-import { TFunction } from '../../types';
+import { TFunction } from '../../../types';
 import {
   CompileExpectationOperatorValue,
   IExpectationSchemaContext,

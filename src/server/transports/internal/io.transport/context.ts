@@ -1,6 +1,6 @@
 import type { IServerContext } from '../../../types';
 import type { MockServer } from '../../../index';
-import type { TFunction } from '../../../../types';
+import type { TFunction } from '../../../../../types';
 
 import { IRequestContextIncoming, RequestContext } from '../../../models';
 import { InternalSocketIoReply } from './reply';

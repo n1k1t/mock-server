@@ -5,7 +5,7 @@ import type * as rxjs from 'rxjs';
 import type _ from 'lodash';
 
 import type { Container, ContainersStorage, IRequestContextIncoming, IRequestContextOutgoing, RequestContextSnapshot } from '../server/models';
-import type { ConvertTupleToUnion, ExtractObjectValueByPath } from '../types';
+import type { ConvertTupleToUnion, ExtractObjectValueByPath } from '../../types';
 import type { MetaContext } from '../meta';
 import type { Logger } from '../logger';
 

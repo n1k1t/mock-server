@@ -1,4 +1,4 @@
-import type { TFunction } from '../../types';
+import type { TFunction } from '../../../types';
 import type {
   ExtractExpectationContextValue,
   IExpectationSchemaContext,
