@@ -7,20 +7,19 @@
 .vscode/
 .husky/
 
-./discardedTests.txt
-./task-processor.ts
-./vite.config.ts
-./keploy-logs.txt
-./tsconfig.json
-./keploy.yml
+discardedTests.txt
+keploy-logs.txt
+vite.config.ts
+tsconfig.json
+keploy.yml
 
-./coverage/
-./images/
-./types/
-./test/
-./bin/
-./src/
+/coverage/
+/images/
+/types/
+/test/
+/bin/
+/src/
 
-./**/*.tsbuildinfo
-./lib/vite.config.*
-./lib/**/*.spec.*
+/**/*.tsbuildinfo
+/lib/vite.config.*
+/lib/**/*.spec.*

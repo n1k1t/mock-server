@@ -16,10 +16,10 @@ keploy-logs.txt
 npm-debug.log
 keploy.yml
 
-node_modules/
-public/
-test/
-lib/
+/node_modules/
+/public/
+/test/
+/lib/
 
-coverage/**
-!coverage/cobertura-coverage.xml
+/coverage/**
+!/coverage/cobertura-coverage.xml
