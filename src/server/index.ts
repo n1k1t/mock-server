@@ -132,7 +132,7 @@ export class MockServer<
     await new Promise<void>((resolve) =>
       server.http.listen(configuration.port, configuration.host, () => {
         logger.info(`Server has started on [${server.authority}]`);
-        logger.info(`GUI is available on [${server.authority}${routes.internal.root}${routes.internal.gui}]`);
+        logger.info(`GUI is available on [${server.authority}${routes.internal.root}${routes.internal.gui}/]`);
 
         resolve();
       })

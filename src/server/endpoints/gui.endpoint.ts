@@ -33,7 +33,7 @@ export default Endpoint
           status: 301,
 
           headers: {
-            Location: path.join(root, '/'),
+            Location: `..${root}/`,
           },
         },
       });
