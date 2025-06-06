@@ -1,6 +1,7 @@
+import _ from 'lodash';
+
 import { ReplaySubject } from 'rxjs';
 import { Value } from '@n1k1t/typebox/value';
-import _ from 'lodash';
 
 import type { IRequestContextIncoming, IRequestContextOutgoing, TRequestContextCacheConfigurationCompiled } from './types';
 import type { IServerContext } from '../../types';
@@ -16,7 +17,7 @@ export * from './snapshot';
 export * from './types';
 export * from './utils';
 
-export abstract class RequestContext<TContext extends IServerContext<any> = IServerContext<any>> {
+export abstract class RequestContext<TContext extends IServerContext = IServerContext> {
   public TContext!: TContext;
   public TShared!: keyof Pick<RequestContext, 'incoming' | 'outgoing' | 'snapshot' | 'expectation' | 'history'>;
 
@@ -41,7 +42,10 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
   public timestamp = Date.now();
   public meta = metaStorage.generate();
 
-  constructor(public provider: Provider<IServerContext<any>>, private configuration: Pick<TContext, 'transport' | 'event'>) {
+  constructor(
+    public provider: Provider<IServerContext>,
+    private configuration: Pick<TContext, 'transport' | 'event'>
+  ) {
     this.streams.incoming.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('incoming', data) });
     this.streams.outgoing.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('outgoing', data) });
   }
@@ -57,7 +61,7 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
 
   /** Compiles snapshot of own payload to work with expectations */
   public compileSnapshot(): RequestContextSnapshot<TContext> {
-    const snapshot = RequestContextSnapshot.build<IServerContext<any>>({
+    const snapshot = RequestContextSnapshot.build<IServerContext>({
       transport: this.transport,
 
       event: this.event,
@@ -99,22 +103,22 @@ export abstract class RequestContext<TContext extends IServerContext<any> = ISer
   }
 
   /** Provides payload parts into context */
-  public assign<T extends Partial<Pick<RequestContext<any>, RequestContext<any>['TShared']>>>(payload: T) {
+  public assign<T extends Partial<Pick<RequestContext<any>, RequestContext<any>['TShared']>>>(payload: T): this {
     return Object.assign(this, payload);
   }
 
   /** Marks context as skipped to prevent further handling in executors */
-  public skip() {
+  public skip(): this {
     return this.switchStatus('skipped');
   }
 
   /** Marks context as handling */
-  public handle() {
+  public handle(): this {
     return this.switchStatus('handling');
   }
 
   /** Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history */
-  public complete() {
+  public complete(): this {
     if (this.hasStatuses(['completed'])) {
       return this;
     }

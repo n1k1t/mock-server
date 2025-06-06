@@ -123,7 +123,7 @@ export interface ICompiledExpectationOperators<
 export const compileExpectationOperators = <
   TInput extends IExpectationSchemaInput,
   TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
->() => ({
+>(): ICompiledExpectationOperators<TContext> => ({
   not: (command) => ({ $not: command }),
   and: (command) => ({ $and: command }),
   or: (command) => ({ $or: command }),
@@ -210,7 +210,7 @@ export const compileExpectationOperators = <
   remove: <K extends TExpectationOperatorObjectLocation>(
     $location: K,
     predicate: object | '$path' | '$jsonPath',
-    value?: unknown,
+    value?: string,
   ) => ({
     $remove: {
       $location,
@@ -222,6 +222,4 @@ export const compileExpectationOperators = <
       }),
     },
   }),
-
-
-} as ICompiledExpectationOperators<TContext>);
+});

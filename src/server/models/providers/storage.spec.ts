@@ -4,7 +4,7 @@ import { Provider } from './model';
 
 // Test generated using Keploy
 test('extract returns all providers including default', () => {
-  const mockServer = <MockServer<any, any>>{};
+  const mockServer = <MockServer>{};
   const storage = new ProvidersStorage(mockServer);
   const provider1 = Provider.build({ group: 'group1' });
   const provider2 = Provider.build({ group: 'group2' });

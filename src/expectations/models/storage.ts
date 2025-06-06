@@ -10,9 +10,9 @@ export type TExpectationsStorageRegisterationResult =
 
 const logger = Logger.build('Expectations.Storage');
 
-export class ExpectationsStorage extends Map<string, Expectation> {
+export class ExpectationsStorage extends Map<string, Expectation<any>> {
   public register(configuration: Expectation['configuration']): TExpectationsStorageRegisterationResult {
-    const expectation = Expectation.build<any>(configuration);
+    const expectation = Expectation.build(configuration);
     const errors = expectation.validate();
 
     if (errors.length) {

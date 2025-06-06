@@ -1,9 +1,11 @@
 import generateAnimalName from 'random-animal-name';
-import { v4 as genUid } from 'uuid';
-import { ValueError } from '@n1k1t/typebox/errors';
 import _ from 'lodash';
 
+import { v4 as genUid } from 'uuid';
+import { ValueError } from '@n1k1t/typebox/errors';
+
 import { serializeExpectationSchema } from '../utils';
+import { ExpectationOperator } from './operator';
 import {
   IExpectationMeta,
   IExpectationSchemaContext,
@@ -31,12 +33,12 @@ export class Expectation<
   public schema = <IExpectationSchema<TContext>>this.configuration.schema;
   public isEnabled: boolean = this.configuration.isEnabled ?? true;
 
-  public request = this.schema.request
-    ? new operators.root<TContext>(operators, this.schema.request)
-    : new operators.root<TContext>(operators, { $exec: () => true });
+  public request: ExpectationOperator<any> = this.schema.request
+    ? new operators.root(operators, this.schema.request)
+    : new operators.root(operators, { $exec: () => true });
 
-  public response = this.schema.response
-    ? new operators.root<TContext>(operators, this.schema.response)
+  public response: ExpectationOperator<any> | null = this.schema.response
+    ? new operators.root(operators, this.schema.response)
     : null;
 
   public meta: IExpectationMeta = {
@@ -56,8 +58,8 @@ export class Expectation<
   };
 
   constructor(
-    public configuration: Pick<Expectation<TContext>, 'schema'> & Partial<
-      Pick<Expectation<TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports' | 'meta'>
+    public configuration: Pick<Expectation<TInput, TContext>, 'schema'> & Partial<
+      Pick<Expectation<TInput, TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports' | 'meta'>
     >
   ) {}
 
@@ -90,7 +92,9 @@ export class Expectation<
     };
   }
 
-  static build<TContext extends IExpectationSchemaContext>(configuration: Expectation<TContext>['configuration']) {
+  static build<TInput extends IExpectationSchemaInput = {}>(
+    configuration: Expectation<TInput>['configuration']
+  ): Expectation<TInput> {
     return new Expectation(configuration);
   }
 }

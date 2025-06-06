@@ -6,18 +6,20 @@ import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Models.ProvidersStorage');
 
-export class ProvidersStorage<TContext extends IServerContext<any>> extends Map<string, Provider<TContext>> {
+export class ProvidersStorage<
+  TContext extends IServerContext = IServerContext
+> extends Map<string, Provider<TContext>> {
   public default = Provider.build<TContext>({ group: 'default' });
 
-  constructor(private server: MockServer<any, TContext>) {
+  constructor(private server: MockServer<any, any>) {
     super();
   }
 
-  public extract(): Provider[] {
+  public extract(): Provider<TContext>[] {
     return [...this.values(), this.default];
   }
 
-  public register(provider: Provider<TContext>): this {
+  public register(provider: Provider<any>): this {
     provider.assign({ server: this.server });
 
     if (this.default === provider) {
@@ -30,5 +32,11 @@ export class ProvidersStorage<TContext extends IServerContext<any>> extends Map<
 
     logger.info(`Provider group [${provider.group}] has registered`);
     return this.set(provider.group, provider);
+  }
+
+  static build<TContext extends IServerContext = IServerContext>(
+    server: MockServer<any, any>
+  ): ProvidersStorage<TContext> {
+    return new ProvidersStorage(server);
   }
 }

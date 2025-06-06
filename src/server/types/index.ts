@@ -4,7 +4,6 @@ import type { Expectation } from '../../expectations';
 import type { History } from '../models';
 
 export type TRequestPayloadType = 'json' | 'plain' | 'xml';
-export type TDefaultServerContext = HttpTransport['TContext'] | WsTransport['TContext'];
 
 export interface IServerContextInput {
   transport?: string;
@@ -13,9 +12,15 @@ export interface IServerContextInput {
 }
 
 export interface IServerContext<TInput extends IServerContextInput = {}> {
-  transport: Extract<TInput['transport'], string>;
-  event: Extract<TInput['event'], string>;
-  flag: Extract<TInput['flag'], string>;
+  transport: TInput extends { transport: infer R } ? R : (string & {});
+  event: TInput extends { event: infer R } ? R : (string & {});
+  flag: TInput extends { flag: infer R } ? R : (string & {});
+}
+
+export interface IServerContextDefaults {
+  transport: HttpTransport['TContext']['transport'] | WsTransport['TContext']['transport'];
+  event: HttpTransport['TContext']['event'] | WsTransport['TContext']['event'];
+  flag: HttpTransport['TContext']['flag'] | WsTransport['TContext']['flag'];
 }
 
 export interface IIoExchangeSchema {

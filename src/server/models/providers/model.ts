@@ -1,12 +1,12 @@
-import type { MockServer } from '../../index';
+import type { IServerContextDefaults, MockServer } from '../../index';
 
-import { IServerContext, TDefaultServerContext } from '../../types';
 import { ExpectationsStorage } from '../../../expectations';
 import { ContainersStorage } from '../containers';
 import { HistoryStorage } from '../history';
+import { IServerContext } from '../../types';
 import { OnsiteClient } from '../../../client';
 
-export class Provider<TContext extends IServerContext<any> = TDefaultServerContext> {
+export class Provider<TContext extends IServerContext = IServerContext> {
   public TContext!: TContext;
   public server!: MockServer;
 
@@ -25,7 +25,7 @@ export class Provider<TContext extends IServerContext<any> = TDefaultServerConte
     return Object.assign(this, payload);
   }
 
-  static build<TContext extends IServerContext<any> = TDefaultServerContext>(
+  static build<TContext extends IServerContext = IServerContextDefaults>(
     provided: Provider['provided']
   ): Provider<TContext> {
     return new Provider<TContext>(provided);

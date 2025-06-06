@@ -1,8 +1,8 @@
 import minimatch from 'minimatch';
 import _ from 'lodash';
 
-import type { MockServer, TDefaultServerContext } from '../index';
 import type { IServerContext } from '../types';
+import type { MockServer } from '../index';
 import type { Transport } from './transports';
 import type { Provider } from './providers';
 
@@ -18,8 +18,8 @@ export interface IRouteMatchResult<
   transport: T;
 }
 
-export class Router<TContext extends IServerContext<any>> extends Map<string, IRouteContext<TContext['transport']>> {
-  constructor(private server: MockServer) {
+export class Router<TContext extends IServerContext = IServerContext> extends Map<string, IRouteContext<TContext['transport']>> {
+  constructor(private server: MockServer<any, any>) {
     super();
   }
 
@@ -32,10 +32,10 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
   ): this {
     this.server.providers.register(configuration.provider);
 
-    const types = Array.isArray(configuration.transports)
+    const types: TContext['transport'][] = Array.isArray(configuration.transports)
       ? configuration.transports
       : configuration.transports
-        ? <TContext['transport'][]>Object.keys(configuration.transports)
+        ? Object.keys(configuration.transports)
         : [...this.server.transports.keys()];
 
     return this.set(pattern, {
@@ -73,7 +73,7 @@ export class Router<TContext extends IServerContext<any>> extends Map<string, IR
     };
   }
 
-  static build<TContext extends IServerContext<any> = TDefaultServerContext>(server: MockServer): Router<TContext> {
+  static build<TContext extends IServerContext = IServerContext>(server: MockServer<any, any>): Router<TContext> {
     return new Router<TContext>(server);
   }
 }

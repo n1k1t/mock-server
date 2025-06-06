@@ -18,7 +18,7 @@ export class WsRequestContext extends RequestContext<IServerContext<{
   public history = this.compileHistory();
 
   constructor(
-    public provider: Provider,
+    public provider: Provider<WsRequestContext['TContext']>,
     public socket: WebSocket,
     public event: WsRequestContext['TContext']['event'],
     public incoming: IRequestContextIncoming
@@ -68,12 +68,12 @@ export class WsRequestContext extends RequestContext<IServerContext<{
   }
 
   static async build(
-    provider: Provider,
+    provider: Provider<WsRequestContext['TContext']>,
     socket: WebSocket,
     request: IncomingMessage,
     event: WsRequestContext['TContext']['event'],
     message?: RawData
-  ) {
+  ): Promise<WsRequestContext> {
     const incoming = await extractHttpIncommingContext(request);
 
     incoming.dataRaw = message ? Buffer.from(message.toString()) : undefined;

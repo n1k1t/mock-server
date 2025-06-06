@@ -17,7 +17,11 @@ export class InternalHttpTransport extends Transport<InternalHttpExecutor> {
     super();
   }
 
-  public compileContext(provider: Provider, request: IncomingMessage, response: ServerResponse) {
+  public compileContext(
+    provider: Provider<InternalHttpTransport['TContext']>,
+    request: IncomingMessage,
+    response: ServerResponse
+  ) {
     return InternalHttpRequestContext.build(this.server, request, response);
   }
 }

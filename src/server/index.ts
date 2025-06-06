@@ -8,8 +8,9 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 
 import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
-import { IIoExchangeSchema, IServerContext, TDefaultServerContext } from './types';
+import { IIoExchangeSchema, IServerContext, IServerContextDefaults } from './types';
 import { AnalyticsService, MetricsService } from './services';
+import { OnsiteClient } from '../client';
 import { Logger } from '../logger';
 import {
   buildHttpListener,
@@ -39,7 +40,7 @@ export interface IMockServerConfiguration {
     expiredCleaningInterval?: number;
   };
 
-  transports?: Partial<Record<TDefaultServerContext['transport'], Transport>> & Record<string, Transport>;
+  transports?: Partial<Record<string, Transport>> & Record<string, Transport>;
   databases?: {
     redis?: RedisOptions;
   };
@@ -47,22 +48,12 @@ export interface IMockServerConfiguration {
 
 export class MockServer<
   TConfiguration extends IMockServerConfiguration = IMockServerConfiguration,
-  TContext extends IServerContext<any> = IServerContext<{
-    transport: TDefaultServerContext['transport'] | Extract<keyof TConfiguration['transports'], string>;
-
-    event: TDefaultServerContext['event'] | {
-      [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['event'];
-    }[keyof TConfiguration['transports']];
-
-    flag: TDefaultServerContext['flag'] | {
-      [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['flag'];
-    }[keyof TConfiguration['transports']];
-  }>
+  TContext extends IServerContext = IServerContext
 > {
   public TContext!: TContext;
 
-  public timestamp = Date.now();
-  public authority = `http://${this.configuration.host}:${this.configuration.port}`;
+  public timestamp: number = Date.now();
+  public authority: string = `http://${this.configuration.host}:${this.configuration.port}`;
 
   public databases = {
     redis: this.configuration.databases?.redis
@@ -74,12 +65,12 @@ export class MockServer<
     io: buildSocketIoExchange<IIoExchangeSchema>({ emit: () => false }),
   };
 
-  public providers = new ProvidersStorage<TContext>(this);
-  public transports = new TransportsStorage<TContext>()
+  public providers: ProvidersStorage<TContext> = ProvidersStorage.build<TContext>(this);
+  public transports: TransportsStorage<TContext> = TransportsStorage.build<TContext>()
     .register('http', new HttpTransport())
     .register('ws', new WsTransport());
 
-  public router = Router.build<TContext>(this);
+  public router: Router<TContext> = Router.build(this);
 
   public http = createServer(buildHttpListener(this.router));
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
@@ -90,12 +81,12 @@ export class MockServer<
     }),
   });
 
-  public services = {
+  public services = <const>{
     analytics: AnalyticsService.build(this),
     metrics: MetricsService.build(this),
   };
 
-  private internal = {
+  private internal = <const>{
     transports: {
       http: new InternalHttpTransport(this),
       io: new InternalSocketIoTransport(this),
@@ -109,25 +100,37 @@ export class MockServer<
     this.databases.redis?.on('error', (error) => logger.info('Got redis error', error?.stack ?? error));
   }
 
-  public get client() {
+  public get client(): OnsiteClient<TContext> {
     return this.providers.default.client;
   }
 
-  public unbindExpiredContainers() {
+  public unbindExpiredContainers(): this {
     this.providers.extract().forEach((provider) =>
       provider.storages.containers.getExpired().forEach((container) => {
         container.unbind();
         logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
       })
-    )
+    );
+
+    return this;
   }
 
   static async start<
     TConfiguration extends IMockServerConfiguration,
-    TContext extends MockServer<TConfiguration>['TContext'] = MockServer<TConfiguration>['TContext']
-  >(configuration: TConfiguration) {
+    TContext extends IServerContext = IServerContext<{
+      transport: IServerContextDefaults['transport'] | Extract<keyof TConfiguration['transports'], string>;
+
+      event: IServerContextDefaults['event'] | {
+        [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['event'];
+      }[keyof TConfiguration['transports']];
+
+      flag: IServerContextDefaults['flag'] | {
+        [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['flag'];
+      }[keyof TConfiguration['transports']];
+    }>
+  >(configuration: TConfiguration): Promise<MockServer<TConfiguration, TContext>> {
     const routes = config.get('routes');
-    const server = new MockServer<TConfiguration>(configuration);
+    const server = new MockServer<TConfiguration, TContext>(configuration);
 
     await new Promise<void>((resolve) =>
       server.http.listen(configuration.port, configuration.host, () => {

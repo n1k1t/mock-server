@@ -26,7 +26,7 @@ export class HttpRequestContext extends RequestContext<IServerContext<{
   });
 
   constructor(
-    public provider: Provider,
+    public provider: Provider<HttpRequestContext['TContext']>,
     public incoming: IRequestContextIncoming,
     public request: IncomingMessage,
     public response: ServerResponse
@@ -65,7 +65,11 @@ export class HttpRequestContext extends RequestContext<IServerContext<{
     });
   };
 
-  static async build(provider: Provider, request: IncomingMessage, response: ServerResponse) {
+  static async build(
+    provider: Provider<HttpRequestContext['TContext']>,
+    request: IncomingMessage,
+    response: ServerResponse
+  ): Promise<HttpRequestContext> {
     const incoming = await extractHttpIncommingContext(request);
     return new HttpRequestContext(provider, incoming, request, response);
   }

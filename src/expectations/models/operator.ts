@@ -20,7 +20,7 @@ const logger = Logger.build('Expectations.Models.Operator');
 export type TExpectationOperatorConstructor<TContext extends IExpectationSchemaContext> =
   Constructable<ExpectationOperator<TContext, any>, ConstructorParameters<typeof ExpectationOperator>>
 
-export abstract class ExpectationOperator<TContext extends IExpectationSchemaContext, TSchema> {
+export abstract class ExpectationOperator<TContext extends IExpectationSchemaContext<any>, TSchema = unknown> {
   public TContext!: TContext;
   public TSchema!: TSchema;
 

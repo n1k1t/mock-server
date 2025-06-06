@@ -30,7 +30,10 @@ export class InternalSocketIoTransport extends Transport<InternalSocketIoExecuto
     server.exchanges.io = buildSocketIoExchange(server.io);
   }
 
-  public async compileContext(provider: Provider<IServerContext<any>>, request: InternalSocketIoRequestContext['request']) {
+  public async compileContext(
+    provider: Provider<IServerContext>,
+    request: InternalSocketIoRequestContext['request']
+  ) {
     return InternalSocketIoRequestContext.build(this.server, request);
   }
 }

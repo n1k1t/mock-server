@@ -51,7 +51,7 @@ const handle = async (
   return signals.close;
 }
 
-export const buildWsListener = (router: Router<WsRequestContext['TContext']>) =>
+export const buildWsListener = <T extends WsRequestContext['TContext']>(router: Router<T>) =>
   async (socket: WebSocket, request: IncomingMessage) => {
     if (request.url?.startsWith('/socket.io')) {
       return socket.terminate();
@@ -94,7 +94,7 @@ export class WsTransport extends Transport<WsExecutor> {
   public executor = new WsExecutor();
 
   public compileContext(
-    provider: Provider,
+    provider: Provider<WsTransport['TContext']>,
     socket: WebSocket,
     request: IncomingMessage,
     event: WsExecutor['TContext']['event'],

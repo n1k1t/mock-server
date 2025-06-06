@@ -11,7 +11,7 @@ export * from './context';
 
 const logger = Logger.build('Server.Transports.Http');
 
-export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>) =>
+export const buildHttpListener = <T extends HttpRequestContext['TContext']>(router: Router<T>) =>
   async (request: IncomingMessage, response: ServerResponse) => {
     for (const { provider, transport } of router.match<HttpTransport>('http', request.url ?? '')) {
       const context = await transport
@@ -47,7 +47,11 @@ export const buildHttpListener = (router: Router<HttpRequestContext['TContext']>
 export class HttpTransport extends Transport<HttpExecutor> {
   public executor = new HttpExecutor();
 
-  public compileContext(provider: Provider, request: IncomingMessage, response: ServerResponse) {
+  public compileContext(
+    provider: Provider<HttpTransport['TContext']>,
+    request: IncomingMessage,
+    response: ServerResponse
+  ) {
     return HttpRequestContext.build(provider, request, response);
   }
 }
