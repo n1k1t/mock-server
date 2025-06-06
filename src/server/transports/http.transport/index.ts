@@ -22,7 +22,7 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
         return response.destroy();
       }
       if (!context.hasStatuses(['registered', 'handling'])) {
-        break;
+        return null;
       }
 
       const expectation = await metaStorage
@@ -30,7 +30,7 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
         .catch((error) => logger.error('Got error while expectation matching', error?.stack ?? error));
 
       if (!context.hasStatuses(['registered', 'handling'])) {
-        break;
+        return null;
       }
       if (!expectation) {
         continue;
@@ -40,8 +40,15 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
         .wrap(context.meta, () => transport.executor.exec(context.handle(), { expectation }))
         .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
 
-      break;
+      return null;
     }
+
+    const { transport, provider } = router.default<HttpTransport>('http');
+    const context = await transport.compileContext(provider, request, response);
+
+    await metaStorage
+      .wrap(context.meta, () => transport.executor.exec(context.handle()))
+      .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
   }
 
 export class HttpTransport extends Transport<HttpExecutor> {

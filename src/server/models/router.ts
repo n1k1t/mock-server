@@ -23,6 +23,13 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
     super();
   }
 
+  public default<T extends Transport>(transport: TContext['transport']): IRouteMatchResult<TContext['transport'], T> {
+    return {
+      provider: this.server.providers.default,
+      transport: <T>this.server.transports.get(transport),
+    };
+  }
+
   public register(
     pattern: string,
     configuration: {
@@ -67,10 +74,7 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
       }
     }
 
-    yield {
-      provider: this.server.providers.default,
-      transport: <T>this.server.transports.get(transport),
-    };
+    yield this.default(transport);
   }
 
   static build<TContext extends IServerContext = IServerContext>(server: MockServer<any, any>): Router<TContext> {
