@@ -44,7 +44,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
 
   constructor(
     public provider: Provider<IServerContext>,
-    private configuration: Pick<TContext, 'transport' | 'event'>
+    protected configuration: Pick<TContext, 'transport' | 'event'>
   ) {
     this.streams.incoming.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('incoming', data) });
     this.streams.outgoing.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('outgoing', data) });

@@ -18,7 +18,7 @@ export class MetricsService extends Service {
     rate: cast<TMetricPoint<'count'>[]>([]),
   };
 
-  constructor(server: Service['server'], private options?: { limit?: number }) {
+  constructor(protected server: Service['server'], protected options?: { limit?: number }) {
     super(server);
   }
 

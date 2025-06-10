@@ -13,7 +13,7 @@ export * from './reply';
 export class InternalHttpTransport extends Transport<InternalHttpExecutor> {
   public executor = new InternalHttpExecutor();
 
-  constructor(private server: MockServer) {
+  constructor(protected server: MockServer) {
     super();
   }
 

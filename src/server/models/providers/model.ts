@@ -19,7 +19,7 @@ export class Provider<TContext extends IServerContext = IServerContext> {
     history: new HistoryStorage(this.provided),
   };
 
-  constructor(private provided: Pick<Provider, 'group'>) {}
+  constructor(protected provided: Pick<Provider, 'group'>) {}
 
   public assign(payload: Partial<Pick<Provider, 'server'>>): this {
     return Object.assign(this, payload);

@@ -19,7 +19,7 @@ export interface IRouteMatchResult<
 }
 
 export class Router<TContext extends IServerContext = IServerContext> extends Map<string, IRouteContext<TContext['transport']>> {
-  constructor(private server: MockServer<any, any>) {
+  constructor(protected server: MockServer<any, any>) {
     super();
   }
 

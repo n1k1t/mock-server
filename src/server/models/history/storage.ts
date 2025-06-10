@@ -4,7 +4,7 @@ import config from '../../../config';
 export class HistoryStorage extends Map<string, History> {
   private stack: string[] = [];
 
-  constructor(private configuration: Pick<History, 'group'>) {
+  constructor(protected configuration: Pick<History, 'group'>) {
     super();
   }
 

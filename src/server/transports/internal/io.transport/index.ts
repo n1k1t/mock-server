@@ -11,7 +11,7 @@ export * from './reply';
 export class InternalSocketIoTransport extends Transport<InternalSocketIoExecutor> {
   public executor = new InternalSocketIoExecutor();
 
-  constructor(private server: MockServer) {
+  constructor(protected server: MockServer) {
     super();
 
     server.io.on('connection', (socket) =>

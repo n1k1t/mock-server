@@ -64,7 +64,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
   };
 
   constructor(
-    private configuration:
+    protected configuration:
       & Pick<TContext, 'transport' | 'event'>
       & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'event' | 'storage' | 'flags'>
       & Partial<Pick<RequestContextSnapshot, 'messages' | 'state' | 'seed' | 'container' | 'forwarded' | 'error' | 'cache'>>

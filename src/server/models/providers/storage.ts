@@ -11,7 +11,7 @@ export class ProvidersStorage<
 > extends Map<string, Provider<TContext>> {
   public default = Provider.build<TContext>({ group: 'default' });
 
-  constructor(private server: MockServer<any, any>) {
+  constructor(protected server: MockServer<any, any>) {
     super();
   }
 

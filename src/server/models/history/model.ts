@@ -24,7 +24,7 @@ export class History {
   public timestamp: number = this.configuration.timestamp ?? Date.now();
   public duration: number = 0;
 
-  constructor(private configuration: Pick<History, 'group' | 'snapshot'> & Partial<Pick<History, 'timestamp'>>) {}
+  constructor(protected configuration: Pick<History, 'group' | 'snapshot'> & Partial<Pick<History, 'timestamp'>>) {}
 
   public pushMessage(location: IRequestContextMessage['location'], data: unknown): this {
     this.snapshot.messages.push({ location, data, id: this.messagesCounter(), timestamp: Date.now() });
