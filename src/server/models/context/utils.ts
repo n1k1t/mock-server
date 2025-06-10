@@ -17,7 +17,7 @@ const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
 });
 
-const parseQuerySearch = (queryString: string): Record<string, unknown> =>
+const parseQuerySearch = (queryString: string): object =>
   Object.entries(parseQueryString(queryString)).reduce((acc, [key, value]) => {
     const valueAsJson = _.flatten([value]).map(arrValue => {
       const parsingArrayValueAsJsonResult = parseJsonSafe(arrValue ?? '');

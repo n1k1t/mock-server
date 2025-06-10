@@ -36,7 +36,7 @@ export const serializeRegExp = (exp: RegExp): Pick<RegExp, 'source' | 'flags'> =
   flags: exp.flags,
 });
 
-export const parseJsonSafe = <T extends Record<string, unknown>>(serializedJson: string) => {
+export const parseJsonSafe = <T extends object>(serializedJson: string) => {
   try {
     return <const>{
       status: 'OK',
