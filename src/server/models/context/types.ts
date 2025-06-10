@@ -9,7 +9,7 @@ export interface IRequestContextIncoming {
   method: string;
   headers: Record<string, string>;
 
-  query?: object;
+  query?: Record<string, unknown>;
   stream?: Observable<unknown>;
 
   data?: unknown;
