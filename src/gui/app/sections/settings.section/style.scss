@@ -16,9 +16,22 @@ section#settings {
 
   div.cache div.content {
     button {
+      margin-top: 0;
+    }
+
+    button#delete {
       background-color: $color-red;
       color: $color-dark;
-      margin-top: 0;
+    }
+
+    button#backup {
+      background-color: $color-green;
+      color: $color-dark;
+    }
+
+    button#restore {
+      background-color: $color-yellow;
+      color: $color-dark;
     }
   }
 }

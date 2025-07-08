@@ -35,3 +35,7 @@ export interface IIoExchangeSchema {
     point: TMetricPoint;
   };
 }
+
+export interface ICacheBackup {
+  redis: [string, string][];
+}

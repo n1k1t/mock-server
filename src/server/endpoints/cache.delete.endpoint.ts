@@ -1,54 +1,48 @@
-import Redis from 'ioredis';
 import _ from 'lodash';
 
+import { RxConverter } from '../utils';
 import { Endpoint } from '../models';
 import { Logger } from '../../logger';
 
-interface IRedisResult {
-  count: number;
+interface IOutgoing {
+  redis?: {
+    count: number;
+  };
 }
 
-const logger = Logger.build('Server.Endpoint.CacheUsage.Get');
-
-const deleteKeys = (client: Redis, prefix?: string) => new Promise<IRedisResult>((resolve, reject) => {
-  const stream = client.scanStream({ match: `${client.options.keyPrefix ?? ''}${prefix ?? ''}*` });
-  const result: IRedisResult = { count: 0 };
-
-  stream.once('end', () => resolve(result));
-  stream.once('error', (error) => {
-    logger.error('Got error while scan execution', error?.stack ?? error);
-    stream.close();
-
-    reject(error);
-  });
-
-  stream.on('data', async (keys: string[]) => {
-    stream.pause();
-
-    result.count += keys.length;
-
-    await Promise
-      .all(keys.map(async (key) => client.call('DEL', key)))
-      .catch((error) => {
-        logger.error('Got error while deletion keys', error?.stack ?? error);
-        stream.close();
-
-        reject(error);
-        return [];
-      });
-
-    stream.resume();
-  });
-});
+const logger = Logger.build('Server.Endpoints.CacheDelete');
 
 export default Endpoint
-  .build<{ incoming: { data: { prefix?: string } }, outgoing: { redis?: IRedisResult } }>()
+  .build<{ incoming: { data: { prefix?: string } }, outgoing: IOutgoing }>()
   .bindToHttp(<const>{ method: 'DELETE', path: `/cache` })
   .bindToIo(<const>{ path: 'cache:delete' })
-  .assignHandler(async ({ incoming, reply, server }) =>
-    reply.ok({
-      redis: server.databases.redis
-        ? await deleteKeys(server.databases.redis, incoming.data?.prefix).catch(() => undefined)
-        : undefined,
-    })
-  );
+  .assignHandler(async ({ incoming, reply, server }) => {
+    const result: IOutgoing = {
+      ...(server.databases.redis && {
+        redis: {
+          count: 0,
+        },
+      }),
+    };
+
+    if (result.redis) {
+      const converter = RxConverter.build(server.services.analytics.iterateRedisKeys(incoming.data?.prefix));
+
+      for await (const key of converter.iterate()) {
+        const unprefixed = server.databases.redis!.options.keyPrefix
+          ? key.replace(server.databases.redis!.options.keyPrefix, '')
+          : key;
+
+        const deleted = await server.databases.redis!.del(unprefixed).catch((error) => {
+          logger.error(`Got error while deletion redis value for key [${key}]`, error?.stack ?? error);
+          return null;
+        });
+
+        if (deleted) {
+          result.redis.count += deleted;
+        }
+      }
+    }
+
+    reply.ok(result);
+  });

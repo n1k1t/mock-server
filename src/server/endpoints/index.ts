@@ -8,6 +8,8 @@ export { default as historyGetList } from './history.get-list.endpoint';
 export { default as historyDelete } from './history.delete.endpoint';
 
 export { default as cacheUsageGet } from './cache.usage.get.endpoint';
+export { default as cacheRestore } from './cache.restore.endpoint';
+export { default as cacheBackup } from './cache.backup.endpoint';
 export { default as cacheDelete } from './cache.delete.endpoint';
 
 export { default as configGet } from './config.get.endpoint';

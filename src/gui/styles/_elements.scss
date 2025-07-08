@@ -138,6 +138,7 @@ div.input {
   padding: 5px 10px;
   border-radius: 10px;
   margin-bottom: 5px;
+  margin-right: 5px;
 
   input {
     border: none;
@@ -149,6 +150,12 @@ div.input {
     &[type="checkbox"] {
       margin: 0;
       margin-top: 2px;
+      cursor: pointer;
+    }
+
+    &[type="file"] {
+      margin: 0;
+      font-size: 12px;
       cursor: pointer;
     }
   }

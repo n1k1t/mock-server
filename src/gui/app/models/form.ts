@@ -4,7 +4,12 @@ import { convertObjectToKeyValueCouples } from '../utils';
 import { Component, TElementPredicate } from './component';
 import { PartialDeep } from '../../../../types';
 
-type TInputType = 'text' | 'number' | 'password' | 'checkbox';
+type TInputType = 'text' | 'number' | 'password' | 'checkbox' | 'file';
+
+export interface IFormFile {
+  name: string;
+  content: string;
+}
 
 const castInputValue = (() => {
   const map = {
@@ -16,6 +21,9 @@ const castInputValue = (() => {
   return (type: TInputType, value: string): null | string | number => {
     if (type === 'checkbox') {
       return value || null;
+    }
+    if (type === 'file') {
+      return null;
     }
 
     const trimed = value.trim();
@@ -30,13 +38,26 @@ export class Form<T extends object = object> extends Component {
       .filter(Boolean);
   }
 
-  public extract(): PartialDeep<T> {
-    return [...this.element.querySelectorAll('*[data-key]')].reduce((acc, input) => {
+  public async extract(): Promise<PartialDeep<T>> {
+    const result: PartialDeep<T> = {};
+
+    for (const input of this.element.querySelectorAll('*[data-key]')) {
       const key = input.getAttribute('data-key');
       const type = <TInputType>(input.getAttribute('cast') ?? input.getAttribute('type') ?? 'text');
 
       if (!key || 'value' in input === false || typeof input.value !== 'string') {
-        return acc;
+        continue;
+      }
+
+      if (type === 'file') {
+        const files: IFormFile[] = [];
+
+        for (const file of ('files' in input ? <FileList>input.files : new FileList())) {
+          files.push({ name: file.name, content: await file.text() });
+        }
+
+        _.set(result, key, files);
+        continue;
       }
 
       if (input.hasAttribute('list')) {
@@ -46,17 +67,28 @@ export class Form<T extends object = object> extends Component {
           .map((nested) => castInputValue(type, nested))
           .filter((nested) => nested !== null);
 
-        return value.length ? _.set(acc, key, value) : acc;
+        if (value.length) {
+          _.set(result, key, value)
+        }
+
+        continue;
       }
 
       const value = castInputValue(type, input.value);
 
       if (type === 'checkbox' && 'checked' in input) {
-        return input.checked ? _.set(acc, key, value ?? true) : acc;
-      }
+        if (input.checked) {
+          _.set(result, key, value ?? true);
+        }
 
-      return value !== null ? _.set(acc, key, value) : acc;
-    }, <T>{});
+        continue;
+      }
+      if (value !== null) {
+        _.set(result, key, value);
+      }
+    }
+
+    return result;
   }
 
   public assign(payload: PartialDeep<T>) {

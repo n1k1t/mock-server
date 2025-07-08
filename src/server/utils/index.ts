@@ -3,6 +3,8 @@ import { Value, ValueError } from '@n1k1t/typebox/value';
 
 import type { Constructable } from '../../../types';
 
+export * from './rx';
+
 interface IValidationMetaContext {
   schema: TObject;
   properties: Set<string | Symbol>;
