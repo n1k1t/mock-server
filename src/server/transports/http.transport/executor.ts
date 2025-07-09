@@ -1,5 +1,7 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { decodeBuffer } from 'http-encoding';
+
 import _ from 'lodash';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
@@ -70,7 +72,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
 
     const response = await axios
       .request<Buffer>(options)
-      .catch((error: AxiosError<Buffer>) => {
+      .catch(async (error: AxiosError<Buffer>): Promise<AxiosResponse<Buffer>> => {
         if (!error.response) {
           context.snapshot.assign({
             error: _.pick(error, ['message', 'code']),
@@ -83,6 +85,11 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
 
         return error.response;
       });
+
+    if (response.headers['content-encoding']) {
+      response.data = await decodeBuffer(response.data, response.headers['content-encoding']);
+      response.headers['content-encoding'] = 'utf-8';
+    }
 
     const type = extractPayloadType(response.headers) ?? 'plain';
     const data = parsePayload(type, response.data);
