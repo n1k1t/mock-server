@@ -39,7 +39,7 @@ export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestCont
   public compileHistory(): History {
     return History.build({
       group: this.provider.group,
-      snapshot: this.compileSnapshot().assign({ messages: [] }),
+      snapshot: this.compileSnapshot(),
     });
   }
 

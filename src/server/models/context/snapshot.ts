@@ -9,6 +9,7 @@ import type {
   IRequestContextOutgoing,
   IRequestContextMessage,
   IRequestContextForwarded,
+  IRequestContextError,
 } from './types';
 
 const clone = rfdc();
@@ -50,18 +51,13 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
 
   public incoming: IRequestContextIncoming = this.configuration.incoming;
   public outgoing: IRequestContextOutgoing = this.configuration.outgoing;
+  public messages: IRequestContextMessage[] = this.configuration.messages ?? [];
 
   public forwarded?: IRequestContextForwarded = this.configuration.forwarded;
-  public messages?: IRequestContextMessage[] = this.configuration.messages;
+  public error?: IRequestContextError = this.configuration.error;
 
   public container?: Container<any> = this.configuration.container;
   public seed?: number = this.configuration.seed;
-
-  public error?: {
-    code?: string;
-    message?: string;
-    isManual?: boolean;
-  };
 
   constructor(
     protected configuration:

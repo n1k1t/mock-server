@@ -6,10 +6,7 @@ import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
 import type { TFunction } from '../../../types';
 
-import type config from '../../config';
-
 import { Context } from './models';
-import { cast } from '../../utils';
 
 type ExtractWsEndpointPath<K extends keyof TEndpoints> = TEndpoints[K]['io'] extends { path: infer R }
   ? R extends string ? R : never
@@ -25,11 +22,11 @@ class MainContext extends Context<{
   popups: PopupsComponent;
   groups: Set<string>;
 }> {
-  public config = cast<Pick<typeof config['storage'], 'history'>>({
+  public config = {
     history: {
       limit: 100,
     },
-  });
+  };
 
   public instances = {
     io: io(window.DEV?.io.origin ?? location.origin, {

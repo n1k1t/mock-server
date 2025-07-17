@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
-import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
+import { buildSocketIoExchange, History, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
 import { IIoExchangeSchema, IServerContext, IServerContextDefaults } from './types';
 import { AnalyticsService, MetricsService } from './services';
 import { OnsiteClient } from '../client';
@@ -100,10 +100,12 @@ export class MockServer<
     this.databases.redis?.on('error', (error) => logger.info('Got redis error', error?.stack ?? error));
   }
 
+  /** Default client to work with main API */
   public get client(): OnsiteClient<TContext> {
     return this.providers.default.client;
   }
 
+  /** Unbinds expired containers */
   public unbindExpiredContainers(): this {
     this.providers.extract().forEach((provider) =>
       provider.storages.containers.getExpired().forEach((container) => {
@@ -115,6 +117,33 @@ export class MockServer<
     return this;
   }
 
+  /** Recoveres persitenated history */
+  public async recoverHistory(): Promise<void> {
+    if (!this.databases.redis) {
+      throw new Error('Cannot recover history without redis initialization');
+    }
+
+    const { persistenation } = config.get('history');
+    const list = await this.databases.redis.lrange(persistenation.key, 0, -1);
+
+    const grouped = list.reduce<Record<string, History['TPlain'][]>>((acc, raw) => {
+      const plain: History['TPlain'] = JSON.parse(raw);
+
+      if (!acc[plain.group]) {
+        acc[plain.group] = [];
+      }
+
+      acc[plain.group].push(plain);
+      return acc;
+    }, {});
+
+    Object.entries(grouped).forEach(([group, items]) => {
+      const provider = this.providers.get(group) ?? this.providers.default;
+      provider.storages.history.inject(items);
+    });
+  }
+
+  /** Starts and setups mock server */
   static async start<
     TConfiguration extends IMockServerConfiguration,
     TContext extends IServerContext = IServerContext<{
@@ -152,16 +181,19 @@ export class MockServer<
       },
     });
 
+    /** Containers expiration job */
     setInterval(
       () => server.unbindExpiredContainers(),
       (configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
     );
 
+    /** Memory metrics job */
     setInterval(
       () => server.services.metrics.register('memory', { mbs: process.memoryUsage().heapUsed / 1024 / 1024 }),
       5 * 1000
     );
 
+    /** Containers metrics job */
     setInterval(
       () => server.services.metrics.register('containers', {
         count: server.providers.extract().reduce((acc, provider) => acc + provider.storages.containers.size, 0),
@@ -169,13 +201,14 @@ export class MockServer<
       5 * 1000
     );
 
+    /** Redis usage metrics job */
     if (server.databases.redis) {
       setInterval(async () => {
-        const redis = await server.services.analytics.calculateRedisUsage();
+        const usage = await server.services.analytics.calculateRedisUsage();
 
         server.services.metrics.register('cache', {
-          redis_mbs: redis.bytes / 1024 / 1024,
-          redis_count: redis.count,
+          redis_mbs: usage.bytes / 1024 / 1024,
+          redis_count: usage.count,
         });
       }, 10 * 60 * 1000);
     }

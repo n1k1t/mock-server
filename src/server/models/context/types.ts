@@ -30,6 +30,12 @@ export interface IRequestContextOutgoing {
   stream?: Observable<unknown>;
 }
 
+export interface IRequestContextError {
+  code?: string;
+  message?: string;
+  isManual?: boolean;
+}
+
 export interface IRequestContextMessage {
   id: number;
   location: 'incoming' | 'outgoing';

@@ -7,28 +7,39 @@ import { cast } from '../utils';
 
 export * from './model';
 
-const checkIsTypeScriptRuntime = (): boolean => path.parse(__filename).ext === '.ts';
-const getPathToRoot = (): string => path.resolve(__dirname, checkIsTypeScriptRuntime() ? '' : '../', '../../');
+const systemDatabaseKeyPrefix = 'system:b3afded0-c54d-4841-a933-ae0579b22547';
 
 export default Config.build(<const>{
-    statics: {
-      public: {
-        dir: path.resolve(getPathToRoot(), 'public'),
-      },
-    },
+  database: {
+    systemKeyPrefix: systemDatabaseKeyPrefix,
+  },
 
-    routes: {
-      internal: {
-        root: '/_system',
-        gui: '/gui',
-      },
+  statics: {
+    public: {
+      dir: path.resolve(
+        path.resolve(__dirname, path.parse(__filename).ext === '.ts' ? '' : '../', '../../'),
+        'public'
+      ),
     },
+  },
 
-    history: {
-      limit: 100,
+  routes: {
+    internal: {
+      root: '/_system',
+      gui: '/gui',
     },
+  },
 
-    logger: {
-      level: cast<TLoggerLevel>('D'),
+  history: {
+    limit: cast<number>(100),
+
+    persistenation: {
+      isEnabled: cast<boolean>(false),
+      key: cast<string>(`${systemDatabaseKeyPrefix}:history`),
     },
-  });
+  },
+
+  logger: {
+    level: cast<TLoggerLevel>('D'),
+  },
+});

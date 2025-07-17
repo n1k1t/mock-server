@@ -5,6 +5,8 @@ import { RxConverter } from '../utils';
 import { Service } from '../models';
 import { Logger } from '../../logger';
 
+import config from '../../config';
+
 export interface IRedisUsage {
   count: number;
   bytes: number;
@@ -18,6 +20,7 @@ export class AnalyticsService extends Service {
       return of();
     }
 
+    const { systemKeyPrefix } = config.get('database');
     const subject = new Subject<string>();
 
     const match = `${this.server.databases.redis!.options.keyPrefix ?? ''}${prefix ?? ''}*`;
@@ -31,7 +34,12 @@ export class AnalyticsService extends Service {
       subject.error(error);
     });
 
-    stream.on('data', async (keys: string[]) => keys.forEach((key) => subject.next(key)));
+    stream.on('data', (keys: string[]) => keys.forEach((key) =>
+      key.includes(systemKeyPrefix)
+        ? null
+        : subject.next(key))
+    );
+
     return subject.asObservable();
   }
 

@@ -1,10 +1,10 @@
 import { v4 as genUid } from 'uuid';
 
 import type { IRequestContextMessage, RequestContextSnapshot } from '../../models';
-import type { SetRequiredKeys } from '../../../../types';
+import type { THistoryStatus } from './types';
 import type { Expectation } from '../../../expectations';
 
-import { buildCounter, cast } from '../../../utils';
+import { buildCounter } from '../../../utils';
 
 export class History {
   public TPlain!: Pick<History, 'id' | 'status' | 'group' | 'timestamp' | 'duration'> & {
@@ -12,19 +12,23 @@ export class History {
     expectation?: Expectation<any>['TPlain'];
   };
 
-  public id: string = genUid();
+  public id: string = this.configuration.id ?? genUid();
   public messagesCounter = buildCounter();
 
   public group: string = this.configuration.group;
-  public snapshot: SetRequiredKeys<RequestContextSnapshot, 'messages'> = this.configuration.snapshot;
+  public snapshot: RequestContextSnapshot = this.configuration.snapshot;
 
-  public status = cast<'unregistered' | 'registered' | 'pending' | 'completed'>('unregistered');
-  public expectation?: Expectation<any>;
+  public status: THistoryStatus = this.configuration.status ?? 'unregistered';
+  public expectation?: Expectation<any> = this.configuration.expectation;
 
   public timestamp: number = this.configuration.timestamp ?? Date.now();
-  public duration: number = 0;
+  public duration: number = this.configuration.duration ?? 0;
 
-  constructor(protected configuration: Pick<History, 'group' | 'snapshot'> & Partial<Pick<History, 'timestamp'>>) {}
+  constructor(
+    protected configuration:
+      & Pick<History, 'group' | 'snapshot'>
+      & Partial<Pick<History, 'timestamp' | 'id' | 'status' | 'expectation' | 'duration'>>
+  ) {}
 
   public pushMessage(location: IRequestContextMessage['location'], data: unknown): this {
     this.snapshot.messages.push({ location, data, id: this.messagesCounter(), timestamp: Date.now() });

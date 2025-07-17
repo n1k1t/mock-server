@@ -13,6 +13,8 @@ import { RequestContextSnapshot } from './snapshot';
 import { metaStorage } from '../../../meta';
 import { cast } from '../../../utils';
 
+import config from '../../../config';
+
 export * from './snapshot';
 export * from './types';
 export * from './utils';
@@ -84,7 +86,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
   public compileHistory(): History {
     return this.provider.storages.history.register({
       timestamp: this.timestamp,
-      snapshot: this.compileSnapshot().assign({ messages: [] }).clone(),
+      snapshot: this.compileSnapshot().clone(),
     });
   }
 
@@ -132,7 +134,19 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
 
     if (this.history?.hasStatus('pending')) {
       this.history.actualizeSnapshot(this.snapshot.assign({ outgoing: this.outgoing })).complete();
-      this.provider.server.exchanges.io.publish('history:updated', this.history.toPlain());
+
+      const { limit, persistenation } = config.get('history');
+      const plain = this.history.toPlain();
+
+      if (persistenation.isEnabled && this.provider.server.databases.redis) {
+        this.provider.server.databases.redis
+          .multi()
+          .lpush(persistenation.key, JSON.stringify(plain))
+          .ltrim(persistenation.key, 0, limit)
+          .exec();
+      }
+
+      this.provider.server.exchanges.io.publish('history:updated', plain);
     }
 
     return this.switchStatus('completed');

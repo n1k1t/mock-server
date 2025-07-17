@@ -1,14 +1,6 @@
+import { IContainerConfiguration } from './types';
 import { compileContainerLink } from './utils';
 import { Container } from './model';
-
-export interface IContainerConfiguration<T extends object> {
-  key: string | object;
-  payload: T;
-
-  /** Seconds */
-  ttl?: number;
-  prefix?: string;
-}
 
 export class ContainersStorage<T extends object = object> {
   private storage = new Map<string, Container<T>>();
