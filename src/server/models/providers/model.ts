@@ -16,10 +16,14 @@ export class Provider<TContext extends IServerContext = IServerContext> {
   public storages = {
     expectations: new ExpectationsStorage(),
     containers: new ContainersStorage(),
-    history: new HistoryStorage(this.provided),
+    history: new HistoryStorage({ group: this.group, limit: this.provided.history?.limit }),
   };
 
-  constructor(protected provided: Pick<Provider, 'group'>) {}
+  constructor(protected provided: Pick<Provider, 'group'> & {
+    history?: {
+      limit?: number;
+    };
+  }) {}
 
   public assign(payload: Partial<Pick<Provider, 'server'>>): this {
     return Object.assign(this, payload);

@@ -142,7 +142,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
         this.provider.server.databases.redis
           .multi()
           .lpush(persistenation.key, JSON.stringify(plain))
-          .ltrim(persistenation.key, 0, limit)
+          .ltrim(persistenation.key, 0, limit * this.provider.server.providers.extract().length)
           .exec();
       }
 

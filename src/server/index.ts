@@ -117,30 +117,54 @@ export class MockServer<
     return this;
   }
 
+  /** Setups background jobs */
+  private async setupJobs(): Promise<void> {
+    /** Containers expiration */
+    setInterval(
+      () => this.unbindExpiredContainers(),
+      (this.configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
+    );
+
+    /** Memory metrics */
+    setInterval(
+      () => this.services.metrics.register('memory', { mbs: process.memoryUsage().heapUsed / 1024 / 1024 }),
+      5 * 1000
+    );
+
+    /** Containers metrics */
+    setInterval(
+      () => this.services.metrics.register('containers', {
+        count: this.providers.extract().reduce((acc, provider) => acc + provider.storages.containers.size, 0),
+      }),
+      5 * 1000
+    );
+
+    /** Redis usage metrics */
+    if (this.databases.redis) {
+      setInterval(async () => {
+        const usage = await this.services.analytics.calculateRedisUsage();
+
+        this.services.metrics.register('cache', {
+          redis_mbs: usage.bytes / 1024 / 1024,
+          redis_count: usage.count,
+        });
+      }, 10 * 60 * 1000);
+    }
+  }
+
   /** Recoveres persitenated history */
-  public async recoverHistory(): Promise<void> {
+  private async recoverHistory(): Promise<void | null> {
     if (!this.databases.redis) {
-      throw new Error('Cannot recover history without redis initialization');
+      return null;
     }
 
     const { persistenation } = config.get('history');
+    if (!persistenation.isEnabled) {
+      return null;
+    }
+
     const list = await this.databases.redis.lrange(persistenation.key, 0, -1);
-
-    const grouped = list.reduce<Record<string, History['TPlain'][]>>((acc, raw) => {
-      const plain: History['TPlain'] = JSON.parse(raw);
-
-      if (!acc[plain.group]) {
-        acc[plain.group] = [];
-      }
-
-      acc[plain.group].push(plain);
-      return acc;
-    }, {});
-
-    Object.entries(grouped).forEach(([group, items]) => {
-      const provider = this.providers.get(group) ?? this.providers.default;
-      provider.storages.history.inject(items);
-    });
+    this.providers.system.storages.history.inject(list.map((raw) => JSON.parse(raw)));
   }
 
   /** Starts and setups mock server */
@@ -181,37 +205,8 @@ export class MockServer<
       },
     });
 
-    /** Containers expiration job */
-    setInterval(
-      () => server.unbindExpiredContainers(),
-      (configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
-    );
-
-    /** Memory metrics job */
-    setInterval(
-      () => server.services.metrics.register('memory', { mbs: process.memoryUsage().heapUsed / 1024 / 1024 }),
-      5 * 1000
-    );
-
-    /** Containers metrics job */
-    setInterval(
-      () => server.services.metrics.register('containers', {
-        count: server.providers.extract().reduce((acc, provider) => acc + provider.storages.containers.size, 0),
-      }),
-      5 * 1000
-    );
-
-    /** Redis usage metrics job */
-    if (server.databases.redis) {
-      setInterval(async () => {
-        const usage = await server.services.analytics.calculateRedisUsage();
-
-        server.services.metrics.register('cache', {
-          redis_mbs: usage.bytes / 1024 / 1024,
-          redis_count: usage.count,
-        });
-      }, 10 * 60 * 1000);
-    }
+    await server.setupJobs();
+    await server.recoverHistory();
 
     return server;
   }

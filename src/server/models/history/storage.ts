@@ -7,7 +7,7 @@ import config from '../../../config';
 export class HistoryStorage extends Map<string, History> {
   private stack: string[] = [];
 
-  constructor(protected configuration: Pick<History, 'group'>) {
+  constructor(protected configuration: Pick<History, 'group'> & { limit?: number }) {
     super();
   }
 
@@ -22,11 +22,21 @@ export class HistoryStorage extends Map<string, History> {
 
     this.set(history.id, history);
 
-    if (this.stack.push(history.id) > config.get('history').limit) {
+    if (this.stack.push(history.id) > (this.configuration.limit ?? config.get('history').limit)) {
       this.delete(this.stack.shift()!);
     }
 
     return history;
+  }
+
+  /** Removes history item from storage and marks it as `unregistred` */
+  public unregister(history?: History): this {
+    if (history) {
+      this.delete(history.switchStatus('unregistered').id);
+      this.stack.splice(this.stack.indexOf(history.id), 1);
+    }
+
+    return this;
   }
 
   /** Injects and registers history items from plain */
@@ -84,16 +94,6 @@ export class HistoryStorage extends Map<string, History> {
         })
       }))
     );
-
-    return this;
-  }
-
-  /** Removes history item from storage */
-  public unregister(history?: History): this {
-    if (history) {
-      this.delete(history.switchStatus('unregistered').id);
-      this.stack.splice(this.stack.indexOf(history.id), 1);
-    }
 
     return this;
   }
