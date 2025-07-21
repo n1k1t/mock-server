@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
-import { buildSocketIoExchange, History, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
+import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
 import { IIoExchangeSchema, IServerContext, IServerContextDefaults } from './types';
 import { AnalyticsService, MetricsService } from './services';
 import { OnsiteClient } from '../client';

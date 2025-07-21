@@ -92,7 +92,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
 
   /** Compiles cache configuration using own snapshot and expectation */
   public compileCacheConfiguration(): TRequestContextCacheConfigurationCompiled {
-    if (!this.snapshot.cache.isEnabled || !this.expectation?.forward?.cache) {
+    if (!this.expectation?.forward?.cache) {
       return { isEnabled: false };
     }
 
@@ -101,7 +101,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
     const key = typeof payload === 'object' ? Value.Hash(payload).toString() : String(payload);
     const ttl = this.snapshot.cache.ttl ?? this.expectation.forward.cache.ttl ?? 3600;
 
-    return { prefix, ttl, key: `${prefix ?? ''}${key}`, isEnabled: true };
+    return { prefix, ttl, key: `${prefix ?? ''}${key}`, isEnabled: this.snapshot.cache.isEnabled };
   }
 
   /** Provides payload parts into context */

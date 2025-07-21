@@ -68,4 +68,4 @@ export interface IRequestContextCacheConfiguration {
 
 export type TRequestContextCacheConfigurationCompiled =
   | { isEnabled: false }
-  | { isEnabled: true, key: string } & SetRequiredKeys<IRequestContextCacheConfiguration, 'ttl'>;
+  | { isEnabled: boolean, key: string } & SetRequiredKeys<IRequestContextCacheConfiguration, 'ttl'>;
