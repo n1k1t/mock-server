@@ -76,6 +76,8 @@ export class MockServer<
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
 
   public io = new Server(this.http, {
+    maxHttpBufferSize: 1e8,
+
     ...(process.env['NODE_ENV'] === 'development' && {
       cors: { origin: '*' },
     }),
