@@ -135,14 +135,14 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
     if (this.history?.hasStatus('pending')) {
       this.history.actualizeSnapshot(this.snapshot.assign({ outgoing: this.outgoing })).complete();
 
-      const { limit, persistenation } = config.get('history');
+      const { limit, persistence } = config.get('history');
       const plain = this.history.toPlain();
 
-      if (persistenation.isEnabled && this.provider.server.databases.redis) {
+      if (persistence.isEnabled && this.provider.server.databases.redis) {
         this.provider.server.databases.redis
           .multi()
-          .lpush(persistenation.key, JSON.stringify(plain))
-          .ltrim(persistenation.key, 0, limit * this.provider.server.providers.extract().length)
+          .lpush(persistence.key, JSON.stringify(plain))
+          .ltrim(persistence.key, 0, limit * this.provider.server.providers.extract().length)
           .exec();
       }
 

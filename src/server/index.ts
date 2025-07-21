@@ -158,12 +158,12 @@ export class MockServer<
       return null;
     }
 
-    const { persistenation } = config.get('history');
-    if (!persistenation.isEnabled) {
+    const { persistence } = config.get('history');
+    if (!persistence.isEnabled) {
       return null;
     }
 
-    const list = await this.databases.redis.lrange(persistenation.key, 0, -1);
+    const list = await this.databases.redis.lrange(persistence.key, 0, -1);
     this.providers.system.storages.history.inject(list.map((raw) => JSON.parse(raw)));
   }
 

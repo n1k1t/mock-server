@@ -9,7 +9,7 @@ export default Endpoint
     server.providers.extract().forEach((provider) => provider.storages.history.clear());
 
     if (server.databases.redis) {
-      await server.databases.redis.del(config.get('history').persistenation.key);
+      await server.databases.redis.del(config.get('history').persistence.key);
     }
 
     reply.ok(null);

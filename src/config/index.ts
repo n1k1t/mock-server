@@ -33,7 +33,7 @@ export default Config.build(<const>{
   history: {
     limit: cast<number>(100),
 
-    persistenation: {
+    persistence: {
       isEnabled: cast<boolean>(false),
       key: cast<string>(`${systemDatabaseKeyPrefix}:history`),
     },
