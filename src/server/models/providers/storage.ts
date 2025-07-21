@@ -23,14 +23,6 @@ export class ProvidersStorage<
   public register(provider: Provider<any>): this {
     provider.assign({ server: this.server });
 
-    if (this.default === provider) {
-      return this;
-    }
-    if (this.has(provider.group)) {
-      logger.info(`Provider group [${provider.group}] is already registered. Using existent...`);
-      return this;
-    }
-
     for (const history of this.system.storages.history.values()) {
       if (history.group !== provider.group) {
         continue;
@@ -38,6 +30,14 @@ export class ProvidersStorage<
 
       provider.storages.history.register(history);
       this.system.storages.history.delete(history.id);
+    }
+
+    if (this.default === provider) {
+      return this;
+    }
+    if (this.has(provider.group)) {
+      logger.info(`Provider group [${provider.group}] is already registered. Using existent...`);
+      return this;
     }
 
     logger.info(`Provider group [${provider.group}] has registered`);

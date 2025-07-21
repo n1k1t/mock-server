@@ -200,15 +200,15 @@ export class MockServer<
       .entries(configuration.transports ?? {})
       .forEach(([type, transport]) => server.transports.register(<TContext['transport']>type, transport));
 
+    await server.setupJobs();
+    await server.recoverHistory();
+
     server.router.register(`${routes.internal.root}/**`, {
       provider: server.providers.default,
       transports: <Record<TContext['transport'], Transport>>{
         http: server.internal.transports.http,
       },
     });
-
-    await server.setupJobs();
-    await server.recoverHistory();
 
     return server;
   }
