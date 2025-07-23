@@ -13,6 +13,7 @@ export class DynamicStorage<T extends object = object> extends Component {
     super(predicate);
   }
 
+  /** Puts stored values into form */
   public sync(): this {
     const stored: [string, unknown][] = this.client.extract() ?? [];
     this.form.assign(stored.reduce((acc, [path, value]) => _.set(acc, path, value), {}));
@@ -20,6 +21,7 @@ export class DynamicStorage<T extends object = object> extends Component {
     return this;
   }
 
+  /** Saves to local storage and returns extracted form values */
   public async save(): Promise<T> {
     const extracted = await this.form.extract();
 

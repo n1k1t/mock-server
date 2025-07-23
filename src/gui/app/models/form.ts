@@ -44,6 +44,7 @@ export class Form<T extends object = object> extends Component {
       .filter(Boolean);
   }
 
+  /** Extracts form values */
   public async extract(): Promise<T> {
     const result = <T>{};
 
@@ -97,6 +98,7 @@ export class Form<T extends object = object> extends Component {
     return result;
   }
 
+  /** Puts values into form */
   public assign(payload: PartialDeep<T>) {
     convertObjectToKeyValueCouples(payload, this.paths)
       .map(([path, value]) => <const>[path, value, this.element.querySelector(`*[data-key="${path}"]`)!])

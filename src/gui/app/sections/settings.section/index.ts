@@ -118,7 +118,7 @@ export default Section
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
 
-      const size = 1024 * 1024 * 300;
+      const size = 1024 * 300;
       const stream = socketIoStream.createStream({ highWaterMark: size });
 
       socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl })
