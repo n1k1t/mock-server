@@ -104,7 +104,7 @@ export default Section
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
 
-      await context.services.io.exec('cache:restore', { ttl: extracted.ttl, backup: extracted.files[0]!.content! });
+      await context.instances.http.post('/cache/restore', { ttl: extracted.ttl, backup: extracted.files[0]!.content! });
       context.shared.popups.push('Restored');
     });
   })

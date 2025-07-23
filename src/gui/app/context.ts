@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import axios from 'axios';
 import io from 'socket.io-client';
 
 import type { IIoExchangeSchema } from '../../server';
@@ -29,6 +30,10 @@ class MainContext extends Context<{
   };
 
   public instances = {
+    http: axios.create({
+      baseURL: `${window.DEV?.http.host ?? location.pathname.split('/').slice(0, -3).join('/')}/_system`,
+    }),
+
     io: io(window.DEV?.io.origin ?? location.origin, {
       path: window.DEV?.io.path ?? `${location.pathname.split('/').slice(0, -3).join('/')}/socket.io/`
     }),

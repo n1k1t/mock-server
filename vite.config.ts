@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => ({
   define: {
     ...(mode === 'development' && {
       DEV: JSON.stringify(cast<IDevContext>({
+        http: {
+          host: 'http://localhost:13000',
+        },
+
         io: {
           origin: 'http://localhost:13000',
           path: '/socket.io/',
