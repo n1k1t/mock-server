@@ -82,7 +82,7 @@ export default Section
     section.content.append(panels.cacheRestoration);
 
     Button.build(panels.cacheDeletion.element.querySelector('button#delete')).handle(async () => {
-      const extracted = await Form.build<{ prefix?: string }>(panels.cacheDeletion).extract();
+      const extracted = await Form.build<{ prefix: string }>(panels.cacheDeletion).extract();
 
       const { data } = await context.services.io.exec('cache:delete', { prefix: extracted.prefix });
       context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
@@ -101,16 +101,17 @@ export default Section
     });
 
     Button.build(panels.cacheRestoration.element.querySelector('button#restore')).handle(async () => {
-      const extracted = await Form.build<{ files?: IFormFile[], ttl?: number }>(panels.cacheRestoration).extract();
+      const extracted = await Form.build<{ files: IFormFile[], ttl: number }>(panels.cacheRestoration).extract();
       if (!extracted.files?.length) {
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
 
+      const size = 1024 * 1024 * 300;
       const file = <IFormFile>extracted.files[0]!;
-      const stream = socketIoStream.createStream();
+      const stream = socketIoStream.createStream({ highWaterMark: size });
 
       socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl })
-      socketIoStream.createBlobReadStream(file.source!).pipe(stream);
+      socketIoStream.createBlobReadStream(file.source, { highWaterMark: size }).pipe(stream);
 
       await new Promise((resolve) => stream.once('finish', resolve));
       context.shared.popups.push('Restored');
