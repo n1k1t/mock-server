@@ -1,3 +1,5 @@
+import type { Stream } from 'stream';
+
 import type { HttpTransport, WsTransport } from '../transports';
 import type { TMetricPoint } from '../services';
 import type { Expectation } from '../../expectations';
@@ -34,6 +36,11 @@ export interface IIoExchangeSchema {
     name: string;
     point: TMetricPoint;
   };
+}
+
+export interface IIoIncomingStream<TParameters extends object = object> {
+  parameters: TParameters;
+  stream: Stream;
 }
 
 export interface ICacheBackup {

@@ -8,7 +8,9 @@ type TInputType = 'text' | 'number' | 'password' | 'checkbox' | 'file';
 
 export interface IFormFile {
   name: string;
+  size: number;
   content: string;
+  source: File;
 }
 
 const castInputValue = (() => {
@@ -53,7 +55,7 @@ export class Form<T extends object = object> extends Component {
         const files: IFormFile[] = [];
 
         for (const file of ('files' in input ? <FileList>input.files : new FileList())) {
-          files.push({ name: file.name, content: await file.text() });
+          files.push({ source: file, name: file.name, size: file.size, content: await file.text() });
         }
 
         _.set(result, key, files);

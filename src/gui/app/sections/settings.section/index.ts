@@ -1,6 +1,8 @@
 import hbs from 'handlebars';
+import _ from 'lodash';
 
 import { Button, Form, IFormFile, Section } from '../../models';
+import { socketIoStream } from '../../../../utils';
 import { PanelComponent } from '../../components';
 
 import context from '../../context';
@@ -104,7 +106,13 @@ export default Section
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
 
-      await context.instances.http.post('/cache/restore', { ttl: extracted.ttl, backup: extracted.files[0]!.content! });
+      const file = <IFormFile>extracted.files[0]!;
+      const stream = socketIoStream.createStream();
+
+      socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl })
+      socketIoStream.createBlobReadStream(file.source!).pipe(stream);
+
+      await new Promise((resolve) => stream.once('finish', resolve));
       context.shared.popups.push('Restored');
     });
   })

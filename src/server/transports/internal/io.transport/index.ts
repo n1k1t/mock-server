@@ -1,8 +1,10 @@
-import type { IServerContext, MockServer } from '../../../index';
+
+import type { IIoIncomingStream, IServerContext, MockServer } from '../../../index';
 
 import { buildSocketIoExchange, Provider, Transport } from '../../../models';
 import { InternalSocketIoRequestContext } from './context';
 import { InternalSocketIoExecutor } from './executor';
+import { cast, socketIoStream } from '../../../../utils';
 
 export * from './executor';
 export * from './context';
@@ -14,8 +16,19 @@ export class InternalSocketIoTransport extends Transport<InternalSocketIoExecuto
   constructor(protected server: MockServer) {
     super();
 
-    server.io.on('connection', (socket) =>
-      Object.values(this.executor.endpoints).forEach((endpoint) =>
+    server.io.on('connection', (socket) => {
+      const stream = socketIoStream(socket);
+
+      Object.values(this.executor.endpoints).forEach((endpoint) => {
+        stream.on(endpoint.io.path, async (stream, parameters) =>
+          endpoint.handler?.(
+            await this.compileContext(server.providers.default, {
+              path: endpoint.io.path,
+              data: cast<IIoIncomingStream>({ stream, parameters }),
+            })
+          )
+        );
+
         socket.on(endpoint.io.path, async (...args) =>
           endpoint.handler?.(
             await this.compileContext(server.providers.default, {
@@ -23,9 +36,10 @@ export class InternalSocketIoTransport extends Transport<InternalSocketIoExecuto
               callback: args.pop(),
               data: args[0],
             })
-        ))
-      )
-    );
+          )
+        );
+      });
+    });
 
     server.exchanges.io = buildSocketIoExchange(server.io);
   }

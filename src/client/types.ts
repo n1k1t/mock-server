@@ -23,9 +23,14 @@ export type TEndpoints = {
     incoming: (typeof endpoints)[K]['TSchema']['incoming'];
     outgoing: (typeof endpoints)[K]['TSchema']['outgoing'];
 
-    location: {
-      url: `${typeof config['storage']['routes']['internal']['root']}${(typeof endpoints)[K]['http']['path']}`;
-      method: (typeof endpoints)[K]['http']['method'];
-    };
+    location: (typeof endpoints)[K]['http'] extends object
+      ? {
+        url: `${typeof config['storage']['routes']['internal']['root']}${(typeof endpoints)[K]['http']['path']}`;
+        method: (typeof endpoints)[K]['http']['method'];
+      }
+      : {
+        url: string & {};
+        method: string & {};
+      };
   };
 }

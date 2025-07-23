@@ -28,7 +28,7 @@ export class InternalSocketIoRequestContext<TOutgoing = unknown> extends Request
     public request: {
       path: string;
       data: unknown;
-      callback: TFunction<void>;
+      callback?: TFunction<void>;
     }
   ) {
     super(server.providers.default, { transport: 'io', event: 'message' });

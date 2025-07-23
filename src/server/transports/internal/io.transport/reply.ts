@@ -5,19 +5,19 @@ import { Reply } from '../../../models';
 
 export class InternalSocketIoReply<TOutgoing = unknown> extends Reply<InternalSocketIoRequestContext, TOutgoing> {
   public ok(payload: TOutgoing) {
-    this.context.request.callback(buildEndpointResponse('OK', payload))
+    this.context.request.callback?.(buildEndpointResponse('OK', payload))
   }
 
   public internalError(message: string = 'Something went wrong') {
-    this.context.request.callback(buildEndpointResponse('INTERNAL_ERROR', { message }));
+    this.context.request.callback?.(buildEndpointResponse('INTERNAL_ERROR', { message }));
   }
 
   public validationError(reasons: unknown[] = ['Payload is not valid']) {
-    this.context.request.callback(buildEndpointResponse('VALIDATION_ERROR', { reasons }));
+    this.context.request.callback?.(buildEndpointResponse('VALIDATION_ERROR', { reasons }));
   }
 
   public notFound() {
-    this.context.request.callback(buildEndpointResponse('NOT_FOUND', null));
+    this.context.request.callback?.(buildEndpointResponse('NOT_FOUND', null));
   }
 
   static build<TResponse>(context: InternalSocketIoRequestContext) {
