@@ -1,7 +1,7 @@
 import hbs from 'handlebars';
 import _ from 'lodash';
 
-import { Button, Form, IFormFile, Section } from '../../models';
+import { Button, DynamicStorage, FormFile, Section } from '../../models';
 import { socketIoStream } from '../../../../utils';
 import { PanelComponent } from '../../components';
 
@@ -72,6 +72,15 @@ const panels = {
     .replace(templates.cacheRestoration({})),
 };
 
+const storages = {
+  cacheDeletion: DynamicStorage.build<{ prefix?: string }>('settings:cache:deletion', panels.cacheDeletion),
+
+  cacheRestoration: DynamicStorage.build<{
+    files?: FormFile[];
+    ttl?: number;
+  }>('settings:cache:restoration', panels.cacheRestoration),
+};
+
 export default Section
   .build(templates.section({}))
   .assignMeta({ icon: 'fas fa-cog' })
@@ -81,8 +90,11 @@ export default Section
     section.content.append(panels.cacheBackup);
     section.content.append(panels.cacheRestoration);
 
+    storages.cacheDeletion.sync();
+    storages.cacheRestoration.sync();
+
     Button.build(panels.cacheDeletion.element.querySelector('button#delete')).handle(async () => {
-      const extracted = await Form.build<{ prefix: string }>(panels.cacheDeletion).extract();
+      const extracted = await storages.cacheDeletion.save();
 
       const { data } = await context.services.io.exec('cache:delete', { prefix: extracted.prefix });
       context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
@@ -101,17 +113,16 @@ export default Section
     });
 
     Button.build(panels.cacheRestoration.element.querySelector('button#restore')).handle(async () => {
-      const extracted = await Form.build<{ files: IFormFile[], ttl: number }>(panels.cacheRestoration).extract();
+      const extracted = await storages.cacheRestoration.save();
       if (!extracted.files?.length) {
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
 
       const size = 1024 * 1024 * 300;
-      const file = <IFormFile>extracted.files[0]!;
       const stream = socketIoStream.createStream({ highWaterMark: size });
 
       socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl })
-      socketIoStream.createBlobReadStream(file.source, { highWaterMark: size }).pipe(stream);
+      socketIoStream.createBlobReadStream(extracted.files[0].source, { highWaterMark: size }).pipe(stream);
 
       await new Promise((resolve) => stream.once('finish', resolve));
       context.shared.popups.push('Restored');

@@ -6,13 +6,6 @@ import { PartialDeep } from '../../../../types';
 
 type TInputType = 'text' | 'number' | 'password' | 'checkbox' | 'file';
 
-export interface IFormFile {
-  name: string;
-  size: number;
-  content: string;
-  source: File;
-}
-
 const castInputValue = (() => {
   const map = {
     password: String,
@@ -33,6 +26,17 @@ const castInputValue = (() => {
   };
 })();
 
+export class FormFile {
+  public name = this.source.name;
+  public size = this.source.size;
+
+  constructor(public source: File, public content: string) {}
+
+  static async build(file: File): Promise<FormFile> {
+    return new FormFile(file, await file.text());
+  }
+}
+
 export class Form<T extends object = object> extends Component {
   public get paths(): string[] {
     return <string[]>[...this.element.querySelectorAll('*[data-key]')]
@@ -40,8 +44,8 @@ export class Form<T extends object = object> extends Component {
       .filter(Boolean);
   }
 
-  public async extract(): Promise<PartialDeep<T>> {
-    const result: PartialDeep<T> = {};
+  public async extract(): Promise<T> {
+    const result = <T>{};
 
     for (const input of this.element.querySelectorAll('*[data-key]')) {
       const key = input.getAttribute('data-key');
@@ -52,10 +56,10 @@ export class Form<T extends object = object> extends Component {
       }
 
       if (type === 'file') {
-        const files: IFormFile[] = [];
+        const files: FormFile[] = [];
 
         for (const file of ('files' in input ? <FileList>input.files : new FileList())) {
-          files.push({ source: file, name: file.name, size: file.size, content: await file.text() });
+          files.push(await FormFile.build(file));
         }
 
         _.set(result, key, files);

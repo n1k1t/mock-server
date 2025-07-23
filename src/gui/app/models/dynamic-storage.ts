@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { convertObjectToKeyValueCouples } from '../utils';
 import { Component, TElementPredicate } from './component';
 import { ClientStorage } from './client-storage';
-import { Form } from './form';
+import { Form, FormFile } from './form';
 
 export class DynamicStorage<T extends object = object> extends Component {
   public client = ClientStorage.build<[string, unknown][]>(this.key);
@@ -20,9 +20,18 @@ export class DynamicStorage<T extends object = object> extends Component {
     return this;
   }
 
-  public save(): this {
-    this.client.store(convertObjectToKeyValueCouples(this.form.extract(), this.form.paths));
-    return this;
+  public async save(): Promise<T> {
+    const extracted = await this.form.extract();
+
+    this.client.store(
+      convertObjectToKeyValueCouples(extracted, this.form.paths).filter(
+        ([, value]) => Array.isArray(value)
+          ? !value.some((nested) => typeof nested === 'object' && nested instanceof FormFile)
+          : !(typeof value === 'object' && value instanceof FormFile)
+      )
+    );
+
+    return extracted;
   }
 
   public clear(): this {
