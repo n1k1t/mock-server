@@ -40,7 +40,9 @@ const handle = async (
   if (!context.hasStatuses(['registered', 'handling'])) {
     return signals.break;
   }
+
   if (!expectation) {
+    context.cancel();
     return null;
   }
 

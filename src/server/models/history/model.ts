@@ -62,7 +62,9 @@ export class History {
 
   /** Updates duration property base on timestamp */
   public mark() {
-    return this.hasStatus('completed') ? this : Object.assign(this, { duration: Date.now() - this.timestamp });
+    return this.hasStatus('completed')
+      ? this
+      : Object.assign(this, { duration: Date.now() - this.timestamp });
   }
 
   public toPlain(): History['TPlain'] {

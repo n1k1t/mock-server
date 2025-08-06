@@ -26,7 +26,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
   public abstract incoming: IRequestContextIncoming;
   public abstract snapshot: RequestContextSnapshot<TContext>;
 
-  public status = cast<'registered' | 'handling' | 'skipped' | 'completed'>('registered');
+  public status = cast<'registered' | 'handling' | 'skipped' | 'completed' | 'canceled'>('registered');
 
   public streams = {
     incoming: new ReplaySubject(Infinity, 5000),
@@ -117,6 +117,12 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
   /** Marks context as handling */
   public handle(): this {
     return this.switchStatus('handling');
+  }
+
+  /** Marks context as canceled and unregisters history */
+  public cancel(): this {
+    this.provider.storages.history.unregister(this.history);
+    return this.switchStatus('canceled');
   }
 
   /** Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history */

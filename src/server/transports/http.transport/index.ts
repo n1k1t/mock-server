@@ -32,7 +32,9 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
       if (!context.hasStatuses(['registered', 'handling'])) {
         return null;
       }
+
       if (!expectation) {
+        context.cancel();
         continue;
       }
 
