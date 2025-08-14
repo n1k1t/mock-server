@@ -31,7 +31,12 @@ export class HistoryComponent extends Component {
       event: this.data.snapshot.event,
       transport: this.data.snapshot.transport,
 
+      ...(this.data.snapshot.seed && { seed: this.data.snapshot.seed }),
+      ...(this.data.snapshot.container && { container: this.data.snapshot.container }),
+
       ...(Object.keys(this.data.snapshot.flags).length && { flags: this.data.snapshot.flags }),
+      ...(Object.keys(this.data.snapshot.state).length && { state: this.data.snapshot.state }),
+
       ...(this.data.expectation && {
         expectation: {
           id: this.data.expectation.id,
@@ -41,9 +46,9 @@ export class HistoryComponent extends Component {
         },
       }),
 
-      ...(this.data.snapshot.cache?.isEnabled && { cache: this.data.snapshot.cache }),
-      ...(this.data.snapshot.seed && { seed: this.data.snapshot.seed }),
-      ...(this.data.snapshot.container && { container: this.data.snapshot.container }),
+      ...((this.data.snapshot.cache.hasRead || this.data.snapshot.cache.hasWritten) && {
+        cache: this.data.snapshot.cache,
+      }),
 
       incoming: this.data.snapshot.incoming,
 

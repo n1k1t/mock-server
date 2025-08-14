@@ -15,8 +15,11 @@ import type {
 const clone = rfdc();
 
 export class RequestContextSnapshot<TContext extends IServerContext = IServerContext> {
-  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage' | 'forwarded'> & {
+  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage' | 'forwarded' | 'state' | 'cache'> & {
     transport: TContext['transport'];
+
+    state: RequestContextSnapshot['state'];
+    cache: RequestContextSnapshot['cache'];
 
     incoming: {
       dataRaw?: string;
