@@ -2,4 +2,18 @@ div.history {
   padding-top: 0;
   padding-bottom: 0;
   margin-top: 0;
+
+  div.meta {
+    span.status {
+      min-width: 85px;
+    }
+
+    span.cache {
+      padding-top: 8px;
+
+      &.written {
+        color: $color-red;
+      }
+    }
+  }
 }

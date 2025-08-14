@@ -7,26 +7,26 @@ import { cast } from '../../../../utils';
 import context from '../../context';
 
 const template = hbs.compile(require('./template.hbs'));
-
-const storage = new Map<string, ExpectationComponent>();
 const empty = EmptyComponent.build();
 
-const controls = {
-  state: {
-    filters: {
-      search: cast<null | string>(null),
-      groups: cast<null | string[]>(null),
-    },
-  },
+const state = {
+  storage: new Map<string, ExpectationComponent>(),
 
+  filters: {
+    search: cast<null | string>(null),
+    groups: cast<null | string[]>(null),
+  },
+};
+
+const panels = {
   search: SearchComponent
     .build({ title: 'Search expectations' })
     .on('clear', () => {
-      controls.state.filters.search = null;
+      state.filters.search = null;
       refresh();
     })
     .on('input', (value) => {
-      controls.state.filters.search = value;
+      state.filters.search = value;
       refresh();
     }),
 
@@ -56,32 +56,36 @@ const controls = {
 const filter = (provided: ExpectationComponent[]): ExpectationComponent[] => {
   let filtred = provided;
 
-  if (controls.state.filters.groups) {
-    filtred = filtred.filter((expectation) => controls.state.filters.groups!.includes(expectation.data.group));
+  if (state.filters.groups) {
+    filtred = filtred.filter((expectation) => state.filters.groups!.includes(expectation.data.group));
   }
-  if (controls.state.filters.search) {
-    filtred = filtred.filter((expectation) => expectation.match(controls.state.filters.search!));
+  if (state.filters.search) {
+    filtred = filtred.filter((expectation) => expectation.match(state.filters.search!));
   }
 
   return filtred;
 }
 
-const refresh = (list: ExpectationComponent[] = [...storage.values()]) => {
+const refresh = (list: ExpectationComponent[] = [...state.storage.values()]) => {
   const shown = filter(list.map((expectation) => expectation.hide())).map((expectation) => expectation.show());
 
-  if (list.length === storage.size) {
+  if (list.length === state.storage.size) {
     shown.length ? empty.hide() : empty.show();
   }
 }
 
 const toggle = (groups?: string[]) =>
-  (groups ?? context.shared.groups).forEach((group) => {
-    const filtred = [...storage.values()].filter((expectation) => expectation.data.group === group);
+  (groups ?? context.services.groups.storage).forEach((group) => {
+    const filtred = [...state.storage.values()].filter((expectation) => expectation.data.group === group);
 
     filtred.every((expectation) => !expectation.data.isEnabled)
-      ? controls.switcher.buttons.provided[group]?.disable('silent')
-      : controls.switcher.buttons.provided[group]?.enable('silent');
+      ? panels.switcher.buttons.provided[group]?.disable('silent')
+      : panels.switcher.buttons.provided[group]?.enable('silent');
   });
+
+const compileOptions = (): ExpectationComponent['TOptions'] => ({
+  pathSize: context.services.settings.get('settings:visual:path-size'),
+});
 
 export default Section
   .build(template({}))
@@ -89,53 +93,49 @@ export default Section
   .once('initialize', (section) => {
     section.append(empty);
 
-    section.controls.main.append(controls.search);
-    section.controls.additional.append(controls.filter);
-    section.controls.additional.append(controls.switcher);
+    section.controls.main.append(panels.search);
+    section.controls.additional.append(panels.filter);
+    section.controls.additional.append(panels.switcher);
 
-    context.on('group:register', (name) => {
-      controls.switcher.provide({ name, isEnabled: true, colorify: true });
-      controls.filter.provide({ name, isEnabled: true, colorify: true });
+    context.services.groups.on('register', (name) => {
+      panels.switcher.provide({ name, isEnabled: true, colorify: true });
+      panels.filter.provide({ name, isEnabled: true, colorify: true });
     });
 
-    controls.switcher.on('enable', (item) =>
-      context.services.io.exec('expectations:group:update', { name: item.name, set: { isEnabled: true } })
+    panels.switcher.on('enable', (button) =>
+      context.services.io.exec('expectations:group:update', { name: button.name, set: { isEnabled: true } })
     );
 
-    controls.switcher.on('disable', (item) =>
-      context.services.io.exec('expectations:group:update', { name: item.name, set: { isEnabled: false } })
+    panels.switcher.on('disable', (button) =>
+      context.services.io.exec('expectations:group:update', { name: button.name, set: { isEnabled: false } })
     );
 
-    controls.filter.on('enable', () => {
-      controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
+    panels.filter.on('switch', (buttons) => {
+      state.filters.groups = buttons.filter((button) => button.isEnabled).map((button) => button.name);
       refresh();
     });
 
-    controls.filter.on('disable', () => {
-      controls.state.filters.groups = controls.filter.extract().filter((item) => item.isEnabled).map((item) => item.name);
-      refresh();
-    });
+    context.services.settings.on('assign:settings:visual:path-size', () =>
+      state.storage.forEach((expectation) => expectation.refresh(compileOptions()))
+    );
 
     context.services.io.subscribe('expectation:added', (data) => {
-      const expectation = ExpectationComponent.build(data);
+      const expectation = ExpectationComponent.build(data, compileOptions());
 
-      storage.set(data.id, expectation);
+      state.storage.set(data.id, expectation);
+      context.services.groups.register(data.group);
+
       section.content.append(expectation);
-
-      if (!context.shared.groups.has(data.group)) {
-        context.shared.groups.add(data.group);
-        context.emit('group:register', data.group);
-      }
 
       refresh([expectation]);
       toggle([expectation.data.group]);
     });
 
     context.services.io.subscribe('expectation:updated', (data) => {
-      const expectation = storage.get(data.id) ?? ExpectationComponent.build(data);
+      const expectation = state.storage.get(data.id) ?? ExpectationComponent.build(data, compileOptions());
 
-      if (storage.has(data.id)) {
-        expectation.provide(data).refresh();
+      if (state.storage.has(data.id)) {
+        expectation.provide(data).refresh(compileOptions());
       }
 
       if (!section.content.element.querySelector(`div.expectation[id="${data.id}"]`)) {
@@ -143,34 +143,28 @@ export default Section
         refresh([expectation])
       }
 
-      if (!context.shared.groups.has(data.group)) {
-        context.shared.groups.add(data.group);
-        context.emit('group:register', data.group);
-      }
+      state.storage.set(data.id, expectation);
+      context.services.groups.register(data.group);
 
-      storage.set(data.id, expectation);
       toggle([expectation.data.group]);
     });
   })
   .on('initialize', async (section) => {
-    context.shared.groups.clear();
+    context.services.groups.clear();
     section.content.clear();
 
-    controls.switcher.clear();
-    controls.filter.clear();
-    storage.clear();
+    panels.switcher.clear();
+    panels.filter.clear();
+    state.storage.clear();
 
     const { data } = await context.services.io.exec('expectations:get-list');
 
     data.forEach((expectation) => {
-      const component = ExpectationComponent.build(expectation);
+      const component = ExpectationComponent.build(expectation, compileOptions());
 
-      if (!context.shared.groups.has(expectation.group)) {
-        context.shared.groups.add(expectation.group);
-        context.emit('group:register', expectation.group);
-      }
+      state.storage.set(expectation.id, component);
+      context.services.groups.register(expectation.group);
 
-      storage.set(expectation.id, component);
       section.content.append(component);
     });
 

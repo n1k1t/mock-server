@@ -30,23 +30,28 @@ div.panel {
     justify-content: center;
   }
 
-  &.width-L {
-    max-width: 1300px;
-    width: 100%;
+  &.width-XL {
+    max-width: $container-width;
+    width: calc(100% - 25px);
   }
 
-  &.width-M {
-    max-width: 630px;
+  &.width-L {
+    max-width: 680px;
     width: calc(50% - 25px);
   }
 
+  &.width-M {
+    max-width: 558px;
+    width: calc(45% - 25px);
+  }
+
   &.width-S {
-    max-width: 410px;
+    max-width: 445px;
     width: calc(33.33% - 25px);
   }
 
   &.width-XS {
-    max-width: 305px;
+    max-width: 325px;
     width: calc(25% - 25px);
   }
 

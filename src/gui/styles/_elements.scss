@@ -23,8 +23,8 @@ html {
 
 body {
   color: #fff;
-  min-width: 772px;
-  max-width: 1600px;
+  min-width: $screen-width-minimum;
+  max-width: $screen-width-maximum;
   margin: auto;
   margin-top: 20px;
   padding-bottom: 100px;
@@ -115,7 +115,7 @@ section {
 }
 
 div.container {
-  max-width: 1300px;
+  max-width: $container-width;
   margin: auto;
   border-radius: 5px;
   padding: 10px 20px;
@@ -128,6 +128,7 @@ div.buttons {
   display: flex;
   align-items: center;
   justify-self: center;
+  flex-wrap: wrap;
 }
 
 div.input {

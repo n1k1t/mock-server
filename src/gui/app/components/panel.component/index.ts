@@ -1,7 +1,7 @@
 import hbs from 'handlebars';
 import { Component, TElementPredicate } from '../../models';
 
-export type TPanelSize = 'XS' | 'S' | 'M' | 'L';
+export type TPanelSize = 'XS' | 'S' | 'M' | 'L' | 'XL';
 
 export interface IPanelConfiguration {
   title?: {

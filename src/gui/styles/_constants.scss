@@ -8,4 +8,8 @@ $color-purple: adjust-hue($color-main, 200);
 $color-green: adjust-hue($color-main, 60);
 $color-red: adjust-hue($color-main, -40);
 
-$screen-medium: 1000px;
+$container-width: 1400px;
+
+$screen-width-maximum: 1800px;
+$screen-width-minimum: 772px;
+$screen-width-medium: 1000px;

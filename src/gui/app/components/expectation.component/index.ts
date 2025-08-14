@@ -1,6 +1,7 @@
 import hbs from 'handlebars';
 import _ from 'lodash';
 
+import type { TSettingsVisualPathSize } from '../../types';
 import type { Expectation } from '../../../../expectations';
 
 import { Button, Component } from '../../models';
@@ -11,19 +12,23 @@ import context from '../../context';
 const template = hbs.compile(require('./template.hbs'));
 
 export class ExpectationComponent extends Component {
+  public TOptions!: {
+    pathSize?: TSettingsVisualPathSize;
+  };
+
   public viewer = ViewerComponent.build({ depth: 3 }).hide();
 
-  constructor(public data: Expectation['TPlain']) {
+  constructor(public data: Expectation['TPlain'], options?: ExpectationComponent['TOptions']) {
     super();
-    this.refresh();
+    this.refresh(options);
   }
 
-  public provide(data: Expectation['TPlain']) {
+  public provide(data: Expectation['TPlain']): this {
     return Object.assign(this, { data });
   }
 
-  public refresh(): this {
-    this.replace(template(this.data)).append(this.viewer);
+  public refresh(options?: ExpectationComponent['TOptions']): this {
+    this.replace(template({ options, data: this.data })).append(this.viewer);
     this.viewer.provide(_.pick(this.data, ['id', 'type', 'transports', 'schema']));
 
     Button
@@ -54,7 +59,7 @@ export class ExpectationComponent extends Component {
     ].some((value) => value?.includes(query));
   }
 
-  static build(expectation: Expectation['TPlain']) {
-    return new ExpectationComponent(expectation);
+  static build(data: Expectation['TPlain'], options?: ExpectationComponent['TOptions']): ExpectationComponent {
+    return new ExpectationComponent(data, options);
   }
 }

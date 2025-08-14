@@ -14,14 +14,16 @@ const header = components.HeaderComponent.build([
 
 context.switchStorage(sections.expectations.storage).share({
   popups: components.PopupsComponent.build(),
-  groups: new Set(),
 });
 
 document.body.prepend(header.element);
 document.body.append(loader.element);
 document.body.append(context.shared.popups.element);
 
-Object.values(sections).forEach((section) => document.body.append(section.element));
+Object
+  .values(sections)
+  .map((section) => section.compile())
+  .forEach((section) => document.body.append(section.element));
 
 context.instances.io.on('connect', async () => {
   console.log('WebSocket has connected');
@@ -30,7 +32,7 @@ context.instances.io.on('connect', async () => {
 
   const { data } = await context.services.io.exec('config:get');
 
-  context.assignConfig(data);
+  context.services.config.assign(data);
   context.shared.popups.push('Connected!');
 
   Object.values(sections).forEach((container) => container.initialize());

@@ -7,13 +7,16 @@ import { Button } from './button';
 
 interface IEvents {
   initialize: [Section];
+  compile: [Section];
   refresh: [Section];
   select: [Section];
 }
 
 export class Section extends Component {
   public content = new Component(this.element.querySelector('div.content'));
+
   public isInitialized = false;
+  public isCompiled = false;
 
   public controls = {
     main: new Component(this.element.querySelector('div.controls div.main')),
@@ -42,41 +45,50 @@ export class Section extends Component {
     }
   }
 
-  public assignMeta(meta: Section['meta']) {
+  public assignMeta(meta: Section['meta']): this {
     return Object.assign(this, { meta });
   }
 
-  public initialize() {
+  public compile(): this {
+    if (this.isCompiled) {
+      return this;
+    }
+
+    this.isCompiled = true;
+    return this.emit('compile', this);
+  }
+
+  public initialize(): this {
     this.isInitialized = true;
     this.storage.sync();
 
     return this.emit('initialize', this);
   }
 
-  public refresh() {
+  public refresh(): this {
     return this.emit('refresh', this);
   }
 
-  public select() {
+  public select(): this {
     return this.emit('select', this);
   }
 
-  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>): this {
     this.events.on(event, handler);
     return this;
   }
 
-  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>): this {
     this.events.once(event, handler);
     return this;
   }
 
-  private emit<K extends keyof IEvents>(event: K, ...args: IEvents[K]) {
+  private emit<K extends keyof IEvents>(event: K, ...args: IEvents[K]): this {
     this.events.emit(event, ...args);
     return this;
   }
 
-  static build(predicate: TElementPredicate) {
+  static build(predicate: TElementPredicate): Section {
     return new Section(predicate);
   }
 }

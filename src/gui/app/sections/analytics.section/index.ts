@@ -17,7 +17,7 @@ const charts = {
       description: 'updates every 5 seconds',
     },
 
-    width: 'M',
+    width: 'L',
   }),
 
   cache: ChartComponent.build({
@@ -28,7 +28,7 @@ const charts = {
       description: 'updates every 10 minutes'
     },
 
-    width: 'M',
+    width: 'L',
   }),
 
   containers: ChartComponent.build({

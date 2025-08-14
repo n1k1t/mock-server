@@ -1,0 +1,17 @@
+export default `
+  <span class="path size-{{size}}">
+    {{#if (compare size 'eq' 'S')}}
+      {{> truncated this length=40}}
+    {{else if (compare size 'eq' 'M')}}
+      {{> truncated this length=45}}
+    {{else if (compare size 'eq' 'L')}}
+      {{> truncated this length=55}}
+    {{else if (compare size 'eq' 'XL')}}
+      {{> truncated this length=65}}
+    {{else if (compare size 'eq' 'XXL')}}
+      {{> truncated this length=75}}
+    {{else}}
+      {{value}}
+    {{/if}}
+  </span>
+`

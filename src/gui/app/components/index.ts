@@ -1,5 +1,6 @@
 export * from './checkbox-area.component';
 export * from './expectation.component';
+export * from './separator.component';
 export * from './history.component';
 export * from './curtain.component';
 export * from './loader.component';

@@ -1,9 +1,10 @@
 import hbs from 'handlebars';
 import _ from 'lodash';
 
+import { CheckboxAreaComponent, PanelComponent, SeparatorComponent } from '../../components';
 import { Button, DynamicStorage, FormFile, Section } from '../../models';
+import { TSettingsVisualPathSize } from '../../types';
 import { socketIoStream } from '../../../../utils';
-import { PanelComponent } from '../../components';
 
 import context from '../../context';
 
@@ -17,90 +18,129 @@ const templates = {
 };
 
 const panels = {
-  stats: PanelComponent.build({
-    title: {
-      text: 'Stats',
-      icon: 'fas fa-server'
-    },
-
-    class: 'stats',
-
-    height: 'XS',
-    width: 'M',
-  }),
-
-  cacheDeletion: PanelComponent
-    .build({
+  system: {
+    stats: PanelComponent.build({
       title: {
-        text: 'Cache deletion',
-        icon: 'fas fa-database',
+        text: 'Stats',
+        icon: 'fas fa-server'
       },
 
-      class: 'cache',
+      class: 'stats',
 
       height: 'XS',
-      width: 'M',
-    })
-    .replace(templates.cacheDeletion({})),
+      width: 'XS',
+    }),
+  },
 
-  cacheBackup: PanelComponent
-    .build({
-      title: {
-        text: 'Cache backup',
-        icon: 'fas fa-database',
-      },
+  cache: {
+    deletion: PanelComponent
+      .build({
+        title: {
+          text: 'Cache deletion',
+          icon: 'fas fa-database',
+        },
 
-      class: 'cache',
+        class: 'cache',
 
-      height: 'XS',
-      width: 'M',
-    })
-    .replace(templates.cacheBackup({})),
+        height: 'XS',
+        width: 'S',
+      })
+      .replace(templates.cacheDeletion({})),
 
-  cacheRestoration: PanelComponent
-    .build({
-      title: {
-        text: 'Cache restoration',
-        icon: 'fas fa-database',
-      },
+    backup: PanelComponent
+      .build({
+        title: {
+          text: 'Cache backup',
+          icon: 'fas fa-database',
+        },
 
-      class: 'cache',
+        class: 'cache',
 
-      height: 'XS',
-      width: 'M',
-    })
-    .replace(templates.cacheRestoration({})),
+        height: 'XS',
+        width: 'XS',
+      })
+      .replace(templates.cacheBackup({})),
+
+    restoration: PanelComponent
+      .build({
+        title: {
+          text: 'Cache restoration',
+          icon: 'fas fa-database',
+        },
+
+        class: 'cache',
+
+        height: 'XS',
+        width: 'M',
+      })
+      .replace(templates.cacheRestoration({})),
+  },
+
+  visual: {
+    pathSize: CheckboxAreaComponent
+      .build<TSettingsVisualPathSize>({
+        title: {
+          text: 'Expectation/history path box size',
+          icon: 'fas fa-palette',
+        },
+
+        storage: {
+          key: 'settings:visual:path-size',
+        },
+
+        class: 'visual',
+        type: 'radio',
+
+        height: 'XS',
+        width: 'S',
+      })
+      .provide(
+        { name: 'S' },
+        { name: 'M', isEnabled: true },
+        { name: 'L' },
+        { name: 'XL' },
+        { name: 'XXL' },
+        { name: 'Unlimited' }
+      ),
+  },
 };
 
 const storages = {
-  cacheDeletion: DynamicStorage.build<{ prefix?: string }>('settings:cache:deletion', panels.cacheDeletion),
-
-  cacheRestoration: DynamicStorage.build<{
-    files?: FormFile[];
-    ttl?: number;
-  }>('settings:cache:restoration', panels.cacheRestoration),
+  cache: {
+    deletion: DynamicStorage.build<{ prefix?: string }>('settings:cache:deletion', panels.cache.deletion),
+    restoration: DynamicStorage.build<{
+      files?: FormFile[];
+      ttl?: number;
+    }>('settings:cache:restoration', panels.cache.restoration),
+  },
 };
 
 export default Section
   .build(templates.section({}))
   .assignMeta({ icon: 'fas fa-cog' })
-  .once('initialize', async (section) => {
-    section.content.append(panels.stats);
-    section.content.append(panels.cacheDeletion);
-    section.content.append(panels.cacheBackup);
-    section.content.append(panels.cacheRestoration);
+  .once('initialize', (section) => {
+    section.content.append(SeparatorComponent.build('System'));
+    section.content.append(panels.system.stats);
 
-    storages.cacheDeletion.sync();
-    storages.cacheRestoration.sync();
+    section.content.append(SeparatorComponent.build('Cache'));
+    section.content.append(panels.cache.backup);
+    section.content.append(panels.cache.restoration);
+    section.content.append(panels.cache.deletion);
 
-    Button.build(panels.cacheDeletion.element.querySelector('button#delete')).handle(async () => {
-      const extracted = await storages.cacheDeletion.save();
+    section.content.append(SeparatorComponent.build('Visual'));
+    section.content.append(panels.visual.pathSize);
+
+    storages.cache.deletion.sync();
+    storages.cache.restoration.sync();
+
+    Button.build(panels.cache.deletion.element.querySelector('button#delete')).handle(async () => {
+      const extracted = await storages.cache.deletion.save();
 
       const { data } = await context.services.io.exec('cache:delete', { prefix: extracted.prefix });
       context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
     });
 
-    Button.build(panels.cacheBackup.element.querySelector('button#backup')).handle(async () => {
+    Button.build(panels.cache.backup.element.querySelector('button#backup')).handle(async () => {
       const { data } = await context.services.io.exec('cache:backup');
 
       const link = document.createElement('a');
@@ -112,8 +152,8 @@ export default Section
       link.click();
     });
 
-    Button.build(panels.cacheRestoration.element.querySelector('button#restore')).handle(async () => {
-      const extracted = await storages.cacheRestoration.save();
+    Button.build(panels.cache.restoration.element.querySelector('button#restore')).handle(async () => {
+      const extracted = await storages.cache.restoration.save();
       if (!extracted.files?.length) {
         return context.shared.popups.push('File is not provided', { level: 'warning' });
       }
@@ -121,14 +161,16 @@ export default Section
       const size = 1024 * 300;
       const stream = socketIoStream.createStream({ highWaterMark: size });
 
-      socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl })
+      socketIoStream(context.instances.io).emit('cache:restore:stream', stream, { ttl: extracted.ttl });
       socketIoStream.createBlobReadStream(extracted.files[0].source, { highWaterMark: size }).pipe(stream);
 
       await new Promise((resolve) => stream.once('finish', resolve));
       context.shared.popups.push('Restored');
     });
+
+    panels.visual.pathSize.on('enable', (button) => context.services.settings.assign('settings:visual:path-size', button.name));
   })
   .on('select', async () => {
     const { data } = await context.services.io.exec('stats');
-    panels.stats.replace(templates.stats(data));
+    panels.system.stats.replace(templates.stats(data));
   });

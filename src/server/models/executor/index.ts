@@ -124,7 +124,6 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           outgoing: forwarded.outgoing ?? context.snapshot.outgoing,
 
           forwarded: {
-            isCached: forwarded.isCached,
             messages: clone(forwarded.messages),
 
             incoming: Object.assign(
@@ -147,7 +146,6 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           cache: context.snapshot.cache,
 
           forwarded: {
-            isCached: context.snapshot.forwarded.isCached,
             incoming: _.omit(context.snapshot.forwarded.incoming, ['stream']),
 
             ...(context.snapshot.forwarded.outgoing && {
@@ -197,13 +195,13 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
       if (parsed) {
         logger.info(`Got cache [${snapshot.cache.key}]`);
+        snapshot.cache.hasRead = true;
 
         if (parsed.messages?.length) {
           parsed.outgoing.stream = from(parsed.messages.map((message) => message.data) ?? []);
         }
 
         return Object.assign(snapshot.pick(['incoming']), {
-          isCached: true,
           messages: parsed.messages,
 
           outgoing: Object.assign(_.omit(parsed.outgoing, ['dataRaw']), {
@@ -260,7 +258,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
     const shouldBeCached = snapshot.cache.isEnabled
       && snapshot.forwarded?.outgoing
-      && !snapshot.forwarded.isCached
+      && !snapshot.cache.hasRead
       && snapshot.cache.ttl
       && typeof snapshot.cache.key === 'string';
 
@@ -287,7 +285,10 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           snapshot.cache.ttl!,
           zipped.toString('base64')
         )
-          .then(() => logger.info(`Wrote cache [${snapshot.cache.key}] for [${snapshot.cache.ttl}] seconds`))
+          .then(() => {
+            logger.info(`Wrote cache [${snapshot.cache.key}] for [${snapshot.cache.ttl}] seconds`);
+            snapshot.cache.hasWritten = true;
+          })
           .catch((error) => logger.error('Got error while redis set', error?.stack ?? error));
       }
     }

@@ -80,7 +80,6 @@
     "@types/express": "4.17.13",
     "@types/http-proxy": "1.17.9",
     "@types/jest": "29.5.14",
-    "@types/lodash": "4.14.184",
     "@types/mime-types": "2.1.4",
     "@types/minimatch": "5.1.2",
     "@types/node": "22.13.4",
@@ -103,6 +102,7 @@
   "dependencies": {
     "@faker-js/faker": "9.2.0",
     "@n1k1t/typebox": "0.31.14",
+    "@types/lodash": "4.14.184",
     "axios": "0.27.2",
     "body-parser": "1.20.3",
     "colors": "1.4.0",

@@ -2,25 +2,30 @@ import hbs from 'handlebars';
 
 import type { History } from '../../../../server';
 
+import { TSettingsVisualPathSize } from '../../types';
 import { ViewerComponent } from '../viewer.component';
 import { Component } from '../../models';
 
 const template = hbs.compile(require('./template.hbs'));
 
 export class HistoryComponent extends Component {
+  public TOptions!: {
+    pathSize?: TSettingsVisualPathSize;
+  };
+
   public viewer = ViewerComponent.build({ depth: 2 }).hide();
 
-  constructor(public data: History['TPlain']) {
+  constructor(public data: History['TPlain'], options?: HistoryComponent['TOptions']) {
     super();
-    this.refresh();
+    this.refresh(options);
   }
 
   public provide(data: History['TPlain']) {
     return Object.assign(this, { data });
   }
 
-  public refresh(): this {
-    this.replace(template(this.data)).append(this.viewer);
+  public refresh(options?: HistoryComponent['TOptions']): this {
+    this.replace(template({ options, data: this.data })).append(this.viewer);
 
     this.viewer.provide({
       event: this.data.snapshot.event,
@@ -70,6 +75,10 @@ export class HistoryComponent extends Component {
       this.data.snapshot.outgoing.dataRaw,
     ].some((value) => value?.includes(query));
 
+    if (light) {
+      return true;
+    }
+
     return light || [
       this.data.snapshot.incoming.query,
       this.data.snapshot.incoming.headers,
@@ -80,7 +89,7 @@ export class HistoryComponent extends Component {
     ].some((value) => JSON.stringify(value)?.includes(query))
   }
 
-  static build(history: History['TPlain']) {
-    return new HistoryComponent(history);
+  static build(data: History['TPlain'], options?: HistoryComponent['TOptions']) {
+    return new HistoryComponent(data, options);
   }
 }

@@ -49,7 +49,6 @@ export interface IRequestContextForwarded {
   outgoing?: IRequestContextOutgoing;
 
   messages?: Pick<IRequestContextMessage, 'location' | 'data'>[];
-  isCached?: boolean;
 }
 
 export interface IRequestContextCache {
@@ -61,6 +60,9 @@ export interface IRequestContextCacheConfiguration {
   isEnabled: boolean;
   prefix?: string;
   key?: string | object;
+
+  hasWritten?: boolean;
+  hasRead?: boolean;
 
   /** Seconds */
   ttl?: number;

@@ -99,12 +99,14 @@ div.history, div.expectation {
 
     span.name {
       font-size: 12px;
+
       b { color: $color-main }
     }
 
     span.status {
       color: rgba(#fff, .4);
       font-size: 12px;
+      padding-top: 8px;
 
       b {
         min-width: 35px;
@@ -119,6 +121,7 @@ div.history, div.expectation {
     span.transport {
       color: rgba(#fff, .4);
       font-size: 12px;
+      padding-top: 8px;
     }
 
     span.method {
@@ -129,6 +132,11 @@ div.history, div.expectation {
     span.path {
       background-color: adjust-hue($color-main, -20);
       color: $color-dark;
+
+      &.size-S {
+        font-size: 12px;
+        padding-top: 8px;
+      }
     }
 
     span.time {
@@ -195,16 +203,13 @@ div.history, div.expectation {
     span.forward {
       background-color: $color-purple;
       font-size: 12px;
+      padding-top: 8px;
     }
 
     span.seed {
       color: $color-green;
       font-size: 12px;
-    }
-
-    span.cache {
-      background-color: lighten($color-purple, 20);
-      color: $color-dark;
+      padding-top: 8px;
     }
   }
 
@@ -222,25 +227,8 @@ div.history, div.expectation {
     }
   }
 
-  @media screen and (max-width: $screen-medium) {
-    div.meta {
-      background-color: lighten($color-dark, 2);
-      padding: 5px;
-      padding-bottom: 0;
-      margin-bottom: 5px;
-
-      span.arrow:nth-child(1), span.arrow:nth-child(2) { display: none }
-
-      div.segment:first-child {
-        width: 100%;
-
-        span:not(.path) { background-color: transparent }
-        span.time { padding: 9px 5px; }
-      }
-    }
-
-    &:hover div.meta {
-      background-color: lighten($color-dark, 5);
-    }
+  @media screen and (max-width: $screen-width-medium) {
+    border-bottom: dashed 1px rgba(#fff, .2);
+    padding-top: 5px !important;
   }
 }

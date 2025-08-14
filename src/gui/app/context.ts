@@ -1,5 +1,4 @@
 import EventEmitter from 'events';
-import axios from 'axios';
 import io from 'socket.io-client';
 
 import type { IIoExchangeSchema } from '../../server';
@@ -9,26 +8,17 @@ import type { TFunction } from '../../../types';
 
 import { Context } from './models';
 
+import * as services from './services';
+
 type ExtractWsEndpointPath<K extends keyof TEndpoints> = TEndpoints[K]['io'] extends { path: infer R }
   ? R extends string ? R : never
   : never;
 
 type TWsEndpoints = { [K in keyof TEndpoints as ExtractWsEndpointPath<K>]-?: TEndpoints[K] };
 
-interface IEvents {
-  'group:register': [string];
-}
-
 class MainContext extends Context<{
   popups: PopupsComponent;
-  groups: Set<string>;
 }> {
-  public config = {
-    history: {
-      limit: 100,
-    },
-  };
-
   public instances = {
     io: io(window.DEV?.io.origin ?? location.origin, {
       path: window.DEV?.io.path ?? `${location.pathname.split('/').slice(0, -3).join('/')}/socket.io/`
@@ -36,6 +26,10 @@ class MainContext extends Context<{
   };
 
   public services = {
+    settings: services.SettingsService.build(),
+    groups: services.GroupsService.build(),
+    config: services.ConfigService.build(),
+
     io: {
       exec: <K extends keyof TWsEndpoints & string>(
         path: K,
@@ -48,27 +42,6 @@ class MainContext extends Context<{
       >(channel: K, handler: (payload: T) => unknown) => this.instances.io.on(<string>channel, handler)
     },
   };
-
-  private events = new EventEmitter();
-
-  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
-    this.events.on(event, handler);
-    return this;
-  }
-
-  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
-    this.events.once(event, handler);
-    return this;
-  }
-
-  public emit<K extends keyof IEvents>(event: K, ...args: IEvents[K]) {
-    this.events.emit(event, ...args);
-    return this;
-  }
-
-  public assignConfig(config: MainContext['config']) {
-    return Object.assign(this, { config });
-  }
 }
 
 export default new MainContext();

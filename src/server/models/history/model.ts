@@ -24,11 +24,17 @@ export class History {
   public timestamp: number = this.configuration.timestamp ?? Date.now();
   public duration: number = this.configuration.duration ?? 0;
 
+  private cached: null | History['TPlain'] = null;
+
   constructor(
     protected configuration:
       & Pick<History, 'group' | 'snapshot'>
       & Partial<Pick<History, 'timestamp' | 'id' | 'status' | 'expectation' | 'duration'>>
   ) {}
+
+  public get plain(): History['TPlain'] {
+    return this.cached ?? this.toPlain();
+  }
 
   public pushMessage(location: IRequestContextMessage['location'], data: unknown): this {
     this.snapshot.messages.push({ location, data, id: this.messagesCounter(), timestamp: Date.now() });
@@ -53,7 +59,8 @@ export class History {
       this.snapshot.container = this.snapshot.container.clone();
     }
 
-    return this.switchStatus('completed');
+    this.cached = this.switchStatus('completed').toPlain();
+    return this;
   }
 
   public assign<T extends Partial<Pick<History, 'expectation'>>>(payload: T) {

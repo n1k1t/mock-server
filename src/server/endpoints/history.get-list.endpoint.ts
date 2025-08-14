@@ -10,6 +10,6 @@ export default Endpoint
         .extract()
         .reduce<History[]>((acc, provider) => acc.concat([...provider.storages.history.values()]), [])
         .sort((a, b) => b.timestamp - a.timestamp)
-        .map((history) => history.toPlain())
+        .map((history) => history.plain)
     )
   );

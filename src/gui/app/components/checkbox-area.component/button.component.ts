@@ -6,15 +6,15 @@ import { TFunction } from '../../../../../types';
 
 type TTrigger = 'click' | 'auto' | 'silent';
 
-interface IEvents {
-  enable: [CheckboxAreaButtonComponent, TTrigger];
-  disable: [CheckboxAreaButtonComponent, TTrigger];
+interface IEvents<TName extends string = string> {
+  enable: [CheckboxAreaButtonComponent<TName>, TTrigger];
+  disable: [CheckboxAreaButtonComponent<TName>, TTrigger];
 }
 
-export class CheckboxAreaButtonComponent extends Component {
+export class CheckboxAreaButtonComponent<TName extends string = string> extends Component {
   private events = new EventEmitter();
 
-  constructor(public configuration: { name: string, isEnabled?: boolean, colorify?: boolean }) {
+  constructor(public configuration: { name: TName, isEnabled?: boolean, colorify?: boolean }) {
     super(`
       <button
         style="${configuration?.colorify ? `color: ${calculateColor(configuration.name)}` : ''}"
@@ -25,7 +25,7 @@ export class CheckboxAreaButtonComponent extends Component {
     this.element.addEventListener('click', () => this.isEnabled ? this.disable('click') : this.enable('click'));
   }
 
-  public get name(): string {
+  public get name(): TName {
     return this.configuration.name;
   }
 
@@ -51,22 +51,24 @@ export class CheckboxAreaButtonComponent extends Component {
     return this.emit('disable', this, trigger);
   }
 
-  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+  public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents<TName>[K]>) {
     this.events.on(event, handler);
     return this;
   }
 
-  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents[K]>) {
+  public once<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents<TName>[K]>) {
     this.events.once(event, handler);
     return this;
   }
 
-  private emit<K extends keyof IEvents>(event: K, ...args: IEvents[K]) {
+  private emit<K extends keyof IEvents>(event: K, ...args: IEvents<TName>[K]) {
     this.events.emit(event, ...args);
     return this;
   }
 
-  static build(configuration: CheckboxAreaButtonComponent['configuration']) {
+  static build<TName extends string>(
+    configuration: CheckboxAreaButtonComponent<TName>['configuration']
+  ): CheckboxAreaButtonComponent<TName> {
     return new CheckboxAreaButtonComponent(configuration);
   }
 }

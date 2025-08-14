@@ -34,4 +34,11 @@ section#settings {
       color: $color-dark;
     }
   }
+
+  div.visual div.content {
+    button.checked {
+      background-color: $color-main;
+      color: $color-dark;
+    }
+  }
 }

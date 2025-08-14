@@ -1,42 +1,47 @@
 export default `
-  <div class="container history" id="{{id}}">
+  <div class="container history" id="{{data.id}}">
     <div class="meta">
       <div class="segment">
-        <span class="time">{{#toLocaleTime timestamp}}{{/toLocaleTime}}</span>
+        <span class="time">{{#toLocaleTime data.timestamp}}{{/toLocaleTime}}</span>
 
-        {{#if snapshot.error}}
+        {{#if data.snapshot.error}}
           <span class="error">
-            {{#compare snapshot.error.code.length 'lte' 24}}{{snapshot.error.code}}{{/compare}}
-            {{#compare snapshot.error.code.length 'gt' 24}}Error{{/compare}}
+            {{#compare data.snapshot.error.code.length 'lte' 24}}{{data.snapshot.error.code}}{{/compare}}
+            {{#compare data.snapshot.error.code.length 'gt' 24}}Error{{/compare}}
           </span>
         {{/if}}
 
-        {{#compare status 'eq' 'pending'}}
+        {{#compare data.status 'eq' 'pending'}}
           <span class="pending"><i class="fas fa-hourglass-start"></i></span>
         {{/compare}}
 
-        {{#compare status 'eq' 'completed'}}
+        {{#compare data.status 'eq' 'completed'}}
           <span class="status
-            {{#compare snapshot.transport 'eq' 'http'}}
-              {{#compare snapshot.outgoing.status 'lt' 400}}green{{/compare}}
-              {{#compare snapshot.outgoing.status 'gte' 400}}red{{/compare}}
+            {{#compare data.snapshot.transport 'eq' 'http'}}
+              {{#compare data.snapshot.outgoing.status 'lt' 400}}green{{/compare}}
+              {{#compare data.snapshot.outgoing.status 'gte' 400}}red{{/compare}}
             {{/compare}}
-          "><b>{{snapshot.outgoing.status}}</b> {{toSeconds duration}}s</span>
+          "><b>{{data.snapshot.outgoing.status}}</b> {{toSeconds data.duration}}s</span>
         {{/compare}}
 
-        <span class="method" style="color: {{toColor snapshot.incoming.method}};">{{snapshot.incoming.method}}</span>
-        <span class="path">{{> truncated value=snapshot.incoming.path length=45}}</span>
+        <span class="method" style="color: {{toColor data.snapshot.incoming.method}};">{{data.snapshot.incoming.method}}</span>
+        {{> metaPath value=data.snapshot.incoming.path size=options.pathSize}}
 
-        {{#if snapshot.seed}}<span class="seed">{{snapshot.seed}}</span>{{/if}}
+        {{#if data.snapshot.seed}}<span class="seed">{{data.snapshot.seed}}</span>{{/if}}
       </div>
 
       <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
-      {{#if expectation}}
-        {{>expectationMeta expectation format='short' isCached=snapshot.forwarded.isCached}}
+      {{#if data.expectation}}
+        {{>expectationMeta options data=data.expectation format='short'}}
       {{else}}
         <div class="segment"><span class="handled-with red">Nowhere</span></div>
       {{/if}}
+
+      <div class="segment">
+        {{#if data.snapshot.cache.hasWritten}}<span class="cache written"><i class="fas fa-database"></i></span>{{/if}}
+        {{#if data.snapshot.cache.hasRead}}<span class="cache read"><i class="fas fa-database"></i></span>{{/if}}
+      </div>
     </div>
 
     {{!-- {{#if snapshot.messages}}

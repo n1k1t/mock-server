@@ -12,15 +12,17 @@ interface IPoint {
 }
 
 const calculateLegendsLimit = (size: TPanelSize) => cast<Record<TPanelSize, number>>({
-  L: 20,
-  M: 10,
+  XL: 20,
+  L: 10,
+  M: 8,
   S: 7,
   XS: 5,
 })[size];
 
 const calculatePointsLimit = (size: TPanelSize) => cast<Record<TPanelSize, number>>({
-  L: 200,
-  M: 100,
+  XL: 200,
+  L: 100,
+  M: 80,
   S: 60,
   XS: 40,
 })[size];

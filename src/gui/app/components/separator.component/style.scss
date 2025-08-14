@@ -1,0 +1,13 @@
+p.separator {
+  position: relative;
+  max-width: $container-width;
+  padding: 10px 0;
+  margin: auto;
+  font-size: 12px;
+  color: rgba(#fff, .3);
+
+  &.highlighted {
+    color: $color-main;
+    font-weight: bold;
+  }
+}
