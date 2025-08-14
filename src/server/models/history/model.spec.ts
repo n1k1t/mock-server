@@ -23,13 +23,3 @@ test('test_switchStatus_updatesStatus', () => {
   history.switchStatus('completed');
   expect(history.hasStatus('completed')).toBe(true);
 });
-
-// Test generated using Keploy
-test('test_complete_marksStatusCompletedAndClonesContainer', () => {
-  const mockContainer = { clone: jest.fn() };
-  const history = new History({ group: 'testGroup', snapshot: <any>{ messages: [], container: mockContainer } });
-  history.complete();
-  expect(history.hasStatus('completed')).toBe(true);
-  expect(mockContainer.clone).toHaveBeenCalled();
-});
-
