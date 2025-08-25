@@ -25,9 +25,14 @@ interface IExpectationContext {
 
 const buildClient = () => new Client({
   ping: () => Promise.resolve('pong'),
-  deleteExpectations: () => Promise.resolve(null),
 
-  createExpectation: (configuration) => Promise.resolve(
+  providersCreate: () => Promise.resolve(null),
+  providersDelete: () => Promise.resolve(null),
+
+  expectationsDelete: () => Promise.resolve(null),
+  expectationsGroupUpdate: () => Promise.resolve([]),
+
+  expectationsCreate: (configuration) => Promise.resolve(
     prepareExpectationBodyToRequest(
       Object.assign(Expectation.build(configuration).toPlain(), {
         id: '12426262-85a3-4340-969b-272e003722e9',
@@ -36,13 +41,11 @@ const buildClient = () => new Client({
     )
   ),
 
-  updateExpectation: ({ id, set }) => Promise.resolve(
+  expectationsUpdate: ({ id, set }) => Promise.resolve(
     prepareExpectationBodyToRequest(
       Object.assign(Expectation.build({ ...set, schema: set.schema ?? {} }).toPlain(), { id })
     )
   ),
-
-  updateExpectationsGroup: () => Promise.resolve([]),
 });
 
 describe('Client.Models.Client', () => {

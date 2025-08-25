@@ -44,7 +44,7 @@ export class ContainersStorage<T extends object = object> {
     return this;
   }
 
-  public getExpired(): Container[] {
+  public collectExpired(): Container[] {
     const timestamp = Date.now();
     return [...this.storage.values()].filter((container) => container.expiresAt < timestamp);
   }

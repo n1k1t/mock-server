@@ -81,4 +81,3 @@ it('should clone the instance correctly', () => {
   expect(cloneInstance).not.toBe(instance);
   expect(cloneInstance.transport).toBe(instance.transport);
 });
-

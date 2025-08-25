@@ -44,6 +44,17 @@ export class ProvidersStorage<
     return this.set(provider.group, provider);
   }
 
+  /** Deletes provider from storage */
+  public unregister(provider: Provider<any>): this {
+    this.delete(provider.group);
+    return this;
+  }
+
+  public collectExpired(): Provider<any>[] {
+    const timestamp = Date.now();
+    return [...this.values()].filter((provider) => provider.expiresAt < timestamp);
+  }
+
   static build<TContext extends IServerContext = IServerContext>(
     server: MockServer<any, any>
   ): ProvidersStorage<TContext> {

@@ -7,6 +7,10 @@ export { default as expectationsUpdate } from './expectations.update.endpoint';
 export { default as historyGetList } from './history.get-list.endpoint';
 export { default as historyDelete } from './history.delete.endpoint';
 
+export { default as providersGetList } from './providers.get-list.endpoint';
+export { default as providersCreate } from './providers.create.endpoint';
+export { default as providersDelete } from './providers.delete.endpoint';
+
 export { default as cacheRestoreStream } from './cache.restore.stream.endpoint';
 export { default as cacheUsageGet } from './cache.usage.get.endpoint';
 export { default as cacheRestore } from './cache.restore.endpoint';

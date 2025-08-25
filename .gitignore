@@ -11,10 +11,7 @@
 
 .vscode/
 
-discardedTests.txt
-keploy-logs.txt
 npm-debug.log
-keploy.yml
 
 /node_modules/
 /public/

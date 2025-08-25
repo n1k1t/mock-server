@@ -20,7 +20,7 @@ export class OnsiteClient<TContext extends IServerContext = IServerContext> exte
   public async updateExpectationsGroup(
     body: NonNullable<TEndpoints['expectationsGroupUpdate']['incoming']['data']>['set']
   ): Promise<Expectation['TPlain'][]> {
-    return this.methods.updateExpectationsGroup({ set: body });
+    return this.methods.expectationsGroupUpdate({ set: body });
   }
 
   static build<TContext extends IServerContext = IServerContext>(provider: Provider<any>): OnsiteClient<TContext> {

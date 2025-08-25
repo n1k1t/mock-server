@@ -10,8 +10,14 @@ export class Provider<TContext extends IServerContext = IServerContext> {
   public TContext!: TContext;
   public server!: MockServer;
 
+  public timestamp: number = Date.now();
+
   public client = OnsiteClient.build<TContext>(this);
   public group: string = this.provided.group;
+
+  /** Seconds */
+  public ttl?: number = this.provided.ttl;
+  public expiresAt: number = this.ttl ? this.timestamp + this.ttl * 1000 : Infinity;
 
   public storages = {
     expectations: new ExpectationsStorage(),
@@ -19,7 +25,7 @@ export class Provider<TContext extends IServerContext = IServerContext> {
     history: new HistoryStorage({ group: this.group, limit: this.provided.history?.limit }),
   };
 
-  constructor(protected provided: Pick<Provider, 'group'> & {
+  constructor(protected provided: Pick<Provider, 'group' | 'ttl'> & {
     history?: {
       limit?: number;
     };

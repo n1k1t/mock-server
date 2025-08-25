@@ -35,7 +35,7 @@ test('delete method removes container and decreases size', () => {
 // Test generated using Keploy
 test('getExpired method returns empty array when no containers are expired', () => {
   const storage = new ContainersStorage();
-  const result = storage.getExpired();
+  const result = storage.collectExpired();
   expect(result).toEqual([]);
 });
 

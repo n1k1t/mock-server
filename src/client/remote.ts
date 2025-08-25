@@ -22,7 +22,15 @@ export class RemoteClient<TContext extends IServerContext = IServerContext> exte
   }
 
   public get updateExpectationsGroup() {
-    return this.methods.updateExpectationsGroup;
+    return this.methods.expectationsGroupUpdate;
+  }
+
+  public get createProvider() {
+    return this.methods.providersCreate;
+  }
+
+  public get deleteProvider() {
+    return this.methods.providersDelete;
   }
 
   static async connect<TContext extends IServerContext = IServerContext>(

@@ -7,11 +7,8 @@
 .vscode/
 .husky/
 
-discardedTests.txt
-keploy-logs.txt
 vite.config.ts
 tsconfig.json
-keploy.yml
 
 /coverage/
 /images/

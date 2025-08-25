@@ -40,6 +40,11 @@ export interface IMockServerConfiguration {
     expiredCleaningInterval?: number;
   };
 
+  providers?: {
+    /** Seconds `default: 5m` */
+    expiredCleaningInterval?: number;
+  };
+
   transports?: Partial<Record<string, Transport>> & Record<string, Transport>;
   databases?: {
     redis?: RedisOptions;
@@ -110,11 +115,20 @@ export class MockServer<
   /** Unbinds expired containers */
   public unbindExpiredContainers(): this {
     this.providers.extract().forEach((provider) =>
-      provider.storages.containers.getExpired().forEach((container) => {
+      provider.storages.containers.collectExpired().forEach((container) => {
         container.unbind();
         logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
       })
     );
+
+    return this;
+  }
+
+  public unbindExpiredProviders(): this {
+    this.providers.collectExpired().forEach((provider) => {
+      this.providers.unregister(provider);
+      this.router.unregister(provider);
+    });
 
     return this;
   }
@@ -125,6 +139,12 @@ export class MockServer<
     setInterval(
       () => this.unbindExpiredContainers(),
       (this.configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
+    );
+
+    /** Providers expiration */
+    setInterval(
+      () => this.unbindExpiredProviders(),
+      (this.configuration.providers?.expiredCleaningInterval ?? 5 * 60) * 1000
     );
 
     /** Memory metrics */
