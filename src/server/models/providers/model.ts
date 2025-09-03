@@ -6,7 +6,7 @@ import { HistoryStorage } from '../history';
 import { IServerContext } from '../../types';
 import { OnsiteClient } from '../../../client';
 
-export class Provider<TContext extends IServerContext = IServerContext> {
+export class Provider<TContext extends IServerContext = IServerContextDefaults> {
   public TContext!: TContext;
   public server!: MockServer;
 

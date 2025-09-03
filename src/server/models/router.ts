@@ -62,7 +62,7 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
   }
 
   /** Deletes each route that is using provider */
-  public unregister(provider: Provider): this {
+  public unregister(provider: Provider<any>): this {
     for (const [pattern, route] of this.entries()) {
       if (route.provider.group === provider.group) {
         this.delete(pattern);
