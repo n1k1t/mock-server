@@ -134,6 +134,11 @@ export class CheckboxAreaComponent<TName extends string = string> extends Compon
     return this;
   }
 
+  /** Triggers `switch` event */
+  public trigger(): this {
+    return this.emit('switch', this.extract());
+  }
+
   public on<K extends keyof IEvents>(event: K, handler: TFunction<unknown, IEvents<TName>[K]>) {
     this.events.on(event, handler);
     return this;

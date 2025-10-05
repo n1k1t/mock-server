@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { extractContextByLocation, extractWithJsonPathSafe } from '../utils';
+import { compileMetaTagsAccumulator, extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { ExpectationOperator } from '../models/operator';
 import { TFunction } from '../../../types';
 import {
@@ -8,8 +8,8 @@ import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationSchemaContext,
   IExpectationExecUtils,
-  TExpectationMetaTag,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class SetExpectationOperator<
@@ -39,20 +39,15 @@ export default class SetExpectationOperator<
     }),
   };
 
-  public get tags(): TExpectationMetaTag[] {
-    if (this.command.$location === 'outgoing.status') {
-      return this.command.$value
-        ? [{ location: 'outgoing.status', value: Number(this.command.$value) }]
-        : [];
+  public get tags(): IExpectationMeta['tags'] {
+    const acc = compileMetaTagsAccumulator(this.command.$location);
+    if (!acc) {
+      return {};
     }
 
-    if (this.command.$location === 'error') {
-      return this.command.$value
-        ? [{ location: 'error', value: String(this.command.$value) }]
-        : [];
-    }
-
-    return [];
+    return this.command.$value !== undefined
+      ? acc([this.command.$value])
+      : {};
   }
 
   public match(): boolean {

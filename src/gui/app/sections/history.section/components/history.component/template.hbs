@@ -4,10 +4,10 @@ export default `
       <div class="segment">
         <span class="time">{{#toLocaleTime data.timestamp}}{{/toLocaleTime}}</span>
 
-        {{#if data.snapshot.error}}
+        {{#if data.meta.tags.error}}
           <span class="error">
-            {{#compare data.snapshot.error.code.length 'lte' 24}}{{data.snapshot.error.code}}{{/compare}}
-            {{#compare data.snapshot.error.code.length 'gt' 24}}Error{{/compare}}
+            {{#compare data.meta.tags.error.code.length 'lte' 24}}{{data.meta.tags.error.code}}{{/compare}}
+            {{#compare data.meta.tags.error.code.length 'gt' 24}}Error{{/compare}}
           </span>
         {{/if}}
 
@@ -16,21 +16,23 @@ export default `
         {{/compare}}
 
         {{#compare data.status 'eq' 'completed'}}
-          <span class="status
-            {{#compare data.snapshot.transport 'eq' 'http'}}
-              {{#compare data.snapshot.outgoing.status 'lt' 400}}green{{/compare}}
-              {{#compare data.snapshot.outgoing.status 'gte' 400}}red{{/compare}}
-            {{/compare}}
-          "><b>{{data.snapshot.outgoing.status}}</b> {{toSeconds data.duration}}s</span>
+          {{#unless data.meta.tags.error}}
+            <span class="status
+              {{#compare data.meta.tags.transport 'eq' 'http'}}
+                {{#compare data.meta.tags.outgoing.status 'lt' 400}}green{{/compare}}
+                {{#compare data.meta.tags.outgoing.status 'gte' 400}}red{{/compare}}
+              {{/compare}}
+            "><b>{{data.meta.tags.outgoing.status}}</b> {{toSeconds data.meta.metrics.duration}}s</span>
+          {{/unless}}
         {{/compare}}
 
-        <span class="method" style="color: {{toColor data.snapshot.incoming.method}};">{{data.snapshot.incoming.method}}</span>
-        {{> metaPath value=data.snapshot.incoming.path size=options.pathSize}}
+        <span class="method" style="color: {{toColor data.meta.tags.incoming.method 'method'}};">
+          {{data.meta.tags.incoming.method}}
+        </span>
 
-        {{#if data.snapshot.seed}}<span class="seed">{{data.snapshot.seed}}</span>{{/if}}
+        {{> metaPath value=data.meta.tags.incoming.path size=options.pathSize}}
+        {{#if data.meta.tags.seed}}<span class="seed">{{data.meta.tags.seed}}</span>{{/if}}
       </div>
-
-      <span class="arrow"><i class="fas fa-chevron-right"></i></span>
 
       {{#if data.expectation}}
         {{>expectationMeta options data=data.expectation format='short'}}
@@ -39,8 +41,8 @@ export default `
       {{/if}}
 
       <div class="segment">
-        {{#if data.snapshot.cache.hasWritten}}<span class="cache written"><i class="fas fa-database"></i></span>{{/if}}
-        {{#if data.snapshot.cache.hasRead}}<span class="cache read"><i class="fas fa-database"></i></span>{{/if}}
+        {{#if data.meta.tags.cache.hasWritten}}<span class="cache written"><i class="fas fa-database"></i></span>{{/if}}
+        {{#if data.meta.tags.cache.hasRead}}<span class="cache read"><i class="fas fa-database"></i></span>{{/if}}
       </div>
     </div>
 

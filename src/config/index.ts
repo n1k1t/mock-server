@@ -7,11 +7,11 @@ import { cast } from '../utils';
 
 export * from './model';
 
-const systemDatabaseKeyPrefix = 'system:b3afded0-c54d-4841-a933-ae0579b22547';
+const databaseSystemKeyPrefix = 'system:56cfe066-dffe-4b68-b8b7-18f9e8890bfe';
 
 export default Config.build(<const>{
   database: {
-    systemKeyPrefix: systemDatabaseKeyPrefix,
+    systemKeyPrefix: databaseSystemKeyPrefix,
   },
 
   statics: {
@@ -35,7 +35,7 @@ export default Config.build(<const>{
 
     persistence: {
       isEnabled: cast<boolean>(false),
-      key: cast<string>(`${systemDatabaseKeyPrefix}:history`),
+      key: cast<string>(`${databaseSystemKeyPrefix}:history`),
     },
   },
 

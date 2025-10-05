@@ -1,9 +1,10 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
+import { mergeMetaTags } from '../utils';
 import {
   IExpectationSchemaContext,
   IExpectationOperatorsSchema,
-  TExpectationMetaTag,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class OrExpectationOperator<
@@ -22,8 +23,8 @@ export default class OrExpectationOperator<
       return new Operator(this.operators, extracted.nested);
     });
 
-  public get tags(): TExpectationMetaTag[] {
-    return this.compiled.reduce<TExpectationMetaTag[]>((acc, operator) => acc.concat(operator.tags), []);
+  public get tags(): IExpectationMeta['tags'] {
+    return mergeMetaTags(this.compiled.map((operator) => operator.tags));
   }
 
   public match(context: TContext): boolean {

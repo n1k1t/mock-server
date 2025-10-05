@@ -1,9 +1,10 @@
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
+import { mergeMetaTags } from '../utils';
 import {
   IExpectationSchemaContext,
   IExpectationOperatorsSchema,
-  TExpectationMetaTag,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class IfExpectationOperator<
@@ -55,12 +56,12 @@ export default class IfExpectationOperator<
     }),
   };
 
-  public get tags(): TExpectationMetaTag[] {
-    return [
-      ...(this.compiled.condition?.tags ?? []),
-      ...(this.compiled.then?.tags ?? []),
-      ...(this.compiled.else?.tags ?? []),
-    ];
+  public get tags(): IExpectationMeta['tags'] {
+    return mergeMetaTags([
+      this.compiled.condition?.tags ?? {},
+      this.compiled.then?.tags ?? {},
+      this.compiled.else?.tags ?? {},
+    ]);
   }
 
   public match(context: TContext): boolean {

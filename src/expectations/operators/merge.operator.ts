@@ -9,8 +9,8 @@ import {
   CompileExpectationOperatorValueWithPredicate,
   IExpectationSchemaContext,
   IExpectationExecUtils,
-  TExpectationMetaTag,
   TExpectationOperatorObjectLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class MergeExpectationOperator<
@@ -40,8 +40,8 @@ export default class MergeExpectationOperator<
     }),
   };
 
-  public get tags(): TExpectationMetaTag[] {
-    return [];
+  public get tags(): IExpectationMeta['tags'] {
+    return {};
   }
 
   public match(): boolean {

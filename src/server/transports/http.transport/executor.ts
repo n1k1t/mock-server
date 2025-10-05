@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import _ from 'lodash';
+
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { decodeBuffer } from 'http-encoding';
-
-import _ from 'lodash';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 import type { HttpRequestContext } from './context';
@@ -36,7 +36,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
     const expectation = context.provider.storages.expectations.match(context.snapshot);
 
-    if (!expectation && context.hasStatuses(['handling'])) {
+    if (!expectation && context.is(['handling'])) {
       context.assign({
         outgoing: await this.reply(context, {
           type: 'plain',
@@ -112,7 +112,11 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     outgoing.headers = _.omitBy(
       Object.assign(_.omit(outgoing.headers, ['transfer-encoding']), {
         'content-type': outgoing.headers['content-type'] ?? (
-          outgoing.type === 'json' ? 'application/json' : outgoing.type === 'xml' ? 'application/xml' : undefined
+          outgoing.type === 'json'
+            ? 'application/json'
+            : outgoing.type === 'xml'
+              ? 'application/xml'
+              : undefined
         ),
 
         ...(outgoing.dataRaw && { 'content-length': String(outgoing.dataRaw.length) }),

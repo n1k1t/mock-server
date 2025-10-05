@@ -7,7 +7,7 @@ import config from '../../../config';
 // Test generated using Keploy
 test('test_registerHistory_withoutExistingHistory_createsValidHistory', () => {
   const storage = new HistoryStorage({ group: 'test-group' });
-  const historyData = { snapshot: {} };
+  const historyData = { snapshot: { incoming: {}, outgoing: {} } };
   const result = storage.register(<any>historyData);
   expect(result).toBeInstanceOf(History);
   expect(result.group).toBe('test-group');
@@ -17,7 +17,7 @@ test('test_registerHistory_withoutExistingHistory_createsValidHistory', () => {
 // Test generated using Keploy
 test('test_unregisterHistory_removesHistoryFromStorage', () => {
   const storage = new HistoryStorage({ group: 'test-group' });
-  const historyInstance = new History(<any>{ id: '1', snapshot: {} });
+  const historyInstance = new History(<any>{ id: '1', snapshot: { incoming: {}, outgoing: {} } });
   storage.register(historyInstance);
   expect(storage.size).toBe(1);
   storage.unregister(historyInstance);
@@ -30,9 +30,9 @@ test('test_registerHistory_exceedsLimit_removesOldestEntry', () => {
   jest.spyOn(config, 'get').mockImplementation(<any>mockConfig.get);
 
   const storage = new HistoryStorage({ group: 'test-group' });
-  const history1 = new History(<any>{ id: '1', snapshot: {} });
-  const history2 = new History(<any>{ id: '2', snapshot: {} });
-  const history3 = new History(<any>{ id: '3', snapshot: {} });
+  const history1 = new History(<any>{ id: '1', snapshot: { incoming: {}, outgoing: {} } });
+  const history2 = new History(<any>{ id: '2', snapshot: { incoming: {}, outgoing: {} } });
+  const history3 = new History(<any>{ id: '3', snapshot: { incoming: {}, outgoing: {} } });
 
   storage.register(history1);
   storage.register(history2);
@@ -48,12 +48,12 @@ it('should return the newly registered history item when the limit is exceeded',
   const history1 = History.build({
     status: 'registered',
     group: storage['configuration'].group,
-    snapshot: RequestContextSnapshot.build(<any>{ transport: faker.word.sample() }),
+    snapshot: RequestContextSnapshot.build(<any>{ incoming: {}, outgoing: {}, transport: faker.word.sample() }),
   });
   const history2 = History.build({
     status: 'registered',
     group: storage['configuration'].group,
-    snapshot: RequestContextSnapshot.build(<any>{ transport: faker.word.sample() }),
+    snapshot: RequestContextSnapshot.build(<any>{ incoming: {}, outgoing: {}, transport: faker.word.sample() }),
   });
 
   storage.register(history1);
@@ -68,12 +68,12 @@ it('should keep the newly registered history item in storage when the limit is e
   const history1 = History.build({
     status: 'registered',
     group: storage['configuration'].group,
-    snapshot: RequestContextSnapshot.build(<any>{ transport: faker.word.sample() }),
+    snapshot: RequestContextSnapshot.build(<any>{ incoming: {}, outgoing: {}, transport: faker.word.sample() }),
   });
   const history2 = History.build({
     status: 'registered',
     group: storage['configuration'].group,
-    snapshot: RequestContextSnapshot.build(<any>{ transport: faker.word.sample() }),
+    snapshot: RequestContextSnapshot.build(<any>{ incoming: {}, outgoing: {}, transport: faker.word.sample() }),
   });
 
   storage.register(history1);

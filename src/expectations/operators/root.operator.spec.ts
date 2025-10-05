@@ -22,5 +22,5 @@ test('tags should return empty array if compiled is null', () => {
   const mockOperators: any = {};
   const operator = new RootExpectationOperator(<any>{}, mockOperators);
   operator.compiled = null;  // Set compiled to null
-  expect(operator.tags).toEqual([]);
+  expect(operator.tags).toEqual({});
 });

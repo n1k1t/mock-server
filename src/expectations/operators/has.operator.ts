@@ -1,16 +1,21 @@
 import minimatch from 'minimatch';
 import _ from 'lodash';
 
-import { checkIsLocationInContext, extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { PartialDeep, TFunction } from '../../../types';
 import { ExpectationOperator } from '../models/operator';
+import {
+  checkIsLocationInContext,
+  compileMetaTagsAccumulator,
+  extractContextByLocation,
+  extractWithJsonPathSafe,
+} from '../utils';
 import {
   CompileExpectationOperatorValue,
   CompileExpectationOperatorValueWithPredicate,
   IExpectationSchemaContext,
   IExpectationExecUtils,
-  TExpectationMetaTag,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class HasExpectationOperator<
@@ -63,42 +68,34 @@ export default class HasExpectationOperator<
     }),
   };
 
-  public get tags(): TExpectationMetaTag[] {
-    if (this.command.$location !== 'path' && this.command.$location !== 'method') {
-      return [];
+  public get tags(): IExpectationMeta['tags'] {
+    const acc = compileMetaTagsAccumulator(this.command.$location);
+    if (!acc) {
+      return {};
     }
 
-    if (this.command.$value) {
-      return [{ location: this.command.$location, value: String(this.command.$value) }];
+    if (this.command.$value !== undefined) {
+      return acc([this.command.$value]);
     }
     if (this.command.$valueAnyOf) {
-      return this.command.$valueAnyOf.map((value) => (<TExpectationMetaTag>{
-        location: this.command.$location,
-        value: String(value)
-      }));
+      return acc(this.command.$valueAnyOf);
     }
 
     if (this.command.$match) {
-      return [{ location: this.command.$location, value: String(this.command.$match) }];
+      return acc([this.command.$match]);
     }
     if (this.command.$matchAnyOf) {
-      return this.command.$matchAnyOf.map((value) => (<TExpectationMetaTag>{
-        location: this.command.$location,
-        value: String(value)
-      }));
+      return acc(this.command.$matchAnyOf);
     }
 
     if (this.command.$regExp) {
-      return [{ location: this.command.$location, value: this.command.$regExp.source }];
+      return acc([this.command.$regExp.source]);
     }
     if (this.command.$regExpAnyOf) {
-      return this.command.$regExpAnyOf.map((value) => (<TExpectationMetaTag>{
-        location: this.command.$location,
-        value: value.source,
-      }));
+      return acc(this.command.$regExpAnyOf.map((value) => value.source));
     }
 
-    return [];
+    return {};
   }
 
   public match(context: TContext): boolean {

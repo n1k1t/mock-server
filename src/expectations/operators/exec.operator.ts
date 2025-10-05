@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { IExpectationExecUtils, IExpectationSchemaContext, TExpectationMetaTag } from '../types';
+import { IExpectationExecUtils, IExpectationMeta, IExpectationSchemaContext } from '../types';
 import { ExpectationOperator } from '../models/operator';
 import { TFunction } from '../../../types';
 
@@ -9,8 +9,8 @@ export default class ExecExpectationOperator<
 > extends ExpectationOperator<TContext, string | TFunction<unknown, [IExpectationExecUtils<TContext>]>> {
   public compiled = this.compileExecHandler(this.command, ['utils']);
 
-  public get tags(): TExpectationMetaTag[] {
-    return [];
+  public get tags(): IExpectationMeta['tags'] {
+    return {};
   }
 
   public match(context: TContext): boolean {

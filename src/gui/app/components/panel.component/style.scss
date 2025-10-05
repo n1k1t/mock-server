@@ -42,7 +42,7 @@ div.panel {
 
   &.width-M {
     max-width: 558px;
-    width: calc(45% - 25px);
+    width: calc(41.67% - 25px);
   }
 
   &.width-S {
@@ -61,5 +61,14 @@ div.panel {
 
   &.height-XS > div.content {
     min-height: 60px;
+  }
+
+  @media screen and (max-width: $screen-width-medium) {
+    display: block;
+    margin: auto;
+    margin-bottom: 5px;
+
+    width: calc(100% - 20px) !important;
+    max-width: calc(100% - 20px) !important;
   }
 }

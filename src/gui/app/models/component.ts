@@ -17,7 +17,7 @@ export class Component {
     return this.element.id;
   }
 
-  public assignId(id: string): this {
+  public identify(id: string): this {
     this.element.id = id;
     return this;
   }

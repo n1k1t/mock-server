@@ -9,45 +9,41 @@ export default `
         {{/if}}
       </button>
 
-      <span class="calls-count {{#compare data.meta.executionsCount 'gt' 0}}active{{/compare}}">
-        <i class="fas fa-undo-alt"></i>{{data.meta.executionsCount}}
+      <span class="calls-count {{#compare data.meta.metrics.executions 'gt' 0}}active{{/compare}}">
+        <i class="fas fa-undo-alt"></i>{{data.meta.metrics.executions}}
       </span>
     {{/compare}}
 
-    <span class="name"><b style="color: {{toColor data.group}};">{{data.group}}</b> {{data.name}}</span>
+    <span class="name"><b style="color: {{toColor data.group 'group'}};">{{data.group}}</b> {{data.name}}</span>
   </div>
 
   {{#compare format 'neq' 'short'}}
-    {{#compare data.meta.tags.length 'gt' 0}}<span class="arrow"><i class="fas fa-chevron-right"></i></span>{{/compare}}
-
     <div class="segment">
       {{#each data.transports}}<span class="transport">{{this}}</span>{{/each}}
 
-      {{#each data.meta.tags}}
-        {{#compare @index 'lte' 5}}
-          {{#if (compare location 'eq' 'outgoing.status')}}
-            <span class="status
-              {{#compare value 'lt' 400}}green{{/compare}}
-              {{#compare value 'gte' 400}}red{{/compare}}
-            "><b>{{value}}</b></span>
-          {{else if (compare location 'eq' 'method')}}
-            <span class="method" style="color: {{toColor value}};">{{value}}</span>
-          {{else if (compare location 'eq' 'path')}}
-            {{> metaPath this size=../options.pathSize}}
-          {{else}}
-            <span class="{{location}}">{{this}}</span>
-          {{/if}}
-        {{/compare}}
+      {{#each data.meta.tags.incoming.method}}
+        <span class="method" style="color: {{toColor this 'method'}};">{{this}}</span>
+      {{/each}}
+
+      {{#each data.meta.tags.incoming.path}}
+        {{> metaPath value=this size=../options.pathSize}}
+      {{/each}}
+
+      {{#each data.meta.tags.incoming.error}}
+        <span class="error">{{this}}</span>
+      {{/each}}
+
+      {{#each data.meta.tags.outgoing.status}}
+        <span class="status {{#compare this 'lt' 400}}green{{/compare}} {{#compare this 'gte' 400}}red{{/compare}}">
+          <b>{{this}}</b>
+        </span>
       {{/each}}
     </div>
   {{/compare}}
 
-  {{#with data.schema.forward}}
-    <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-
+  {{#with data.meta.tags.forward.url}}
     <div class="segment">
-      {{#if baseUrl}}<span class="forward">{{> truncated value=baseUrl length=45}}</span>{{/if}}
-      {{#if url}}<span class="forward">{{> truncated value=url length=45}}</span>{{/if}}
+      <span class="forward">{{> truncated value=this length=45}}</span>
     </div>
   {{/with}}
 `

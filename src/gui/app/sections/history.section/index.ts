@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 import hbs from 'handlebars';
 
+import { HistoryComponent } from './components';
 import { Button, Section } from '../../models';
 import { cast } from '../../../../utils';
 import {
   CheckboxAreaComponent,
   EmptyComponent,
-  HistoryComponent,
   PanelComponent,
   SearchComponent,
   SeparatorComponent,
@@ -55,7 +55,11 @@ const panels = {
       description: 'shows/hides items in the list below'
     },
 
-    width: 'M',
+    storage: {
+      key: 'history:filters:groups',
+    },
+
+    width: 'L',
   }),
 
   actions: PanelComponent
@@ -66,7 +70,7 @@ const panels = {
       },
 
       class: 'actions',
-      width: 'M',
+      width: 'L',
     })
     .append(templates.actions({})),
 };
@@ -195,7 +199,10 @@ export default Section
       }
     });
 
-    context.services.groups.on('register', (name) => panels.filter.provide({ name, isEnabled: true, colorify: true }));
+    context.services.groups.on('register', (name) =>
+      panels.filter.provide({ name, isEnabled: true, colorify: { prefix: 'group' } })
+    );
+
     context.services.settings.on('assign:settings:visual:path-size', () =>
       state.storage.forEach((history) => history.refresh(compileOptions()))
     );
@@ -243,7 +250,7 @@ export default Section
     section.content.clear();
     state.storage.clear();
 
-    const { data } = await context.services.io.exec('history:get-list');
+    const { data } = await context.services.io.exec('history:compact:get-list');
 
     data.forEach((history) => {
       const component = HistoryComponent.build(history, compileOptions());
@@ -254,5 +261,6 @@ export default Section
       section.content.append(component);
     });
 
+    panels.filter.trigger();
     refresh();
   });

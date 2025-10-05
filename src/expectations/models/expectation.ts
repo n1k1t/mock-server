@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { v4 as genUid } from 'uuid';
 import { ValueError } from '@n1k1t/typebox/errors';
 
-import { serializeExpectationSchema } from '../utils';
+import { mergeMetaTags, serializeExpectationSchema } from '../utils';
 import { ExpectationOperator } from './operator';
 import {
   IExpectationMeta,
@@ -22,7 +22,13 @@ export class Expectation<
   public TPlain!: Pick<
     Expectation<TInput, TContext>,
     'schema' | 'id' | 'group' | 'isEnabled' | 'meta' | 'name' | 'transports'
-  >;
+  > & {
+    format: 'plain';
+  };
+
+  public TCompact!: Omit<Expectation<TInput, TContext>['TPlain'], 'schema' | 'format'> & {
+    format: 'compact';
+  };
 
   public id: string = this.configuration.id ?? genUid();
   public name: string = this.configuration.name ?? generateAnimalName().split(' ').map(_.capitalize).join('');
@@ -41,14 +47,24 @@ export class Expectation<
     ? new operators.root(operators, this.schema.response)
     : null;
 
-  public meta: IExpectationMeta = {
-    executionsCount: this.configuration.meta?.executionsCount ?? 0,
-    tags: (this.request?.tags ?? []).concat(this.response?.tags ?? []),
-  };
+  public meta: IExpectationMeta = this.configuration.meta ?? {
+    tags: mergeMetaTags([
+      this.request.tags,
+      this.response?.tags ?? {},
 
-  public get forward() {
-    return this.schema.forward;
-  }
+      {
+        ...(this.schema.forward && {
+          forward: {
+            url: this.schema.forward.baseUrl ?? this.schema.forward.url,
+          },
+        }),
+      },
+    ]),
+
+    metrics: {
+      executions: 0,
+    },
+  };
 
   private serialized = {
     schema: {
@@ -64,7 +80,7 @@ export class Expectation<
   ) {}
 
   public increaseExecutionsCounter(): this {
-    this.meta.executionsCount += 1;
+    this.meta.metrics.executions += 1;
     return this;
   }
 
@@ -74,6 +90,8 @@ export class Expectation<
 
   public toPlain(): Expectation<TInput, TContext>['TPlain'] {
     return {
+      format: 'plain',
+
       id: this.id,
       group: this.group,
 
@@ -89,6 +107,21 @@ export class Expectation<
         request: this.serialized.schema.request,
         response: this.serialized.schema.response,
       },
+    };
+  }
+
+  public toCompact(): Expectation<TInput, TContext>['TCompact'] {
+    return {
+      format: 'compact',
+
+      id: this.id,
+      group: this.group,
+
+      name: this.name,
+      transports: this.transports,
+
+      meta: this.meta,
+      isEnabled: this.isEnabled,
     };
   }
 

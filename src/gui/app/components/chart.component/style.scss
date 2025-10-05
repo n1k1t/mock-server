@@ -1,4 +1,21 @@
 div.chart {
   div.source { padding-top: 10px }
   canvas { margin-bottom: 5px }
+
+  @media screen and (max-width: $screen-width-medium) {
+    &.panel {
+      display: inline-block;
+      margin: 0 5px 5px 0;
+
+      width: calc(50% - 25px) !important;
+      max-width: calc(50% - 25px) !important;
+
+      &:nth-child(2n) {
+        margin-right: 0;
+
+        width: calc(50% - 20px) !important;
+        max-width: calc(50% - 20px) !important;
+      }
+    }
+  }
 }

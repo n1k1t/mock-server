@@ -1,6 +1,7 @@
 import hbs from 'handlebars';
 
-import { CheckboxAreaComponent, EmptyComponent, ExpectationComponent, SearchComponent } from '../../components';
+import { CheckboxAreaComponent, EmptyComponent, SearchComponent } from '../../components';
+import { ExpectationComponent } from './components';
 import { Section } from '../../models';
 import { cast } from '../../../../utils';
 
@@ -38,7 +39,11 @@ const panels = {
       description: 'shows/hides items in the list below',
     },
 
-    width: 'M',
+    storage: {
+      key: 'expectations:filters:groups',
+    },
+
+    width: 'L',
   }),
 
   switcher: CheckboxAreaComponent.build({
@@ -49,7 +54,7 @@ const panels = {
       description: 'turnes on/off items in the list below',
     },
 
-    width: 'M',
+    width: 'L',
   }),
 };
 
@@ -98,8 +103,8 @@ export default Section
     section.controls.additional.append(panels.switcher);
 
     context.services.groups.on('register', (name) => {
-      panels.switcher.provide({ name, isEnabled: true, colorify: true });
-      panels.filter.provide({ name, isEnabled: true, colorify: true });
+      panels.switcher.provide({ name, isEnabled: true, colorify: { prefix: 'group' } });
+      panels.filter.provide({ name, isEnabled: true, colorify: { prefix: 'group' } });
     });
 
     panels.switcher.on('enable', (button) =>
@@ -157,7 +162,7 @@ export default Section
     panels.filter.clear();
     state.storage.clear();
 
-    const { data } = await context.services.io.exec('expectations:get-list');
+    const { data } = await context.services.io.exec('expectations:compact:get-list');
 
     data.forEach((expectation) => {
       const component = ExpectationComponent.build(expectation, compileOptions());
@@ -167,6 +172,8 @@ export default Section
 
       section.content.append(component);
     });
+
+    panels.filter.trigger();
 
     refresh();
     toggle();

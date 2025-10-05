@@ -3,8 +3,8 @@ import { Logger } from '../../logger';
 import {
   IExpectationSchemaContext,
   IExpectationOperatorsSchema,
-  TExpectationMetaTag,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 const logger = Logger.build('Expectations.Operators.Root');
@@ -27,8 +27,8 @@ export default class RootExpectationOperator<
     return new Operator(this.operators, extracted.nested);
   })();
 
-  public get tags(): TExpectationMetaTag[] {
-    return this.compiled?.tags ?? [];
+  public get tags(): IExpectationMeta['tags'] {
+    return this.compiled?.tags ?? {};
   }
 
   public match(context: TContext): boolean {

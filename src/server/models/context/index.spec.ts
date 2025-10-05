@@ -16,7 +16,7 @@ test('switchStatus method should correctly change status and return the instance
   const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  const result = context.switchStatus('handling');
+  const result = context.switch('handling');
   expect(context.status).toBe('handling');
   expect(result).toBe(context);
 });
@@ -98,9 +98,9 @@ test('hasStatuses method correctly identifies if current status is in the given 
   };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  context.switchStatus('completed');
+  context.switch('completed');
 
-  const result = context.hasStatuses(['registered', 'completed']);
+  const result = context.is(['registered', 'completed']);
 
   expect(result).toBe(true);
 });
@@ -126,7 +126,7 @@ test('complete method completes streams and switches status to completed', () =>
   };
   context.complete();
 
-  expect(context.hasStatuses(['completed'])).toBe(true);
+  expect(context.is(['completed'])).toBe(true);
   expect(context.streams.incoming.isStopped).toBe(true);
   expect(context.streams.outgoing.isStopped).toBe(true);
 });

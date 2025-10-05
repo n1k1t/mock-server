@@ -140,7 +140,7 @@ div.history, div.expectation {
     }
 
     span.time {
-      width: 60px;
+      min-width: 60px;
       text-align: center;
       font-size: 12px;
       padding: 9px 15px;
@@ -213,6 +213,10 @@ div.history, div.expectation {
     }
   }
 
+  div.viewer {
+    margin-bottom: 20px;
+  }
+
   &:hover div.meta {
     cursor: pointer;
 
@@ -230,5 +234,9 @@ div.history, div.expectation {
   @media screen and (max-width: $screen-width-medium) {
     border-bottom: dashed 1px rgba(#fff, .2);
     padding-top: 5px !important;
+
+    div.viewer {
+      margin-bottom: 5px;
+    }
   }
 }

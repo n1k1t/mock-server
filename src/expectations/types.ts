@@ -33,16 +33,19 @@ import type SwitchExpectationOperator from './operators/switch.operator';
 export type TExpectationFlatOperator = ConvertTupleToUnion<typeof LExpectationFlatOperator>;
 export const LExpectationFlatOperator = <const>['$set', '$remove', '$merge', '$exec', '$has'];
 
-export type TExpectationMetaTagLocation = ConvertTupleToUnion<typeof LExpectationMetaTagLocation>;
-export const LExpectationMetaTagLocation = <const>['path', 'method', 'outgoing.status'];
-
-export type TExpectationMetaTag =
-  | { location: 'path' | 'method' | 'error', value: string }
-  | { location: 'outgoing.status', value: number };
-
 export interface IExpectationMeta {
-  executionsCount: number;
-  tags: TExpectationMetaTag[];
+  tags: {
+    incoming?: Partial<Record<'path' | 'method' | 'error', string[]>>;
+    outgoing?: Partial<Record<'status', number[]>>;
+
+    forward?: {
+      url?: string;
+    };
+  };
+
+  metrics: {
+    executions: number;
+  };
 };
 
 export type TExpectationContextLocation = 'request' | 'response';
@@ -61,8 +64,11 @@ export const LExpectationOperatorLocation = <const>[
   'delay',
 
   'path',
+  'query',
   'method',
 
+  'incoming.path',
+  'incoming.method',
   'incoming.data',
   'incoming.dataRaw',
   'incoming.query',

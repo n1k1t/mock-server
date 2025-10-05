@@ -1,17 +1,15 @@
 import _ from 'lodash';
 
+import { compileMetaTagsAccumulator, extractContextByLocation, mergeMetaTags } from '../utils';
 import { ExpectationOperator, TExpectationOperatorConstructor } from '../models/operator';
-import { extractContextByLocation } from '../utils';
 import { TFunction } from '../../../types';
 import {
   CompileExpectationOperatorValue,
   IExpectationSchemaContext,
   IExpectationExecUtils,
   IExpectationOperatorsSchema,
-  LExpectationMetaTagLocation,
-  TExpectationMetaTag,
-  TExpectationMetaTagLocation,
   TExpectationOperatorLocation,
+  IExpectationMeta,
 } from '../types';
 
 export default class SwitchExpectationOperator<
@@ -75,17 +73,15 @@ export default class SwitchExpectationOperator<
     }),
   };
 
-  public get tags(): TExpectationMetaTag[] {
-    return [
-      ...(
-        LExpectationMetaTagLocation.includes(<TExpectationMetaTagLocation>this.command.$location)
-          ? Object.keys(this.compiled.cases).map((value) => (<TExpectationMetaTag>{ location: this.command.$location, value }))
-          : []
-      ),
+  public get tags(): IExpectationMeta['tags'] {
+    const acc = compileMetaTagsAccumulator(this.command.$location);
 
-      ...Object.values(this.compiled.cases).reduce<TExpectationMetaTag[]>((acc, operator) => acc.concat(operator.tags), []),
-      ...(this.compiled.default?.tags ?? []),
-    ];
+    return mergeMetaTags([
+      acc?.(Object.keys(this.compiled.cases)) ?? {},
+      this.compiled.default?.tags ?? {},
+
+      ...Object.values(this.compiled.cases).map((operator) => operator.tags),
+    ]);
   }
 
   public match(context: TContext): boolean {

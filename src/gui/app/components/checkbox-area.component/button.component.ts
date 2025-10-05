@@ -14,12 +14,22 @@ interface IEvents<TName extends string = string> {
 export class CheckboxAreaButtonComponent<TName extends string = string> extends Component {
   private events = new EventEmitter();
 
-  constructor(public configuration: { name: TName, isEnabled?: boolean, colorify?: boolean }) {
+  constructor(public configuration: {
+    name: TName;
+
+    isEnabled?: boolean;
+    colorify?: boolean | { prefix: string };
+  }) {
+    const color = configuration.colorify
+      ? typeof configuration.colorify === 'object'
+        ? calculateColor(configuration.name, configuration.colorify.prefix)
+        : calculateColor(configuration.name)
+      : null;
+
     super(`
-      <button
-        style="${configuration?.colorify ? `color: ${calculateColor(configuration.name)}` : ''}"
-        class="${configuration.isEnabled ? 'checked' : ''}"
-      >${configuration.name}</button>
+      <button style="${color ? `color: ${color}` : ''}" class="${configuration.isEnabled ? 'checked' : ''}">
+        ${configuration.name}
+      </button>
     `);
 
     this.element.addEventListener('click', () => this.isEnabled ? this.disable('click') : this.enable('click'));

@@ -1,6 +1,8 @@
 import Chart from 'chart.js/auto';
 import _ from 'lodash';
 
+import { v4 as genUid } from 'uuid';
+
 import { IPanelConfiguration, PanelComponent, TPanelSize } from '../panel.component';
 import { buildCounter, cast } from '../../../../utils';
 import { calculateColor } from '../../utils';
@@ -28,6 +30,7 @@ const calculatePointsLimit = (size: TPanelSize) => cast<Record<TPanelSize, numbe
 })[size];
 
 export class ChartComponent extends Component {
+  private revision = genUid();
   private counter = buildCounter();
 
   private aliases: Record<string, number> = {};
@@ -148,8 +151,8 @@ export class ChartComponent extends Component {
         pointHoverRadius: 5,
 
         borderWidth: 1,
-        borderColor: calculateColor(label),
-        backgroundColor: calculateColor(label),
+        borderColor: calculateColor(label, `chart:${this.revision}`),
+        backgroundColor: calculateColor(label, `chart:${this.revision}`),
       })),
     };
 

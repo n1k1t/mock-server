@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { IExpectationSchemaContext, TExpectationMetaTag, TExpectationOperatorLocation } from '../types';
+import { IExpectationMeta, IExpectationSchemaContext, TExpectationOperatorLocation } from '../types';
 import { extractContextByLocation, extractWithJsonPathSafe } from '../utils';
 import { ExpectationOperator } from '../models/operator';
 
@@ -18,8 +18,8 @@ export default class RemoveExpectationOperator<
     }
   }[TLocation]
 > {
-  public get tags(): TExpectationMetaTag[] {
-    return [];
+  public get tags(): IExpectationMeta['tags'] {
+    return {};
   }
 
   public match(): boolean {

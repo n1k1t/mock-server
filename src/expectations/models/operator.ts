@@ -1,7 +1,8 @@
-import { Faker, ru, en, en_GB } from '@faker-js/faker';
+import * as rxjs from 'rxjs';
 import dayjs from 'dayjs';
 import _ from 'lodash';
-import * as rxjs from 'rxjs';
+
+import { Faker, ru, en, en_GB } from '@faker-js/faker';
 
 import { Constructable, TFunction } from '../../../types';
 import { metaStorage } from '../../meta';
@@ -11,8 +12,8 @@ import {
   IExpectationExecMode,
   IExpectationExecUtils,
   IExpectationOperatorsSchema,
-  TExpectationMetaTag,
   TExpectationOperators,
+  IExpectationMeta,
 } from '../types';
 
 const logger = Logger.build('Expectations.Models.Operator');
@@ -27,7 +28,7 @@ export abstract class ExpectationOperator<TContext extends IExpectationSchemaCon
   public abstract match(context: TContext): boolean;
   public abstract manipulate<T extends TContext>(context: T): T;
 
-  public abstract get tags(): TExpectationMetaTag[];
+  public abstract get tags(): IExpectationMeta['tags'];
 
   constructor(public operators: TExpectationOperators, public command: TSchema) {}
 

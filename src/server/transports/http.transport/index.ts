@@ -21,7 +21,7 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
       if (!context) {
         return response.destroy();
       }
-      if (!context.hasStatuses(['registered', 'handling'])) {
+      if (!context.is(['registered', 'handling'])) {
         return null;
       }
 
@@ -29,7 +29,7 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
         .wrap(context.meta, () => transport.executor.match(context))
         .catch((error) => logger.error('Got error while expectation matching', error?.stack ?? error));
 
-      if (!context.hasStatuses(['registered', 'handling'])) {
+      if (!context.is(['registered', 'handling'])) {
         return null;
       }
 

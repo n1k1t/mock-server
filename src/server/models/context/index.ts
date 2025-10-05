@@ -52,13 +52,14 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
     this.streams.outgoing.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('outgoing', data) });
   }
 
-  public switchStatus(status: RequestContext['status']): this {
-    this.status = status;
-    return this;
+  /** Switches to status */
+  public switch(status: RequestContext['status']): this {
+    return Object.assign(this, { status });
   }
 
-  public hasStatuses(status: RequestContext['status'][]): boolean {
-    return status.includes(this.status);
+  /** Checks context is in provided statuses */
+  public is(statuses: RequestContext['status'][]): boolean {
+    return statuses.includes(this.status);
   }
 
   /** Compiles snapshot of own payload to work with expectations */
@@ -92,14 +93,14 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
 
   /** Compiles cache configuration using own snapshot and expectation */
   public compileCacheConfiguration(): TRequestContextCacheConfigurationCompiled {
-    if (!this.expectation?.forward?.cache) {
+    if (!this.expectation?.schema.forward?.cache) {
       return { isEnabled: false };
     }
 
     const payload = this.snapshot.cache.key ?? _.pick(this.snapshot.incoming, ['path', 'method', 'data', 'query']);
-    const prefix = this.snapshot.cache.prefix ?? this.expectation?.forward?.cache?.prefix;
+    const prefix = this.snapshot.cache.prefix ?? this.expectation.schema.forward.cache.prefix;
     const key = typeof payload === 'object' ? Value.Hash(payload).toString() : String(payload);
-    const ttl = this.snapshot.cache.ttl ?? this.expectation.forward.cache.ttl ?? 3600;
+    const ttl = this.snapshot.cache.ttl ?? this.expectation.schema.forward.cache.ttl ?? 3600;
 
     return { prefix, ttl, key: `${prefix ?? ''}${key}`, isEnabled: this.snapshot.cache.isEnabled };
   }
@@ -111,23 +112,23 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
 
   /** Marks context as skipped to prevent further handling in executors */
   public skip(): this {
-    return this.switchStatus('skipped');
+    return this.switch('skipped');
   }
 
   /** Marks context as handling */
   public handle(): this {
-    return this.switchStatus('handling');
+    return this.switch('handling');
   }
 
   /** Marks context as canceled and unregisters history */
   public cancel(): this {
     this.provider.storages.history.unregister(this.history);
-    return this.switchStatus('canceled');
+    return this.switch('canceled');
   }
 
   /** Marks context as completed, completes streams, provides outgoing payload from the own snapshot and publishes history */
   public complete(): this {
-    if (this.hasStatuses(['completed'])) {
+    if (this.is(['completed'])) {
       return this;
     }
 
@@ -138,8 +139,8 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
       this.outgoing = this.snapshot.outgoing;
     }
 
-    if (this.history?.hasStatus('pending')) {
-      this.history.actualizeSnapshot(this.snapshot.assign({ outgoing: this.outgoing })).complete();
+    if (this.history?.is('pending')) {
+      this.history.actualize(this.snapshot.assign({ outgoing: this.outgoing })).complete();
 
       const { limit, persistence } = config.get('history');
       const plain = this.history.toPlain();
@@ -155,6 +156,6 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
       this.provider.server.exchanges.io.publish('history:updated', plain);
     }
 
-    return this.switchStatus('completed');
+    return this.switch('completed');
   }
 }

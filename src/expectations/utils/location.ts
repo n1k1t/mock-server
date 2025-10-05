@@ -14,9 +14,10 @@ export const checkIsLocationInContext = (
   context: IExpectationSchemaContext
 ): boolean => {
   switch(location) {
+    case 'method':
     case 'delay':
     case 'error':
-    case 'method':
+    case 'query':
     case 'path': return context.incoming[location] !== undefined;
 
     default: return _.get(context, location) !== undefined;
@@ -28,14 +29,16 @@ export const extractContextByLocation = (
   context: IExpectationSchemaContext
 ): TExtractedContext | null => {
   switch(location) {
-    case 'path': return {
+    case 'path':
+    case 'incoming.path': return {
       key: 'incoming.path',
       type: 'string',
       parent: context,
       value: context.incoming?.path,
     };
 
-    case 'method': return {
+    case 'method':
+    case 'incoming.method': return {
       key: 'incoming.method',
       type: 'string',
       parent: context,
@@ -56,6 +59,7 @@ export const extractContextByLocation = (
       value: context.incoming?.dataRaw,
     };
 
+    case 'query':
     case 'incoming.query': return {
       key: 'incoming.query',
       type: 'object',

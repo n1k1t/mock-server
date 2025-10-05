@@ -1,9 +1,10 @@
+import bodyParser from 'body-parser';
+import _ from 'lodash';
+
 import { IncomingMessage, ServerResponse } from 'http';
 import { parse as parseQueryString } from 'querystring';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { parse as parseUrl } from 'url';
-import bodyParser from 'body-parser';
-import _ from 'lodash';
 
 import { IRequestContextIncoming } from './types';
 import { TRequestPayloadType } from '../../types';
@@ -43,26 +44,24 @@ export const extractPayloadType = (headers: IncomingMessage['headers']): TReques
 }
 
 export const parsePayload = (type: TRequestPayloadType, payload: Buffer): object | undefined => {
-  if (type === 'json') {
-    const parsed = parseJsonSafe(payload.toString());
-    return parsed.status === 'OK' ? parsed.result : undefined;
-  }
-  if (type === 'xml') {
-    return xmlParser.parse(payload) ?? undefined;
-  }
+  switch(type) {
+    case 'json': {
+      const parsed = parseJsonSafe(payload.toString());
+      return parsed.status === 'OK' ? parsed.result : undefined;
+    }
 
-  return undefined;
+    case 'plain': return undefined;
+    case 'xml': return xmlParser.parse(payload) ?? undefined;
+  }
 }
 
-export const serializePayload = (type: TRequestPayloadType, payload: object | null): Buffer | undefined => {
-  if (type === 'json') {
-    return Buffer.from(JSON.stringify(payload));
-  }
-  if (type === 'xml') {
-    return Buffer.from(xmlBuilder.build(payload ?? {}));
-  }
+export const serializePayload = (type: TRequestPayloadType, payload: unknown): Buffer | undefined => {
+  switch(type) {
+    case 'json': return Buffer.from(JSON.stringify(payload) ?? '');
 
-  return undefined;
+    case 'plain': return Buffer.from(String(payload ?? ''));
+    case 'xml': return Buffer.from(xmlBuilder.build(payload ?? {}) ?? '');
+  }
 }
 
 export const extractHttpIncommingContext = async (request: IncomingMessage): Promise<IRequestContextIncoming> => {

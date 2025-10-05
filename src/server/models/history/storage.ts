@@ -32,7 +32,7 @@ export class HistoryStorage extends Map<string, History> {
   /** Removes history item from storage and marks it as `unregistred` */
   public unregister(history?: History): this {
     if (history) {
-      this.delete(history.switchStatus('unregistered').id);
+      this.delete(history.switch('unregistered').id);
       this.stack.splice(this.stack.indexOf(history.id), 1);
     }
 
@@ -51,7 +51,7 @@ export class HistoryStorage extends Map<string, History> {
         status: history.status,
 
         timestamp: history.timestamp,
-        duration: history.duration,
+        meta: history.meta,
 
         ...(history.expectation && { expectation: Expectation.build(history.expectation) }),
 

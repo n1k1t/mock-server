@@ -1,7 +1,8 @@
-import { gzip, ungzip } from 'node-gzip';
-import { from } from 'rxjs';
 import rfdc from 'rfdc';
 import _ from 'lodash';
+
+import { gzip, ungzip } from 'node-gzip';
+import { from } from 'rxjs';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
@@ -68,8 +69,8 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         return context;
       }
 
-      if (context.history?.hasStatus('registered')) {
-        context.history.switchStatus('pending');
+      if (context.history?.is('registered')) {
+        context.history.switch('pending');
       }
 
       return context;
@@ -87,17 +88,17 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     context.provider.server.exchanges.io.publish('expectation:updated', expectation.toPlain());
     logger.info('Expectation has matched as', `"${expectation.name}" [${expectation.id}]`);
 
-    if (context.history?.hasStatus('registered')) {
+    if (context.history?.is('registered')) {
       context.history
-        .switchStatus('pending')
-        .actualizeSnapshot(context.snapshot)
+        .switch('pending')
+        .actualize(context.snapshot)
         .assign({ expectation: context.expectation });
 
       context.provider.server.exchanges.io.publish('history:added', context.history.toPlain());
       context.provider.server.services.metrics.register('rate', { count: 1 });
     }
 
-    if (!context.hasStatuses(['handling'])) {
+    if (!context.is(['handling'])) {
       return context;
     }
 
@@ -113,7 +114,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       throw ExecutorManualError.build(context.snapshot.incoming.error);
     }
 
-    if (expectation.forward) {
+    if (expectation.schema.forward) {
       const forwarded = await this.handleForwarding(context).catch((error) => {
         logger.error('Got error while execution [handleForwarding] method', error?.stack ?? error);
         return null;
@@ -141,24 +142,13 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         });
       }
 
-      if (context.snapshot.forwarded && context.history?.hasStatus('pending')) {
-        context.history.snapshot.assign({
-          cache: context.snapshot.cache,
-
-          forwarded: {
-            incoming: _.omit(context.snapshot.forwarded.incoming, ['stream']),
-
-            ...(context.snapshot.forwarded.outgoing && {
-              outgoing: _.omit(context.snapshot.forwarded.outgoing, ['stream'])
-            }),
-          },
-        });
-
+      if (context.snapshot.forwarded && context.history?.is('pending')) {
+        context.history.actualize(context.snapshot);
         context.provider.server.exchanges.io.publish('history:updated', context.history.toPlain());
       }
     }
 
-    if (!context.hasStatuses(['handling'])) {
+    if (!context.is(['handling'])) {
       return context;
     }
 
@@ -171,7 +161,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
   }
 
   private async handleForwarding(context: TRequestContext): Promise<IRequestContextForwarded | null> {
-    if (!context.expectation?.forward) {
+    if (!context.expectation?.schema.forward) {
       return context.snapshot;
     }
 
@@ -212,15 +202,18 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       }
     }
 
-    const type = extractPayloadType(snapshot.incoming.headers) ?? 'plain';
+    const type = extractPayloadType(snapshot.incoming.headers) ?? (
+      snapshot.incoming.type === 'plain'
+        ? typeof snapshot.incoming.data === 'object' ? 'json' : 'plain'
+        : snapshot.incoming.type
+    );
+
     const dataRaw = snapshot.incoming.data === undefined
       ? snapshot.incoming.dataRaw
-      : typeof snapshot.incoming.data === 'object'
-        ? serializePayload(type, snapshot.incoming.data)
-        : Buffer.from(String(snapshot.incoming.data));
+      : serializePayload(type, snapshot.incoming.data);
 
     const forwarded = await this
-      .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), context.expectation.forward)
+      .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), context.expectation.schema.forward)
       .catch((error) => {
         logger.error('Got error while execution [forward] method', error?.stack ?? error);
         return null;
@@ -242,12 +235,15 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
-    const type = extractPayloadType(snapshot.outgoing.headers) ?? snapshot.outgoing.type;
+    const type = extractPayloadType(snapshot.outgoing.headers) ?? (
+      snapshot.outgoing.type === 'plain'
+        ? typeof snapshot.outgoing.data === 'object' ? 'json' : 'plain'
+        : snapshot.outgoing.type
+    );
+
     const dataRaw = snapshot.outgoing.data === undefined
       ? snapshot.outgoing.dataRaw
-      : typeof snapshot.outgoing.data === 'object'
-        ? serializePayload(type, snapshot.outgoing.data)
-        : Buffer.from(String(snapshot.outgoing.data));
+      : serializePayload(type, snapshot.outgoing.data);
 
     const outgoing = await this
       .reply(context, Object.assign(snapshot.outgoing, { type, dataRaw }))
