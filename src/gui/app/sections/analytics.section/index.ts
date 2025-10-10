@@ -36,7 +36,7 @@ const charts = {
       text: 'Registered containers',
       icon: 'fas fa-box',
 
-      description: 'updates every 5 seconds'
+      description: 'updates every 10 minutes'
     },
 
     width: 'S',

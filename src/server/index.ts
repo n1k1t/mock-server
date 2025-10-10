@@ -158,8 +158,11 @@ export class MockServer<
       () => this.services.metrics.register('containers', {
         count: this.providers.extract().reduce((acc, provider) => acc + provider.storages.containers.size, 0),
       }),
-      5 * 1000
+      10 * 60 * 1000
     );
+
+    /** Reqests rate blank metrics */
+    setInterval(() => this.services.metrics.register('rate', { count: 0 }), 60 * 1000);
 
     /** Redis usage metrics */
     if (this.databases.redis) {
