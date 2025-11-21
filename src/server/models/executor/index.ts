@@ -1,3 +1,4 @@
+import merge from 'deepmerge';
 import rfdc from 'rfdc';
 import _ from 'lodash';
 
@@ -37,7 +38,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
   public abstract forward(
     context: TRequestContext,
     incoming: IRequestContextIncoming,
-    configuration: IExpectationSchemaForward,
+    schema: IExpectationSchemaForward,
   ): Promise<IRequestContextForwarded | null>;
 
   /** Uses to handle outgoing payload and reply */
@@ -125,6 +126,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           outgoing: forwarded.outgoing ?? context.snapshot.outgoing,
 
           forwarded: {
+            schema: forwarded.schema,
             messages: clone(forwarded.messages),
 
             incoming: Object.assign(
@@ -162,10 +164,13 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
   private async handleForwarding(context: TRequestContext): Promise<IRequestContextForwarded | null> {
     if (!context.expectation?.schema.forward) {
-      return context.snapshot;
+      return null;
     }
 
     const snapshot = context.snapshot.assign({ cache: context.compileCacheConfiguration() });
+    const schema = snapshot.overrides?.forward
+      ? merge(context.expectation.schema.forward, <IExpectationSchemaForward>snapshot.overrides.forward)
+      : context.expectation.schema.forward;
 
     if (snapshot.cache.isEnabled) {
       const cached = await context.provider.server.databases.redis!.get(snapshot.cache.key).catch((error) => {
@@ -191,14 +196,17 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
           parsed.outgoing.stream = from(parsed.messages.map((message) => message.data) ?? []);
         }
 
-        return Object.assign(snapshot.pick(['incoming']), {
+        return {
+          schema,
+
+          incoming: snapshot.incoming,
           messages: parsed.messages,
 
           outgoing: Object.assign(_.omit(parsed.outgoing, ['dataRaw']), {
             data: dataRaw ? parsePayload(parsed.outgoing.type, dataRaw) : undefined,
             dataRaw,
           }),
-        });
+        };
       }
     }
 
@@ -213,7 +221,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       : serializePayload(type, snapshot.incoming.data);
 
     const forwarded = await this
-      .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), context.expectation.schema.forward)
+      .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), schema)
       .catch((error) => {
         logger.error('Got error while execution [forward] method', error?.stack ?? error);
         return null;

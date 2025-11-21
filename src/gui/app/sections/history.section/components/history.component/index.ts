@@ -48,6 +48,7 @@ export class HistoryComponent extends Component {
 
         ...(this.data.snapshot.seed && { seed: this.data.snapshot.seed }),
         ...(this.data.snapshot.container && { container: this.data.snapshot.container }),
+        ...(this.data.snapshot.overrides && { overrides: this.data.snapshot.overrides }),
 
         ...(Object.keys(this.data.snapshot.flags).length && { flags: this.data.snapshot.flags }),
         ...(Object.keys(this.data.snapshot.state).length && { state: this.data.snapshot.state }),

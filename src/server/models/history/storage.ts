@@ -73,6 +73,7 @@ export class HistoryStorage extends Map<string, History> {
 
           ...(history.snapshot.forwarded && {
             forwarded: {
+              schema: history.snapshot.forwarded.schema,
               messages: history.snapshot.forwarded.messages,
 
               incoming: Object.assign(history.snapshot.forwarded.incoming, {

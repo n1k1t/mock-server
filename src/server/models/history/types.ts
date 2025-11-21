@@ -1,3 +1,4 @@
+import type { IExpectationSchemaForward } from '../../../expectations';
 import type {
   IRequestContextCacheConfiguration,
   IRequestContextIncoming,
@@ -13,6 +14,8 @@ export interface IHistoryMeta {
     incoming: Partial<Pick<IRequestContextIncoming, 'path' | 'method'>>;
 
     outgoing?: Partial<Pick<IRequestContextOutgoing, 'status'>>;
+    forward?: Partial<Pick<IExpectationSchemaForward, 'url'>>;
+
     cache?: Partial<Pick<IRequestContextCacheConfiguration, 'hasRead' | 'hasWritten'>>;
   };
 

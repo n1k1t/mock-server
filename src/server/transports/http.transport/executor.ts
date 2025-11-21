@@ -56,10 +56,10 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   public async forward(
     context: HttpRequestContext,
     incoming: IRequestContextIncoming,
-    configuration: IExpectationSchemaForward
+    schema: IExpectationSchemaForward
   ) {
     const options = await this
-      .compileForwardingConfiguration(context, incoming, configuration)
+      .compileForwardingConfiguration(context, incoming, schema)
       .catch((error) => {
         context.snapshot.assign({
           error: { code: 'UNKNOWN', message: error?.message ?? 'Unknown' },
@@ -95,7 +95,9 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     const data = parsePayload(type, response.data);
 
     return {
+      schema,
       incoming,
+
       outgoing: {
         type: type,
 
@@ -135,32 +137,32 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   protected async compileForwardingConfiguration(
     context: HttpRequestContext,
     incoming: IRequestContextIncoming,
-    configuration: IExpectationSchemaForward
+    schema: IExpectationSchemaForward
   ): Promise<AxiosRequestConfig> {
-    const url = new URL(configuration.url ?? incoming.path, configuration.baseUrl);
+    const url = new URL(schema.url ?? incoming.path, schema.baseUrl);
     const isSecured = url.protocol.includes('https');
 
     return {
-      timeout: configuration.timeout ?? 30000,
+      timeout: schema.timeout ?? 30000,
 
       method: incoming.method,
       headers: Object.assign(incoming.headers, {
         connection: 'close',
 
-        ...(configuration.options?.overrideHost !== false && { host: url.host }),
+        ...(schema.options?.overrideHost !== false && { host: url.host }),
         ...(incoming.dataRaw && { 'content-length': String(incoming.dataRaw.length) }),
       }),
 
-      ...(configuration.url && { url: configuration.url }),
-      ...(configuration.baseUrl && { baseURL: configuration.baseUrl, url: incoming.path }),
+      ...(schema.url && { url: schema.url }),
+      ...(schema.baseUrl && { baseURL: schema.baseUrl, url: incoming.path }),
 
       data: incoming.dataRaw,
       params: context.incoming.query,
       responseType: 'arraybuffer',
 
-      ...((configuration.proxy && !isSecured) && { proxy: configuration.proxy }),
-      ...((configuration.proxy && isSecured) && {
-        httpsAgent: new HttpsProxyAgent(`http://${configuration.proxy.host}:${configuration.proxy.port}`),
+      ...((schema.proxy && !isSecured) && { proxy: schema.proxy }),
+      ...((schema.proxy && isSecured) && {
+        httpsAgent: new HttpsProxyAgent(`http://${schema.proxy.host}:${schema.proxy.port}`),
       }),
     };
   }

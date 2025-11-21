@@ -1,7 +1,8 @@
 import type { Observable } from 'rxjs';
 
+import type { PartialDeep, SetRequiredKeys } from '../../../../types';
+import type { IExpectationSchemaForward } from '../../../expectations';
 import type { TRequestPayloadType } from '../../types';
-import type { SetRequiredKeys } from '../../../../types';
 
 export interface IRequestContextIncoming {
   type: TRequestPayloadType;
@@ -45,9 +46,10 @@ export interface IRequestContextMessage {
 }
 
 export interface IRequestContextForwarded {
+  schema: IExpectationSchemaForward;
   incoming: IRequestContextIncoming;
-  outgoing?: IRequestContextOutgoing;
 
+  outgoing?: IRequestContextOutgoing;
   messages?: Pick<IRequestContextMessage, 'location' | 'data'>[];
 }
 
@@ -66,6 +68,10 @@ export interface IRequestContextCacheConfiguration {
 
   /** Seconds */
   ttl?: number;
+}
+
+export interface IRequestContextOverrides {
+  forward?: PartialDeep<Omit<IExpectationSchemaForward, 'cache'>>;
 }
 
 export type TRequestContextCacheConfigurationCompiled =

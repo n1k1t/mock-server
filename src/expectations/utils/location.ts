@@ -179,6 +179,13 @@ export const extractContextByLocation = (
       value: context.flags,
     };
 
+    case 'overrides': return {
+      key: 'overrides',
+      type: 'object',
+      parent: context,
+      value: context.overrides,
+    };
+
     default: return null;
   }
 }

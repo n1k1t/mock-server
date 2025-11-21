@@ -39,6 +39,10 @@ export class History {
       outgoing: {
         status: this.snapshot.outgoing.status,
       },
+
+      forward: {
+        url: this.expectation?.schema.forward?.baseUrl ?? this.expectation?.schema.forward?.url,
+      },
     },
 
     metrics: {
@@ -65,8 +69,13 @@ export class History {
     this.snapshot.assign(snapshot.omit(['incoming', 'forwarded', 'messages']));
 
     if (snapshot.forwarded) {
+      this.meta.tags.forward = {
+        url: snapshot.forwarded.schema.baseUrl ?? snapshot.forwarded.schema.url,
+      };
+
       this.snapshot.assign({
         forwarded: {
+          schema: snapshot.forwarded.schema,
           incoming: _.omit(snapshot.forwarded.incoming, ['stream']),
 
           ...(snapshot.forwarded.outgoing && {

@@ -38,9 +38,7 @@ export interface IExpectationMeta {
     incoming?: Partial<Record<'path' | 'method' | 'error', string[]>>;
     outgoing?: Partial<Record<'status', number[]>>;
 
-    forward?: {
-      url?: string;
-    };
+    forward?: Partial<Pick<IExpectationSchemaForward, 'url'>>;
   };
 
   metrics: {
@@ -57,6 +55,7 @@ export const LExpectationOperatorLocation = <const>[
   'flags',
 
   'container',
+  'overrides',
   'cache',
   'state',
   'seed',
@@ -117,6 +116,8 @@ export interface IExpectationSchemaContext<TInput extends IExpectationSchemaInpu
   state: TInput['state'] extends object ? TInput['state'] : Record<string, any>;
   storage: ContainersStorage<TInput['container']>;
   cache: TInput extends object ? RequestContextSnapshot['cache'] : any;
+
+  overrides?: RequestContextSnapshot['overrides'];
 
   container?: Container<NonNullable<TInput['container']>>;
   seed?: RequestContextSnapshot['seed'];

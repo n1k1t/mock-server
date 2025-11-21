@@ -10,6 +10,7 @@ import type {
   IRequestContextMessage,
   IRequestContextForwarded,
   IRequestContextError,
+  IRequestContextOverrides,
 } from './types';
 
 const clone = rfdc();
@@ -56,6 +57,9 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
   public outgoing: IRequestContextOutgoing = this.configuration.outgoing;
   public messages: IRequestContextMessage[] = this.configuration.messages ?? [];
 
+  /** Expectation schema overrides */
+  public overrides?: IRequestContextOverrides = this.configuration.overrides;
+
   public forwarded?: IRequestContextForwarded = this.configuration.forwarded;
   public error?: IRequestContextError = this.configuration.error;
 
@@ -65,7 +69,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
   constructor(
     protected configuration:
       & Pick<TContext, 'transport' | 'event'>
-      & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'event' | 'storage' | 'flags'>
+      & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'event' | 'storage' | 'flags' | 'overrides'>
       & Partial<Pick<RequestContextSnapshot, 'messages' | 'state' | 'seed' | 'container' | 'forwarded' | 'error' | 'cache'>>
   ) {}
 
@@ -108,6 +112,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
       event: this.event,
       flags: this.flags,
 
+      overrides: this.overrides,
       state: this.state,
       cache: this.cache,
 

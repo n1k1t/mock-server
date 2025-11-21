@@ -35,7 +35,16 @@ export default `
       </div>
 
       {{#if data.expectation}}
-        {{>expectationMeta options data=data.expectation format='short'}}
+        <div class="segment">
+          <span class="name">
+            <b style="color: {{toColor data.expectation.group 'group'}};">{{data.expectation.group}}</b>
+            {{data.expectation.name}}
+          </span>
+
+          {{#if data.meta.tags.forward.url}}
+            <span class="forward">{{> truncated value=data.meta.tags.forward.url length=45}}</span>
+          {{/if}}
+        </div>
       {{else}}
         <div class="segment"><span class="handled-with red">Nowhere</span></div>
       {{/if}}
