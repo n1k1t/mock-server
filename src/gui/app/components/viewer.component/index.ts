@@ -1,4 +1,4 @@
-import JsonFormatter from '../../../../../../../packages/json-formatter';
+import JsonFormatter from '../../../../../../package.json-formatter';
 import hbs from 'handlebars';
 
 import { Component } from '../../models';

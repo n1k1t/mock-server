@@ -6,7 +6,10 @@ export default Endpoint
     outgoing: null;
   }>()
   .bindToHttp(<const>{ method: 'DELETE', path: '/expectations' })
-  .assignHandler(async ({ reply, incoming, provider }) => {
-    await provider.client.deleteExpectations(incoming.data);
+  .assignHandler(async ({ reply, incoming, server }) => {
+    for (const provider of server.providers.extract()) {
+      await provider.client.deleteExpectations(incoming.data);
+    }
+
     reply.ok(null);
   });

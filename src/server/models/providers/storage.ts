@@ -21,6 +21,8 @@ export class ProvidersStorage<
   }
 
   public register(provider: Provider<any>): this {
+    const existent = this.get(provider.group);
+
     provider.assign({ server: this.server });
 
     for (const history of this.system.storages.history.values()) {
@@ -35,8 +37,15 @@ export class ProvidersStorage<
     if (this.default === provider) {
       return this;
     }
-    if (this.has(provider.group)) {
-      logger.info(`Provider group [${provider.group}] is already registered. Using existent...`);
+
+    if (existent) {
+      if (existent === provider) {
+        return this;
+      }
+
+      logger.warn(`Provider group [${provider.group}] is already registered. Extending...`);
+      existent.extend(provider);
+
       return this;
     }
 

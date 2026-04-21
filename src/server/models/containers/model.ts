@@ -8,15 +8,13 @@ import { compileContainerLink } from './utils';
 const clone = rfdc();
 
 export class Container<TPayload extends object = object> {
-  public TPlain!: Pick<Container<TPayload>, 'key' | 'prefix' | 'payload' | 'ttl'>;
+  public TPlain!: Pick<Container<TPayload>, 'key' | 'payload' | 'ttl'>;
 
   public ttl = this.provided.ttl;
+  public key = this.provided.key;
+
   public expiresAt = this.provided.timestamp + this.ttl * 1000;
-
   public payload = this.provided.payload;
-
-  public prefix = this.provided.prefix;
-  public key = (this.prefix ?? '') + this.provided.key;
 
   constructor(
     public provided: {
@@ -27,11 +25,9 @@ export class Container<TPayload extends object = object> {
       ttl: number;
       timestamp: number;
 
-      prefix?: string;
-
       hooks?: {
-        onBind?: TFunction<unknown, [string, Container<any>]>;
-        onUnbind?: TFunction<unknown, [Container<any>]>;
+        bind?: TFunction<unknown, [string, Container<any>]>;
+        unbind?: TFunction<unknown, [Container<any>]>;
       };
     }
   ) {}
@@ -56,12 +52,12 @@ export class Container<TPayload extends object = object> {
   }
 
   public bind(key: string | object): this {
-    this.provided.hooks?.onBind?.(compileContainerLink(key), this);
+    this.provided.hooks?.bind?.(compileContainerLink(key), this);
     return this;
   }
 
   public unbind(): this {
-    this.provided.hooks?.onUnbind?.(this);
+    this.provided.hooks?.unbind?.(this);
     return this;
   }
 
@@ -70,7 +66,7 @@ export class Container<TPayload extends object = object> {
   }
 
   public toPlain(): Container<TPayload>['TPlain'] {
-    return _.pick(this, ['key', 'prefix', 'payload', 'ttl']);
+    return _.pick(this, ['key', 'payload', 'ttl']);
   }
 
   static build<T extends object>(provided: Container<T>['provided']) {

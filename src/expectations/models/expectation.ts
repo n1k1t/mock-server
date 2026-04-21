@@ -79,6 +79,10 @@ export class Expectation<
     >
   ) {}
 
+  public assign(payload: Partial<Pick<Expectation<TInput, TContext>, 'group'>>): this {
+    return Object.assign(this, payload);
+  }
+
   public increaseExecutionsCounter(): this {
     this.meta.metrics.executions += 1;
     return this;

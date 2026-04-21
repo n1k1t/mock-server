@@ -4,5 +4,4 @@ export interface IContainerConfiguration<T extends object> {
 
   /** Seconds */
   ttl?: number;
-  prefix?: string;
 }

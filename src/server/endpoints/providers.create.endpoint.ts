@@ -8,6 +8,8 @@ export default Endpoint
 
         /** Seconds */
         ttl?: number;
+
+        /** Path match for router (`**` by default) */
         route?: string;
       };
     };
@@ -25,9 +27,6 @@ export default Endpoint
       ttl: incoming.data.ttl,
     });
 
-    incoming.data?.route
-      ? server.router.register(incoming.data.route, { provider })
-      : server.providers.register(provider);
-
+    server.router.register(incoming.data.route ?? '**', { provider })
     reply.ok(null);
   });

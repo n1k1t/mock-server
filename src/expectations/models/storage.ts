@@ -11,6 +11,19 @@ export type TExpectationsStorageRegisterationResult =
 const logger = Logger.build('Expectations.Storage');
 
 export class ExpectationsStorage extends Map<string, Expectation<any>> {
+  constructor(protected configuration: Pick<Expectation<any>, 'group'>) {
+    super();
+  }
+
+  /** Extends this storage with another */
+  public extend(storage: ExpectationsStorage): this {
+    for (const [name, expectation] of storage.entries()) {
+      this.set(name, expectation);
+    }
+
+    return this;
+  }
+
   public register(configuration: Expectation['configuration']): TExpectationsStorageRegisterationResult {
     const expectation = Expectation.build(configuration);
     const errors = expectation.validate();

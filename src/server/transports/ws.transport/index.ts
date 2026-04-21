@@ -19,7 +19,7 @@ const handle = async (
   event: WsTransport['TContext']['event'],
   socket: WebSocket,
   request: IncomingMessage,
-  match: IRouteMatchResult<'ws', WsTransport>,
+  match: IRouteMatchResult<WsTransport>,
   data?: RawData
 ): Promise<void | null | symbol> => {
   const context = await match.transport
@@ -59,7 +59,7 @@ export const buildWsListener = <T extends WsRequestContext['TContext']>(router: 
       return socket.terminate();
     }
 
-    const matches: IRouteMatchResult<'ws', WsTransport>[] = [];
+    const matches: IRouteMatchResult<WsTransport>[] = [];
 
     for (const match of router.match<WsTransport>('ws', request.url ?? '')) {
       matches.push(match);

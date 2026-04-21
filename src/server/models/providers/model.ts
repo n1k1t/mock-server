@@ -20,7 +20,7 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
   public expiresAt: number = this.ttl ? this.timestamp + this.ttl * 1000 : Infinity;
 
   public storages = {
-    expectations: new ExpectationsStorage(),
+    expectations: new ExpectationsStorage({ group: this.group }),
     containers: new ContainersStorage(),
     history: new HistoryStorage({ group: this.group, limit: this.provided.history?.limit }),
   };
@@ -31,8 +31,17 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
     };
   }) {}
 
-  public assign(payload: Partial<Pick<Provider, 'server'>>): this {
+  public assign(payload: Partial<Pick<Provider, 'server' | 'client' | 'storages'>>): this {
     return Object.assign(this, payload);
+  }
+
+  /** Extends storages of this instance with another provider */
+  public extend(provider: Provider<any>): this {
+    this.storages.expectations.extend(provider.storages.expectations);
+    this.storages.containers.extend(provider.storages.containers);
+    this.storages.history.extend(provider.storages.history);
+
+    return this;
   }
 
   static build<TContext extends IServerContext = IServerContextDefaults>(

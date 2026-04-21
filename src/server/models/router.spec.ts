@@ -1,26 +1,27 @@
 import { faker } from '@faker-js/faker';
 import { Router } from './router';
 
-// Test generated using Keploy
-test('should set default transports when no transports are provided', () => {
+it('should set default transports when no transports are provided', () => {
   const mockServer = {
     providers: {
       register: jest.fn(),
-      default: {} // mocked default provider
+      default: {}
     },
-    transports: new Map([['default', {}]]) // mocked transports
+    transports: new Map([['default', {}]])
   };
 
   const router = new Router(<any>mockServer);
   const pattern = 'route-pattern';
-  const configuration = { provider: {} }; // mocked provider
+  const configuration = { provider: { group: 'test-group' } };
 
   const result = router.register(pattern, <any>configuration);
 
   expect(mockServer.providers.register).toHaveBeenCalledWith(configuration.provider);
-  expect(result.get(pattern)).toEqual({
+  const routes = result.get(pattern);
+  expect(routes).toBeInstanceOf(Set);
+  expect(Array.from(routes!)[0]).toEqual({
     provider: configuration.provider,
-    transports: { default: {} } // default transport set
+    transports: { default: {} }
   });
 });
 

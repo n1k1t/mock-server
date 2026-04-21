@@ -11,6 +11,15 @@ export class HistoryStorage extends Map<string, History> {
     super();
   }
 
+  /** Extends this storage with another */
+  public extend(storage: HistoryStorage): this {
+    for (const [name, history] of storage.entries()) {
+      this.set(name, history);
+    }
+
+    return this;
+  }
+
   /** Registers history item */
   public register(predicate: History | Omit<History['configuration'], 'group'>): History {
     const history = predicate instanceof History ? predicate : History.build({

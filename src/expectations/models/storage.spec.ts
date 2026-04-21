@@ -4,12 +4,12 @@ import { Expectation } from './expectation';
 
 describe('Expectations.Models.Storage', () => {
   it('should not match with empty storage', () => {
-    const storage = new ExpectationsStorage();
+    const storage = new ExpectationsStorage({ group: 'test' });
     expect(storage.match(buildExpectationContext())).toBeNull();
   });
 
   it('should match with 1 expectation', () => {
-    const storage = new ExpectationsStorage();
+    const storage = new ExpectationsStorage({ group: 'test' });
 
     const { expectation } = <{ expectation: Expectation }>storage.register({
       schema: {
@@ -21,7 +21,7 @@ describe('Expectations.Models.Storage', () => {
   });
 
   it('should not match with 1 expectation', () => {
-    const storage = new ExpectationsStorage();
+    const storage = new ExpectationsStorage({ group: 'test' });
 
     storage.register({
       schema: {
@@ -33,7 +33,7 @@ describe('Expectations.Models.Storage', () => {
   });
 
   it('should match with 2 expectations', () => {
-    const storage = new ExpectationsStorage();
+    const storage = new ExpectationsStorage({ group: 'test' });
 
     storage.register({
       schema: {
@@ -51,7 +51,7 @@ describe('Expectations.Models.Storage', () => {
   });
 
   it('should not match with 2 expectations', () => {
-    const storage = new ExpectationsStorage();
+    const storage = new ExpectationsStorage({ group: 'test' });
 
     storage.register({
       schema: {
