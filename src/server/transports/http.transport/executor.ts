@@ -33,24 +33,16 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     return context.complete();
   }
 
+  /**
+   * Returns the matched expectation for the context or `null` when nothing
+   * matches. Unlike the previous implementation this method does NOT send a
+   * preemptive 404 reply: the HTTP listener iterates over multiple matched
+   * providers (the router is a multimap) and a premature reply here would
+   * close the response before the next provider gets a chance. The listener
+   * owns the final "nothing matched anywhere" 404.
+   */
   public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
-    const expectation = context.provider.storages.expectations.match(context.snapshot);
-
-    if (!expectation && context.is(['handling'])) {
-      context.assign({
-        outgoing: await this.reply(context, {
-          type: 'plain',
-          status: 404,
-
-          dataRaw: Buffer.from('Expectation was not found'),
-          headers: {},
-        }),
-      });
-
-      return null;
-    }
-
-    return expectation;
+    return context.provider.storages.expectations.match(context.snapshot);
   }
 
   public async forward(

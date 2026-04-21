@@ -18,7 +18,14 @@ export interface IRouteMatchResult<
   transport: T;
 }
 
-export class Router<TContext extends IServerContext = IServerContext> extends Map<string, IRouteContext<TContext['transport']>> {
+/**
+ * The router keeps multiple routes per pattern so independent providers can
+ * share a URL prefix (for example several parallel test workers registering
+ * their own provider under `/forward/**`). The HTTP listener iterates over
+ * every matched route and the first provider whose expectation storage hits
+ * wins; the rest are skipped without closing the response.
+ */
+export class Router<TContext extends IServerContext = IServerContext> extends Map<string, IRouteContext<TContext['transport']>[]> {
   constructor(protected server: MockServer<any, any>) {
     super();
   }
@@ -45,7 +52,7 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
         ? Object.keys(configuration.transports)
         : [...this.server.transports.keys()];
 
-    return this.set(pattern, {
+    const route: IRouteContext<TContext['transport']> = {
       provider: configuration.provider,
 
       transports: types.reduce<IRouteContext<TContext['transport']>['transports']>(
@@ -58,14 +65,27 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
         ),
         {}
       ),
-    });
+    };
+
+    const existing = this.get(pattern);
+
+    if (existing) {
+      existing.push(route);
+      return this;
+    }
+
+    return this.set(pattern, [route]);
   }
 
   /** Deletes each route that is using provider */
   public unregister(provider: Provider<any>): this {
-    for (const [pattern, route] of this.entries()) {
-      if (route.provider.group === provider.group) {
+    for (const [pattern, routes] of this.entries()) {
+      const filtered = routes.filter((route) => route.provider.group !== provider.group);
+
+      if (filtered.length === 0) {
         this.delete(pattern);
+      } else if (filtered.length !== routes.length) {
+        this.set(pattern, filtered);
       }
     }
 
@@ -76,12 +96,14 @@ export class Router<TContext extends IServerContext = IServerContext> extends Ma
     transport: TContext['transport'],
     path: string
   ): Generator<IRouteMatchResult<TContext['transport'], T>> {
-    for (const [pattern, route] of this.entries()) {
+    for (const [pattern, routes] of this.entries()) {
       if (minimatch(path, pattern)) {
-        yield {
-          provider: route.provider,
-          transport: <T>route.transports[transport],
-        };
+        for (const route of routes) {
+          yield {
+            provider: route.provider,
+            transport: <T>route.transports[transport],
+          };
+        }
       }
     }
 

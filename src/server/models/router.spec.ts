@@ -18,10 +18,74 @@ test('should set default transports when no transports are provided', () => {
   const result = router.register(pattern, <any>configuration);
 
   expect(mockServer.providers.register).toHaveBeenCalledWith(configuration.provider);
-  expect(result.get(pattern)).toEqual({
-    provider: configuration.provider,
-    transports: { default: {} } // default transport set
-  });
+  expect(result.get(pattern)).toEqual([
+    {
+      provider: configuration.provider,
+      transports: { default: {} } // default transport set
+    }
+  ]);
+});
+
+test('register should append a route when another provider already uses the same pattern', () => {
+  const mockServer = {
+    providers: {
+      register: jest.fn(),
+      default: {}
+    },
+    transports: new Map([['http', { type: 'http-a' }], ['ws', { type: 'ws-a' }]])
+  };
+
+  const router = new Router(<any>mockServer);
+  const pattern = '/forward/**';
+
+  const providerA = { group: 'group-a' };
+  const providerB = { group: 'group-b' };
+  const providerC = { group: 'group-c' };
+
+  router.register(pattern, <any>{ provider: providerA, transports: ['http'] });
+  router.register(pattern, <any>{ provider: providerB, transports: ['http'] });
+  router.register(pattern, <any>{ provider: providerC, transports: ['http'] });
+
+  const bucket = router.get(pattern)!;
+
+  expect(bucket).toHaveLength(3);
+  expect(bucket.map((route) => route.provider)).toEqual([providerA, providerB, providerC]);
+
+  const matches = Array.from(router.match('http', '/forward/anything'));
+
+  // 3 registered routes + the default route yielded at the end of match()
+  expect(matches).toHaveLength(4);
+  expect(matches.slice(0, 3).map((m) => m.provider)).toEqual([providerA, providerB, providerC]);
+  expect(matches[3].provider).toBe(mockServer.providers.default);
+});
+
+test('unregister removes only the routes that belong to the given provider and keeps the rest in the bucket', () => {
+  const mockServer = {
+    providers: {
+      register: jest.fn(),
+      default: {}
+    },
+    transports: new Map([['http', { type: 'http-a' }]])
+  };
+
+  const router = new Router(<any>mockServer);
+  const pattern = '/forward/**';
+
+  const providerA = { group: 'group-a' };
+  const providerB = { group: 'group-b' };
+
+  router.register(pattern, <any>{ provider: providerA, transports: ['http'] });
+  router.register(pattern, <any>{ provider: providerB, transports: ['http'] });
+
+  router.unregister(<any>providerA);
+
+  const bucket = router.get(pattern)!;
+  expect(bucket).toHaveLength(1);
+  expect(bucket[0].provider).toBe(providerB);
+  expect(router.has(pattern)).toBe(true);
+
+  router.unregister(<any>providerB);
+  expect(router.has(pattern)).toBe(false);
 });
 
 // Test generated using Keploy

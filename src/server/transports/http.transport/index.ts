@@ -51,6 +51,16 @@ export const buildHttpListener = <T extends HttpRequestContext['TContext']>(rout
     await metaStorage
       .wrap(context.meta, () => transport.executor.exec(context.handle()))
       .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
+
+    // Nothing matched — neither any registered provider nor the default one
+    // produced an outgoing payload (no forwarder, no expectation). The 404
+    // used to be emitted eagerly from `HttpExecutor.match`, but that broke
+    // multi-provider fallback. Send it here once, as the final step, if the
+    // response is still open.
+    if (!response.headersSent && response.writable) {
+      response.writeHead(404, { 'content-type': 'text/plain' });
+      response.end('Expectation was not found');
+    }
   }
 
 export class HttpTransport extends Transport<HttpExecutor> {
