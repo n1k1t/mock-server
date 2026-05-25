@@ -28,11 +28,11 @@ export default class NotExpectationOperator<
     return {};
   }
 
-  public match(context: TContext): boolean {
-    return this.compiled ? !this.compiled.match(context) : false;
+  public async match(context: TContext): Promise<boolean> {
+    return this.compiled ? !(await this.compiled.match(context)) : false;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     return context;
   }
 }

@@ -1,14 +1,14 @@
-import type { IServerContext } from '../../../types';
 import type { MockServer } from '../../../index';
 import type { TFunction } from '../../../../../types';
 
 import { IRequestContextIncoming, RequestContext } from '../../../models';
 import { InternalSocketIoReply } from './reply';
 
-export class InternalSocketIoRequestContext<TOutgoing = unknown> extends RequestContext<IServerContext<{
+export class InternalSocketIoRequestContext<TOutgoing = unknown> extends RequestContext<{
   transport: 'io';
   event: 'message';
-}>> {
+  flag: string & {};
+}> {
   public incoming: IRequestContextIncoming = {
     type: 'json',
     data: this.request.data,

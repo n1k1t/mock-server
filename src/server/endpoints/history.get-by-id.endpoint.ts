@@ -1,6 +1,6 @@
-import { Endpoint, History } from '../models';
+import { EndpointFactory, History } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: {
       query: { id: string };
@@ -9,9 +9,9 @@ export default Endpoint
 
     outgoing: History['TPlain'];
   }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/history' })
-  .bindToIo(<const>{ path: 'history:get-by-id' })
-  .assignHandler(({ reply, incoming, server }) => {
+  .http(<const>{ method: 'GET', path: '/history' })
+  .io(<const>{ path: 'history:get-by-id' })
+  .compile(({ reply, incoming, server }) => {
     const id = incoming.data?.id ?? incoming.query?.id;
     if (!id) {
       return reply.validationError(['Invalid "id" query parameter']);

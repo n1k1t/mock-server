@@ -23,8 +23,8 @@ const logger = Logger.build('Server.Transports.Http.Executor');
 export class HttpExecutor extends Executor<HttpRequestContext> {
   public async exec(context: HttpRequestContext, options?: IExecutorExecOptions) {
     await super.exec(context, options).catch((error) => {
-      if (error instanceof ExecutorManualError) {
-        return null;
+      if (error instanceof ExecutorManualError && error.is('ECONNABORTED')) {
+        return context.request.socket.destroy();
       }
 
       logger.error('Got unexpected error while execution', error?.stack ?? error);
@@ -34,7 +34,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
   }
 
   public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
-    const expectation = context.provider.storages.expectations.match(context.snapshot);
+    const expectation = await context.provider.storages.expectations.match(context.snapshot);
 
     if (!expectation && context.is(['handling'])) {
       context.assign({

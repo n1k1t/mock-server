@@ -1,11 +1,11 @@
+import { EndpointFactory } from '../models';
 import { Expectation } from '../../expectations';
-import { Endpoint } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: Expectation['TCompact'][] }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/expectations/compact' })
-  .bindToIo(<const>{ path: 'expectations:compact:get-list' })
-  .assignHandler(({ reply, server }) =>
+  .http(<const>{ method: 'GET', path: '/expectations/compact' })
+  .io(<const>{ path: 'expectations:compact:get-list' })
+  .compile(({ reply, server }) =>
     reply.ok(
       server.providers
         .extract()

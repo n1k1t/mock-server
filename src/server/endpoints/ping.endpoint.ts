@@ -1,7 +1,7 @@
-import { Endpoint } from '../models';
+import { EndpointFactory } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: 'pong' }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/ping' })
-  .bindToIo(<const>{ path: 'ping' })
-  .assignHandler(({ reply }) => reply.ok('pong'));
+  .http(<const>{ method: 'GET', path: '/ping' })
+  .io(<const>{ path: 'ping' })
+  .compile(({ reply }) => reply.ok('pong'));

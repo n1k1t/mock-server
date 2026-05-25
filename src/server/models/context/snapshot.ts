@@ -15,7 +15,7 @@ import type {
 
 const clone = rfdc();
 
-export class RequestContextSnapshot<TContext extends IServerContext = IServerContext> {
+export class RequestContextSnapshot<TContext extends IServerContext = any> {
   public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage' | 'forwarded' | 'state' | 'cache'> & {
     transport: TContext['transport'];
 
@@ -146,7 +146,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = IServerCon
     };
   }
 
-  static build<TContext extends IServerContext = IServerContext>(
+  static build<TContext extends IServerContext>(
     configuration: RequestContextSnapshot<TContext>['configuration']
   ): RequestContextSnapshot<TContext> {
     return new RequestContextSnapshot<TContext>(configuration);

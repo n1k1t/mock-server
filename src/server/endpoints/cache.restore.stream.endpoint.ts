@@ -1,15 +1,15 @@
 import { ungzip } from 'node-gzip';
 
 import { ICacheBackup, IIoIncomingStream } from '../types';
-import { Endpoint } from '../models';
+import { EndpointFactory } from '../models';
 import { Logger } from '../../logger';
 
 const logger = Logger.build('Server.Endpoints.CacheRestore');
 
-export default Endpoint
+export default EndpointFactory
   .build<{ incoming: { data: IIoIncomingStream<{ ttl: number }>, outgoing: null }, outgoing: null }>()
-  .bindToIo(<const>{ path: 'cache:restore:stream' })
-  .assignHandler(async ({ incoming, reply, server }) => {
+  .io(<const>{ path: 'cache:restore:stream' })
+  .compile(async ({ incoming, reply, server }) => {
     const chunks: string[] = [];
 
     if (!incoming.data?.stream) {

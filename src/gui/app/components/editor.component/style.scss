@@ -1,0 +1,31 @@
+div.editor {
+  position: relative;
+  height: 600px;
+
+  div.ace_search {
+    background-color: lighten($color-dark, 10);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    right: 10px;
+    top: 10px;
+
+    span.ace_searchbtn, span.ace_button {
+      background-color: lighten($color-dark, 5);
+      border: solid 1px lighten($color-dark, 10);
+      border-radius: 5px;
+      color: rgba(#fff, .5);
+    }
+
+    span.checked, span.ace_searchbtn:hover, span.ace_button:hover {
+      color: $color-main;
+    }
+
+    input {
+      background-color: rgba(#fff, .1);
+      border: solid 1px lighten($color-dark, 10);
+      border-radius: 5px;
+      color: #fff;
+    }
+  }
+}

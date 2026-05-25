@@ -14,11 +14,14 @@ const header = components.HeaderComponent.build([
 
 context.switchStorage(sections.expectations.storage).share({
   popups: components.PopupsComponent.build(),
+  curtain: components.CurtainComponent.build(),
 });
 
 document.body.prepend(header.element);
 document.body.append(loader.element);
+
 document.body.append(context.shared.popups.element);
+document.body.append(context.shared.curtain.element);
 
 Object
   .values(sections)

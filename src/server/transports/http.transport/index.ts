@@ -2,6 +2,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 
 import { Provider, Router, Transport } from '../../models';
 import { HttpRequestContext } from './context';
+import { IServerContext } from '../../types';
 import { HttpExecutor } from './executor';
 import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
@@ -11,7 +12,7 @@ export * from './context';
 
 const logger = Logger.build('Server.Transports.Http');
 
-export const buildHttpListener = <T extends HttpRequestContext['TContext']>(router: Router<T>) =>
+export const buildHttpListener = <T extends IServerContext>(router: Router<T>) =>
   async (request: IncomingMessage, response: ServerResponse) => {
     for (const { provider, transport } of router.match<HttpTransport>('http', request.url ?? '')) {
       const context = await transport
@@ -57,7 +58,7 @@ export class HttpTransport extends Transport<HttpExecutor> {
   public executor = new HttpExecutor();
 
   public compileContext(
-    provider: Provider<HttpTransport['TContext']>,
+    provider: Provider,
     request: IncomingMessage,
     response: ServerResponse
   ) {

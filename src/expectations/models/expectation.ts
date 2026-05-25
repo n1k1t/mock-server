@@ -11,22 +11,20 @@ import {
   IExpectationSchemaContext,
   IExpectationSchemaInput,
   IExpectationSchema,
+  IExpectationDefaults,
 } from '../types';
 
 import * as operators from '../operators';
 
-export class Expectation<
-  TInput extends IExpectationSchemaInput = {},
-  TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
-> {
-  public TPlain!: Pick<
-    Expectation<TInput, TContext>,
-    'schema' | 'id' | 'group' | 'isEnabled' | 'meta' | 'name' | 'transports'
-  > & {
+type TExpectationPlainKey = 'schema' | 'id' | 'group' | 'isEnabled' | 'meta' | 'name' | 'transports' | 'defaults';
+type TExpectationCompactKey = Exclude<TExpectationPlainKey, 'schema'>;
+
+export class Expectation<TContext extends IExpectationSchemaContext<any> = any> {
+  public TPlain!: Pick<Expectation<TContext>, TExpectationPlainKey> & {
     format: 'plain';
   };
 
-  public TCompact!: Omit<Expectation<TInput, TContext>['TPlain'], 'schema' | 'format'> & {
+  public TCompact!: Pick<Expectation<TContext>, TExpectationCompactKey> & {
     format: 'compact';
   };
 
@@ -35,6 +33,7 @@ export class Expectation<
   public group: string = this.configuration.group ?? 'unknown';
 
   public transports?: TContext['transport'][] = this.configuration.transports;
+  public defaults?: IExpectationDefaults<TContext> = this.configuration.defaults;
 
   public schema = <IExpectationSchema<TContext>>this.configuration.schema;
   public isEnabled: boolean = this.configuration.isEnabled ?? true;
@@ -74,12 +73,12 @@ export class Expectation<
   };
 
   constructor(
-    public configuration: Pick<Expectation<TInput, TContext>, 'schema'> & Partial<
-      Pick<Expectation<TInput, TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports' | 'meta'>
+    public configuration: Pick<Expectation<TContext>, 'schema'> & Partial<
+      Pick<Expectation<TContext>, 'id' | 'name' | 'isEnabled' | 'group' | 'transports' | 'meta' | 'defaults'>
     >
   ) {}
 
-  public assign(payload: Partial<Pick<Expectation<TInput, TContext>, 'group'>>): this {
+  public assign(payload: Partial<Pick<Expectation<TContext>, 'group'>>): this {
     return Object.assign(this, payload);
   }
 
@@ -92,7 +91,7 @@ export class Expectation<
     return [];
   }
 
-  public toPlain(): Expectation<TInput, TContext>['TPlain'] {
+  public toPlain(): Expectation<TContext>['TPlain'] {
     return {
       format: 'plain',
 
@@ -100,6 +99,7 @@ export class Expectation<
       group: this.group,
 
       name: this.name,
+      defaults: this.defaults,
       transports: this.transports,
 
       meta: this.meta,
@@ -114,7 +114,7 @@ export class Expectation<
     };
   }
 
-  public toCompact(): Expectation<TInput, TContext>['TCompact'] {
+  public toCompact(): Expectation<TContext>['TCompact'] {
     return {
       format: 'compact',
 
@@ -129,9 +129,9 @@ export class Expectation<
     };
   }
 
-  static build<TInput extends IExpectationSchemaInput = {}>(
-    configuration: Expectation<TInput>['configuration']
-  ): Expectation<TInput> {
+  static build<TInput extends IExpectationSchemaInput>(
+    configuration: Expectation<IExpectationSchemaContext<TInput>>['configuration']
+  ): Expectation<IExpectationSchemaContext<TInput>> {
     return new Expectation(configuration);
   }
 }

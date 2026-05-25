@@ -25,28 +25,31 @@ export abstract class ExpectationOperator<TContext extends IExpectationSchemaCon
   public TContext!: TContext;
   public TSchema!: TSchema;
 
-  public abstract match(context: TContext): boolean;
-  public abstract manipulate<T extends TContext>(context: T): T;
+  public abstract match(context: TContext): Promise<boolean>;
+  public abstract manipulate<T extends TContext>(context: T): Promise<T>;
 
   public abstract get tags(): IExpectationMeta['tags'];
 
   constructor(public operators: TExpectationOperators, public command: TSchema) {}
 
-  protected compileExecHandler(raw: TFunction<any, any[]> | string, provide: ('payload' | 'utils')[]) {
+  protected compileExecHandler(
+    raw: TFunction<any, any[]> | string,
+    provide: ('payload' | 'utils')[]
+  ): TFunction<Promise<unknown>, [IExpectationExecMode, TContext, ...unknown[]]> {
     const parameters: string[] = [];
 
     if (provide.includes('payload')) {
       parameters.push('payload');
     }
     if (provide.includes('utils')) {
-      parameters.push('{ context, mode, meta, T, _, d, faker }');
+      parameters.push('{ context, mode, meta, T, _, d, faker, rx }');
     }
 
     const handler = typeof raw === 'function' ? raw : Function(parameters.join(', '), `return (() => ${raw})()`);
 
-    return (mode: IExpectationExecMode, context: TContext, ...args: unknown[]) => {
+    return async (mode, context, ...args) => {
       const utils = this.compileExecUtils(mode, context);
-      const handled = handler(...args, utils);
+      const handled = await handler(...args, utils);
 
       return typeof handled === 'function' ? handled(...args, utils) : handled;
     }
@@ -82,7 +85,6 @@ export abstract class ExpectationOperator<TContext extends IExpectationSchemaCon
       context: <IExpectationExecUtils<T>['context']>context,
       meta: metaStorage.provide(),
 
-      T: (payload) => <any>payload,
       rx: rxjs,
       d: dayjs,
     }

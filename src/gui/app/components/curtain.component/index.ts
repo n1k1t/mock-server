@@ -13,7 +13,7 @@ export class CurtainComponent extends Component {
     }
   }
 
-  static build(options: ICurtainComponentOptions) {
+  static build(options?: ICurtainComponentOptions) {
     return new CurtainComponent(options);
   }
 }

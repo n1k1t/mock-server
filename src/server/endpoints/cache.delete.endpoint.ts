@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
+import { EndpointFactory } from '../models';
 import { RxConverter } from '../utils';
-import { Endpoint } from '../models';
 import { Logger } from '../../logger';
 
 interface IOutgoing {
@@ -12,11 +12,11 @@ interface IOutgoing {
 
 const logger = Logger.build('Server.Endpoints.CacheDelete');
 
-export default Endpoint
+export default EndpointFactory
   .build<{ incoming: { data: { prefix?: string } }, outgoing: IOutgoing }>()
-  .bindToHttp(<const>{ method: 'DELETE', path: `/cache` })
-  .bindToIo(<const>{ path: 'cache:delete' })
-  .assignHandler(async ({ incoming, reply, server }) => {
+  .http(<const>{ method: 'DELETE', path: `/cache` })
+  .io(<const>{ path: 'cache:delete' })
+  .compile(async ({ incoming, reply, server }) => {
     const result: IOutgoing = {
       ...(server.databases.redis && {
         redis: {

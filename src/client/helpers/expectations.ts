@@ -7,40 +7,28 @@ import type {
   TExpectationOperatorObjectLocation,
 } from '../../expectations';
 
-import type AndExpectationOperator from '../../expectations/operators/and.operator';
-import type ExecExpectationOperator from '../../expectations/operators/exec.operator';
-import type HasExpectationOperator from '../../expectations/operators/has.operator';
-import type IfExpectationOperator from '../../expectations/operators/if.operator';
-import type MergeExpectationOperator from '../../expectations/operators/merge.operator';
-import type NotExpectationOperator from '../../expectations/operators/not.operator';
-import type OrExpectationOperator from '../../expectations/operators/or.operator';
-import type RemoveExpectationOperator from '../../expectations/operators/remove.operator';
-import type SetExpectationOperator from '../../expectations/operators/set.operator';
-import type SwitchExpectationOperator from '../../expectations/operators/switch.operator';
+import type * as operators from '../../expectations/operators';
 
-export interface ICompiledExpectationOperators<
-  TInput extends IExpectationSchemaInput,
-  TContext extends IExpectationSchemaContext<TInput> = IExpectationSchemaContext<TInput>
-> {
-  not<S extends NotExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $not: S };
-  and<S extends AndExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $and: S };
-  or<S extends OrExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $or: S };
+export interface ICompiledExpectationOperators<TContext extends IExpectationSchemaContext<any>> {
+  not<S extends operators.$not<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $not: any };
+  and<S extends operators.$and<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $and: any[] };
+  or<S extends operators.$or<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $or: any[] };
 
-  exec<S extends ExecExpectationOperator<TContext>['TSchema']>(command: S): { $exec: S };
-  if<S extends IfExpectationOperator<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $if: S };
+  exec<S extends operators.$exec<TContext>['TSchema']>(command: S): { $exec: any };
+  if<S extends operators.$if<TContext, TExpectationOperatorLocation, any>['TSchema']>(command: S): { $if: any };
 
   switch<
     K extends TExpectationOperatorLocation,
-    S extends SwitchExpectationOperator<TContext, TExpectationOperatorLocation, void, TExpectationOperatorLocation, any>['TSchema']
+    S extends operators.$switch<TContext, TExpectationOperatorLocation, void, TExpectationOperatorLocation, any>['TSchema']
   >(location: K, command: Omit<S, '$location'>): {
-    $switch: S & { $location: K };
+    $switch: any;
   };
 
   switch<
     K extends TExpectationOperatorLocation,
     U extends '$path' | '$exec',
     Q extends U extends '$exec'
-      ? NonNullable<SwitchExpectationOperator<TContext, K>['TSchema']['$exec']>
+      ? NonNullable<operators.$switch<TContext, K>['TSchema']['$exec']>
       : string,
     V extends Q extends TFunction<infer R, any[]>
       ? NonNullable<R> extends (string | number)
@@ -49,16 +37,16 @@ export interface ICompiledExpectationOperators<
       : Q extends string
         ? ExtractExpectationContextValue<TContext, K, Q>
         : void,
-    S extends SwitchExpectationOperator<TContext, K, V, TExpectationOperatorLocation, any>['TSchema'],
+    S extends operators.$switch<TContext, K, V, TExpectationOperatorLocation, any>['TSchema'],
   >(location: K, using: U, value: Q, command: Omit<S, '$location' | '$path' | '$exec'>): {
-    $switch: S & { $location: K, $exec: Q }
+    $switch: any;
   };
 
   has<
     K extends TExpectationOperatorLocation,
-    S extends HasExpectationOperator<TContext, K>['TSchema']
+    S extends operators.$has<TContext, K>['TSchema']
   >(location: K, command?: Omit<S, '$location'>): {
-    $has: S & { $location: K };
+    $has: any;
   };
 
   has<
@@ -66,16 +54,16 @@ export interface ICompiledExpectationOperators<
     U extends '$path' | '$jsonPath',
     Q extends string,
     V extends U extends '$path' ? ExtractExpectationContextValue<TContext, K, Q> : unknown,
-    S extends HasExpectationOperator<TContext, K, V>['TSchema']
+    S extends operators.$has<TContext, K, V>['TSchema']
   >(location: K, using: U, value: Q, command?: Omit<S, '$location' | '$path' | '$jsonPath'>): {
-    $has: S & { $location: any, $path?: string, $jsonPath?: string }
+    $has: any;
   };
 
   set<
     K extends TExpectationOperatorLocation,
-    S extends SetExpectationOperator<TContext, K>['TSchema']
+    S extends operators.$set<TContext, K>['TSchema']
   >(location: K, command: Omit<S, '$location'>): {
-    $set: S & { $location: K };
+    $set: any;
   };
 
   set<
@@ -83,16 +71,16 @@ export interface ICompiledExpectationOperators<
     U extends '$path' | '$jsonPath',
     Q extends string,
     V extends U extends '$path' ? ExtractExpectationContextValue<TContext, K, Q> : unknown,
-    S extends SetExpectationOperator<TContext, K, V>['TSchema']
+    S extends operators.$set<TContext, K, V>['TSchema']
   >(location: K, using: U, value: Q, command: Omit<S, '$location' | '$path' | '$jsonPath'>): {
-    $set: S & { $location: K, $path?: string, $jsonPath?: string }
+    $set: any;
   };
 
   merge<
     K extends TExpectationOperatorObjectLocation,
-    S extends MergeExpectationOperator<TContext, K>['TSchema']
+    S extends operators.$merge<TContext, K>['TSchema']
   >(location: K, command: Omit<S, '$location'>): {
-    $merge: S & { $location: K };
+    $merge: any;
   };
 
   merge<
@@ -100,23 +88,23 @@ export interface ICompiledExpectationOperators<
     U extends '$path' | '$jsonPath',
     Q extends string,
     V extends U extends '$path' ? ExtractExpectationContextValue<TContext, K, Q> : unknown,
-    S extends MergeExpectationOperator<TContext, K, V>['TSchema']
+    S extends operators.$merge<TContext, K, V>['TSchema']
   >(location: K, using: U, value: Q, command: Omit<S, '$location' | '$path' | '$jsonPath'>): {
-    $merge: S & { $location: K, $path?: string, $jsonPath?: string }
+    $merge: any;
   };
 
   remove<
     K extends TExpectationOperatorLocation,
-    S extends RemoveExpectationOperator<TContext, K>['TSchema']
+    S extends operators.$remove<TContext, K>['TSchema']
   >(location: K, command: Omit<S, '$location'>): {
-    $remove: S & { $location: K };
+    $remove: any;
   };
 
   remove<
     K extends TExpectationOperatorLocation,
     U extends '$path' | '$jsonPath',
   >(location: K, using: U, value: string): {
-    $remove: { $location: K, $path?: string, $jsonPath?: string }
+    $remove: any;
   };
 }
 

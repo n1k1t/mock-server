@@ -77,8 +77,14 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       return context;
     }
 
+    if (expectation.defaults?.state) {
+      context.snapshot.state = merge(expectation.defaults.state, context.snapshot.state, {
+        arrayMerge: (target, source) => source,
+      });
+    }
+
     context.assign({
-      snapshot: expectation.request.manipulate(context.snapshot),
+      snapshot: await expectation.request.manipulate(context.snapshot),
       expectation: expectation.increaseExecutionsCounter(),
     });
 
@@ -240,7 +246,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
   private async handleReplying(context: TRequestContext): Promise<IRequestContextOutgoing | null> {
     const snapshot = context.expectation?.response
-      ? context.expectation.response.manipulate(context.snapshot)
+      ? await context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
     const type = extractPayloadType(snapshot.outgoing.headers) ?? (

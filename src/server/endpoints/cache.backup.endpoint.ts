@@ -1,17 +1,17 @@
 import { gzip } from 'node-gzip';
 
+import { EndpointFactory } from '../models';
 import { ICacheBackup } from '../types';
 import { RxConverter } from '../utils';
-import { Endpoint } from '../models';
 import { Logger } from '../../logger';
 
 const logger = Logger.build('Server.Endpoints.CacheBackup');
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: string }>()
-  .bindToHttp(<const>{ method: 'POST', path: `/cache/backup` })
-  .bindToIo(<const>{ path: 'cache:backup' })
-  .assignHandler(async ({ reply, server }) => {
+  .http(<const>{ method: 'POST', path: `/cache/backup` })
+  .io(<const>{ path: 'cache:backup' })
+  .compile(async ({ reply, server }) => {
     const backup: ICacheBackup = { redis: [] };
 
     if (server.databases.redis) {

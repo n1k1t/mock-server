@@ -11,7 +11,7 @@ import {
 
 const clone = rfdc();
 
-export const introspectExpectationOperatorsSchema = <T extends object = IExpectationSchema, K extends keyof T = keyof T>(
+export const introspectExpectationOperatorsSchema = <T extends object = IExpectationSchema<any>, K extends keyof T = keyof T>(
   schema: T,
   handler: (key: K, schema: T, path: string) => unknown,
   location: string = ''

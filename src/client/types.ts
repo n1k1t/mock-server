@@ -17,16 +17,16 @@ export type TMethodsSchema = {
 
 export type TEndpoints = {
   [K in keyof typeof endpoints]: {
-    http: (typeof endpoints)[K]['http'];
-    io: (typeof endpoints)[K]['io'];
+    http: (typeof endpoints)[K]['TSchema']['locations']['http'];
+    io: (typeof endpoints)[K]['TSchema']['locations']['io'];
 
     incoming: (typeof endpoints)[K]['TSchema']['incoming'];
     outgoing: (typeof endpoints)[K]['TSchema']['outgoing'];
 
-    location: (typeof endpoints)[K]['http'] extends object
+    location: (typeof endpoints)[K]['TSchema']['locations']['http'] extends { path: infer TPath; method: infer TMethod }
       ? {
-        url: `${typeof config['storage']['routes']['internal']['root']}${(typeof endpoints)[K]['http']['path']}`;
-        method: (typeof endpoints)[K]['http']['method'];
+        url: `${typeof config['storage']['routes']['internal']['root']}${TPath extends string ? TPath : never}`;
+        method: TMethod extends string ? TMethod : never;
       }
       : {
         url: string & {};

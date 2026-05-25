@@ -1,13 +1,13 @@
+import { EndpointFactory } from '../models';
 import { Expectation } from '../../expectations';
-import { Endpoint } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: { data: Expectation<any>['configuration'] };
     outgoing: Expectation['TPlain'];
   }>()
-  .bindToHttp(<const>{ method: 'POST', path: '/expectations' })
-  .assignHandler(async ({ reply, incoming, server }) => {
+  .http(<const>{ method: 'POST', path: '/expectations' })
+  .compile(async ({ reply, incoming, server }) => {
     if (!incoming.data) {
       return reply.validationError();
     }

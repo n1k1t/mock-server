@@ -1,0 +1,43 @@
+export default `
+  <div class="container expectation" id="expectation-editor">
+    <div class="meta">
+      <div class="segment">
+        <span class="name"><b style="color: {{toColor data.group 'group'}};">{{data.group}}</b> {{data.name}}</span>
+      </div>
+
+      <div class="segment">
+        {{#each data.transports}}<span class="transport">{{this}}</span>{{/each}}
+
+        {{#each data.meta.tags.incoming.method}}
+          <span class="method" style="color: {{toColor this 'method'}};">{{this}}</span>
+        {{/each}}
+
+        {{#each data.meta.tags.incoming.path}}
+          {{> metaPath value=this size=../options.pathSize}}
+        {{/each}}
+
+        {{#each data.meta.tags.incoming.error}}
+          <span class="error">{{this}}</span>
+        {{/each}}
+
+        {{#each data.meta.tags.outgoing.status}}
+          <span class="status {{#compare this 'lt' 400}}green{{/compare}} {{#compare this 'gte' 400}}red{{/compare}}">
+            <b>{{this}}</b>
+          </span>
+        {{/each}}
+      </div>
+
+      {{#with data.meta.tags.forward.url}}
+        <div class="segment">
+          <span class="forward">{{> truncated value=this length=45}}</span>
+        </div>
+      {{/with}}
+    </div>
+
+    <div class="content"></div>
+
+    <div class="buttons">
+      <button id="save"><i class="fas fa-save"></i>Save</button>
+    </div>
+  </div>
+`

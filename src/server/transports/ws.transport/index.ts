@@ -4,6 +4,7 @@ import { IncomingMessage } from 'http';
 
 import { IRouteMatchResult, Provider, Router, Transport } from '../../models';
 import { WsRequestContext } from './context';
+import { IServerContext } from '../../types';
 import { metaStorage } from '../../../meta';
 import { WsExecutor } from './executor';
 import { Logger } from '../../../logger';
@@ -53,7 +54,7 @@ const handle = async (
   return signals.close;
 }
 
-export const buildWsListener = <T extends WsRequestContext['TContext']>(router: Router<T>) =>
+export const buildWsListener = <T extends IServerContext>(router: Router<T>) =>
   async (socket: WebSocket, request: IncomingMessage) => {
     if (request.url?.startsWith('/socket.io')) {
       return socket.terminate();
@@ -96,7 +97,7 @@ export class WsTransport extends Transport<WsExecutor> {
   public executor = new WsExecutor();
 
   public compileContext(
-    provider: Provider<WsTransport['TContext']>,
+    provider: Provider,
     socket: WebSocket,
     request: IncomingMessage,
     event: WsExecutor['TContext']['event'],

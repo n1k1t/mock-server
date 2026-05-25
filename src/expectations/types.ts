@@ -6,7 +6,7 @@ import type * as rxjs from 'rxjs';
 import type { Observable } from 'rxjs';
 import type { faker } from '@faker-js/faker';
 
-import type { ConvertTupleToUnion, ExtractObjectValueByPath } from '../../types';
+import type { ConvertTupleToUnion, ExtractObjectValueByPath, OverrideObject, PartialDeep } from '../../types';
 import type { MetaContext } from '../meta';
 import type { Logger } from '../logger';
 import type {
@@ -18,17 +18,6 @@ import type {
 } from '../server/models';
 
 import type * as operators from './operators';
-
-import type AndExpectationOperator from './operators/and.operator';
-import type SetExpectationOperator from './operators/set.operator';
-import type HasExpectationOperator from './operators/has.operator';
-import type OrExpectationOperator from './operators/or.operator';
-import type NotExpectationOperator from './operators/not.operator';
-import type IfExpectationOperator from './operators/if.operator';
-import type MergeExpectationOperator from './operators/merge.operator';
-import type RemoveExpectationOperator from './operators/remove.operator';
-import type ExecExpectationOperator from './operators/exec.operator';
-import type SwitchExpectationOperator from './operators/switch.operator';
 
 export type TExpectationFlatOperator = ConvertTupleToUnion<typeof LExpectationFlatOperator>;
 export const LExpectationFlatOperator = <const>['$set', '$remove', '$merge', '$exec', '$has'];
@@ -94,47 +83,46 @@ export type TExpectationOperatorObjectLocation =
 export type TExpectationOperators = Omit<typeof operators, 'root'>;
 
 export interface IExpectationSchemaInput {
-  state?: Record<string, any>;
+  state: {};
 
-  incoming?: Pick<IRequestContextIncoming, 'query' | 'data'>;
-  outgoing?: Pick<IRequestContextOutgoing, 'data'>;
+  incoming: Pick<IRequestContextIncoming, 'query' | 'data'>;
+  outgoing: Pick<IRequestContextOutgoing, 'data'>;
 
-  container?: any;
-  transport?: any;
-  event?: any;
-  flag?: any;
+  container: {};
+  transport: string & {};
+  event: string & {};
+  flag: string & {};
 }
 
 type ExtractData<T extends IExpectationSchemaInput['incoming'] | IExpectationSchemaInput['outgoing']> =
   'data' extends keyof T ? T['data'] : any;
 
-export interface IExpectationSchemaContext<TInput extends IExpectationSchemaInput = {}> {
-  transport: TInput['transport'];
-  event: TInput['event'];
-  flags: Partial<Record<TInput['flag'], boolean>>;
+export interface IExpectationSchemaContext<
+  TInput extends Partial<IExpectationSchemaInput> = {},
+  TMerged extends IExpectationSchemaInput = OverrideObject<IExpectationSchemaInput, TInput>
+> {
+  transport: TMerged['transport'];
+  event: TMerged['event'];
+  flags: Partial<Record<TMerged['flag'], boolean>>;
 
-  state: TInput['state'] extends object ? TInput['state'] : Record<string, any>;
-  storage: ContainersStorage<TInput['container']>;
-  cache: TInput extends object ? RequestContextSnapshot['cache'] : any;
+  state: TMerged['state'];
+  storage: ContainersStorage<TMerged['container']>;
+  cache: RequestContextSnapshot['cache'];
 
   overrides?: RequestContextSnapshot['overrides'];
 
-  container?: Container<NonNullable<TInput['container']>>;
+  container?: Container<NonNullable<TMerged['container']>>;
   seed?: RequestContextSnapshot['seed'];
 
-  incoming: TInput['incoming'] extends object
-    ? Omit<IRequestContextIncoming, 'stream'> & TInput['incoming'] & {
-      data?: ExtractData<TInput['incoming']>;
-      stream?: Observable<ExtractData<TInput['incoming']>>;
-    }
-    : IRequestContextIncoming;
+  incoming: Omit<IRequestContextIncoming, 'stream'> & TMerged['incoming'] & {
+    data?: ExtractData<TMerged['incoming']>;
+    stream?: Observable<ExtractData<TMerged['incoming']>>;
+  };
 
-  outgoing: TInput['outgoing'] extends object
-    ? IRequestContextOutgoing & TInput['outgoing'] & {
-      data?: ExtractData<TInput['outgoing']>;
-      stream?: Observable<ExtractData<TInput['outgoing']>>;
-    }
-    : IRequestContextOutgoing;
+  outgoing: IRequestContextOutgoing & TMerged['outgoing'] & {
+    data?: ExtractData<TMerged['outgoing']>;
+    stream?: Observable<ExtractData<TMerged['outgoing']>>;
+  };
 };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
@@ -181,19 +169,19 @@ export interface IExpectationOperatorsSchema<
   TLocation extends TExpectationOperatorLocation = TExpectationOperatorLocation,
   TValue = void
 > {
-  $and?: AndExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $or?: OrExpectationOperator<TContext, TLocation, TValue>['TSchema'];
+  $and?: operators.$and<TContext, TLocation, TValue>['TSchema'];
+  $or?: operators.$or<TContext, TLocation, TValue>['TSchema'];
 
-  $not?: NotExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $if?: IfExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $switch?: SwitchExpectationOperator<TContext, TLocation, TValue, TLocation, TValue>['TSchema'];
+  $not?: operators.$not<TContext, TLocation, TValue>['TSchema'];
+  $if?: operators.$if<TContext, TLocation, TValue>['TSchema'];
+  $switch?: operators.$switch<TContext, TLocation, TValue, TLocation, TValue>['TSchema'];
 
-  $set?: SetExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $has?: HasExpectationOperator<TContext, TLocation, TValue>['TSchema'];
-  $merge?: MergeExpectationOperator<TContext, Extract<TLocation, TExpectationOperatorObjectLocation>, TValue>['TSchema'];
-  $remove?: RemoveExpectationOperator<TContext, TLocation>['TSchema'];
+  $set?: operators.$set<TContext, TLocation, TValue>['TSchema'];
+  $has?: operators.$has<TContext, TLocation, TValue>['TSchema'];
+  $merge?: operators.$merge<TContext, Extract<TLocation, TExpectationOperatorObjectLocation>, TValue>['TSchema'];
+  $remove?: operators.$remove<TContext, TLocation>['TSchema'];
 
-  $exec?: ExecExpectationOperator<TContext>['TSchema'];
+  $exec?: operators.$exec<TContext>['TSchema'];
 };
 
 export interface IExpectationSchemaForward {
@@ -216,11 +204,15 @@ export interface IExpectationSchemaForward {
   };
 }
 
-export interface IExpectationSchema<TContext extends IExpectationSchemaContext = IExpectationSchemaContext> {
+export interface IExpectationSchema<TContext extends IExpectationSchemaContext> {
   request?: IExpectationOperatorsSchema<TContext>;
   response?: IExpectationOperatorsSchema<TContext>;
   forward?: IExpectationSchemaForward;
 };
+
+export interface IExpectationDefaults<TContext extends IExpectationSchemaContext> {
+  state?: PartialDeep<TContext['state']>;
+}
 
 export type IExpectationExecMode = 'match' | 'manipulate';
 
@@ -230,8 +222,6 @@ export interface IExpectationExecUtils<T extends IExpectationSchemaContext> {
 
   mode: IExpectationExecMode;
   meta: MetaContext;
-
-  T: <T = any>(payload: unknown) => T;
 
   _: typeof _;
   d: typeof dayjs;

@@ -7,11 +7,19 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
-import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
 import { IIoExchangeSchema, IServerContext, IServerContextDefaults } from './types';
 import { AnalyticsService, MetricsService } from './services';
+import { parseJsonSafe } from '../utils';
 import { OnsiteClient } from '../client';
 import { Logger } from '../logger';
+import {
+  buildSocketIoExchange,
+  History,
+  IContainersStorageDump,
+  ProvidersStorage, Router,
+  Transport,
+  TransportsStorage,
+} from './models';
 import {
   buildHttpListener,
   buildWsListener,
@@ -45,15 +53,15 @@ export interface IMockServerConfiguration {
     expiredCleaningInterval?: number;
   };
 
-  transports?: Partial<Record<string, Transport>> & Record<string, Transport>;
+  transports?: Record<string, Transport>;
   databases?: {
     redis?: RedisOptions;
   };
 }
 
 export class MockServer<
-  TConfiguration extends IMockServerConfiguration = IMockServerConfiguration,
-  TContext extends IServerContext = IServerContext
+  TConfiguration extends IMockServerConfiguration = any,
+  TContext extends IServerContext = any
 > {
   public TContext!: TContext;
 
@@ -77,7 +85,7 @@ export class MockServer<
 
   public router: Router<TContext> = Router.build(this);
 
-  public http = createServer(buildHttpListener(this.router));
+  public http = createServer(buildHttpListener<TContext>(this.router));
   public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
 
   public io = new Server(this.http, {
@@ -177,8 +185,8 @@ export class MockServer<
     }
   }
 
-  /** Recoveres persitenated history */
-  private async recoverHistory(): Promise<void | null> {
+  /** Restores persitenated history */
+  private async restoreHistory(): Promise<void | null> {
     if (!this.databases.redis) {
       return null;
     }
@@ -189,13 +197,65 @@ export class MockServer<
     }
 
     const list = await this.databases.redis.lrange(persistence.key, 0, -1);
-    this.providers.system.storages.history.inject(list.map((raw) => JSON.parse(raw)));
+    this.providers.system.storages.history.restore(
+      list
+        .map((raw) => parseJsonSafe<History['TPlain']>(raw))
+        .filter((parsed) => {
+          if (parsed.status === 'ERROR') {
+            logger.error('Got error while history restoration', parsed.error?.stack ?? parsed.error);
+            return false;
+          }
+
+          return true;
+        })
+        .map((parsed) => parsed.result!)
+    );
+
+    try {
+    } catch(error) {
+
+    }
+  }
+
+  /** Restores persitenated containers */
+  private async restoreContainers(): Promise<void | null> {
+    if (!this.databases.redis) {
+      return null;
+    }
+
+    const { persistence } = config.get('containers');
+    if (!persistence.isEnabled) {
+      return null;
+    }
+
+    const prefix = this.databases.redis.options.keyPrefix ?? '';
+    const stream = this.databases.redis.scanStream({
+      match: `${prefix}${persistence.key}:*`
+    });
+
+    stream.on('data', (keys: string[]) =>
+      Promise.all(
+        keys.map(async (key) => {
+          const raw = await this.databases.redis!.get(key.replace(prefix, ''));
+          if (!raw) {
+            return null;
+          }
+
+          const dump = parseJsonSafe<IContainersStorageDump>(raw);
+          if (dump.status === 'ERROR') {
+            logger.error('Got error while containers restoration', dump.error?.stack ?? dump.error);
+          }
+
+          this.providers.system.storages.containers.restore(dump.result!);
+        })
+      )
+    );
   }
 
   /** Starts and setups mock server */
   static async start<
     TConfiguration extends IMockServerConfiguration,
-    TContext extends IServerContext = IServerContext<{
+    TContext extends IServerContext = {
       transport: IServerContextDefaults['transport'] | Extract<keyof TConfiguration['transports'], string>;
 
       event: IServerContextDefaults['event'] | {
@@ -205,7 +265,7 @@ export class MockServer<
       flag: IServerContextDefaults['flag'] | {
         [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['flag'];
       }[keyof TConfiguration['transports']];
-    }>
+    }
   >(configuration: TConfiguration): Promise<MockServer<TConfiguration, TContext>> {
     const routes = config.get('routes');
     const server = new MockServer<TConfiguration, TContext>(configuration);
@@ -224,7 +284,8 @@ export class MockServer<
       .forEach(([type, transport]) => server.transports.register(<TContext['transport']>type, transport));
 
     await server.setupJobs();
-    await server.recoverHistory();
+    await server.restoreHistory();
+    await server.restoreContainers();
 
     server.router.register(`${routes.internal.root}/**`, {
       provider: server.providers.default,

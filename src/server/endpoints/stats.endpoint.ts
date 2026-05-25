@@ -1,18 +1,18 @@
 import dayjs from 'dayjs';
 
+import { EndpointFactory } from '../models';
 import { version } from '../../../package.json';
-import { Endpoint } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     outgoing: {
       version: string;
       uptime: string;
     };
   }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/stats' })
-  .bindToIo(<const>{ path: 'stats' })
-  .assignHandler((context) =>
+  .http(<const>{ method: 'GET', path: '/stats' })
+  .io(<const>{ path: 'stats' })
+  .compile((context) =>
     context.reply.ok({
       version,
       uptime: dayjs(context.server.timestamp).fromNow(true),

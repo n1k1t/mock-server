@@ -1,7 +1,7 @@
+import { EndpointFactory } from '../models';
 import { Expectation } from '../../expectations';
-import { Endpoint } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: {
       data: {
@@ -14,9 +14,9 @@ export default Endpoint
 
     outgoing: Expectation['TPlain'][];
   }>()
-  .bindToHttp(<const>{ method: 'PUT', path: '/expectations/group' })
-  .bindToIo(<const>{ path: 'expectations:group:update' })
-  .assignHandler(async ({ reply, incoming, server }) => {
+  .http(<const>{ method: 'PUT', path: '/expectations/group' })
+  .io(<const>{ path: 'expectations:group:update' })
+  .compile(async ({ reply, incoming, server }) => {
     if (!incoming.data) {
       return reply.validationError();
     }

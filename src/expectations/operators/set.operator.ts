@@ -50,11 +50,11 @@ export default class SetExpectationOperator<
       : {};
   }
 
-  public match(): boolean {
+  public async match(): Promise<boolean> {
     return true;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     const payload = extractContextByLocation(this.command.$location, context);
     if (!payload) {
       return context;
@@ -67,7 +67,9 @@ export default class SetExpectationOperator<
         _.set(
           payload.parent,
           payload.key,
-          this.compiled.exec ? this.compiled.exec('manipulate', context, payload.value) : this.command.$value
+          this.compiled.exec
+            ? await this.compiled.exec('manipulate', context, payload.value)
+            : this.command.$value
         );
 
         return context;
@@ -79,7 +81,7 @@ export default class SetExpectationOperator<
             payload.parent,
             `${payload.key}.${this.command.$path}`,
             this.compiled.exec
-              ? this.compiled.exec('manipulate', context, _.get(payload.value, this.command.$path))
+              ? await this.compiled.exec('manipulate', context, _.get(payload.value, this.command.$path))
               : this.command.$value
           );
 
@@ -87,11 +89,15 @@ export default class SetExpectationOperator<
         }
 
         if (this.command.$jsonPath && _.isObject(payload.value)) {
-          extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.forEach(
-            ({ parent, parentProperty, value }) => this.compiled.exec
-              ? _.set(parent, parentProperty, this.compiled.exec('manipulate', context, value))
-              : _.set(parent, parentProperty, this.command.$value)
-          );
+          const segments = extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results ?? [];
+
+          for (const segment of segments) {
+            const target = this.compiled.exec
+              ? await this.compiled.exec('manipulate', context, segment.value)
+              : this.command.$value
+
+            _.set(segment.parent, segment.parentProperty, target);
+          }
 
           return context;
         }
@@ -99,7 +105,9 @@ export default class SetExpectationOperator<
         _.set(
           payload.parent,
           payload.key,
-          this.compiled.exec ? this.compiled.exec('manipulate', context, payload.value) : this.command.$value
+          this.compiled.exec
+            ? await this.compiled.exec('manipulate', context, payload.value)
+            : this.command.$value
         );
 
         return context;

@@ -2,23 +2,21 @@ import { RawData, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 
 import { extractHttpIncommingContext, IRequestContextIncoming, parsePayload, Provider, RequestContext } from '../../models';
-import { IServerContext } from '../../types';
 import { parseJsonSafe } from '../../../utils';
-import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Transports.Ws.Context');
 
-export class WsRequestContext extends RequestContext<IServerContext<{
+export class WsRequestContext extends RequestContext<{
   transport: 'ws';
   event: 'connection' | 'message';
   flag: 'wsCloseConnection';
-}>> {
+}> {
   public snapshot = this.compileSnapshot();
   public history = this.compileHistory();
 
   constructor(
-    public provider: Provider<WsRequestContext['TContext']>,
+    public provider: Provider,
     public socket: WebSocket,
     public event: WsRequestContext['TContext']['event'],
     public incoming: IRequestContextIncoming
@@ -37,8 +35,8 @@ export class WsRequestContext extends RequestContext<IServerContext<{
 
   public handle(): this {
     this.event === 'message'
-      ? logger.info(`Incoming WS ${event} [${this.incoming.path}] got message`, this.incoming.data)
-      : logger.info(`Incoming WS ${event} [${this.incoming.path}]`);
+      ? logger.info(`Incoming WS ${this.event} [${this.incoming.path}] got message`, this.incoming.data)
+      : logger.info(`Incoming WS ${this.event} [${this.incoming.path}]`);
 
     if (this.event === 'connection') {
       this.streams.incoming.subscribe({
@@ -68,7 +66,7 @@ export class WsRequestContext extends RequestContext<IServerContext<{
   }
 
   static async build(
-    provider: Provider<WsRequestContext['TContext']>,
+    provider: Provider,
     socket: WebSocket,
     request: IncomingMessage,
     event: WsRequestContext['TContext']['event'],

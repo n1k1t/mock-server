@@ -5,13 +5,13 @@ import path from 'path';
 import fs from 'fs/promises';
 import _ from 'lodash';
 
-import { Endpoint, IRequestContextOutgoing } from '../models';
+import { EndpointFactory, IRequestContextOutgoing } from '../models';
 import config from '../../config';
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: string }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/gui' })
-  .assignHandler(async (context) => {
+  .http(<const>{ method: 'GET', path: '/gui' })
+  .compile(async (context) => {
     if (context.transport !== 'http') {
       return context.reply.notFound();
     }

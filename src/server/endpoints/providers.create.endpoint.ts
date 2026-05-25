@@ -1,6 +1,6 @@
-import { Endpoint, Provider } from '../models';
+import { EndpointFactory, Provider } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: {
       data: {
@@ -16,8 +16,8 @@ export default Endpoint
 
     outgoing: null;
   }>()
-  .bindToHttp(<const>{ method: 'POST', path: '/providers' })
-  .assignHandler(async ({ reply, incoming, server }) => {
+  .http(<const>{ method: 'POST', path: '/providers' })
+  .compile(async ({ reply, incoming, server }) => {
     if (!incoming.data?.group) {
       return reply.validationError(['Parameter "group" is not valid']);
     }

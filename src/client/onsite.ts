@@ -8,8 +8,8 @@ import { Client } from './models';
 
 import * as methods from './methods';
 
-export class OnsiteClient<TContext extends IServerContext = IServerContext> extends Client<TContext> {
-  constructor(provider: Provider<any>) {
+export class OnsiteClient<TContext extends IServerContext = any> extends Client<TContext> {
+  constructor(provider: Provider) {
     super(
       Object
         .entries(methods)
@@ -23,7 +23,7 @@ export class OnsiteClient<TContext extends IServerContext = IServerContext> exte
     return this.methods.expectationsGroupUpdate({ set: body });
   }
 
-  static build<TContext extends IServerContext = IServerContext>(provider: Provider<any>): OnsiteClient<TContext> {
+  static build<TContext extends IServerContext>(provider: Provider): OnsiteClient<TContext> {
     return new OnsiteClient<TContext>(provider);
   }
 }

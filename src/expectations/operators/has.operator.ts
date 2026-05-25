@@ -98,7 +98,7 @@ export default class HasExpectationOperator<
     return {};
   }
 
-  public match(context: TContext): boolean {
+  public async match(context: TContext): Promise<boolean> {
     if (!checkIsLocationInContext(this.command.$location, context)) {
       return false;
     }
@@ -132,7 +132,7 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return this.compiled.exec('match', context, payload.value) === true;
+          return (await this.compiled.exec('match', context, payload.value)) === true;
         }
 
         return false;
@@ -155,7 +155,7 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return this.compiled.exec('match', context, payload.value) === true;
+          return (await this.compiled.exec('match', context, payload.value)) === true;
         }
 
         return false;
@@ -163,7 +163,7 @@ export default class HasExpectationOperator<
 
       case 'buffer': {
         if (this.compiled.exec) {
-          return this.compiled.exec('match', context, payload.value) === true;
+          return (await this.compiled.exec('match', context, payload.value)) === true;
         }
 
         return false;
@@ -211,7 +211,8 @@ export default class HasExpectationOperator<
         }
 
         if (this.compiled.exec) {
-          return values.every((value) => this.compiled.exec!('match', context, value) === true);
+          const executed = await Promise.all(values.map((value) => this.compiled.exec!('match', context, value)));
+          return executed.every((result) => result === true);
         }
 
         return values.length !== 0;
@@ -221,7 +222,7 @@ export default class HasExpectationOperator<
     }
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     return context;
   }
 }

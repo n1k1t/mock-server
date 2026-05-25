@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import _ from 'lodash';
 
-import type { IServerContext } from '../../../types';
 import type { MockServer } from '../../../index';
 
 import { extractHttpIncommingContext, History, IRequestContextIncoming, RequestContext } from '../../../models';
@@ -10,10 +9,11 @@ import { Logger } from '../../../../logger';
 
 const logger = Logger.build('Server.Transports.Internal.Http.Context');
 
-export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestContext<IServerContext<{
+export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestContext<{
   transport: 'http';
   event: 'connection';
-}>> {
+  flag: string & {};
+}> {
   public snapshot = this.compileSnapshot();
   public reply = InternalHttpReply.build<TOutgoing>(this);
 

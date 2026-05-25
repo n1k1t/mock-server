@@ -1,38 +1,29 @@
 import type { IServerContext } from '../../types';
 import type { MockServer } from '../../index';
 
+import { SystemProvider } from './system';
 import { Provider } from './model';
 import { Logger } from '../../../logger';
 
 const logger = Logger.build('Server.Models.ProvidersStorage');
 
-export class ProvidersStorage<
-  TContext extends IServerContext = IServerContext
-> extends Map<string, Provider<TContext>> {
+export class ProvidersStorage<TContext extends IServerContext = any> extends Map<string, Provider> {
   public default = Provider.build<TContext>({ group: 'default' });
-  public system = Provider.build<TContext>({ group: 'system', history: { limit: Infinity } });
+  public system = SystemProvider.build({ group: 'system', history: { limit: Infinity } });
 
-  constructor(protected server: MockServer<any, any>) {
+  constructor(protected server: MockServer) {
     super();
   }
 
-  public extract(): Provider<TContext>[] {
+  public extract(): Provider[] {
     return [...this.values(), this.default];
   }
 
-  public register(provider: Provider<any>): this {
+  public register(provider: Provider): this {
     const existent = this.get(provider.group);
 
     provider.assign({ server: this.server });
-
-    for (const history of this.system.storages.history.values()) {
-      if (history.group !== provider.group) {
-        continue;
-      }
-
-      provider.storages.history.register(history);
-      this.system.storages.history.delete(history.id);
-    }
+    this.system.distribute(provider);
 
     if (this.default === provider) {
       return this;
@@ -54,19 +45,17 @@ export class ProvidersStorage<
   }
 
   /** Deletes provider from storage */
-  public unregister(provider: Provider<any>): this {
+  public unregister(provider: Provider): this {
     this.delete(provider.group);
     return this;
   }
 
-  public collectExpired(): Provider<any>[] {
+  public collectExpired(): Provider[] {
     const timestamp = Date.now();
     return [...this.values()].filter((provider) => provider.expiresAt < timestamp);
   }
 
-  static build<TContext extends IServerContext = IServerContext>(
-    server: MockServer<any, any>
-  ): ProvidersStorage<TContext> {
+  static build<TContext extends IServerContext>(server: MockServer): ProvidersStorage<TContext> {
     return new ProvidersStorage(server);
   }
 }

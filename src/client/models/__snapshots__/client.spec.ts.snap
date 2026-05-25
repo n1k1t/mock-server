@@ -2,6 +2,7 @@
 
 exports[`Client.Models.Client should create expectation with complex schema as function 1`] = `
 {
+  "defaults": undefined,
   "format": "plain",
   "group": "unknown",
   "id": "12426262-85a3-4340-969b-272e003722e9",
@@ -627,6 +628,7 @@ exports[`Client.Models.Client should create expectation with complex schema as f
 
 exports[`Client.Models.Client should create expectation with complex schema as object 1`] = `
 {
+  "defaults": undefined,
   "format": "plain",
   "group": "unknown",
   "id": "12426262-85a3-4340-969b-272e003722e9",

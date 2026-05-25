@@ -64,15 +64,22 @@ export default class IfExpectationOperator<
     ]);
   }
 
-  public match(context: TContext): boolean {
-    const result = this.compiled.condition?.match(context) ?? false;
-    return (result ? this.compiled.then?.match(context) : this.compiled.else?.match(context)) ?? false;
+  public async match(context: TContext): Promise<boolean> {
+    const matched = await this.compiled.condition?.match(context) ?? false;
+    const result = matched
+      ? await this.compiled.then?.match(context)
+      : await this.compiled.else?.match(context)
+
+    return result ?? false;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
-    const result = this.compiled.condition?.match(context) ?? false;
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
+    const result = await this.compiled.condition?.match(context) ?? false;
 
-    result ? this.compiled.then?.manipulate(context) : this.compiled.else?.manipulate(context);
+    result
+      ? await this.compiled.then?.manipulate(context)
+      : await this.compiled.else?.manipulate(context);
+
     return context;
   }
 }

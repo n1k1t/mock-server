@@ -22,11 +22,11 @@ export default class RemoveExpectationOperator<
     return {};
   }
 
-  public match(): boolean {
+  public async match(): Promise<boolean> {
     return true;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     const payload = extractContextByLocation(this.command.$location, context);
     if (payload?.type !== 'object') {
       return context;

@@ -3,6 +3,7 @@ import { Container } from './model';
 it('should initialize Container with correct properties', () => {
   const provided = {
     key: 'testKey',
+    group: 'test',
     payload: { data: 'testData' },
     ttl: 100,
     timestamp: Date.now(),
@@ -22,6 +23,7 @@ it('should initialize Container with correct properties', () => {
 test('should merge payload correctly', () => {
   const provided = {
     key: 'testKey',
+    group: 'test',
     payload: { data: 'initialData' },
     ttl: 100,
     timestamp: Date.now(),
@@ -35,6 +37,7 @@ test('should merge payload correctly', () => {
 test('should assign new payload to Container', () => {
   const provided = {
     key: 'testKey',
+    group: 'test',
     payload: { data: 'initialData' },
     ttl: 100,
     timestamp: Date.now(),
@@ -49,6 +52,7 @@ test('should call onBind hook when binding', () => {
   const onBindMock = jest.fn();
   const provided = {
     key: 'testKey',
+    group: 'test',
     payload: {},
     ttl: 100,
     timestamp: Date.now(),
@@ -66,6 +70,7 @@ test('should call onUnbind hook when unbinding', () => {
   const onUnbindMock = jest.fn();
   const provided = {
     key: 'testKey',
+    group: 'test',
     payload: {},
     ttl: 100,
     timestamp: Date.now(),
@@ -82,6 +87,7 @@ test('should call onUnbind hook when unbinding', () => {
 it('merge replaces arrays when merging', () => {
   const container = Container.build({
     key: 'k',
+    group: 'test',
     payload: { items: [1, 2] },
     ttl: 5,
     timestamp: 0,
@@ -96,6 +102,7 @@ it('merge replaces arrays when merging', () => {
 it('clone deep clones payload', () => {
   const container = Container.build({
     key: 'k',
+    group: 'test',
     payload: { nested: { a: 1 } },
     ttl: 5,
     timestamp: 0,

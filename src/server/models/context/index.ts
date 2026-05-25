@@ -19,7 +19,7 @@ export * from './snapshot';
 export * from './types';
 export * from './utils';
 
-export abstract class RequestContext<TContext extends IServerContext = IServerContext> {
+export abstract class RequestContext<TContext extends IServerContext = any> {
   public TContext!: TContext;
   public TShared!: keyof Pick<RequestContext, 'incoming' | 'outgoing' | 'snapshot' | 'expectation' | 'history'>;
 
@@ -45,7 +45,7 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
   public meta = metaStorage.generate();
 
   constructor(
-    public provider: Provider<IServerContext>,
+    public provider: Provider,
     protected configuration: Pick<TContext, 'transport' | 'event'>
   ) {
     this.streams.incoming.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('incoming', data) });
@@ -142,15 +142,32 @@ export abstract class RequestContext<TContext extends IServerContext = IServerCo
     if (this.history?.is('pending')) {
       this.history.actualize(this.snapshot.assign({ outgoing: this.outgoing })).complete();
 
-      const { limit, persistence } = config.get('history');
       const plain = this.history.toPlain();
+      const configurations = {
+        history: config.get('history'),
+        containers: config.get('containers'),
+      };
 
-      if (persistence.isEnabled && this.provider.server.databases.redis) {
-        this.provider.server.databases.redis
-          .multi()
-          .lpush(persistence.key, JSON.stringify(plain))
-          .ltrim(persistence.key, 0, limit * this.provider.server.providers.extract().length)
-          .exec();
+      if (this.provider.server.databases.redis) {
+        if (configurations.history.persistence.isEnabled) {
+          this.provider.server.databases.redis
+            .multi()
+            .lpush(configurations.history.persistence.key, JSON.stringify(plain))
+            .ltrim(
+              configurations.history.persistence.key,
+              0,
+              configurations.history.limit * this.provider.server.providers.extract().length
+            )
+            .exec();
+        }
+
+        if (configurations.containers.persistence.isEnabled && this.snapshot.container) {
+          this.provider.server.databases.redis.setex(
+            `${configurations.containers.persistence.key}:${this.provider.group}`,
+            configurations.containers.persistence.ttl,
+            JSON.stringify(this.provider.storages.containers.dump())
+          );
+        }
       }
 
       this.provider.server.exchanges.io.publish('history:updated', plain);

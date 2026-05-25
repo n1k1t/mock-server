@@ -1,10 +1,10 @@
-import { History, Endpoint } from '../models';
+import { History, EndpointFactory } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: History['TCompact'][] }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/history/compact' })
-  .bindToIo(<const>{ path: 'history:compact:get-list' })
-  .assignHandler(({ reply, server }) =>
+  .http(<const>{ method: 'GET', path: '/history/compact' })
+  .io(<const>{ path: 'history:compact:get-list' })
+  .compile(({ reply, server }) =>
     reply.ok(
       server.providers
         .extract()

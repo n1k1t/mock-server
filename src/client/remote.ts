@@ -1,13 +1,14 @@
 import axios from 'axios';
 import _ from 'lodash';
 
-import { IRemoteClientConnectOptions, TMethodsSchema } from './types';
-import { IServerContext } from '../server/types';
+import type { IRemoteClientConnectOptions, TMethodsSchema } from './types';
+import type { IServerContext, IServerContextDefaults } from '../server/types';
+
 import { Client } from './models';
 
 import * as methods from './methods';
 
-export class RemoteClient<TContext extends IServerContext = IServerContext> extends Client<TContext> {
+export class RemoteClient<TContext extends IServerContext = any> extends Client<TContext> {
   constructor(public options: IRemoteClientConnectOptions) {
     const instance = axios.create({
       baseURL: options.baseUrl,
@@ -33,7 +34,7 @@ export class RemoteClient<TContext extends IServerContext = IServerContext> exte
     return this.methods.providersDelete;
   }
 
-  static async connect<TContext extends IServerContext = IServerContext>(
+  static async connect<TContext extends IServerContext = IServerContextDefaults>(
     options: IRemoteClientConnectOptions
   ): Promise<RemoteClient<TContext>> {
     const client = new RemoteClient<TContext>(options);

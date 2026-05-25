@@ -1,11 +1,11 @@
-import { Endpoint } from '../models';
+import { EndpointFactory } from '../models';
 import config from '../../config';
 
-export default Endpoint
+export default EndpointFactory
   .build<{ outgoing: null }>()
-  .bindToHttp(<const>{ method: 'DELETE', path: '/history' })
-  .bindToIo(<const>{ path: 'history:delete' })
-  .assignHandler(async ({ reply, server }) => {
+  .http(<const>{ method: 'DELETE', path: '/history' })
+  .io(<const>{ path: 'history:delete' })
+  .compile(async ({ reply, server }) => {
     server.providers.extract().forEach((provider) => provider.storages.history.clear());
 
     if (server.databases.redis) {

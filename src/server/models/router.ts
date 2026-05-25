@@ -10,20 +10,18 @@ import { Logger } from '../../logger';
 
 export interface IRouteContext<K extends string> {
   transports: Partial<Record<K, Transport>>;
-  provider: Provider<any>;
+  provider: Provider;
 }
 
 export interface IRouteMatchResult<T extends Transport = Transport> {
   transport: T;
-  provider: Provider<any>;
+  provider: Provider;
 }
 
 const logger = Logger.build('Server.Models.Router');
 
-export class Router<
-  TContext extends IServerContext = IServerContext
-> extends Map<string, Set<IRouteContext<TContext['transport']>>> {
-  constructor(protected server: MockServer<any, any>) {
+export class Router<TContext extends IServerContext = any> extends Map<string, Set<IRouteContext<TContext['transport']>>> {
+  constructor(protected server: MockServer) {
     super();
   }
 
@@ -37,7 +35,7 @@ export class Router<
   public register(
     pattern: string,
     configuration: {
-      provider: Provider<any>;
+      provider: Provider;
       transports?: TContext['transport'][] | Partial<Record<TContext['transport'], Transport>>;
     }
   ): this {
@@ -92,7 +90,7 @@ export class Router<
   }
 
   /** Deletes each route that is using provider */
-  public unregister(provider: Provider<any>): this {
+  public unregister(provider: Provider): this {
     for (const [pattern, routes] of this.entries()) {
       for (const route of routes) {
         if (route.provider.group === provider.group) {
@@ -130,7 +128,7 @@ export class Router<
     yield this.default(transport);
   }
 
-  static build<TContext extends IServerContext = IServerContext>(server: MockServer<any, any>): Router<TContext> {
+  static build<TContext extends IServerContext>(server: MockServer): Router<TContext> {
     return new Router<TContext>(server);
   }
 }

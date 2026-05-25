@@ -33,9 +33,21 @@ export default Config.build(<const>{
   history: {
     limit: cast<number>(100),
 
+    /** Saves requests history and restores on mock server restart */
     persistence: {
       isEnabled: cast<boolean>(false),
       key: cast<string>(`${databaseSystemKeyPrefix}:history`),
+    },
+  },
+
+  containers: {
+    /** Saves stored containers and restores on mock server restart */
+    persistence: {
+      isEnabled: cast<boolean>(false),
+      key: cast<string>(`${databaseSystemKeyPrefix}:containers`),
+
+      /** Seconds (default `1 week`) */
+      ttl: cast<number>(7 * 24 * 60 * 60),
     },
   },
 

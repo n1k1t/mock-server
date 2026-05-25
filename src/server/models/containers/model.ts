@@ -3,22 +3,29 @@ import rfdc from 'rfdc';
 import _ from 'lodash';
 
 import { PartialDeep, TFunction } from '../../../../types';
-import { compileContainerLink } from './utils';
+import { compileContainerKey } from './utils';
 
 const clone = rfdc();
 
 export class Container<TPayload extends object = object> {
   public TPlain!: Pick<Container<TPayload>, 'key' | 'payload' | 'ttl'>;
 
-  public ttl = this.provided.ttl;
   public key = this.provided.key;
+  public group = this.provided.group;
+
+  public ttl = this.provided.ttl;
+  public timestamp = this.provided.timestamp;
 
   public expiresAt = this.provided.timestamp + this.ttl * 1000;
   public payload = this.provided.payload;
 
+  private hooks = this.provided.hooks;
+
   constructor(
-    public provided: {
+    private provided: {
       key: string;
+      group: string;
+
       payload: TPayload;
 
       /** Seconds */
@@ -51,13 +58,24 @@ export class Container<TPayload extends object = object> {
     return Object.assign(this, { payload });
   }
 
+  /** Binds this container to another key */
   public bind(key: string | object): this {
-    this.provided.hooks?.bind?.(compileContainerLink(key), this);
+    this.hooks?.bind?.(compileContainerKey(key), this);
     return this;
   }
 
+  /** Unbinds this container from nested key */
   public unbind(): this {
-    this.provided.hooks?.unbind?.(this);
+    this.hooks?.unbind?.(this);
+    return this;
+  }
+
+  /** Returns initial configuration */
+  public configure(payload: Partial<Pick<Container<TPayload>['provided'], 'hooks'>>): this {
+    if (payload.hooks) {
+      this.hooks = payload.hooks;
+    }
+
     return this;
   }
 

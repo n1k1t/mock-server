@@ -7,16 +7,10 @@ import type { History } from '../models';
 
 export type TRequestPayloadType = 'json' | 'plain' | 'xml';
 
-export interface IServerContextInput {
-  transport?: string;
-  event?: string;
-  flag?: string;
-}
-
-export interface IServerContext<TInput extends IServerContextInput = {}> {
-  transport: TInput extends { transport: infer R } ? R : (string & {});
-  event: TInput extends { event: infer R } ? R : (string & {});
-  flag: TInput extends { flag: infer R } ? R : (string & {});
+export interface IServerContext {
+  transport: string;
+  event: string;
+  flag: string;
 }
 
 export interface IServerContextDefaults {

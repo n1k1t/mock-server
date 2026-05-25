@@ -44,11 +44,11 @@ export default class MergeExpectationOperator<
     return {};
   }
 
-  public match(): boolean {
+  public async match(): Promise<boolean> {
     return true;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     const payload = extractContextByLocation(this.command.$location, context);
     if (payload?.type !== 'object' || !_.isObject(payload.value)) {
       return context;
@@ -56,40 +56,46 @@ export default class MergeExpectationOperator<
 
     if (this.command.$path) {
       const value = _.get(payload.value, this.command.$path);
+      const target = this.compiled.exec
+        ? <object>(await this.compiled.exec('manipulate', context, value))
+        : this.command.$value ?? {};
 
       _.set(
         payload.parent,
         `${payload.key}.${this.command.$path}`,
-        this.compiled.exec
-          ? merge(value, this.compiled.exec('manipulate', context, value), { arrayMerge: (target, source) => source })
-          : merge(value, <object>this.command.$value ?? {}, { arrayMerge: (target, source) => source })
+        merge(value, target, { arrayMerge: (target, source) => source })
       );
 
       return context;
     }
 
     if (this.command.$jsonPath) {
-      extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results?.forEach((segment) => {
+      const segments = extractWithJsonPathSafe({ path: this.command.$jsonPath, json: payload.value }).results ?? [];
+
+      for (const segment of segments) {
         const value = _.get(segment.parent, segment.parentProperty);
+        const target = this.compiled.exec
+          ? <object>(await this.compiled.exec('manipulate', context, value))
+          : this.command.$value ?? {};
 
         _.set(
           <object>payload.value,
           segment.pointer.substring(1).replace(/\//g, '.'),
-          this.compiled.exec
-            ? merge(value, this.compiled.exec('manipulate', context, value))
-            : merge(value, this.command.$value ?? {})
-        )
-      });
+          merge(value, target, { arrayMerge: (target, source) => source })
+        );
+      }
 
       return context;
     }
 
+    const target = this.compiled.exec
+      ? <object>(await this.compiled.exec('manipulate', context, payload.value))
+      : this.command.$value ?? {};
+
     _.set(
       payload.parent,
       payload.key,
-      this.compiled.exec
-        ? merge(payload.value, this.compiled.exec('manipulate', context, payload.value))
-        : merge(payload.value, this.command.$value ?? {})
+      merge(payload.value, target, { arrayMerge: (target, source) => source })
     );
 
     return context;

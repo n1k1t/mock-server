@@ -48,65 +48,6 @@ export class HistoryStorage extends Map<string, History> {
     return this;
   }
 
-  /** Injects and registers history items from plain */
-  public inject(list: History['TPlain'][]): this {
-    const fake = Provider.build({ group: this.configuration.group });
-
-    list.forEach((history) => this.register(
-      History.build({
-        id: history.id,
-
-        group: history.group,
-        status: history.status,
-
-        timestamp: history.timestamp,
-        meta: history.meta,
-
-        ...(history.expectation && { expectation: Expectation.build(history.expectation) }),
-
-        snapshot: RequestContextSnapshot.build({
-          transport: history.snapshot.transport,
-          event: history.snapshot.event,
-          flags: history.snapshot.flags,
-
-          cache: history.snapshot.cache,
-          state: history.snapshot.state,
-          error: history.snapshot.error,
-
-          incoming: history.snapshot.incoming,
-          outgoing: history.snapshot.outgoing,
-          messages: history.snapshot.messages,
-
-          seed: history.snapshot.seed,
-          storage: fake.storages.containers,
-
-          ...(history.snapshot.forwarded && {
-            forwarded: {
-              schema: history.snapshot.forwarded.schema,
-              messages: history.snapshot.forwarded.messages,
-
-              incoming: Object.assign(history.snapshot.forwarded.incoming, {
-                dataRaw: history.snapshot.forwarded.incoming.dataRaw
-                  ? Buffer.from(history.snapshot.forwarded.incoming.dataRaw)
-                  : undefined,
-              }),
-
-              ...(history.snapshot.forwarded.outgoing && {
-                outgoing: Object.assign(history.snapshot.forwarded.outgoing, {
-                  dataRaw: history.snapshot.forwarded.outgoing.dataRaw
-                    ? Buffer.from(history.snapshot.forwarded.outgoing.dataRaw)
-                    : undefined,
-                }),
-              }),
-            },
-          }),
-        })
-      }))
-    );
-
-    return this;
-  }
-
   /** Clears storage */
   public clear(): void {
     this.stack = [];

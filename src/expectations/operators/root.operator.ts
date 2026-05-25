@@ -31,7 +31,7 @@ export default class RootExpectationOperator<
     return this.compiled?.tags ?? {};
   }
 
-  public match(context: TContext): boolean {
+  public async match(context: TContext): Promise<boolean> {
     try {
       return this.compiled?.match(context) ?? false;
     } catch(error: any) {
@@ -40,7 +40,7 @@ export default class RootExpectationOperator<
     }
   }
 
-  public manipulate<T extends TContext>(context: T): T {
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
     try {
       return this.compiled?.manipulate(context) ?? context;
     } catch(error: any) {

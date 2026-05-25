@@ -84,20 +84,20 @@ export default class SwitchExpectationOperator<
     ]);
   }
 
-  public match(context: TContext): boolean {
-    const operator = this.handle(context);
-    return operator?.match(context) ?? false;
+  public async match(context: TContext): Promise<boolean> {
+    const operator = await this.handle(context);
+    return (await operator?.match(context)) ?? false;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
-    const operator = this.handle(context);
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
+    const operator = await this.handle(context);
 
-    operator?.manipulate(context);
+    await operator?.manipulate(context);
     return context;
   }
 
-  private handle<T extends TContext>(context: T): ExpectationOperator<any, any> | null {
-    const value = this.extractValue(context);
+  private async handle<T extends TContext>(context: T): Promise<ExpectationOperator<any, any> | null> {
+    const value = await this.extractValue(context);
     if (value === null) {
       return this.compiled.default ?? null;
     }
@@ -105,7 +105,7 @@ export default class SwitchExpectationOperator<
     return _.get(this.compiled.cases, String(value)) ?? this.compiled.default ?? null;
   }
 
-  private extractValue<T extends TContext>(context: T): unknown {
+  private async extractValue<T extends TContext>(context: T): Promise<unknown> {
     const payload = extractContextByLocation(this.command.$location, context);
     if (!payload) {
       return null;

@@ -27,12 +27,21 @@ export default class AndExpectationOperator<
     return mergeMetaTags(this.compiled.map((operator) => operator.tags));
   }
 
-  public match(context: TContext): boolean {
-    return this.compiled.every((operator) => operator.match(context));
+  public async match(context: TContext): Promise<boolean> {
+    for (const operator of this.compiled) {
+      if (!(await operator.match(context))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  public manipulate<T extends TContext>(context: T): T {
-    this.compiled.forEach((operator) => operator.manipulate(context));
+  public async manipulate<T extends TContext>(context: T): Promise<T> {
+    for (const operator of this.compiled) {
+      await operator.manipulate(context);
+    }
+
     return context;
   }
 }

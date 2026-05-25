@@ -2,7 +2,7 @@ import { ContainersStorage } from './storage';
 
 // Test generated using Keploy
 test('register method increases storage size correctly', () => {
-  const storage = new ContainersStorage();
+  const storage = new ContainersStorage({ group: 'test' });
   const config = {
     key: 'test-key',
     payload: { data: 'test data' },
@@ -14,7 +14,7 @@ test('register method increases storage size correctly', () => {
 
 // Test generated using Keploy
 test('provide method reuses existing container', () => {
-  const storage = new ContainersStorage();
+  const storage = new ContainersStorage({ group: 'test' });
   const config = { key: 'test-key', payload: { data: 'test data' } };
   const container1 = storage.provide(config);
   const container2 = storage.provide(config);
@@ -24,7 +24,7 @@ test('provide method reuses existing container', () => {
 
 // Test generated using Keploy
 test('delete method removes container and decreases size', () => {
-  const storage = new ContainersStorage();
+  const storage = new ContainersStorage({ group: 'test' });
   const config = { key: 'test-key', payload: { data: 'test data' } };
   storage.register(config);
   expect(storage.size).toBe(1);
@@ -34,7 +34,7 @@ test('delete method removes container and decreases size', () => {
 
 // Test generated using Keploy
 test('getExpired method returns empty array when no containers are expired', () => {
-  const storage = new ContainersStorage();
+  const storage = new ContainersStorage({ group: 'test' });
   const result = storage.collectExpired();
   expect(result).toEqual([]);
 });

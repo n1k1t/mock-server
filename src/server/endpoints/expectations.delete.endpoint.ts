@@ -1,12 +1,12 @@
-import { Endpoint } from '../models';
+import { EndpointFactory } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: { data: void | { ids?: string[] } };
     outgoing: null;
   }>()
-  .bindToHttp(<const>{ method: 'DELETE', path: '/expectations' })
-  .assignHandler(async ({ reply, incoming, server }) => {
+  .http(<const>{ method: 'DELETE', path: '/expectations' })
+  .compile(async ({ reply, incoming, server }) => {
     for (const provider of server.providers.extract()) {
       await provider.client.deleteExpectations(incoming.data);
     }

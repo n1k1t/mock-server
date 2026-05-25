@@ -2,14 +2,28 @@ import _ from 'lodash';
 
 import { Endpoint, Executor, IRequestContextOutgoing } from '../../../models';
 import { InternalHttpRequestContext } from './context';
-import { SetRequiredKeys } from '../../../../../types';
 
 import * as endpoints from '../../../endpoints';
 import config from '../../../../config';
 
+type TEndpoint = Endpoint<{
+  locations: {
+    http: {
+      method: string;
+      path: string;
+    };
+  };
+
+  incoming: any;
+  outgoing: any;
+}>;
+
 export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
-  public router = Object.values(endpoints).reduce<Record<string, SetRequiredKeys<Endpoint['TCompiled'], 'http'>>>(
-    (acc, endpoint) => endpoint.http ? _.set(acc, `${endpoint.http.method}:${endpoint.http.path}`, endpoint) : acc,
+  public router = Object.values(endpoints).reduce<Record<string, TEndpoint>>(
+    (acc, endpoint) =>
+      endpoint.locations.http
+        ? _.set(acc, `${endpoint.locations.http.method}:${endpoint.locations.http.path}`, endpoint)
+        : acc,
     {}
   );
 

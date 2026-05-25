@@ -1,4 +1,4 @@
-import type { IServerContextDefaults, MockServer } from '../../index';
+import type { MockServer } from '../../index';
 
 import { ExpectationsStorage } from '../../../expectations';
 import { ContainersStorage } from '../containers';
@@ -6,7 +6,7 @@ import { HistoryStorage } from '../history';
 import { IServerContext } from '../../types';
 import { OnsiteClient } from '../../../client';
 
-export class Provider<TContext extends IServerContext = IServerContextDefaults> {
+export class Provider<TContext extends IServerContext = any> {
   public TContext!: TContext;
   public server!: MockServer;
 
@@ -21,7 +21,7 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
 
   public storages = {
     expectations: new ExpectationsStorage({ group: this.group }),
-    containers: new ContainersStorage(),
+    containers: new ContainersStorage({ group: this.group }),
     history: new HistoryStorage({ group: this.group, limit: this.provided.history?.limit }),
   };
 
@@ -36,7 +36,7 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
   }
 
   /** Extends storages of this instance with another provider */
-  public extend(provider: Provider<any>): this {
+  public extend(provider: Provider): this {
     this.storages.expectations.extend(provider.storages.expectations);
     this.storages.containers.extend(provider.storages.containers);
     this.storages.history.extend(provider.storages.history);
@@ -44,7 +44,7 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
     return this;
   }
 
-  static build<TContext extends IServerContext = IServerContextDefaults>(
+  static build<TContext extends IServerContext>(
     provided: Provider['provided']
   ): Provider<TContext> {
     return new Provider<TContext>(provided);

@@ -1,7 +1,7 @@
+import { EndpointFactory } from '../models';
 import { Expectation } from '../../expectations';
-import { Endpoint } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     incoming: {
       query: { id: string };
@@ -10,9 +10,9 @@ export default Endpoint
 
     outgoing: Expectation['TPlain'];
   }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/expectations' })
-  .bindToIo(<const>{ path: 'expectations:get-by-id' })
-  .assignHandler(({ reply, incoming, server }) => {
+  .http(<const>{ method: 'GET', path: '/expectations' })
+  .io(<const>{ path: 'expectations:get-by-id' })
+  .compile(({ reply, incoming, server }) => {
     const id = incoming.data?.id ?? incoming.query?.id;
     if (!id) {
       return reply.validationError(['Invalid "id" query parameter']);

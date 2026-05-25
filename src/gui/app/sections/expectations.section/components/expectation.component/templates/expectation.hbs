@@ -2,12 +2,16 @@ export default `
   <div class="container expectation" id="{{data.id}}">
     <div class="meta">
       <div class="segment">
-        <button class="activity">
+        <button id="activity">
           {{#if data.isEnabled}}
             <i class="fas fa-plug"></i>
           {{else}}
             <i class="fas fa-power-off"></i>
           {{/if}}
+        </button>
+
+        <button id="edit">
+          <i class="far fa-edit"></i>
         </button>
 
         <span class="calls-count {{#compare data.meta.metrics.executions 'gt' 0}}active{{/compare}}">

@@ -3,7 +3,7 @@ import hbs from 'handlebars';
 import type { History } from '../../../../../../server';
 
 import { TSettingsVisualPathSize } from '../../../../types';
-import { ViewerComponent } from '../../../../components/viewer.component';
+import { ViewerComponent } from '../../../../components';
 import { Component } from '../../../../models';
 
 import context from '../../../../context';

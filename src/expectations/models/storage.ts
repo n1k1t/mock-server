@@ -38,14 +38,14 @@ export class ExpectationsStorage extends Map<string, Expectation<any>> {
     return { status: 'REGISTERED', expectation };
   }
 
-  public match(context: IExpectationSchemaContext): Expectation<any> | null {
+  public async match(context: IExpectationSchemaContext): Promise<Expectation<any> | null> {
     for (const expectation of this.values()) {
       if (!expectation.isEnabled) {
         continue;
       }
 
       const hasSameTransport = expectation.transports?.includes(context.transport) ?? true;
-      if (hasSameTransport && expectation.request.match(context)) {
+      if (hasSameTransport && (await expectation.request.match(context))) {
         return expectation;
       }
     }

@@ -1,11 +1,11 @@
-import { Endpoint, Provider } from '../models';
+import { EndpointFactory, Provider } from '../models';
 
-export default Endpoint
+export default EndpointFactory
   .build<{
     outgoing: Pick<Provider, 'group' | 'timestamp' | 'ttl'>[];
   }>()
-  .bindToHttp(<const>{ method: 'GET', path: '/providers' })
-  .assignHandler(({ reply, server }) => reply.ok(
+  .http(<const>{ method: 'GET', path: '/providers' })
+  .compile(({ reply, server }) => reply.ok(
     server.providers.extract().map((provider) => ({
       timestamp: provider.timestamp,
 

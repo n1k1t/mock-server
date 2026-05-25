@@ -76,6 +76,14 @@ export type ExtractClassMethodContext<T extends Constructable<object>, K extends
   ? [R0, R1]
   : never;
 
+export type OverrideObject<TTarget extends object, TSource extends object> = {
+  [K in keyof TTarget]: K extends keyof TSource
+    ? TSource[K] extends TTarget[K]
+      ? TSource[K]
+      : TTarget[K]
+    : TTarget[K];
+};
+
 export type MergeObjects<T1 extends object, T2 extends object> = keyof T2 extends never
   ? T1
   : Omit<T1, keyof T2> & T2;

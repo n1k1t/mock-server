@@ -18,7 +18,7 @@ export class InternalHttpTransport extends Transport<InternalHttpExecutor> {
   }
 
   public compileContext(
-    provider: Provider<InternalHttpTransport['TContext']>,
+    provider: Provider,
     request: IncomingMessage,
     response: ServerResponse
   ) {

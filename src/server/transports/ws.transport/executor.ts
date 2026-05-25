@@ -28,7 +28,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
   }
 
   public async match(context: WsRequestContext) {
-    const expectation = context.provider.storages.expectations.match(context.snapshot);
+    const expectation = await context.provider.storages.expectations.match(context.snapshot);
 
     if (!expectation) {
       context.event === 'connection' ? context.skip() : logger.warn('Expectation was not found');

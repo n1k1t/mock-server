@@ -3,58 +3,58 @@ import * as operators from './index';
 
 describe('Expectations.Operators.If', () => {
   describe('matching', () => {
-    it('should match by schema with simple valid condition and valid [then] target branch', () => {
+    it('should match by schema with simple valid condition and valid [then] target branch', async () => {
       const operator = new operators.$if(operators, {
         $condition: { $has: { $location: 'path', $regExp: /^\/foo/ } },
         $then: { $has: { $location: 'method', $value: 'POST' } },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeTruthy();
+      expect(await operator.match(buildExpectationContext())).toBeTruthy();
     });
 
-    it('should match by schema with simple invalid condition and valid [then] target branch', () => {
+    it('should match by schema with simple invalid condition and valid [then] target branch', async () => {
       const operator = new operators.$if(operators, {
         $condition: { $has: { $location: 'path', $regExp: /^\/bar/ } },
         $then: { $has: { $location: 'method', $value: 'POST' } },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeFalsy();
+      expect(await operator.match(buildExpectationContext())).toBeFalsy();
     });
 
-    it('should match by schema with simple valid condition and invalid [then] target branch', () => {
+    it('should match by schema with simple valid condition and invalid [then] target branch', async () => {
       const operator = new operators.$if(operators, {
         $condition: { $has: { $location: 'path', $regExp: /^\/foo/ } },
         $then: { $has: { $location: 'method', $value: 'GET' } },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeFalsy();
+      expect(await operator.match(buildExpectationContext())).toBeFalsy();
     });
 
-    it('should match by schema with simple invalid condition and valid [else] target branch', () => {
+    it('should match by schema with simple invalid condition and valid [else] target branch', async () => {
       const operator = new operators.$if(operators, {
         $condition: { $has: { $location: 'path', $regExp: /^\/bar/ } },
         $else: { $has: { $location: 'method', $value: 'POST' } },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeTruthy();
+      expect(await operator.match(buildExpectationContext())).toBeTruthy();
     });
 
-    it('should match by schema with simple invalid condition and invalid [else] target branch', () => {
+    it('should match by schema with simple invalid condition and invalid [else] target branch', async () => {
       const operator = new operators.$if(operators, {
         $condition: { $has: { $location: 'path', $regExp: /^\/bar/ } },
         $else: { $has: { $location: 'method', $value: 'GET' } },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeFalsy();
+      expect(await operator.match(buildExpectationContext())).toBeFalsy();
     });
 
-    it('should match by schema with complex valid condition', () => {
+    it('should match by schema with complex valid condition', async () => {
       const operator = new operators.$if(operators, {
         $condition: {
           $or: [
             { $if: { $condition: {} } },
             { $has: { $location: 'path', $regExp: /^\/bar/ } },
-            { $has: { $location: 'method', $value: 'POST'} },
+            { $has: { $location: 'method', $value: 'POST' } },
           ],
         },
 
@@ -66,16 +66,16 @@ describe('Expectations.Operators.If', () => {
         },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeTruthy();
+      expect(await operator.match(buildExpectationContext())).toBeTruthy();
     });
 
-    it('should match by schema with complex invalid condition', () => {
+    it('should match by schema with complex invalid condition', async () => {
       const operator = new operators.$if(operators, {
         $condition: {
           $or: [
             { $if: { $condition: {} } },
             { $has: { $location: 'path', $regExp: /^\/bar/ } },
-            { $has: { $location: 'method', $value: 'GET'} },
+            { $has: { $location: 'method', $value: 'GET' } },
           ],
         },
 
@@ -84,18 +84,18 @@ describe('Expectations.Operators.If', () => {
         },
       });
 
-      expect(operator.match(buildExpectationContext())).toBeFalsy();
+      expect(await operator.match(buildExpectationContext())).toBeFalsy();
     });
   });
 
   describe('manipulation', () => {
-    it('should manipulate by schema with conplex condition', () => {
+    it('should manipulate by schema with conplex condition', async () => {
       const operator = new operators.$if<any>(operators, {
         $condition: {
           $or: [
             { $if: { $condition: {} } },
             { $has: { $location: 'path', $regExp: /^\/bar/ } },
-            { $has: { $location: 'method', $value: 'POST'} },
+            { $has: { $location: 'method', $value: 'POST' } },
           ],
         },
 
@@ -107,7 +107,7 @@ describe('Expectations.Operators.If', () => {
         },
       });
 
-      const context = operator.manipulate<any>(buildExpectationContext());
+      const context = await operator.manipulate<any>(buildExpectationContext());
 
       expect(context.incoming.headers?.['content-length']).toEqual(100);
       expect(context.incoming.query?.bar?.baz?.test).toBeTruthy();

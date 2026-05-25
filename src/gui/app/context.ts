@@ -1,10 +1,8 @@
-import EventEmitter from 'events';
 import io from 'socket.io-client';
 
+import type { CurtainComponent, PopupsComponent } from './components';
 import type { IIoExchangeSchema } from '../../server';
-import type { PopupsComponent } from './components';
 import type { TEndpoints } from '../../client';
-import type { TFunction } from '../../../types';
 
 import { Context } from './models';
 
@@ -18,6 +16,7 @@ type TWsEndpoints = { [K in keyof TEndpoints as ExtractWsEndpointPath<K>]-?: TEn
 
 class MainContext extends Context<{
   popups: PopupsComponent;
+  curtain: CurtainComponent;
 }> {
   public instances = {
     io: io(window.DEV?.io.origin ?? location.origin, {

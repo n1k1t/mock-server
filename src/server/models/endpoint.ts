@@ -1,5 +1,11 @@
 import type { InternalHttpRequestContext, InternalSocketIoRequestContext } from '../transports';
-import type { SetRequiredKeys, TFunction } from '../../../types';
+import type { TFunction } from '../../../types';
+
+type TEndpointHandler<TSchema extends IEndpointSchema<any>> = TFunction<any, [
+  (InternalHttpRequestContext<TSchema['outgoing']['data']> | InternalSocketIoRequestContext<TSchema['outgoing']['data']>) & {
+    incoming: TSchema['incoming'];
+  }
+]>;
 
 export interface IEndpointResponse<T> {
   code: 'OK' | 'INTERNAL_ERROR' | 'VALIDATION_ERROR' | 'NOT_FOUND';
@@ -17,53 +23,80 @@ export interface IEndpointInput {
   outgoing?: any;
 }
 
-export interface IEndpointSchema<TInput extends IEndpointInput> {
+export interface IEndpointSchema<TInput extends IEndpointInput = {}> {
+  locations: {
+    http?: {
+      method: string;
+      path: string;
+    };
+
+    io?: {
+      path: string;
+    };
+  };
+
   incoming: {
-    data?: NonNullable<TInput['incoming']>['data'];
     query?: NonNullable<TInput['incoming']>['query'];
+    data?: NonNullable<TInput['incoming']>['data'];
   };
 
   outgoing: IEndpointResponse<TInput['outgoing']>;
 }
 
-export class Endpoint<
-  TInput extends IEndpointInput = {},
-  TSchema extends IEndpointSchema<TInput> = IEndpointSchema<TInput>
-> {
+export class EndpointFactory<TSchema extends IEndpointSchema<any> = any> {
   public TSchema!: TSchema;
-  public TCompiled!: SetRequiredKeys<Endpoint<TInput, TSchema>, 'handler'>;
+  private provided: IEndpointSchema['locations'] = {};
 
-  public handler?: TFunction<any, [
-    (InternalHttpRequestContext<TSchema['outgoing']['data']> | InternalSocketIoRequestContext<TSchema['outgoing']['data']>) & {
+  public http<
+    T extends NonNullable<IEndpointSchema['locations']['http']>,
+    TReturn extends EndpointFactory<{
+      locations: {
+        http: T;
+        io: TSchema['locations']['io'];
+      };
+
       incoming: TSchema['incoming'];
+      outgoing: TSchema['outgoing'];
+    }>
+  >(payload: T): TReturn {
+    this.provided.http = payload;
+    return <this & TReturn>this;
+  }
+
+  public io<
+    T extends NonNullable<IEndpointSchema['locations']['io']>,
+    TReturn extends EndpointFactory<{
+      locations: {
+        http: TSchema['locations']['http'];
+        io: T;
+      };
+
+      incoming: TSchema['incoming'];
+      outgoing: TSchema['outgoing'];
+    }>
+  >(payload: T): TReturn {
+    this.provided.io = payload;
+    return <this & TReturn>this;
+  }
+
+  public compile(handler: TEndpointHandler<TSchema>): Endpoint<TSchema> {
+    if (!this.provided.http && !this.provided.io) {
+      throw new Error('Cannot compile endpoint without locations');
     }
-  ]>;
 
-  public http?: {
-    method: string;
-    path: string;
-  };
-
-  public io?: {
-    path: string;
-  };
-
-  public bindToHttp<This extends NonNullable<Endpoint<TInput, TSchema>['http']>>(http: This) {
-    return Object.assign(this, { http });
+    return new Endpoint(this.provided, handler);
   }
 
-  public bindToIo<Q extends NonNullable<Endpoint<TInput, TSchema>['io']>>(io: Q) {
-    return Object.assign(this, { io });
+  static build<TInput extends IEndpointInput>(): EndpointFactory<IEndpointSchema<TInput>> {
+    return new EndpointFactory();
   }
+}
 
-  public assignHandler<Q extends NonNullable<Endpoint<TInput, TSchema>['handler']>>(handler: Q) {
-    return Object.assign(this, { handler });
-  }
+export class Endpoint<TSchema extends IEndpointSchema = any> {
+  public TSchema!: TSchema;
 
-  static build<
-    TInput extends IEndpointInput = {},
-    TSchema extends IEndpointSchema<TInput> = IEndpointSchema<TInput>
-  >(): Endpoint<TInput, TSchema> {
-    return new Endpoint<TInput, TSchema>();
-  }
+  constructor(
+    public locations: TSchema['locations'],
+    public handler: TEndpointHandler<TSchema>
+  ) {}
 }

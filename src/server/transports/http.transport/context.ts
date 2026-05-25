@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import _ from 'lodash';
 
-import { IServerContext } from '../../types';
 import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
 import {
@@ -14,10 +13,11 @@ import {
 
 const logger = Logger.build('Server.Transports.Http.Context');
 
-export class HttpRequestContext extends RequestContext<IServerContext<{
+export class HttpRequestContext extends RequestContext<{
   transport: 'http';
   event: 'connection';
-}>> {
+  flag: string & {};
+}> {
   public snapshot = this.compileSnapshot();
   public history = this.compileHistory();
 
@@ -26,7 +26,7 @@ export class HttpRequestContext extends RequestContext<IServerContext<{
   });
 
   constructor(
-    public provider: Provider<HttpRequestContext['TContext']>,
+    public provider: Provider,
     public incoming: IRequestContextIncoming,
     public request: IncomingMessage,
     public response: ServerResponse
@@ -66,7 +66,7 @@ export class HttpRequestContext extends RequestContext<IServerContext<{
   };
 
   static async build(
-    provider: Provider<HttpRequestContext['TContext']>,
+    provider: Provider,
     request: IncomingMessage,
     response: ServerResponse
   ): Promise<HttpRequestContext> {

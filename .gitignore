@@ -13,10 +13,10 @@
 
 npm-debug.log
 
-/node_modules/
-/public/
-/test/
-/lib/
+node_modules/
+public/
+test/
+lib/
 
-/coverage/**
-!/coverage/cobertura-coverage.xml
+coverage/**
+!coverage/cobertura-coverage.xml
