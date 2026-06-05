@@ -86,17 +86,41 @@ export interface IExpectationSchemaInput {
   state: {};
 
   incoming: {
-    query?: object;
-    data?: unknown;
+    query?: Record<string, any>;
+    data?: any;
   };
 
   outgoing: {
-    data?: unknown;
+    data?: any;
   };
 
   container: {};
   transport: string & {};
   flag: string & {};
+}
+
+interface IExpectationSchemaIncomingOverride<
+  TInput extends Partial<IExpectationSchemaInput['incoming']>
+> extends Omit<IRequestContextIncoming, 'query' | 'data' | 'stream'> {
+  stream: Observable<RequestMessage<TInput['data']>>;
+
+  data: 'data' extends keyof TInput
+    ? TInput['data']
+    : IExpectationSchemaInput['incoming']['data'];
+
+  query: TInput['query'] extends object
+    ? TInput['query']
+    : IExpectationSchemaInput['incoming']['query'];
+}
+
+interface IExpectationSchemaOutgoingOverride<
+  TInput extends Partial<IExpectationSchemaInput['outgoing']>
+> extends Omit<IRequestContextOutgoing, 'data' | 'stream'> {
+  stream: Observable<RequestMessage<TInput['data']>>;
+
+  data: 'data' extends keyof TInput
+    ? TInput['data']
+    : IExpectationSchemaInput['outgoing']['data'];
 }
 
 export interface IExpectationSchemaContext<
@@ -106,22 +130,22 @@ export interface IExpectationSchemaContext<
   transport: TMerged['transport'];
   flags: Partial<Record<TMerged['flag'], boolean>>;
 
-  state: TMerged['state'];
   storage: ContainersStorage<TMerged['container']>;
   cache: RequestContextSnapshot['cache'];
+  state: TMerged['state'];
+
+  incoming: TInput['incoming'] extends Partial<IExpectationSchemaInput['incoming']>
+    ? IExpectationSchemaIncomingOverride<TInput['incoming']>
+    : IRequestContextIncoming;
+
+  outgoing: TInput['outgoing'] extends Partial<IExpectationSchemaInput['outgoing']>
+    ? IExpectationSchemaOutgoingOverride<TInput['outgoing']>
+    : IRequestContextOutgoing;
 
   overrides?: RequestContextSnapshot['overrides'];
 
   container?: Container<NonNullable<TMerged['container']>>;
   seed?: RequestContextSnapshot['seed'];
-
-  incoming: OverrideObject<IRequestContextIncoming, TMerged['incoming'] & {
-    stream?: Observable<RequestMessage<TMerged['incoming']['data']>>;
-  }>;
-
-  outgoing: OverrideObject<IRequestContextOutgoing, TMerged['outgoing'] & {
-    stream?: Observable<RequestMessage<TMerged['outgoing']['data']>>;
-  }>;
 };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =

@@ -13,12 +13,12 @@ export interface IRequestContextIncoming {
   method: string;
 
   headers: IncomingHttpHeaders;
-  query: Record<string, unknown>;
-
-  stream?: Observable<RequestMessage>;
+  query: Record<string, any>;
 
   data?: unknown;
   dataRaw?: Buffer;
+
+  stream?: Observable<RequestMessage>;
 
   delay?: number;
   error?: 'ECONNABORTED';

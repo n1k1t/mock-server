@@ -6,7 +6,6 @@ import { SystemSocketIoReply } from './reply';
 
 export class SystemSocketIoRequestContext<TOutgoing = unknown> extends RequestContext<{
   transport: 'io';
-  event: string & {};
   flag: string & {};
 }> {
   public incoming: IRequestContextIncoming = {

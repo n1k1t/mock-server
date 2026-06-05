@@ -2,9 +2,8 @@ import type { SystemHttpRequestContext, SystemSocketIoRequestContext } from '../
 import type { TFunction } from '../../../types';
 
 type TEndpointHandler<TSchema extends IEndpointSchema<any>> = TFunction<any, [
-  (SystemHttpRequestContext<TSchema['outgoing']['data']> | SystemSocketIoRequestContext<TSchema['outgoing']['data']>) & {
-    incoming: TSchema['incoming'];
-  }
+  | SystemHttpRequestContext<TSchema['outgoing']['data']> & { incoming: TSchema['incoming'] }
+  | SystemSocketIoRequestContext<TSchema['outgoing']['data']> & { incoming: TSchema['incoming'] }
 ]>;
 
 export interface IEndpointResponse<T> {

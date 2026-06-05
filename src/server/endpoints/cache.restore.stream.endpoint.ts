@@ -7,7 +7,13 @@ import { Logger } from '../../logger';
 const logger = Logger.build('Endpoints.CacheRestore');
 
 export default EndpointFactory
-  .build<{ incoming: { data: IIoIncomingStream<{ ttl: number }>, outgoing: null }, outgoing: null }>()
+  .build<{
+    incoming: {
+      data: IIoIncomingStream<{ ttl: number }>;
+    };
+
+    outgoing: null;
+  }>()
   .io(<const>{ path: 'cache:restore:stream' })
   .compile(async ({ incoming, reply, server }) => {
     const chunks: string[] = [];

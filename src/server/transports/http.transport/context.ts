@@ -16,7 +16,6 @@ const logger = Logger.build('Transports.Http.Context');
 
 export class HttpRequestContext extends RequestContext<{
   transport: 'http';
-  event: string & {};
   flag: string & {};
 }> {
   public snapshot = this.compileSnapshot();
