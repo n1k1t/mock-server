@@ -2,7 +2,7 @@
   <h1>Mock server</h1>
   <p>The ultimate toolkit to <b>intercept, transform, and simulate</b> HTTP/WS traffic with type-safe expectations</p>
 
-  <img src="https://raw.githubusercontent.com/n1k1t/mock-server/refs/heads/master/images/preview.png?raw=true" />
+  <img width="640px" src="https://raw.githubusercontent.com/n1k1t/mock-server/refs/heads/master/images/preview.png?raw=true" />
 
   <br />
   <br />
