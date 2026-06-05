@@ -30,7 +30,7 @@ export const handleRequestError = (error: AxiosError<IEndpointResponse<any>>) =>
   throw new InternalServerError(configuration, error.message);
 }
 
-export const prepareExpectationBodyToRequest = <T extends Partial<Expectation<any>['TPlain']>>(body: T): T => ({
+export const prepareExpectationBodyToRequest = <T extends Partial<Expectation['TPlain']>>(body: T): T => ({
   ...body,
 
   schema: {

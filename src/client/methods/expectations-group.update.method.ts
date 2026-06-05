@@ -16,7 +16,7 @@ export default ClientMethod
         data: body,
 
         ...cast<TEndpoints['expectationsGroupUpdate']['location']>({
-          url: `${config.get('routes').internal.root}/expectations/group`,
+          url: `${config.get('routes').system.root}/expectations/group`,
           method: 'PUT',
         }),
       })

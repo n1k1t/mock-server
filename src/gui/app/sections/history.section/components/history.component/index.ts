@@ -43,7 +43,6 @@ export class HistoryComponent extends Component {
 
     if (this.data.format === 'plain') {
       this.viewer.provide({
-        event: this.data.snapshot.event,
         transport: this.data.snapshot.transport,
 
         ...(this.data.snapshot.seed && { seed: this.data.snapshot.seed }),

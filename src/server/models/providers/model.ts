@@ -1,4 +1,4 @@
-import type { MockServer } from '../../index';
+import type { IServerContextDefaults, MockServer } from '../../index';
 
 import { ExpectationsStorage } from '../../../expectations';
 import { ContainersStorage } from '../containers';
@@ -44,7 +44,7 @@ export class Provider<TContext extends IServerContext = any> {
     return this;
   }
 
-  static build<TContext extends IServerContext>(
+  static build<TContext extends IServerContext = IServerContextDefaults>(
     provided: Provider['provided']
   ): Provider<TContext> {
     return new Provider<TContext>(provided);

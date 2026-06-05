@@ -178,10 +178,9 @@ it('should distribute history to target provider and delete from system provider
     group: 'target-group',
     snapshot: RequestContextSnapshot.build({
       transport: 'http',
-      event: 'request',
       flags: {},
       storage: systemProvider.storages.containers,
-      incoming: { type: 'json', path: '/test', method: 'GET', headers: {} },
+      incoming: { type: 'json', path: '/test', method: 'GET', headers: {}, query: {} },
       outgoing: { type: 'json', status: 200, headers: {} },
     }),
   });
@@ -199,10 +198,9 @@ it('should register distributed history in target provider', () => {
     group: 'target-group',
     snapshot: RequestContextSnapshot.build({
       transport: 'http',
-      event: 'request',
       flags: {},
       storage: systemProvider.storages.containers,
-      incoming: { type: 'json', path: '/test', method: 'GET', headers: {} },
+      incoming: { type: 'json', path: '/test', method: 'GET', headers: {}, query: {} },
       outgoing: { type: 'json', status: 200, headers: {} },
     }),
   });
@@ -252,10 +250,9 @@ it('should not distribute history of a different group', () => {
     group: 'other-group',
     snapshot: RequestContextSnapshot.build({
       transport: 'http',
-      event: 'request',
       flags: {},
       storage: systemProvider.storages.containers,
-      incoming: { type: 'json', path: '/test', method: 'GET', headers: {} },
+      incoming: { type: 'json', path: '/test', method: 'GET', headers: {}, query: {} },
       outgoing: { type: 'json', status: 200, headers: {} },
     }),
   });

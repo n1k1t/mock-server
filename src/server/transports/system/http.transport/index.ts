@@ -2,16 +2,16 @@ import { IncomingMessage, ServerResponse } from 'http';
 
 import type { MockServer } from '../../../index';
 
-import { InternalHttpRequestContext } from './context';
-import { InternalHttpExecutor } from './executor';
+import { SystemHttpRequestContext } from './context';
+import { SystemHttpExecutor } from './executor';
 import { Provider, Transport } from '../../../models';
 
 export * from './executor';
 export * from './context';
 export * from './reply';
 
-export class InternalHttpTransport extends Transport<InternalHttpExecutor> {
-  public executor = new InternalHttpExecutor();
+export class SystemHttpTransport extends Transport<SystemHttpExecutor> {
+  public executor = new SystemHttpExecutor();
 
   constructor(protected server: MockServer) {
     super();
@@ -22,6 +22,6 @@ export class InternalHttpTransport extends Transport<InternalHttpExecutor> {
     request: IncomingMessage,
     response: ServerResponse
   ) {
-    return InternalHttpRequestContext.build(this.server, request, response);
+    return SystemHttpRequestContext.build(this.server, request, response);
   }
 }

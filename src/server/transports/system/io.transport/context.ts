@@ -2,11 +2,11 @@ import type { MockServer } from '../../../index';
 import type { TFunction } from '../../../../../types';
 
 import { IRequestContextIncoming, RequestContext } from '../../../models';
-import { InternalSocketIoReply } from './reply';
+import { SystemSocketIoReply } from './reply';
 
-export class InternalSocketIoRequestContext<TOutgoing = unknown> extends RequestContext<{
+export class SystemSocketIoRequestContext<TOutgoing = unknown> extends RequestContext<{
   transport: 'io';
-  event: 'message';
+  event: string & {};
   flag: string & {};
 }> {
   public incoming: IRequestContextIncoming = {
@@ -20,7 +20,7 @@ export class InternalSocketIoRequestContext<TOutgoing = unknown> extends Request
     query: {},
   };
 
-  public reply = InternalSocketIoReply.build<TOutgoing>(this);
+  public reply = SystemSocketIoReply.build<TOutgoing>(this);
   public snapshot = this.compileSnapshot();
 
   constructor(
@@ -31,10 +31,10 @@ export class InternalSocketIoRequestContext<TOutgoing = unknown> extends Request
       callback?: TFunction<void>;
     }
   ) {
-    super(server.providers.default, { transport: 'io', event: 'message' });
+    super(server.providers.default, { transport: 'io' });
   }
 
-  static build(server: MockServer, request: InternalSocketIoRequestContext['request']) {
-    return new InternalSocketIoRequestContext(server, request);
+  static build(server: MockServer, request: SystemSocketIoRequestContext['request']) {
+    return new SystemSocketIoRequestContext(server, request);
   }
 }

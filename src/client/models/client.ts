@@ -17,8 +17,13 @@ export class Client<TContext extends IServerContext = any> {
     return this.methods.expectationsDelete;
   }
 
-  public createExpectation<TInput extends Partial<IExpectationSchemaInput>>(
-    handler: TFunction<Expectation<IExpectationSchemaContext<TInput & TContext>>['configuration'], [
+  public createExpectation<
+    TInput extends Partial<IExpectationSchemaInput>,
+    TConfiguration extends Expectation['configuration'] = Expectation<
+      IExpectationSchemaContext<TInput & TContext>
+    >['configuration']
+  >(
+    handler: TFunction<TConfiguration, [
       IExpectationHandlerContext<IExpectationSchemaContext<TInput & TContext>>
     ]>
   ): ReturnType<TMethodsSchema['expectationsCreate']>;
@@ -29,7 +34,7 @@ export class Client<TContext extends IServerContext = any> {
 
   public createExpectation(predicate: unknown): ReturnType<TMethodsSchema['expectationsCreate']> {
     return typeof predicate === 'function'
-      ? this.methods.expectationsCreate(predicate(this.compileHandlerUtils()))
+      ? this.methods.expectationsCreate(predicate(this.compileHandlerContext()))
       : this.methods.expectationsCreate(<Expectation['configuration']>predicate);
   }
 
@@ -37,23 +42,32 @@ export class Client<TContext extends IServerContext = any> {
     configuration: { id: string, set: Partial<Expectation['configuration']> }
   ): ReturnType<TMethodsSchema['expectationsUpdate']>;
 
-  public updateExpectation<TInput extends Partial<IExpectationSchemaInput>>(
-    handler: TFunction<{ id: string, set: Partial<Expectation['configuration']> }, [
+  public updateExpectation<
+    TInput extends Partial<IExpectationSchemaInput>,
+    TConfiguration extends Expectation['configuration'] = Expectation<
+      IExpectationSchemaContext<TInput & TContext>
+    >['configuration']
+  >(
+    handler: TFunction<{ id: string, set: Partial<TConfiguration> }, [
       IExpectationHandlerContext<IExpectationSchemaContext<TInput & TContext>>
     ]>
   ): ReturnType<TMethodsSchema['expectationsUpdate']>
 
   public updateExpectation(predicate: unknown): ReturnType<TMethodsSchema['expectationsUpdate']> {
     return typeof predicate === 'function'
-      ? this.methods.expectationsUpdate(predicate(this.compileHandlerUtils()))
+      ? this.methods.expectationsUpdate(predicate(this.compileHandlerContext()))
       : this.methods.expectationsUpdate(<{ id: string, set: Partial<Expectation['configuration']> }>predicate);
   }
 
-  private compileHandlerUtils<TInput extends IExpectationSchemaInput>(): IExpectationHandlerContext<
+  private compileHandlerContext<TInput extends IExpectationSchemaInput>(): IExpectationHandlerContext<
     IExpectationSchemaContext<TInput & TContext>
   > {
     return {
       $: compileExpectationOperators(),
+
+      utils: {
+        transports: (values) => values,
+      },
     }
   }
 }

@@ -2,13 +2,12 @@ import { prepareExpectationBodyToRequest } from '../utils';
 import { Expectation } from '../../expectations';
 import { Client } from './client';
 
-
 interface IExpectationContext {
   incoming: {
     query: {
       foo?: 'a' | 'b' | 'c';
       bar: 'a' | 'b' | 'c';
-    }
+    };
 
     body: {
       foo: 'a' | 'b' | 'c';
@@ -23,30 +22,33 @@ interface IExpectationContext {
   };
 }
 
-const buildClient = () => new Client({
-  ping: () => Promise.resolve('pong'),
+const buildClient = () =>
+  new Client({
+    ping: () => Promise.resolve('pong'),
 
-  providersCreate: () => Promise.resolve(null),
-  providersDelete: () => Promise.resolve(null),
+    providersCreate: () => Promise.resolve(null),
+    providersDelete: () => Promise.resolve(null),
 
-  expectationsDelete: () => Promise.resolve(null),
-  expectationsGroupUpdate: () => Promise.resolve([]),
+    expectationsDelete: () => Promise.resolve(null),
+    expectationsGroupUpdate: () => Promise.resolve([]),
 
-  expectationsCreate: (configuration) => Promise.resolve(
-    prepareExpectationBodyToRequest(
-      Object.assign(Expectation.build(configuration).toPlain(), {
-        id: '12426262-85a3-4340-969b-272e003722e9',
-        name: 'MaliciousCobra',
-      })
-    )
-  ),
+    expectationsCreate: (configuration) =>
+      Promise.resolve(
+        prepareExpectationBodyToRequest(
+          Object.assign(Expectation.build(configuration).toPlain(), {
+            id: '12426262-85a3-4340-969b-272e003722e9',
+            name: 'MaliciousCobra',
+          }),
+        ),
+      ),
 
-  expectationsUpdate: ({ id, set }) => Promise.resolve(
-    prepareExpectationBodyToRequest(
-      Object.assign(Expectation.build({ ...set, schema: set.schema ?? {} }).toPlain(), { id })
-    )
-  ),
-});
+    expectationsUpdate: ({ id, set }) =>
+      Promise.resolve(
+        prepareExpectationBodyToRequest(
+          Object.assign(Expectation.build({ ...set, schema: set.schema ?? {} }).toPlain(), { id }),
+        ),
+      ),
+  });
 
 describe('Client.Models.Client', () => {
   it('should create expectation with complex schema as object', async () => {
@@ -92,7 +94,12 @@ describe('Client.Models.Client', () => {
               { $has: { $location: 'incoming.data' } },
 
               { $has: { $location: 'incoming.data', $value: { foo: 'a', bar: ['a'] } } },
-              { $has: { $location: 'incoming.data', $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }] } },
+              {
+                $has: {
+                  $location: 'incoming.data',
+                  $valueAnyOf: [{ foo: 'a', bar: ['a'] }, { bar: ['b'] }, { baz: {} }],
+                },
+              },
               { $has: { $location: 'incoming.data', $match: { foo: 'a', baz: { foo: 1 } } } },
               { $has: { $location: 'incoming.data', $matchAnyOf: [{ baz: {} }, { bar: [] }] } },
               { $has: { $location: 'incoming.data', $exec: (payload) => payload?.baz?.foo === 1 } },
@@ -154,14 +161,16 @@ describe('Client.Models.Client', () => {
                   $exec: (payload) => payload.foo,
 
                   $cases: {
-                    'a': {
-                      $and: [{
-                        $exec: ({ context }) => {
-                          if (context.incoming.data?.foo === 'a') {
-                            context.outgoing!.status = 200;
-                          }
+                    a: {
+                      $and: [
+                        {
+                          $exec: ({ context }) => {
+                            if (context.incoming.data?.foo === 'a') {
+                              context.outgoing!.status = 200;
+                            }
+                          },
                         },
-                      }],
+                      ],
                     },
                   },
                 },
@@ -169,7 +178,7 @@ describe('Client.Models.Client', () => {
             ],
           },
         },
-      })
+      }),
     ).resolves.toMatchSnapshot();
   });
 
@@ -200,7 +209,12 @@ describe('Client.Models.Client', () => {
             $.has('incoming.query', '$path', 'foo'),
 
             $.has('incoming.query', { $value: { foo: 'a', bar: 'a' } }),
-            $.has('incoming.query', { $valueAnyOf: [{ foo: 'a', bar: 'a' }, { foo: 'b', bar: 'b' }] }),
+            $.has('incoming.query', {
+              $valueAnyOf: [
+                { foo: 'a', bar: 'a' },
+                { foo: 'b', bar: 'b' },
+              ],
+            }),
             $.has('incoming.query', { $match: { foo: 'a' } }),
             $.has('incoming.query', { $matchAnyOf: [{ foo: 'a' }, { foo: 'b' }] }),
             $.has('incoming.query', { $exec: (payload) => payload?.foo === 'a' }),
@@ -241,7 +255,7 @@ describe('Client.Models.Client', () => {
 
             $.switch('incoming.query', '$path', 'foo', {
               $cases: {
-                'a': $.and([])
+                a: $.and([]),
               },
             }),
           ]),
@@ -262,10 +276,7 @@ describe('Client.Models.Client', () => {
 
             $.switch('incoming.data', '$path', 'baz.bar', {
               $cases: {
-                1: $.and([
-                  $.merge('outgoing.data', { $value: {} }),
-                  $.remove('outgoing.data', '$path', 'foo'),
-                ]),
+                1: $.and([$.merge('outgoing.data', { $value: {} }), $.remove('outgoing.data', '$path', 'foo')]),
               },
             }),
 
@@ -277,7 +288,7 @@ describe('Client.Models.Client', () => {
 
             $.switch('outgoing.headers', '$exec', (payload) => payload.foo, {
               $cases: {
-                'a': $.and([
+                a: $.and([
                   $.exec(({ context }) => {
                     if (context.incoming.data.foo === 'a') {
                       context.outgoing!.status = 200;
@@ -288,32 +299,158 @@ describe('Client.Models.Client', () => {
             }),
           ]),
         },
-      }))
+      })),
     ).resolves.toMatchSnapshot();
   });
 });
 
 // Test generated using Keploy
 it('should return pong on ping method', async () => {
-    const client = buildClient();
-    await expect(client.ping()).resolves.toEqual('pong');
-  });
-
+  const client = buildClient();
+  await expect(client.ping()).resolves.toEqual('pong');
+});
 
 // Test generated using Keploy
 it('should return null on deleteExpectations method', async () => {
-    const client = buildClient();
-    await expect(client.deleteExpectations()).resolves.toBeNull();
-  });
-
+  const client = buildClient();
+  await expect(client.deleteExpectations()).resolves.toBeNull();
+});
 
 // Test generated using Keploy
 it('should update expectation with function predicate', async () => {
-    const client = buildClient();
-    const result = await client.updateExpectation((context) => ({
-      id: 'some-id',
-      set: { schema: {} },
-    }));
-    expect(result).toHaveProperty('id');
+  const client = buildClient();
+  const result = await client.updateExpectation((context) => ({
+    id: 'some-id',
+    set: { schema: {} },
+  }));
+  expect(result).toHaveProperty('id');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should provide a transports utility in the context that returns the input values', async () => {
+  const client = buildClient();
+  const values = ['a', 'b'];
+  let capturedValues: any;
+  await client.createExpectation((ctx) => {
+    capturedValues = ctx.utils.transports(values);
+    return {
+      schema: {},
+    };
   });
 
+  expect(capturedValues).toEqual(values);
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should provide expectation operators in the context via the $ property', async () => {
+  const client = buildClient();
+  let operators: any;
+  await client.createExpectation((ctx) => {
+    operators = ctx.$;
+    return {
+      schema: {},
+    };
+  });
+
+  expect(operators).toBeDefined();
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should return the ping method from the methods schema', async () => {
+  const client = buildClient();
+
+  const result = await client.ping();
+
+  expect(result).toBe('pong');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should return the expectationsDelete method from the methods schema', async () => {
+  const client = buildClient();
+
+  const result = await client.deleteExpectations();
+
+  expect(result).toBeNull();
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should call expectationsCreate with the provided configuration object', async () => {
+  const client = buildClient();
+  const configuration = {
+    schema: {},
+  };
+
+  const result = await client.createExpectation(configuration);
+
+  expect(result.id).toBe('12426262-85a3-4340-969b-272e003722e9');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should call expectationsCreate with the result of the predicate function', async () => {
+  const client = buildClient();
+
+  const result = await client.createExpectation(() => ({
+    schema: {},
+  }));
+
+  expect(result.id).toBe('12426262-85a3-4340-969b-272e003722e9');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should call expectationsUpdate with the provided update object', async () => {
+  const client = buildClient();
+  const update = {
+    id: 'test-id',
+    set: {
+      schema: {},
+    },
+  };
+
+  const result = await client.updateExpectation(update);
+
+  expect(result?.id).toBe('test-id');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should call expectationsUpdate with the result of the predicate function', async () => {
+  const client = buildClient();
+
+  const result = await client.updateExpectation(() => ({
+    id: 'test-id-2',
+    set: {
+      schema: {},
+    },
+  }));
+
+  expect(result?.id).toBe('test-id-2');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should provide a context with transports utility that returns input values', async () => {
+  const client = buildClient();
+  let capturedValue: any;
+
+  await client.createExpectation((ctx) => {
+    capturedValue = ctx.utils.transports(<any>'test-value');
+    return {
+      schema: {},
+    };
+  });
+
+  expect(capturedValue).toBe('test-value');
+});
+
+/* Generated by @n1k1t/unit-generator */
+it('should provide a context with expectation operators to the predicate', async () => {
+  const client = buildClient();
+  let operators: any;
+
+  await client.createExpectation((ctx) => {
+    operators = ctx.$;
+    return {
+      schema: {},
+    };
+  });
+
+  expect(operators).toBeDefined();
+});

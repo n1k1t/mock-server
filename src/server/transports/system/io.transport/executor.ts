@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { Endpoint, Executor, IRequestContextOutgoing } from '../../../models';
-import { InternalSocketIoRequestContext } from './context';
+import { SystemSocketIoRequestContext } from './context';
 
 import * as endpoints from '../../../endpoints';
 
@@ -16,13 +16,13 @@ type TEndpoint = Endpoint<{
   outgoing: any;
 }>;
 
-export class InternalSocketIoExecutor extends Executor<InternalSocketIoRequestContext> {
+export class SystemSocketIoExecutor extends Executor<SystemSocketIoRequestContext> {
   public endpoints = Object.values(endpoints).reduce<Record<string, TEndpoint>>(
     (acc, endpoint) => endpoint.locations.io ? _.set(acc, endpoint.locations.io.path, endpoint) : acc,
     {}
   );
 
-  public async exec(context: InternalSocketIoRequestContext) {
+  public async exec(context: SystemSocketIoRequestContext) {
     await this.endpoints[context.incoming.path]?.handler?.(context);
     return context.complete();
   }

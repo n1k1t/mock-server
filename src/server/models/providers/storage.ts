@@ -5,7 +5,7 @@ import { SystemProvider } from './system';
 import { Provider } from './model';
 import { Logger } from '../../../logger';
 
-const logger = Logger.build('Server.Models.ProvidersStorage');
+const logger = Logger.build('ProvidersStorage');
 
 export class ProvidersStorage<TContext extends IServerContext = any> extends Map<string, Provider> {
   public default = Provider.build<TContext>({ group: 'default' });

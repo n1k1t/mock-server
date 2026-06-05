@@ -2,16 +2,16 @@
 import type { IIoIncomingStream, MockServer } from '../../../index';
 
 import { buildSocketIoExchange, Provider, Transport } from '../../../models';
-import { InternalSocketIoRequestContext } from './context';
-import { InternalSocketIoExecutor } from './executor';
+import { SystemSocketIoRequestContext } from './context';
+import { SystemSocketIoExecutor } from './executor';
 import { cast, socketIoStream } from '../../../../utils';
 
 export * from './executor';
 export * from './context';
 export * from './reply';
 
-export class InternalSocketIoTransport extends Transport<InternalSocketIoExecutor> {
-  public executor = new InternalSocketIoExecutor();
+export class SystemSocketIoTransport extends Transport<SystemSocketIoExecutor> {
+  public executor = new SystemSocketIoExecutor();
 
   constructor(protected server: MockServer) {
     super();
@@ -46,8 +46,8 @@ export class InternalSocketIoTransport extends Transport<InternalSocketIoExecuto
 
   public async compileContext(
     provider: Provider,
-    request: InternalSocketIoRequestContext['request']
+    request: SystemSocketIoRequestContext['request']
   ) {
-    return InternalSocketIoRequestContext.build(this.server, request);
+    return SystemSocketIoRequestContext.build(this.server, request);
   }
 }

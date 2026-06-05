@@ -24,7 +24,7 @@ export default ClientMethod
         },
 
         ...cast<TEndpoints['expectationsUpdate']['location']>({
-          url: `${config.get('routes').internal.root}/expectations`,
+          url: `${config.get('routes').system.root}/expectations`,
           method: 'PUT',
         }),
       })

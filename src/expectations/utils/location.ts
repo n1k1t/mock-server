@@ -165,13 +165,6 @@ export const extractContextByLocation = (
       value: <string>context.transport,
     };
 
-    case 'event': return {
-      key: 'event',
-      type: 'string',
-      parent: context,
-      value: <string>context.event,
-    };
-
     case 'flags': return {
       key: 'flags',
       type: 'object',

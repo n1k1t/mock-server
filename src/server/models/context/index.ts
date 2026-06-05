@@ -5,6 +5,7 @@ import { Value } from '@n1k1t/typebox/value';
 
 import type { IRequestContextIncoming, IRequestContextOutgoing, TRequestContextCacheConfigurationCompiled } from './types';
 import type { IServerContext } from '../../types';
+import type { RequestMessage } from '../message';
 import type { Expectation } from '../../../expectations';
 import type { Provider } from '../providers';
 import type { History } from '../history';
@@ -29,15 +30,14 @@ export abstract class RequestContext<TContext extends IServerContext = any> {
   public status = cast<'registered' | 'handling' | 'skipped' | 'completed' | 'canceled'>('registered');
 
   public streams = {
-    incoming: new ReplaySubject(Infinity, 5000),
-    outgoing: new ReplaySubject(Infinity, 5000),
+    incoming: new ReplaySubject<RequestMessage>(Infinity, 5000),
+    outgoing: new ReplaySubject<RequestMessage>(Infinity, 5000),
   };
 
   public transport: TContext['transport'] = this.configuration.transport;
-  public event: TContext['event'] = this.configuration.event;
   public flags: Partial<Record<TContext['flag'], boolean>> = {};
 
-  public expectation?: Expectation<any>;
+  public expectation?: Expectation;
   public outgoing?: IRequestContextOutgoing;
   public history?: History;
 
@@ -46,11 +46,8 @@ export abstract class RequestContext<TContext extends IServerContext = any> {
 
   constructor(
     public provider: Provider,
-    protected configuration: Pick<TContext, 'transport' | 'event'>
-  ) {
-    this.streams.incoming.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('incoming', data) });
-    this.streams.outgoing.subscribe({ error: () => null, next: (data) => this.history?.pushMessage('outgoing', data) });
-  }
+    protected configuration: Pick<TContext, 'transport'>
+  ) {}
 
   /** Switches to status */
   public switch(status: RequestContext['status']): this {
@@ -66,8 +63,6 @@ export abstract class RequestContext<TContext extends IServerContext = any> {
   public compileSnapshot(): RequestContextSnapshot<TContext> {
     const snapshot = RequestContextSnapshot.build<IServerContext>({
       transport: this.transport,
-
-      event: this.event,
       flags: this.flags,
 
       incoming: this.incoming,

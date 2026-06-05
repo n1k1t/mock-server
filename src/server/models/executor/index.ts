@@ -8,6 +8,7 @@ import { from } from 'rxjs';
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
 import { ExecutorManualError } from './errors';
+import { RequestMessage } from '../message';
 import { cast, wait } from '../../../utils';
 import { Logger } from '../../../logger';
 import {
@@ -24,10 +25,10 @@ import {
 export * from './errors';
 
 const clone = rfdc();
-const logger = Logger.build('Server.Models.Executor');
+const logger = Logger.build('Executor');
 
 export interface IExecutorExecOptions {
-  expectation?: Expectation<any>;
+  expectation?: Expectation;
 }
 
 export abstract class Executor<TRequestContext extends RequestContext = RequestContext> {
@@ -48,13 +49,13 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
   ): Promise<IRequestContextOutgoing | null>;
 
   /** Matches expectation */
-  public async match(context: TRequestContext): Promise<Expectation<any> | null> {
+  public async match(context: TRequestContext): Promise<Expectation | null> {
     return context.provider.storages.expectations.match(context.snapshot);
   }
 
   /** Prepares context right after expectation was manipulated */
   public async prepare(context: TRequestContext): Promise<unknown> {
-    return context;
+    return null;
   }
 
   /** Uses to handle whole request */
@@ -82,6 +83,26 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         arrayMerge: (target, source) => source,
       });
     }
+
+    context.streams.incoming.subscribe({
+      error: () => null,
+      next: (message) => context.snapshot.messages.push({
+        direction: 'incoming',
+
+        data: message.clone().data,
+        timestamp: Date.now(),
+      }),
+    });
+
+    context.streams.outgoing.subscribe({
+      error: () => null,
+      next: (message) => context.snapshot.messages.push({
+        direction: 'outgoing',
+
+        data: message.data,
+        timestamp: Date.now(),
+      }),
+    });
 
     context.assign({
       snapshot: await expectation.request.manipulate(context.snapshot),
@@ -133,7 +154,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
           forwarded: {
             schema: forwarded.schema,
-            messages: clone(forwarded.messages),
+            messages: forwarded.messages,
 
             incoming: Object.assign(
               clone(_.omit(forwarded.incoming, ['stream'])),
@@ -178,6 +199,10 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? merge(context.expectation.schema.forward, <IExpectationSchemaForward>snapshot.overrides.forward)
       : context.expectation.schema.forward;
 
+    if (schema.isEnabled === false) {
+      return null;
+    }
+
     if (snapshot.cache.isEnabled) {
       const cached = await context.provider.server.databases.redis!.get(snapshot.cache.key).catch((error) => {
         logger.error('Got error while redis get', error?.stack ?? error);
@@ -199,7 +224,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         snapshot.cache.hasRead = true;
 
         if (parsed.messages?.length) {
-          parsed.outgoing.stream = from(parsed.messages.map((message) => message.data) ?? []);
+          parsed.outgoing.stream = from(parsed.messages.map((message) => RequestMessage.build(message.data)));
         }
 
         return {
@@ -235,9 +260,25 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
     if (forwarded) {
       forwarded.messages = [];
+
+      snapshot.incoming.stream?.subscribe({
+        error: () => null,
+        next: (message) => forwarded.messages!.push({
+          direction: 'incoming',
+
+          data: message.data,
+          timestamp: Date.now(),
+        }),
+      });
+
       forwarded.outgoing?.stream?.subscribe({
         error: () => null,
-        next: (data) => forwarded.messages!.push({ data, location: 'outgoing' }),
+        next: (message) => forwarded.messages!.push({
+          direction: 'outgoing',
+
+          data: message.clone().data,
+          timestamp: Date.now(),
+        }),
       });
     }
 
@@ -274,7 +315,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
     if (shouldBeCached) {
       const serialized = serializePayload('json', cast<IRequestContextCache>({
-        messages: snapshot.forwarded!.messages?.filter((message) => message.location === 'outgoing'),
+        messages: snapshot.forwarded!.messages?.filter((message) => message.direction === 'outgoing'),
         outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['data']), {
           dataRaw: snapshot.forwarded!.outgoing?.dataRaw?.toString('base64'),
         }),

@@ -1,17 +1,21 @@
+import type { IncomingHttpHeaders } from 'http';
 import type { Observable } from 'rxjs';
 
 import type { PartialDeep, SetRequiredKeys } from '../../../../types';
 import type { IExpectationSchemaForward } from '../../../expectations';
 import type { TRequestPayloadType } from '../../types';
+import type { RequestMessage } from '../message';
 
 export interface IRequestContextIncoming {
   type: TRequestPayloadType;
+
   path: string;
   method: string;
-  headers: Record<string, string>;
 
-  query?: Record<string, unknown>;
-  stream?: Observable<unknown>;
+  headers: IncomingHttpHeaders;
+  query: Record<string, unknown>;
+
+  stream?: Observable<RequestMessage>;
 
   data?: unknown;
   dataRaw?: Buffer;
@@ -22,13 +26,14 @@ export interface IRequestContextIncoming {
 
 export interface IRequestContextOutgoing {
   type: TRequestPayloadType;
+
+  headers: IncomingHttpHeaders;
   status: number;
-  headers: Record<string, string>;
 
   data?: unknown;
   dataRaw?: Buffer;
 
-  stream?: Observable<unknown>;
+  stream?: Observable<RequestMessage>;
 }
 
 export interface IRequestContextError {
@@ -38,8 +43,7 @@ export interface IRequestContextError {
 }
 
 export interface IRequestContextMessage {
-  id: number;
-  location: 'incoming' | 'outgoing';
+  direction: 'incoming' | 'outgoing';
 
   timestamp: number;
   data: unknown;
@@ -50,12 +54,12 @@ export interface IRequestContextForwarded {
   incoming: IRequestContextIncoming;
 
   outgoing?: IRequestContextOutgoing;
-  messages?: Pick<IRequestContextMessage, 'location' | 'data'>[];
+  messages?: IRequestContextMessage[];
 }
 
 export interface IRequestContextCache {
   outgoing: Omit<IRequestContextOutgoing, 'dataRaw'> & { dataRaw?: string };
-  messages?: Pick<IRequestContextMessage, 'location' | 'data'>[];
+  messages?: IRequestContextMessage[];
 }
 
 export interface IRequestContextCacheConfiguration {

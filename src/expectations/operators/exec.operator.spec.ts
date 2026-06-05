@@ -15,9 +15,9 @@ describe('Expectations.Operators.Exec', () => {
     const operator = new operators.$exec(
       operators,
       `{
-    context.incoming.data.foo.push({ test: 1 });
-    context.incoming.data.foo.push({ test: 2 });
-  }`,
+        context.incoming.data.foo.push({ test: 1 });
+        context.incoming.data.foo.push({ test: 2 });
+      }`,
     );
     const context = await operator.manipulate<any>(buildExpectationContext());
 

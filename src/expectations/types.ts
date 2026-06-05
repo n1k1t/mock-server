@@ -14,7 +14,8 @@ import type {
   ContainersStorage,
   IRequestContextIncoming,
   IRequestContextOutgoing,
-  RequestContextSnapshot
+  RequestContextSnapshot,
+  RequestMessage
 } from '../server/models';
 
 import type * as operators from './operators';
@@ -40,7 +41,6 @@ export type TExpectationContextLocation = 'request' | 'response';
 export type TExpectationOperatorLocation = ConvertTupleToUnion<typeof LExpectationOperatorLocation>;
 export const LExpectationOperatorLocation = <const>[
   'transport',
-  'event',
   'flags',
 
   'container',
@@ -85,24 +85,25 @@ export type TExpectationOperators = Omit<typeof operators, 'root'>;
 export interface IExpectationSchemaInput {
   state: {};
 
-  incoming: Pick<IRequestContextIncoming, 'query' | 'data'>;
-  outgoing: Pick<IRequestContextOutgoing, 'data'>;
+  incoming: {
+    query?: object;
+    data?: unknown;
+  };
+
+  outgoing: {
+    data?: unknown;
+  };
 
   container: {};
   transport: string & {};
-  event: string & {};
   flag: string & {};
 }
-
-type ExtractData<T extends IExpectationSchemaInput['incoming'] | IExpectationSchemaInput['outgoing']> =
-  'data' extends keyof T ? T['data'] : any;
 
 export interface IExpectationSchemaContext<
   TInput extends Partial<IExpectationSchemaInput> = {},
   TMerged extends IExpectationSchemaInput = OverrideObject<IExpectationSchemaInput, TInput>
 > {
   transport: TMerged['transport'];
-  event: TMerged['event'];
   flags: Partial<Record<TMerged['flag'], boolean>>;
 
   state: TMerged['state'];
@@ -114,15 +115,13 @@ export interface IExpectationSchemaContext<
   container?: Container<NonNullable<TMerged['container']>>;
   seed?: RequestContextSnapshot['seed'];
 
-  incoming: Omit<IRequestContextIncoming, 'stream'> & TMerged['incoming'] & {
-    data?: ExtractData<TMerged['incoming']>;
-    stream?: Observable<ExtractData<TMerged['incoming']>>;
-  };
+  incoming: OverrideObject<IRequestContextIncoming, TMerged['incoming'] & {
+    stream?: Observable<RequestMessage<TMerged['incoming']['data']>>;
+  }>;
 
-  outgoing: IRequestContextOutgoing & TMerged['outgoing'] & {
-    data?: ExtractData<TMerged['outgoing']>;
-    stream?: Observable<ExtractData<TMerged['outgoing']>>;
-  };
+  outgoing: OverrideObject<IRequestContextOutgoing, TMerged['outgoing'] & {
+    stream?: Observable<RequestMessage<TMerged['outgoing']['data']>>;
+  }>;
 };
 
 type ConvertExpectationLocationToContextPath<TLocation extends TExpectationOperatorLocation> =
@@ -185,8 +184,13 @@ export interface IExpectationOperatorsSchema<
 };
 
 export interface IExpectationSchemaForward {
+  /** Helps to disable forwarding using `overrides` (default `true`) */
+  isEnabled?: boolean;
+
   url?: string;
   baseUrl?: string;
+
+  /** Milliseconds (default `30s`) */
   timeout?: number;
 
   cache?: Pick<RequestContextSnapshot['cache'], 'key' | 'prefix' | 'ttl'> & {

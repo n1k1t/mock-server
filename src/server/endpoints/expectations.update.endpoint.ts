@@ -6,7 +6,7 @@ export default EndpointFactory
     incoming: {
       data: {
         id: string;
-        set: Partial<Expectation<any>['configuration']>;
+        set: Partial<Expectation['configuration']>;
       };
     };
 

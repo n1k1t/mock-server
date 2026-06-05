@@ -1,9 +1,9 @@
-import type { InternalSocketIoRequestContext } from './context';
+import type { SystemSocketIoRequestContext } from './context';
 
 import { buildEndpointResponse } from '../utils';
 import { Reply } from '../../../models';
 
-export class InternalSocketIoReply<TOutgoing = unknown> extends Reply<InternalSocketIoRequestContext, TOutgoing> {
+export class SystemSocketIoReply<TOutgoing = unknown> extends Reply<SystemSocketIoRequestContext, TOutgoing> {
   public ok(payload: TOutgoing) {
     this.context.request.callback?.(buildEndpointResponse('OK', payload))
   }
@@ -20,7 +20,7 @@ export class InternalSocketIoReply<TOutgoing = unknown> extends Reply<InternalSo
     this.context.request.callback?.(buildEndpointResponse('NOT_FOUND', null));
   }
 
-  static build<TResponse>(context: InternalSocketIoRequestContext) {
-    return new InternalSocketIoReply<TResponse>(context);
+  static build<TResponse>(context: SystemSocketIoRequestContext) {
+    return new SystemSocketIoReply<TResponse>(context);
   }
 }

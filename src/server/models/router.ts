@@ -18,7 +18,7 @@ export interface IRouteMatchResult<T extends Transport = Transport> {
   provider: Provider;
 }
 
-const logger = Logger.build('Server.Models.Router');
+const logger = Logger.build('Router');
 
 export class Router<TContext extends IServerContext = any> extends Map<string, Set<IRouteContext<TContext['transport']>>> {
   constructor(protected server: MockServer) {

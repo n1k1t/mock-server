@@ -7,6 +7,7 @@ import { decodeBuffer } from 'http-encoding';
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 import type { HttpRequestContext } from './context';
 
+import { formatHeaders } from '../../../utils';
 import { Logger } from '../../../logger';
 import {
   extractPayloadType,
@@ -16,12 +17,13 @@ import {
   IRequestContextOutgoing,
   IRequestContextIncoming,
   IExecutorExecOptions,
+  IRequestContextForwarded,
 } from '../../models';
 
-const logger = Logger.build('Server.Transports.Http.Executor');
+const logger = Logger.build('Transports.Http.Executor');
 
 export class HttpExecutor extends Executor<HttpRequestContext> {
-  public async exec(context: HttpRequestContext, options?: IExecutorExecOptions) {
+  public async exec(context: HttpRequestContext, options?: IExecutorExecOptions): Promise<HttpRequestContext> {
     await super.exec(context, options).catch((error) => {
       if (error instanceof ExecutorManualError && error.is('ECONNABORTED')) {
         return context.request.socket.destroy();
@@ -33,7 +35,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     return context.complete();
   }
 
-  public async match(context: HttpRequestContext): Promise<Expectation<any> | null> {
+  public async match(context: HttpRequestContext): Promise<Expectation | null> {
     const expectation = await context.provider.storages.expectations.match(context.snapshot);
 
     if (!expectation && context.is(['handling'])) {
@@ -57,8 +59,8 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     context: HttpRequestContext,
     incoming: IRequestContextIncoming,
     schema: IExpectationSchemaForward
-  ) {
-    const options = await this
+  ): Promise<IRequestContextForwarded> {
+    const configuration = await this
       .compileForwardingConfiguration(context, incoming, schema)
       .catch((error) => {
         context.snapshot.assign({
@@ -71,7 +73,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       });
 
     const response = await axios
-      .request<Buffer>(options)
+      .request<Buffer>(configuration)
       .catch(async (error: AxiosError<Buffer>): Promise<AxiosResponse<Buffer>> => {
         if (!error.response) {
           context.snapshot.assign({
@@ -99,7 +101,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       incoming,
 
       outgoing: {
-        type: type,
+        type,
 
         status: response.status,
         headers: response.headers,
@@ -110,7 +112,10 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     };
   }
 
-  public async reply(context: HttpRequestContext, outgoing: IRequestContextOutgoing) {
+  public async reply(
+    context: HttpRequestContext,
+    outgoing: IRequestContextOutgoing
+  ): Promise<IRequestContextOutgoing> {
     outgoing.headers = _.omitBy(
       Object.assign(_.omit(outgoing.headers, ['transfer-encoding']), {
         'content-type': outgoing.headers['content-type'] ?? (
@@ -144,14 +149,16 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
 
     return {
       timeout: schema.timeout ?? 30000,
-
       method: incoming.method,
-      headers: Object.assign(incoming.headers, {
-        connection: 'close',
 
-        ...(schema.options?.overrideHost !== false && { host: url.host }),
-        ...(incoming.dataRaw && { 'content-length': String(incoming.dataRaw.length) }),
-      }),
+      headers: formatHeaders(
+        Object.assign(incoming.headers, {
+          connection: 'close',
+
+          ...(schema.options?.overrideHost !== false && { host: url.host }),
+          ...(incoming.dataRaw && { 'content-length': String(incoming.dataRaw.length) }),
+        })
+      ),
 
       ...(schema.url && { url: schema.url }),
       ...(schema.baseUrl && { baseURL: schema.baseUrl, url: incoming.path }),

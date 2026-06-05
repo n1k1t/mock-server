@@ -1,8 +1,8 @@
-import type { InternalHttpRequestContext, InternalSocketIoRequestContext } from '../transports';
+import type { SystemHttpRequestContext, SystemSocketIoRequestContext } from '../transports';
 import type { TFunction } from '../../../types';
 
 type TEndpointHandler<TSchema extends IEndpointSchema<any>> = TFunction<any, [
-  (InternalHttpRequestContext<TSchema['outgoing']['data']> | InternalSocketIoRequestContext<TSchema['outgoing']['data']>) & {
+  (SystemHttpRequestContext<TSchema['outgoing']['data']> | SystemSocketIoRequestContext<TSchema['outgoing']['data']>) & {
     incoming: TSchema['incoming'];
   }
 ]>;

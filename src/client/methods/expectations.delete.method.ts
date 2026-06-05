@@ -16,7 +16,7 @@ export default ClientMethod
         data: body,
 
         ...cast<TEndpoints['expectationsDelete']['location']>({
-          url: `${config.get('routes').internal.root}/expectations`,
+          url: `${config.get('routes').system.root}/expectations`,
           method: 'DELETE',
         }),
       })

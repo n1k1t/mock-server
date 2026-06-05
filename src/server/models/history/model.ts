@@ -1,23 +1,21 @@
 import { v4 as genUid } from 'uuid';
 import _ from 'lodash';
 
-import type { IRequestContextMessage, RequestContextSnapshot } from '../../models';
 import type { IHistoryMeta, THistoryStatus } from './types';
+import type { RequestContextSnapshot } from '../../models';
 import type { Expectation } from '../../../expectations';
-
-import { buildCounter } from '../../../utils';
 
 export class History {
   public TPlain!: Pick<History, 'id' | 'status' | 'group' | 'timestamp' | 'meta'> & {
     format: 'plain';
 
     snapshot: RequestContextSnapshot['TPlain'];
-    expectation?: Expectation<any>['TPlain'];
+    expectation?: Expectation['TPlain'];
   };
 
   public TCompact!: Omit<History['TPlain'], 'snapshot' | 'expectation' | 'format'> & {
     format: 'compact';
-    expectation?: Expectation<any>['TCompact'];
+    expectation?: Expectation['TCompact'];
   };
 
   public id: string = this.configuration.id ?? genUid();
@@ -50,8 +48,7 @@ export class History {
     },
   };
 
-  public messagesCounter = buildCounter();
-  public expectation?: Expectation<any> = this.configuration.expectation;
+  public expectation?: Expectation = this.configuration.expectation;
 
   constructor(
     protected configuration:
@@ -59,14 +56,9 @@ export class History {
       & Partial<Pick<History, 'timestamp' | 'id' | 'status' | 'expectation' | 'meta'>>
   ) {}
 
-  public pushMessage(location: IRequestContextMessage['location'], data: unknown): this {
-    this.snapshot.messages.push({ location, data, id: this.messagesCounter(), timestamp: Date.now() });
-    return this.mark();
-  }
-
   /** Actualizes internal snapshot with provided */
   public actualize(snapshot: RequestContextSnapshot): this {
-    this.snapshot.assign(snapshot.omit(['incoming', 'forwarded', 'messages']));
+    this.snapshot.assign(snapshot.omit(['incoming', 'forwarded']));
 
     if (snapshot.forwarded) {
       this.meta.tags.forward = {
@@ -76,7 +68,9 @@ export class History {
       this.snapshot.assign({
         forwarded: {
           schema: snapshot.forwarded.schema,
+
           incoming: _.omit(snapshot.forwarded.incoming, ['stream']),
+          messages: snapshot.forwarded.messages,
 
           ...(snapshot.forwarded.outgoing && {
             outgoing: _.omit(snapshot.forwarded.outgoing, ['stream']),

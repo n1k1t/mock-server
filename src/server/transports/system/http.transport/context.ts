@@ -4,18 +4,18 @@ import _ from 'lodash';
 import type { MockServer } from '../../../index';
 
 import { extractHttpIncommingContext, History, IRequestContextIncoming, RequestContext } from '../../../models';
-import { InternalHttpReply } from './reply';
+import { SystemHttpReply } from './reply';
 import { Logger } from '../../../../logger';
 
-const logger = Logger.build('Server.Transports.Internal.Http.Context');
+const logger = Logger.build('Transports.System.Http.Context');
 
-export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestContext<{
+export class SystemHttpRequestContext<TOutgoing = unknown> extends RequestContext<{
   transport: 'http';
-  event: 'connection';
+  event: string & {};
   flag: string & {};
 }> {
   public snapshot = this.compileSnapshot();
-  public reply = InternalHttpReply.build<TOutgoing>(this);
+  public reply = SystemHttpReply.build<TOutgoing>(this);
 
   constructor(
     public server: MockServer,
@@ -23,7 +23,7 @@ export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestCont
     public request: IncomingMessage,
     public response: ServerResponse
   ) {
-    super(server.providers.default, { transport: 'http', event: 'connection' });
+    super(server.providers.default, { transport: 'http' });
     logger.info('Incoming request', `[${incoming.method} ${incoming.path}]`);
   }
 
@@ -45,6 +45,6 @@ export class InternalHttpRequestContext<TOutgoing = unknown> extends RequestCont
 
   static async build(server: MockServer, request: IncomingMessage, response: ServerResponse) {
     const incoming = await extractHttpIncommingContext(request);
-    return new InternalHttpRequestContext(server, incoming, request, response);
+    return new SystemHttpRequestContext(server, incoming, request, response);
   }
 }

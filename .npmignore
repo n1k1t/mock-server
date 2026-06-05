@@ -4,19 +4,24 @@
 .nvmrc
 .env
 
+.opencode/
 .vscode/
 .husky/
+.ai/
 
 vite.config.ts
 tsconfig.json
 
 /coverage/
 /images/
+/skills/
 /types/
 /test/
 /bin/
 /src/
 
+/**/*.old.md
 /**/*.tsbuildinfo
+
 /lib/vite.config.*
 /lib/**/*.spec.*

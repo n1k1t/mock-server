@@ -22,6 +22,11 @@ export default `
                 {{#compare data.meta.tags.outgoing.status 'lt' 400}}green{{/compare}}
                 {{#compare data.meta.tags.outgoing.status 'gte' 400}}red{{/compare}}
               {{/compare}}
+
+              {{#compare data.meta.tags.transport 'eq' 'ws'}}
+                {{#compare data.meta.tags.outgoing.status 'eq' 1000}}green{{/compare}}
+                {{#compare data.meta.tags.outgoing.status 'gt' 1000}}red{{/compare}}
+              {{/compare}}
             "><b>{{data.meta.tags.outgoing.status}}</b> {{toSeconds data.meta.metrics.duration}}s</span>
           {{/unless}}
         {{/compare}}

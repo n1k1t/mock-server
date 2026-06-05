@@ -110,7 +110,7 @@ describe('Expectations.Operators.If', () => {
       const context = await operator.manipulate<any>(buildExpectationContext());
 
       expect(context.incoming.headers?.['content-length']).toEqual(100);
-      expect(context.incoming.query?.bar?.baz?.test).toBeTruthy();
+      expect(context.incoming.query.bar?.baz?.test).toBeTruthy();
     });
   });
 });

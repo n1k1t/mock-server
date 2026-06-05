@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import _ from 'lodash';
 
+import { parseJsonSafe } from '../../../utils';
 import { metaStorage } from '../../../meta';
 import { Logger } from '../../../logger';
 import {
@@ -11,11 +12,11 @@ import {
   RequestContextSnapshot,
 } from '../../models';
 
-const logger = Logger.build('Server.Transports.Http.Context');
+const logger = Logger.build('Transports.Http.Context');
 
 export class HttpRequestContext extends RequestContext<{
   transport: 'http';
-  event: 'connection';
+  event: string & {};
   flag: string & {};
 }> {
   public snapshot = this.compileSnapshot();
@@ -31,7 +32,7 @@ export class HttpRequestContext extends RequestContext<{
     public request: IncomingMessage,
     public response: ServerResponse
   ) {
-    super(provider, { transport: 'http', event: 'connection' });
+    super(provider, { transport: 'http' });
   }
 
   public handle(): this {
@@ -50,6 +51,13 @@ export class HttpRequestContext extends RequestContext<{
 
   public compileSnapshot(): RequestContextSnapshot {
     const snapshot = super.compileSnapshot();
+    const state = this.incoming.headers['x-use-mock-state']
+      ? parseJsonSafe(Buffer.from(String(this.incoming.headers['x-use-mock-state']), 'base64').toString())
+      : null;
+
+    if (state?.status === 'ERROR') {
+      logger.error('Got error while parsing [x-use-mock-state] header', state.error?.stack ?? state.error);
+    }
 
     snapshot.outgoing.status = 200;
     snapshot.incoming.headers = _.omit(snapshot.incoming.headers, ['transfer-encoding']);
@@ -60,7 +68,7 @@ export class HttpRequestContext extends RequestContext<{
       }),
 
       ...(this.incoming.headers['x-use-mock-state'] && {
-        state: JSON.parse(Buffer.from(String(this.incoming.headers['x-use-mock-state']), 'base64').toString()),
+        state: state?.result ?? {},
       }),
     });
   };

@@ -16,7 +16,7 @@ export default ClientMethod
         data: body,
 
         ...cast<TEndpoints['providersDelete']['location']>({
-          url: `${config.get('routes').internal.root}/providers`,
+          url: `${config.get('routes').system.root}/providers`,
           method: 'DELETE',
         }),
       })

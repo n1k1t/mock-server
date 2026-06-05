@@ -5,13 +5,13 @@ import { Expectation } from './expectation';
 import { Logger } from '../../logger';
 
 export type TExpectationsStorageRegisterationResult =
-  | { status: 'REGISTERED', expectation: Expectation<any> }
+  | { status: 'REGISTERED', expectation: Expectation }
   | { status: 'ERROR', reasons: ValueError[] };
 
 const logger = Logger.build('Expectations.Storage');
 
-export class ExpectationsStorage extends Map<string, Expectation<any>> {
-  constructor(protected configuration: Pick<Expectation<any>, 'group'>) {
+export class ExpectationsStorage extends Map<string, Expectation> {
+  constructor(protected configuration: Pick<Expectation, 'group'>) {
     super();
   }
 
@@ -38,7 +38,7 @@ export class ExpectationsStorage extends Map<string, Expectation<any>> {
     return { status: 'REGISTERED', expectation };
   }
 
-  public async match(context: IExpectationSchemaContext): Promise<Expectation<any> | null> {
+  public async match(context: IExpectationSchemaContext): Promise<Expectation | null> {
     for (const expectation of this.values()) {
       if (!expectation.isEnabled) {
         continue;

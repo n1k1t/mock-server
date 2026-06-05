@@ -10,7 +10,7 @@ interface IOutgoing {
   };
 }
 
-const logger = Logger.build('Server.Endpoints.CacheDelete');
+const logger = Logger.build('Endpoints.CacheDelete');
 
 export default EndpointFactory
   .build<{ incoming: { data: { prefix?: string } }, outgoing: IOutgoing }>()

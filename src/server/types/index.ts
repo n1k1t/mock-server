@@ -9,19 +9,17 @@ export type TRequestPayloadType = 'json' | 'plain' | 'xml';
 
 export interface IServerContext {
   transport: string;
-  event: string;
   flag: string;
 }
 
 export interface IServerContextDefaults {
   transport: HttpTransport['TContext']['transport'] | WsTransport['TContext']['transport'];
-  event: HttpTransport['TContext']['event'] | WsTransport['TContext']['event'];
   flag: HttpTransport['TContext']['flag'] | WsTransport['TContext']['flag'];
 }
 
 export interface IIoExchangeSchema {
-  'expectation:added': Expectation<any>['TPlain'];
-  'expectation:updated': Expectation<any>['TPlain'];
+  'expectation:added': Expectation['TPlain'];
+  'expectation:updated': Expectation['TPlain'];
 
   'history:added': History['TPlain'];
   'history:updated': History['TPlain'];

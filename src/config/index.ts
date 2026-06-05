@@ -24,7 +24,7 @@ export default Config.build(<const>{
   },
 
   routes: {
-    internal: {
+    system: {
       root: '/_system',
       gui: '/gui',
     },

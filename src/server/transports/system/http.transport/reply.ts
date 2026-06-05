@@ -1,4 +1,4 @@
-import type { InternalHttpRequestContext } from './context';
+import type { SystemHttpRequestContext } from './context';
 
 import { IRequestContextOutgoing, Reply } from '../../../models';
 import { buildEndpointResponse } from '../utils';
@@ -7,7 +7,7 @@ const headers = {
   'Content-type': 'application/json',
 };
 
-export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRequestContext, TOutgoing> {
+export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpRequestContext, TOutgoing> {
   public ok(payload: TOutgoing) {
     const outgoing: IRequestContextOutgoing = {
       headers,
@@ -76,7 +76,7 @@ export class InternalHttpReply<TOutgoing = unknown> extends Reply<InternalHttpRe
     this.context.assign({ outgoing }).complete();
   }
 
-  static build<TResponse>(context: InternalHttpRequestContext) {
-    return new InternalHttpReply<TResponse>(context);
+  static build<TResponse>(context: SystemHttpRequestContext) {
+    return new SystemHttpReply<TResponse>(context);
   }
 }

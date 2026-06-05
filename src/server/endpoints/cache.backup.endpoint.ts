@@ -5,7 +5,7 @@ import { ICacheBackup } from '../types';
 import { RxConverter } from '../utils';
 import { Logger } from '../../logger';
 
-const logger = Logger.build('Server.Endpoints.CacheBackup');
+const logger = Logger.build('Endpoints.CacheBackup');
 
 export default EndpointFactory
   .build<{ outgoing: string }>()

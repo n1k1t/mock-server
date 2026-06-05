@@ -5,6 +5,7 @@
 *.patch
 *.orig
 *.rej
+*.old.md
 
 .DS_Store
 .env

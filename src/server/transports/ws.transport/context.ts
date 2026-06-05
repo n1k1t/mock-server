@@ -1,53 +1,53 @@
-import { RawData, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
+import { Duplex } from 'stream';
 
-import { extractHttpIncommingContext, IRequestContextIncoming, parsePayload, Provider, RequestContext } from '../../models';
-import { parseJsonSafe } from '../../../utils';
+import { extractHttpIncommingContext, IRequestContextIncoming, Provider, RequestContext, WebSocket } from '../../models';
 import { Logger } from '../../../logger';
+import { cast } from '../../../utils';
 
-const logger = Logger.build('Server.Transports.Ws.Context');
+const logger = Logger.build('Transports.Ws.Context');
 
 export class WsRequestContext extends RequestContext<{
   transport: 'ws';
-  event: 'connection' | 'message';
-  flag: 'wsCloseConnection';
+  flag: string & {};
 }> {
   public snapshot = this.compileSnapshot();
   public history = this.compileHistory();
 
+  public additional = {
+    ws: cast<WebSocket | null>(null),
+  };
+
   constructor(
     public provider: Provider,
-    public socket: WebSocket,
-    public event: WsRequestContext['TContext']['event'],
-    public incoming: IRequestContextIncoming
+    public incoming: IRequestContextIncoming,
+    public request: IncomingMessage,
+    public socket: Duplex,
+    public head: Buffer,
   ) {
-    super(provider, { event, transport: 'ws' });
+    super(provider, { transport: 'ws' });
   }
 
   public compileSnapshot() {
     const snapshot = super.compileSnapshot();
 
-    snapshot.outgoing.status = this.event === 'message' ? 0 : 1000;
-    snapshot.incoming.method = this.event === 'message' ? 'MSG' : 'CON';
-
+    snapshot.incoming.method = 'WS';
     return snapshot;
   }
 
   public handle(): this {
-    this.event === 'message'
-      ? logger.info(`Incoming WS ${this.event} [${this.incoming.path}] got message`, this.incoming.data)
-      : logger.info(`Incoming WS ${this.event} [${this.incoming.path}]`);
+    logger.info(`Incoming WS connection [${this.incoming.path}]`);
 
-    if (this.event === 'connection') {
-      this.streams.incoming.subscribe({
+    this.streams.incoming.subscribe({
         error: () => null,
-        next: (data) => logger.info(`Incoming WS ${this.event} [${this.incoming.path}] got message`, data),
+        next: (message) =>
+          logger.info(`Incoming WS connection [${this.incoming.path}] got message of [${message.dataRaw.length}] bytes`),
       });
-    }
 
     this.streams.outgoing.subscribe({
       error: () => null,
-      next: (data) => logger.info(`Incoming WS ${this.event} [${this.incoming.path}] has sent`, data),
+      next: (message) =>
+        logger.info(`Incoming WS connection [${this.incoming.path}] sent message with [${message.dataRaw.length}] bytes`),
     });
 
     return super.handle();
@@ -61,28 +61,21 @@ export class WsRequestContext extends RequestContext<{
   }
 
   public complete() {
-    logger.info(`Incoming WS ${this.event} [${this.incoming.path}] has finished in [${Date.now() - this.timestamp}ms]`);
+    logger.info(
+      `Incoming WS connection [${this.incoming.path}] has finished`,
+      `with status [${this.outgoing?.status ?? 0}] in [${Date.now() - this.timestamp}ms]`
+    );
+
     return super.complete();
   }
 
   static async build(
     provider: Provider,
-    socket: WebSocket,
     request: IncomingMessage,
-    event: WsRequestContext['TContext']['event'],
-    message?: RawData
+    socket: Duplex,
+    head: Buffer
   ): Promise<WsRequestContext> {
     const incoming = await extractHttpIncommingContext(request);
-
-    incoming.dataRaw = message ? Buffer.from(message.toString()) : undefined;
-    incoming.data = incoming.dataRaw
-      ? incoming.type === 'plain'
-        ? parseJsonSafe(incoming.dataRaw.toString()).result
-        : parsePayload(incoming.type, incoming.dataRaw)
-      : undefined;
-
-    incoming.type = incoming.type === 'plain' && incoming.data !== undefined ? 'json' : incoming.type;
-
-    return new WsRequestContext(provider, socket, event, incoming);
+    return new WsRequestContext(provider, incoming, request, socket, head);
   }
 }

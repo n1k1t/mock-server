@@ -6,9 +6,9 @@ import { parse as parseQueryString } from 'querystring';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { parse as parseUrl } from 'url';
 
+import { formatHeaders, parseJsonSafe } from '../../../utils';
 import { IRequestContextIncoming } from './types';
 import { TRequestPayloadType } from '../../types';
-import { parseJsonSafe } from '../../../utils';
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -70,11 +70,6 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
   const type = extractPayloadType(request.headers) ?? 'plain';
   const query = parseQuerySearch(rawQuery ?? '');
 
-  const headers = Object
-    .entries(request.headers)
-    .map(([name, values]) => [name.toLowerCase(), _.flatten([values]).map((value) => String(value)).sort().join(',')])
-    .reduce((acc, [name, value]) => _.set(acc, name, value), {});
-
   const dataRaw = await new Promise<Buffer | null>((resolve, reject) =>
     bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) =>
       error
@@ -85,12 +80,12 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
 
   return {
     type,
+    query,
 
     method: String(request.method ?? 'GET').toUpperCase(),
     path: pathname ?? '/',
 
-    headers,
-    query,
+    headers: formatHeaders(request.headers),
 
     data: dataRaw ? parsePayload(type, dataRaw) : undefined,
     dataRaw: dataRaw ?? undefined,

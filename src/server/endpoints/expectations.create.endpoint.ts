@@ -3,7 +3,7 @@ import { Expectation } from '../../expectations';
 
 export default EndpointFactory
   .build<{
-    incoming: { data: Expectation<any>['configuration'] };
+    incoming: { data: Expectation['configuration'] };
     outgoing: Expectation['TPlain'];
   }>()
   .http(<const>{ method: 'POST', path: '/expectations' })

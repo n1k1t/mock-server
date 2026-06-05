@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { Endpoint, Executor, IRequestContextOutgoing } from '../../../models';
-import { InternalHttpRequestContext } from './context';
+import { SystemHttpRequestContext } from './context';
 
 import * as endpoints from '../../../endpoints';
 import config from '../../../../config';
@@ -18,7 +18,7 @@ type TEndpoint = Endpoint<{
   outgoing: any;
 }>;
 
-export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
+export class SystemHttpExecutor extends Executor<SystemHttpRequestContext> {
   public router = Object.values(endpoints).reduce<Record<string, TEndpoint>>(
     (acc, endpoint) =>
       endpoint.locations.http
@@ -27,11 +27,11 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     {}
   );
 
-  public async exec(context: InternalHttpRequestContext) {
+  public async exec(context: SystemHttpRequestContext) {
     const routes = config.get('routes');
 
-    const path = `${context.incoming.method}:${context.incoming.path.replace(routes.internal.root, '')}`;
-    const endpoint = this.router[path] ?? (path.includes(routes.internal.gui) ? endpoints.gui : null);
+    const path = `${context.incoming.method}:${context.incoming.path.replace(routes.system.root, '')}`;
+    const endpoint = this.router[path] ?? (path.includes(routes.system.gui) ? endpoints.gui : null);
 
     await endpoint?.handler?.(context);
 
@@ -43,7 +43,7 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     return context.assign({ outgoing }).complete();
   }
 
-  public async match(context: InternalHttpRequestContext<unknown>) {
+  public async match(context: SystemHttpRequestContext<unknown>) {
     await this.exec(context);
     return null;
   }
@@ -52,7 +52,7 @@ export class InternalHttpExecutor extends Executor<InternalHttpRequestContext> {
     return null;
   }
 
-  public async reply(context: InternalHttpRequestContext, outgoing?: IRequestContextOutgoing) {
+  public async reply(context: SystemHttpRequestContext, outgoing?: IRequestContextOutgoing) {
      const result = outgoing ?? {
       type: 'plain',
       status: 404,

@@ -14,7 +14,7 @@ export default ClientMethod
     const response = await instance
       .request<TEndpoints['ping']['outgoing']>({
         ...cast<TEndpoints['ping']['location']>({
-          url: `${config.get('routes').internal.root}/ping`,
+          url: `${config.get('routes').system.root}/ping`,
           method: 'GET',
         }),
       })

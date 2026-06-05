@@ -4,7 +4,6 @@ import { RequestContextSnapshot } from './snapshot';
 it('should correctly assign new values to the instance', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    event: 'connect',
     incoming: <any>{},
     outgoing: <any>{},
     storage: <any>{},
@@ -21,7 +20,6 @@ it('should correctly assign new values to the instance', () => {
 it('should return only the specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    event: 'connect',
     incoming: <any>{},
     outgoing: <any>{},
     storage: <any>{},
@@ -39,7 +37,6 @@ it('should return only the specified keys', () => {
 it('should omit specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    event: 'connect',
     incoming: <any>{},
     outgoing: <any>{},
     storage: <any>{},
@@ -48,14 +45,12 @@ it('should omit specified keys', () => {
 
   const omitted = instance.omit(<never[]>['transport']);
   expect(omitted.transport).toBeUndefined();
-  expect(omitted.event).toBe('connect');
 });
 
 // Test generated using Keploy
 it('should unset specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    event: 'connect',
     incoming: <any>{},
     outgoing: <any>{},
     storage: <any>{},
@@ -70,7 +65,6 @@ it('should unset specified keys', () => {
 it('should clone the instance correctly', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    event: 'connect',
     incoming: <any>{},
     outgoing: <any>{},
     storage: <any>{},

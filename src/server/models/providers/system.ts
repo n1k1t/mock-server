@@ -47,7 +47,6 @@ export class SystemHistoryStorage extends HistoryStorage {
 
         snapshot: RequestContextSnapshot.build({
           transport: history.snapshot.transport,
-          event: history.snapshot.event,
           flags: history.snapshot.flags,
 
           cache: history.snapshot.cache,

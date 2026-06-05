@@ -32,7 +32,7 @@ export class Expectation<TContext extends IExpectationSchemaContext<any> = any> 
   public name: string = this.configuration.name ?? generateAnimalName().split(' ').map(_.capitalize).join('');
   public group: string = this.configuration.group ?? 'unknown';
 
-  public transports?: TContext['transport'][] = this.configuration.transports;
+  public transports?: (TContext['transport'] | (string & {}))[] = this.configuration.transports;
   public defaults?: IExpectationDefaults<TContext> = this.configuration.defaults;
 
   public schema = <IExpectationSchema<TContext>>this.configuration.schema;

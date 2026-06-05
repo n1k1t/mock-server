@@ -1,12 +1,9 @@
 {
   "name": "@n1k1t/mock-server",
   "version": "0.3.0",
-  "description": "Powerful util to setup mocks over HTTP APIs",
+  "description": "The ultimate toolkit to intercept, transform, and simulate HTTP/WS traffic with type-safe expectations",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
-  "bin": {
-    "mock": "lib/bin/index.js"
-  },
   "scripts": {
     "test": "NODE_ENV=test TZ=UTC npx jest",
     "start": "node lib/src/index",
@@ -68,7 +65,19 @@
     "restful",
     "router",
     "app",
-    "api"
+    "api",
+    "websocket",
+    "ws",
+    "soap",
+    "xml",
+    "json",
+    "forward",
+    "proxy",
+    "interceptor",
+    "faker",
+    "state",
+    "ai",
+    "skills"
   ],
   "homepage": "https://github.com/n1k1t/mock-server",
   "author": "n1k1t",

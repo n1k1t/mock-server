@@ -1,19 +1,23 @@
-import type { FlattenArrays } from '../../types';
+import _ from 'lodash';
 
-export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const cast = <T>(payload: T) => payload;
+export const wait = (ms: number) => {
+  const context = {
+    isCanceled: false,
+    timeout: <NodeJS.Timeout | undefined>undefined,
+  };
 
-export const flattenArrayed = <
-  T extends unknown[][],
-  Q extends FlattenArrays<T>[] = FlattenArrays<T>[]
->(payload: T): Q => {
-  if (payload?.every?.(Array.isArray)) {
-    return <Q>payload.reduce((acc, nestedPayload) => acc.concat(flattenArrayed(<T>nestedPayload)), []);
-  }
+  const promise = new Promise<void>((resolve) =>
+    context.isCanceled ? resolve() : (context.timeout = setTimeout(resolve, ms))
+  );
 
-  return Array.isArray(payload)
-    ? <Q>[payload]
-    : <Q>[[payload]];
+  return Object.assign(promise, {
+    value: ms,
+    abort: () => {
+      context.isCanceled = true;
+      clearTimeout(context.timeout);
+    },
+  });
 };
 
 /**
@@ -49,6 +53,13 @@ export const parseJsonSafe = <T extends object>(serializedJson: string) => {
     };
   }
 };
+
+/** Joins propeties arrays and renames keys to lower case */
+export const formatHeaders = (headers: object): Record<string, string> =>
+  Object.entries(headers).reduce<Record<string, string>>(
+    (acc, [key, value]) => _.set(acc, key.toLowerCase(), Array.isArray(value) ? value.join(',') : String(value)),
+    {}
+  );
 
 /**
  * Cuts massive string to a cunks with limited length

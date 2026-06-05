@@ -3,9 +3,7 @@ import { ContainersStorage } from '../../server/models';
 
 export const buildExpectationContext = (): IExpectationSchemaContext => ({
   storage: new ContainersStorage({ group: 'test' }),
-
   transport: 'http',
-  event: 'connection',
 
   state: {},
   flags: {},

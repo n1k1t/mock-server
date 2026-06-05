@@ -25,7 +25,7 @@ export type TEndpoints = {
 
     location: (typeof endpoints)[K]['TSchema']['locations']['http'] extends { path: infer TPath; method: infer TMethod }
       ? {
-        url: `${typeof config['storage']['routes']['internal']['root']}${TPath extends string ? TPath : never}`;
+        url: `${typeof config['storage']['routes']['system']['root']}${TPath extends string ? TPath : never}`;
         method: TMethod extends string ? TMethod : never;
       }
       : {

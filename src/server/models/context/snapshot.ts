@@ -45,7 +45,6 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
   };
 
   public transport: TContext['transport'] = this.configuration.transport;
-  public event: TContext['event'] = this.configuration.event;
   public flags: Partial<Record<TContext['flag'], boolean>> = this.configuration.flags;
 
   public storage: ContainersStorage = this.configuration.storage;
@@ -68,8 +67,8 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
 
   constructor(
     protected configuration:
-      & Pick<TContext, 'transport' | 'event'>
-      & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'event' | 'storage' | 'flags' | 'overrides'>
+      & Pick<TContext, 'transport'>
+      & Pick<RequestContextSnapshot, 'incoming' | 'outgoing' | 'storage' | 'flags' | 'overrides'>
       & Partial<Pick<RequestContextSnapshot, 'messages' | 'state' | 'seed' | 'container' | 'forwarded' | 'error' | 'cache'>>
   ) {}
 
@@ -109,7 +108,6 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
   public toPlain(): RequestContextSnapshot['TPlain'] {
     return {
       transport: this.transport,
-      event: this.event,
       flags: this.flags,
 
       overrides: this.overrides,
@@ -118,6 +116,9 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
 
       seed: this.seed,
       container: this.container?.toPlain(),
+
+      error: this.error,
+      messages: this.messages,
 
       incoming: Object.assign(_.omit(this.incoming, ['stream']), {
         dataRaw: this.incoming.dataRaw?.toString(),
@@ -128,7 +129,9 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
       }),
 
       ...(this.forwarded && {
-        forwarded: Object.assign(_.omit(this.forwarded, ['incoming', 'outgoing']), {
+        forwarded: {
+          schema: this.forwarded.schema,
+
           incoming: Object.assign(_.omit(this.forwarded.incoming, ['dataRaw']), {
             dataRaw: this.forwarded.incoming.dataRaw?.toString(),
           }),
@@ -138,11 +141,10 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
               dataRaw: this.forwarded.outgoing.dataRaw?.toString(),
             }),
           }),
-        }),
-      }),
 
-      messages: this.messages,
-      error: this.error,
+          messages: this.forwarded.messages,
+        },
+      }),
     };
   }
 

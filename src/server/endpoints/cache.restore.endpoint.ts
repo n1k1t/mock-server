@@ -1,10 +1,11 @@
 import { ungzip } from 'node-gzip';
 
 import { EndpointFactory } from '../models';
+import { parseJsonSafe } from '../../utils';
 import { ICacheBackup } from '../types';
 import { Logger } from '../../logger';
 
-const logger = Logger.build('Server.Endpoints.CacheRestore');
+const logger = Logger.build('Endpoints.CacheRestore');
 
 export default EndpointFactory
   .build<{ incoming: { data: { backup: string, ttl?: number } }, outgoing: null }>()
@@ -21,10 +22,15 @@ export default EndpointFactory
     }
 
     const ttl = incoming.data!.ttl ?? 60 * 60;
-    const backup: ICacheBackup = JSON.parse(unziped.toString('utf8'));
+    const backup = parseJsonSafe<ICacheBackup>(unziped.toString('utf8'));
+
+    if (backup.status === 'ERROR') {
+      logger.error('Got error while parsing cache', backup.error?.stack ?? backup.error);
+      return reply.internalError('Cannot parse cache');
+    }
 
     if (server.databases.redis) {
-      await Promise.all(backup.redis.map(([key, value]) =>
+      await Promise.all(backup.result.redis.map(([key, value]) =>
         server.databases.redis!.setex(key, ttl, value).catch((error) => {
           logger.error(`Got error while inserting key [${key}]`, error?.stack ?? error);
           return null;

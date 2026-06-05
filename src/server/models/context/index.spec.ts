@@ -5,7 +5,9 @@ class TestRequestContext extends RequestContext {
     type: 'plain',
     path: '/',
     method: 'NONE',
+
     headers: {},
+    query: {},
   };
 
   public snapshot = this.compileSnapshot();
@@ -32,7 +34,6 @@ test('compileSnapshot method should create a valid snapshot with proper properti
   const snapshot = context.compileSnapshot();
 
   expect(snapshot.transport).toBe(context.transport);
-  expect(snapshot.event).toBe(context.event);
   expect(snapshot.flags).toEqual(context.flags);
   expect(snapshot.incoming).toEqual(context.incoming);
   expect(snapshot.outgoing.stream).toBeDefined();

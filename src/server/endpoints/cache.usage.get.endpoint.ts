@@ -7,6 +7,6 @@ export default EndpointFactory
   .io(<const>{ path: 'cache:usage:get' })
   .compile(async ({ incoming, reply, server }) =>
     reply.ok({
-      redis: await server.services.analytics.calculateRedisUsage(incoming.query?.prefix),
+      redis: await server.services.analytics.calculateRedisUsage(incoming.query.prefix),
     })
   );

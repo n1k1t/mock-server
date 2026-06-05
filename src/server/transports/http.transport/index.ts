@@ -10,7 +10,7 @@ import { Logger } from '../../../logger';
 export * from './executor';
 export * from './context';
 
-const logger = Logger.build('Server.Transports.Http');
+const logger = Logger.build('Transports.Http');
 
 export const buildHttpListener = <T extends IServerContext>(router: Router<T>) =>
   async (request: IncomingMessage, response: ServerResponse) => {
@@ -39,11 +39,9 @@ export const buildHttpListener = <T extends IServerContext>(router: Router<T>) =
         continue;
       }
 
-      await metaStorage
+      return metaStorage
         .wrap(context.meta, () => transport.executor.exec(context.handle(), { expectation }))
         .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
-
-      return null;
     }
 
     const { transport, provider } = router.default<HttpTransport>('http');

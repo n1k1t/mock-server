@@ -12,7 +12,7 @@ export default EndpointFactory
   .http(<const>{ method: 'GET', path: '/history' })
   .io(<const>{ path: 'history:get-by-id' })
   .compile(({ reply, incoming, server }) => {
-    const id = incoming.data?.id ?? incoming.query?.id;
+    const id = incoming.data?.id ?? incoming.query.id;
     if (!id) {
       return reply.validationError(['Invalid "id" query parameter']);
     }

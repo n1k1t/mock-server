@@ -19,11 +19,11 @@ export default EndpointFactory
     const routes = config.get('routes');
     const statics = config.get('statics');
 
-    if (!context.incoming.path.includes(routes.internal.gui)) {
+    if (!context.incoming.path.includes(routes.system.gui)) {
       return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
     }
 
-    const root = routes.internal.root + routes.internal.gui;
+    const root = routes.system.root + routes.system.gui;
     const parsed = path.parse(context.incoming.path.replace(root, ''));
 
     if (!parsed.dir) {

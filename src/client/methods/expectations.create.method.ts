@@ -17,7 +17,7 @@ export default ClientMethod
         data: prepareExpectationBodyToRequest(body),
 
         ...cast<TEndpoints['expectationsCreate']['location']>({
-          url: `${config.get('routes').internal.root}/expectations`,
+          url: `${config.get('routes').system.root}/expectations`,
           method: 'POST',
         }),
       })

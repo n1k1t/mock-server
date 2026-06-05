@@ -1,96 +1,57 @@
-
-import { WebSocket, RawData } from 'ws';
 import { IncomingMessage } from 'http';
+import { Duplex } from 'stream';
 
-import { IRouteMatchResult, Provider, Router, Transport } from '../../models';
+import { Provider, Router, Transport } from '../../models';
 import { WsRequestContext } from './context';
 import { IServerContext } from '../../types';
 import { metaStorage } from '../../../meta';
 import { WsExecutor } from './executor';
 import { Logger } from '../../../logger';
 
-const logger = Logger.build('Server.Transports.Ws');
-
-const signals = {
-  close: Symbol('close'),
-  break: Symbol('break'),
-};
-
-const handle = async (
-  event: WsTransport['TContext']['event'],
-  socket: WebSocket,
-  request: IncomingMessage,
-  match: IRouteMatchResult<WsTransport>,
-  data?: RawData
-): Promise<void | null | symbol> => {
-  const context = await match.transport
-    .compileContext(match.provider, socket, request, event, data)
-    .catch((error) => logger.error(`Got error while [ws:${event}] context compilation`, error?.stack ?? error));
-
-  if (!context) {
-    return signals.close;
-  }
-  if (!context.is(['registered', 'handling'])) {
-    return signals.break;
-  }
-
-  const expectation = await metaStorage
-    .wrap(context.meta, () => match.transport.executor.match(context))
-    .catch((error) => logger.error(`Got error while [ws:${event}] expectation matching`, error?.stack ?? error));
-
-  if (!context.is(['registered', 'handling'])) {
-    return signals.break;
-  }
-
-  if (!expectation) {
-    context.cancel();
-    return null;
-  }
-
-  await metaStorage
-    .wrap(context.meta, () => match.transport.executor.exec(context.handle(), { expectation }))
-    .catch((error) => logger.error(`Got error while [ws:${event}] execution`, error?.stack ?? error));
-
-  return signals.close;
-}
+const logger = Logger.build('Transports.Ws');
 
 export const buildWsListener = <T extends IServerContext>(router: Router<T>) =>
-  async (socket: WebSocket, request: IncomingMessage) => {
+  async (request: IncomingMessage, socket: Duplex, head: Buffer) => {
     if (request.url?.startsWith('/socket.io')) {
-      return socket.terminate();
+      return socket.destroy();
     }
-
-    const matches: IRouteMatchResult<WsTransport>[] = [];
 
     for (const match of router.match<WsTransport>('ws', request.url ?? '')) {
-      matches.push(match);
+      const context = await match.transport
+        .compileContext(match.provider, request, socket, head)
+        .catch((error) => logger.error(`Got error while [ws] context compilation`, error?.stack ?? error));
 
-      const signal = await handle('connection', socket, request, match);
-
-      if (signal === signals.close) {
-        return socket.close();
+      if (!context) {
+        return socket.destroy();
       }
-      if (signal === signals.break) {
+      if (!context.is(['registered', 'handling'])) {
         break;
       }
-    }
 
-    if (!matches.length || socket.readyState !== socket.OPEN) {
-      return socket.close();
-    }
+      const expectation = await metaStorage
+        .wrap(context.meta, () => match.transport.executor.match(context))
+        .catch((error) => logger.error(`Got error while [ws] expectation matching`, error?.stack ?? error));
 
-    socket.on('message', async (data) => {
-      for (const match of matches) {
-        const signal = await handle('message', socket, request, match, data);
-
-        if (signal === signals.close) {
-          return socket.close();
-        }
-        if (signal === signals.break) {
-          break;
-        }
+      if (!context.is(['registered', 'handling'])) {
+        break;
       }
-    });
+
+      if (!expectation) {
+        context.cancel();
+        continue;
+      }
+
+      return metaStorage
+        .wrap(context.meta, () => match.transport.executor.exec(context.handle(), { expectation }))
+        .catch((error) => logger.error(`Got error while [ws] execution`, error?.stack ?? error));
+    }
+
+    const { transport, provider } = router.default<WsTransport>('ws');
+    const context = await transport.compileContext(provider, request, socket, head);
+
+    await metaStorage
+      .wrap(context.meta, () => transport.executor.exec(context.handle()))
+      .catch((error) => logger.error('Got error while execution', error?.stack ?? error));
   }
 
 export class WsTransport extends Transport<WsExecutor> {
@@ -98,11 +59,10 @@ export class WsTransport extends Transport<WsExecutor> {
 
   public compileContext(
     provider: Provider,
-    socket: WebSocket,
     request: IncomingMessage,
-    event: WsExecutor['TContext']['event'],
-    message?: RawData
+    socket: Duplex,
+    head: Buffer
   ) {
-    return WsRequestContext.build(provider, socket, request, event, message);
+    return WsRequestContext.build(provider, request, socket, head);
   }
 }

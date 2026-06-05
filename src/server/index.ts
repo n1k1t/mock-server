@@ -24,8 +24,8 @@ import {
   buildHttpListener,
   buildWsListener,
   HttpTransport,
-  InternalHttpTransport,
-  InternalSocketIoTransport,
+  SystemHttpTransport,
+  SystemSocketIoTransport,
   WsTransport,
 } from './transports';
 
@@ -84,9 +84,10 @@ export class MockServer<
     .register('ws', new WsTransport());
 
   public router: Router<TContext> = Router.build(this);
+  public wss = new WebSocketServer({ noServer: true });
 
-  public http = createServer(buildHttpListener<TContext>(this.router));
-  public ws = new WebSocketServer({ server: this.http }).on('connection', buildWsListener(this.router));
+  public http = createServer(buildHttpListener<TContext>(this.router))
+    .on('upgrade', buildWsListener(this.router));
 
   public io = new Server(this.http, {
     maxHttpBufferSize: 1e8,
@@ -101,10 +102,10 @@ export class MockServer<
     metrics: MetricsService.build(this),
   };
 
-  private internal = <const>{
+  private system = <const>{
     transports: {
-      http: new InternalHttpTransport(this),
-      io: new InternalSocketIoTransport(this),
+      http: new SystemHttpTransport(this),
+      io: new SystemSocketIoTransport(this),
     },
   };
 
@@ -258,10 +259,6 @@ export class MockServer<
     TContext extends IServerContext = {
       transport: IServerContextDefaults['transport'] | Extract<keyof TConfiguration['transports'], string>;
 
-      event: IServerContextDefaults['event'] | {
-        [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['event'];
-      }[keyof TConfiguration['transports']];
-
       flag: IServerContextDefaults['flag'] | {
         [K in keyof TConfiguration['transports']]: NonNullable<TConfiguration['transports']>[K]['TContext']['flag'];
       }[keyof TConfiguration['transports']];
@@ -272,8 +269,8 @@ export class MockServer<
 
     await new Promise<void>((resolve) =>
       server.http.listen(configuration.port, configuration.host, () => {
-        logger.info(`Server has started on [${server.authority}]`);
-        logger.info(`GUI is available on [${server.authority}${routes.internal.root}${routes.internal.gui}/]`);
+        logger.info(`Has started on [${server.authority}]`);
+        logger.info(`GUI is available on [${server.authority}${routes.system.root}${routes.system.gui}/]`);
 
         resolve();
       })
@@ -287,10 +284,10 @@ export class MockServer<
     await server.restoreHistory();
     await server.restoreContainers();
 
-    server.router.register(`${routes.internal.root}/**`, {
+    server.router.register(`${routes.system.root}/**`, {
       provider: server.providers.default,
       transports: <Record<TContext['transport'], Transport>>{
-        http: server.internal.transports.http,
+        http: server.system.transports.http,
       },
     });
 
