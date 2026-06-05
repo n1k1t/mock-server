@@ -1,6 +1,6 @@
 ---
 name: mock-server-extensions
-description: Skill for working with additional mock server entities (Redis, RemoteClient, Providers, Logger)
+description: Skill for package @n1k1t/mock-server to work with additional mock server entities (Redis, RemoteClient, Providers, Logger)
 ---
 
 # Mock Server Extensions Skill

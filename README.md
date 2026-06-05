@@ -16,6 +16,7 @@ This mock server provides complete control over your network layer. It allows yo
 
 - [Features](#features)
 - [Installation](#installation)
+- [Add Skills](#add-skills)
 - [Simple Example](#simple-example)
 - [Overview](#overview)
   - [GUI](#gui)
@@ -69,6 +70,19 @@ This mock server provides complete control over your network layer. It allows yo
 ```bash
 npm i @n1k1t/mock-server
 ```
+
+## Add Skills
+
+If you are using the [skills](https://www.npmjs.com/package/skills) package, you can add `n1k1t/mock-server` to your project using the following command:
+
+```bash
+npx skills add n1k1t/mock-server
+```
+
+This package includes the following skills for better integration with AI agents:
+
+- **`mock-server-basic`**: Core entities management, including server initialization, operators (`$`), expectations, containers, forwarding, and cache.
+- **`mock-server-extensions`**: Advanced features like Redis configuration, `RemoteClient` for remote management, `Provider` for grouping/routing, and `Logger` customization.
 
 ## Simple Example
 

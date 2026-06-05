@@ -1,6 +1,6 @@
 ---
 name: mock-server-basic
-description: Skill for working with basic mock server entities (server, operators, expectations, containers, forwarding, cache)
+description: Skill for package @n1k1t/mock-server to work with basic mock server entities (server, operators, expectations, containers, forwarding, cache)
 ---
 
 # Mock Server Basic Skill
