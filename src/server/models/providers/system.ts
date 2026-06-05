@@ -2,6 +2,7 @@ import { Container, ContainersStorage, IContainersStorageDump } from '../contain
 import { Expectation, ExpectationsStorage } from '../../../expectations';
 import { History, HistoryStorage } from '../history';
 import { RequestContextSnapshot } from '../context';
+import { IServerContext } from '../../types';
 import { Provider } from './model';
 
 export class SystemContainersStorage extends ContainersStorage<any> {
@@ -88,7 +89,7 @@ export class SystemHistoryStorage extends HistoryStorage {
   }
 }
 
-export class SystemProvider extends Provider {
+export class SystemProvider<TContext extends IServerContext = any> extends Provider<TContext> {
   public storages = {
     expectations: new ExpectationsStorage({ group: this.group }),
     containers: new SystemContainersStorage({ group: this.group }),
