@@ -27,9 +27,6 @@ const checkStatusIsValid = (code: number) =>
 
 export class WsExecutor extends Executor<WsRequestContext> {
   public async exec(context: WsRequestContext, options?: IExecutorExecOptions): Promise<WsRequestContext> {
-    context.socket.once('close', () => context.complete());
-    context.socket.on('message', (data) => RequestMessage.build(data));
-
     await super.exec(context, options).catch((error) => {
       if (error instanceof ExecutorManualError && error.is('ECONNABORTED')) {
         return context.socket.destroy();
@@ -38,7 +35,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
       logger.error('Got unexpected error while execution', error?.stack ?? error);
     });
 
-    return context;
+    return context.complete();
   }
 
   public async match(context: WsRequestContext): Promise<Expectation | null> {
