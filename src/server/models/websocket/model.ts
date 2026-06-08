@@ -200,7 +200,7 @@ export class WebSocket<TIncoming = any, TOutgoing = any> {
     const query = configuration.query ? `?${qs.stringify(configuration.query)}` : '';
     const url = configuration.url
       ? configuration.baseURL
-        ? `${configuration.baseURL.replace(/\/$/, '')}/${configuration.url}${query}`
+        ? `${configuration.baseURL.replace(/\/$/, '')}/${configuration.url.replace(/^\//, '')}${query}`
         : `${configuration.url}${query}`
       : configuration.baseURL
         ? `${configuration.baseURL}${query}`

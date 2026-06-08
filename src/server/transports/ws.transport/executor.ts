@@ -123,7 +123,11 @@ export class WsExecutor extends Executor<WsRequestContext> {
         }
 
         if (!checkStatusIsValid(outgoing.status)) {
-          const fallback = status ?? 1000;
+          const fallback = status !== null
+            ? checkStatusIsValid(status)
+              ? status
+              : 1000
+            : 1000;
 
           logger.warn(`Outgoing status [${outgoing.status}] is invalid. Fallback to [${fallback}]`);
           outgoing.status = fallback;
