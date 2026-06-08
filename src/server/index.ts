@@ -16,7 +16,8 @@ import {
   buildSocketIoExchange,
   History,
   IContainersStorageDump,
-  ProvidersStorage, Router,
+  ProvidersStorage,
+  Router,
   Transport,
   TransportsStorage,
 } from './models';

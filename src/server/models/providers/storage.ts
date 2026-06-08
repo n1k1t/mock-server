@@ -7,7 +7,7 @@ import { Logger } from '../../../logger';
 
 const logger = Logger.build('ProvidersStorage');
 
-export class ProvidersStorage<TContext extends IServerContext = any> extends Map<string, Provider> {
+export class ProvidersStorage<TContext extends IServerContext = any> extends Map<string, Provider<any>> {
   public default = Provider.build<TContext>({ group: 'default' });
   public system = SystemProvider.build({ group: 'system', history: { limit: Infinity } });
 

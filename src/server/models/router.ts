@@ -10,12 +10,12 @@ import { Logger } from '../../logger';
 
 export interface IRouteContext<K extends string> {
   transports: Partial<Record<K, Transport>>;
-  provider: Provider;
+  provider: Provider<any>;
 }
 
 export interface IRouteMatchResult<T extends Transport = Transport> {
   transport: T;
-  provider: Provider;
+  provider: Provider<any>;
 }
 
 const logger = Logger.build('Router');
@@ -35,7 +35,7 @@ export class Router<TContext extends IServerContext = any> extends Map<string, S
   public register(
     pattern: string,
     configuration: {
-      provider: Provider;
+      provider: Provider<any>;
       transports?: TContext['transport'][] | Partial<Record<TContext['transport'], Transport>>;
     }
   ): this {
