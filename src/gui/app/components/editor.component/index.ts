@@ -1,12 +1,12 @@
-import { Editor } from 'ace-builds';
+import { Editor } from 'ace-builds/src-min-noconflict/ace';
 import hbs from 'handlebars';
+
+import ace from 'ace-builds/src-min-noconflict/ace';
+import lang from 'ace-builds/src-min-noconflict/mode-json';
+import theme from 'ace-builds/src-min-noconflict/theme-cloud9_night';
 
 import { PartialDeep } from '../../../../../types';
 import { Component } from '../../models';
-
-const ace = require('ace-builds/src-min/ace');
-const lang = require('ace-builds/src-min/mode-json');
-const theme = require('ace-builds/src-min/theme-cloud9_night');
 
 const render = hbs.compile(require('./template.hbs'));
 
