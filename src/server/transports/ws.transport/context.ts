@@ -44,7 +44,7 @@ export class WsRequestContext extends RequestContext<{
       logger.error('Got error while parsing [x-use-mock-state] header', state.error?.stack ?? state.error);
     }
 
-    snapshot.incoming.method = 'CON';
+    snapshot.incoming.method = 'WS';
 
     return snapshot.assign({
       ...(state?.status === 'OK' && {
