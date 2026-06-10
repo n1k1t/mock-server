@@ -1,9 +1,15 @@
 import { IncomingMessage } from 'http';
 import { Duplex } from 'stream';
 
-import { extractHttpIncommingContext, IRequestContextIncoming, Provider, RequestContext, WebSocket } from '../../models';
+import { cast, parseJsonSafe } from '../../../utils';
 import { Logger } from '../../../logger';
-import { cast } from '../../../utils';
+import {
+  extractHttpIncommingContext,
+  IRequestContextIncoming,
+  Provider,
+  RequestContext,
+  WebSocket,
+} from '../../models';
 
 const logger = Logger.build('Transports.Ws.Context');
 
@@ -30,9 +36,21 @@ export class WsRequestContext extends RequestContext<{
 
   public compileSnapshot() {
     const snapshot = super.compileSnapshot();
+    const state = this.incoming.headers['x-use-mock-state']
+      ? parseJsonSafe(Buffer.from(String(this.incoming.headers['x-use-mock-state']), 'base64').toString())
+      : null;
 
-    snapshot.incoming.method = 'WS';
-    return snapshot;
+    if (state?.status === 'ERROR') {
+      logger.error('Got error while parsing [x-use-mock-state] header', state.error?.stack ?? state.error);
+    }
+
+    snapshot.incoming.method = 'CON';
+
+    return snapshot.assign({
+      ...(state?.status === 'OK' && {
+        state: state.result,
+      }),
+    });
   }
 
   public handle(): this {

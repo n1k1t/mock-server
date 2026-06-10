@@ -42,24 +42,17 @@ export interface IRequestContextError {
   isManual?: boolean;
 }
 
-export interface IRequestContextMessage {
-  direction: 'incoming' | 'outgoing';
-
-  timestamp: number;
-  data: unknown;
-}
-
 export interface IRequestContextForwarded {
   schema: IExpectationSchemaForward;
   incoming: IRequestContextIncoming;
 
   outgoing?: IRequestContextOutgoing;
-  messages?: IRequestContextMessage[];
+  messages?: RequestMessage[];
 }
 
 export interface IRequestContextCache {
   outgoing: Omit<IRequestContextOutgoing, 'dataRaw'> & { dataRaw?: string };
-  messages?: IRequestContextMessage[];
+  messages?: RequestMessage['TPlain'][];
 }
 
 export interface IRequestContextCacheConfiguration {

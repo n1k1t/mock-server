@@ -43,18 +43,33 @@ export class WebSocket<TIncoming = any, TOutgoing = any> {
       return this.nested.headers;
     }
 
-    return new Promise<IncomingHttpHeaders>((resolve) =>
-      this.nested.source?.once('upgrade', (request) => resolve(request.headers))
-    );
+    if (!this.nested.source) {
+      return {};
+    }
+    if (webSocketClosingStates.includes(this.nested.source.readyState)) {
+      return {};
+    }
+
+    const headers = await Promise.race([
+      new Promise<null>((resolve) => this.nested.source!.once('close', () => resolve(null))),
+      new Promise<IncomingHttpHeaders>((resolve) =>
+        this.nested.source!.once('upgrade', (request) => resolve(request.headers))
+      ),
+    ]);
+
+    return headers ?? {};
   }
 
   public async status(): Promise<number> {
     if (this.nested.status !== null) {
-      return this.nested.status
+      return this.nested.status;
+    }
+    if (!this.nested.source) {
+      return 1000;
     }
 
     return new Promise<number>((resolve) =>
-      this.nested.source?.once('close', (code) => resolve(code))
+      this.nested.source!.once('close', (code) => resolve(code))
     );
   }
 
@@ -102,7 +117,10 @@ export class WebSocket<TIncoming = any, TOutgoing = any> {
       this.nested.source.once('close', (code: number) => this.close(code));
       this.nested.source.once('upgrade', (request) => this.nested.headers = request.headers);
 
-      this.nested.source.on('message', (payload) => this.observable.next(RequestMessage.build(payload)));
+      this.nested.source.on(
+        'message',
+        (payload) => this.observable.next(RequestMessage.build('outgoing', payload))
+      );
 
       this.nested.source.on('error', (error) => {
         if (!webSocketClosingStates.includes(this.nested.source!.readyState)) {

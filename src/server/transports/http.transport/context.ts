@@ -66,8 +66,8 @@ export class HttpRequestContext extends RequestContext<{
         seed: Number(this.incoming.headers['x-use-mock-seed']),
       }),
 
-      ...(this.incoming.headers['x-use-mock-state'] && {
-        state: state?.result ?? {},
+      ...(state?.status === 'OK' && {
+        state: state.result,
       }),
     });
   };

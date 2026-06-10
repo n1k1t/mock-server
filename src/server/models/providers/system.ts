@@ -1,7 +1,10 @@
+import _ from 'lodash';
+
 import { Container, ContainersStorage, IContainersStorageDump } from '../containers';
 import { Expectation, ExpectationsStorage } from '../../../expectations';
 import { History, HistoryStorage } from '../history';
 import { RequestContextSnapshot } from '../context';
+import { RequestMessage } from '../../models';
 import { IServerContext } from '../../types';
 import { Provider } from './model';
 
@@ -44,7 +47,9 @@ export class SystemHistoryStorage extends HistoryStorage {
         timestamp: history.timestamp,
         meta: history.meta,
 
-        ...(history.expectation && { expectation: Expectation.build(history.expectation) }),
+        ...(history.expectation && {
+          expectation: Expectation.build(history.expectation)
+        }),
 
         snapshot: RequestContextSnapshot.build({
           transport: history.snapshot.transport,
@@ -54,9 +59,19 @@ export class SystemHistoryStorage extends HistoryStorage {
           state: history.snapshot.state,
           error: history.snapshot.error,
 
-          incoming: history.snapshot.incoming,
-          outgoing: history.snapshot.outgoing,
-          messages: history.snapshot.messages,
+          incoming: Object.assign(history.snapshot.incoming, {
+            dataRaw: history.snapshot.incoming.dataRaw
+              ? Buffer.from(history.snapshot.incoming.dataRaw)
+              : undefined,
+          }),
+
+          outgoing: Object.assign(history.snapshot.outgoing, {
+            dataRaw: history.snapshot.outgoing.dataRaw
+              ? Buffer.from(history.snapshot.outgoing.dataRaw)
+              : undefined,
+          }),
+
+          messages: history.snapshot.messages.map((message) => RequestMessage.build(message)),
 
           seed: history.snapshot.seed,
           storage: fake.storages.containers,
@@ -64,7 +79,7 @@ export class SystemHistoryStorage extends HistoryStorage {
           ...(history.snapshot.forwarded && {
             forwarded: {
               schema: history.snapshot.forwarded.schema,
-              messages: history.snapshot.forwarded.messages,
+              messages: history.snapshot.forwarded.messages?.map((message) => RequestMessage.build(message)),
 
               incoming: Object.assign(history.snapshot.forwarded.incoming, {
                 dataRaw: history.snapshot.forwarded.incoming.dataRaw

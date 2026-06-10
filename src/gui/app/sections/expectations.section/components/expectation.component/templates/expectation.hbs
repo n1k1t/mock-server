@@ -37,7 +37,12 @@ export default `
         {{/each}}
 
         {{#each data.meta.tags.outgoing.status}}
-          <span class="status {{#compare this 'lt' 400}}green{{/compare}} {{#compare this 'gte' 400}}red{{/compare}}">
+          <span class="status
+            {{#compare this 'eq' 1000}}green{{/compare}}
+            {{#compare this 'gt' 1000}}red{{/compare}}
+            {{#compare this 'lt' 400}}green{{/compare}}
+            {{#compare this 'gte' 400}}red{{/compare}}
+          ">
             <b>{{this}}</b>
           </span>
         {{/each}}

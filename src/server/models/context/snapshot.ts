@@ -3,11 +3,11 @@ import _ from 'lodash';
 
 import type { Container, ContainersStorage } from '../containers';
 import type { IServerContext } from '../../types';
+import type { RequestMessage } from '../message';
 import type {
   IRequestContextCacheConfiguration,
   IRequestContextIncoming,
   IRequestContextOutgoing,
-  IRequestContextMessage,
   IRequestContextForwarded,
   IRequestContextError,
   IRequestContextOverrides,
@@ -16,21 +16,24 @@ import type {
 const clone = rfdc();
 
 export class RequestContextSnapshot<TContext extends IServerContext = any> {
-  public TPlain!: Omit<RequestContextSnapshot['configuration'], 'container' | 'storage' | 'forwarded' | 'state' | 'cache'> & {
+  public TPlain!: Pick<RequestContextSnapshot['configuration'], 'flags' | 'overrides' | 'seed' | 'transport'> & {
     transport: TContext['transport'];
+    messages: RequestMessage['TPlain'][];
 
     state: RequestContextSnapshot['state'];
     cache: RequestContextSnapshot['cache'];
 
-    incoming: {
+    incoming: Omit<IRequestContextIncoming, 'dataRaw'> & {
       dataRaw?: string;
     };
 
-    outgoing: {
+    outgoing: Omit<IRequestContextOutgoing, 'dataRaw'> & {
       dataRaw?: string;
     };
 
-    forwarded?: Omit<IRequestContextForwarded, 'incoming' | 'outgoing'> & {
+    forwarded?: Omit<IRequestContextForwarded, 'incoming' | 'outgoing' | 'messages'> & {
+      messages?: RequestMessage['TPlain'][];
+
       incoming: Omit<IRequestContextIncoming, 'dataRaw'> & {
         dataRaw?: string;
       };
@@ -54,7 +57,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
 
   public incoming: IRequestContextIncoming = this.configuration.incoming;
   public outgoing: IRequestContextOutgoing = this.configuration.outgoing;
-  public messages: IRequestContextMessage[] = this.configuration.messages ?? [];
+  public messages: RequestMessage[] = this.configuration.messages ?? [];
 
   /** Expectation schema overrides */
   public overrides?: IRequestContextOverrides = this.configuration.overrides;
@@ -109,6 +112,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
     return {
       transport: this.transport,
       flags: this.flags,
+      error: this.error,
 
       overrides: this.overrides,
       state: this.state,
@@ -117,8 +121,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
       seed: this.seed,
       container: this.container?.toPlain(),
 
-      error: this.error,
-      messages: this.messages,
+      messages: this.messages.map((message) => message.toPlain()),
 
       incoming: Object.assign(_.omit(this.incoming, ['stream']), {
         dataRaw: this.incoming.dataRaw?.toString(),
@@ -142,7 +145,7 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
             }),
           }),
 
-          messages: this.forwarded.messages,
+          messages: this.forwarded.messages?.map((message) => message.toPlain()),
         },
       }),
     };

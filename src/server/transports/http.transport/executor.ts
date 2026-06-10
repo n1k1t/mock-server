@@ -8,10 +8,10 @@ import type { Expectation, IExpectationSchemaForward } from '../../../expectatio
 import type { HttpRequestContext } from './context';
 
 import { formatHeaders } from '../../../utils';
+import { parsePayload } from '../../utils';
 import { Logger } from '../../../logger';
 import {
-  extractPayloadType,
-  parsePayload,
+  definePayloadType,
   Executor,
   ExecutorManualError,
   IRequestContextOutgoing,
@@ -93,20 +93,21 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       response.headers['content-encoding'] = 'utf-8';
     }
 
-    const type = extractPayloadType(response.headers) ?? 'plain';
-    const data = parsePayload(type, response.data);
+    const parsed = response.data?.length
+      ? parsePayload(response.data, definePayloadType(response.headers) ?? 'plain')
+      : null;
 
     return {
       schema,
       incoming,
 
       outgoing: {
-        type,
+        type: parsed?.type ?? 'plain',
+        data: parsed?.data ?? undefined,
 
         status: response.status,
         headers: response.headers,
 
-        data,
         dataRaw: response.data,
       },
     };

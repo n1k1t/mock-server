@@ -3,20 +3,12 @@ import _ from 'lodash';
 
 import { IncomingMessage, ServerResponse } from 'http';
 import { parse as parseQueryString } from 'querystring';
-import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { parse as parseUrl } from 'url';
 
 import { formatHeaders, parseJsonSafe } from '../../../utils';
 import { IRequestContextIncoming } from './types';
 import { TRequestPayloadType } from '../../types';
-
-const xmlParser = new XMLParser({
-  ignoreAttributes: false,
-});
-
-const xmlBuilder = new XMLBuilder({
-  ignoreAttributes: false,
-});
+import { parsePayload } from '../../utils';
 
 const parseQuerySearch = (queryString: string): Record<string, unknown> =>
   Object.entries(parseQueryString(queryString)).reduce((acc, [key, value]) => {
@@ -29,7 +21,7 @@ const parseQuerySearch = (queryString: string): Record<string, unknown> =>
   }, {});
 
 
-export const extractPayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType | null => {
+export const definePayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType | null => {
   const contentTypeKey = Object.keys(headers).find((key) => key.toLowerCase() === 'content-type');
   const contextType = _.flatten([_.get(headers, contentTypeKey ?? '', '')]).join(',').toLowerCase();
 
@@ -43,34 +35,12 @@ export const extractPayloadType = (headers: IncomingMessage['headers']): TReques
   return null;
 }
 
-export const parsePayload = (type: TRequestPayloadType, payload: Buffer): object | undefined => {
-  switch(type) {
-    case 'json': {
-      const parsed = parseJsonSafe(payload.toString());
-      return parsed.status === 'OK' ? parsed.result : undefined;
-    }
-
-    case 'plain': return undefined;
-    case 'xml': return xmlParser.parse(payload) ?? undefined;
-  }
-}
-
-export const serializePayload = (type: TRequestPayloadType, payload: unknown): Buffer | undefined => {
-  switch(type) {
-    case 'json': return Buffer.from(JSON.stringify(payload) ?? '');
-
-    case 'plain': return Buffer.from(String(payload ?? ''));
-    case 'xml': return Buffer.from(xmlBuilder.build(payload ?? {}) ?? '');
-  }
-}
-
 export const extractHttpIncommingContext = async (request: IncomingMessage): Promise<IRequestContextIncoming> => {
   const { pathname, query: rawQuery } = parseUrl(request.url ?? '');
 
-  const type = extractPayloadType(request.headers) ?? 'plain';
   const query = parseQuerySearch(rawQuery ?? '');
 
-  const dataRaw = await new Promise<Buffer | null>((resolve, reject) =>
+  const raw = await new Promise<Buffer | null>((resolve, reject) =>
     bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) =>
       error
         ? reject(error)
@@ -78,16 +48,21 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
     )
   );
 
+  const parsed = raw?.length
+    ? parsePayload(raw, definePayloadType(request.headers) ?? 'plain')
+    : null;
+
   return {
-    type,
     query,
+
+    type: parsed?.type ?? 'plain',
 
     method: String(request.method ?? 'GET').toUpperCase(),
     path: pathname ?? '/',
 
     headers: formatHeaders(request.headers),
 
-    data: dataRaw ? parsePayload(type, dataRaw) : undefined,
-    dataRaw: dataRaw ?? undefined,
+    data: parsed?.data ?? undefined,
+    dataRaw: raw ?? undefined,
   };
 }

@@ -7,15 +7,14 @@ import { from } from 'rxjs';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
+import { parsePayload, serializePayload } from '../../utils';
+import { cast, parseJsonSafe, wait } from '../../../utils';
 import { ExecutorManualError } from './errors';
 import { RequestMessage } from '../message';
-import { cast, wait } from '../../../utils';
 import { Logger } from '../../../logger';
 import {
-  parsePayload,
   RequestContext,
-  serializePayload,
-  extractPayloadType,
+  definePayloadType,
   IRequestContextCache,
   IRequestContextOutgoing,
   IRequestContextIncoming,
@@ -60,6 +59,16 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
   /** Uses to handle whole request */
   public async exec(context: TRequestContext, options?: IExecutorExecOptions): Promise<TRequestContext> {
+    context.streams.incoming.subscribe({
+      error: () => null,
+      next: (message) => context.snapshot.messages.push(message.clone({ deep: true }).redirect('incoming')),
+    });
+
+    context.streams.outgoing.subscribe({
+      error: () => null,
+      next: (message) => context.snapshot.messages.push(message.clone().redirect('outgoing')),
+    });
+
     const expectation = options?.expectation ? options.expectation : await this.match(context).catch((error) => {
       logger.error('Got error while execution [matchExpectation] method', error?.stack ?? error);
       return null;
@@ -83,26 +92,6 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         arrayMerge: (target, source) => source,
       });
     }
-
-    context.streams.incoming.subscribe({
-      error: () => null,
-      next: (message) => context.snapshot.messages.push({
-        direction: 'incoming',
-
-        data: message.clone().data,
-        timestamp: Date.now(),
-      }),
-    });
-
-    context.streams.outgoing.subscribe({
-      error: () => null,
-      next: (message) => context.snapshot.messages.push({
-        direction: 'outgoing',
-
-        data: message.data,
-        timestamp: Date.now(),
-      }),
-    });
 
     context.assign({
       snapshot: await expectation.request.manipulate(context.snapshot),
@@ -204,44 +193,52 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
     }
 
     if (snapshot.cache.isEnabled) {
-      const cached = await context.provider.server.databases.redis!.get(snapshot.cache.key).catch((error) => {
+      const zipped = await context.provider.server.databases.redis!.get(snapshot.cache.key).catch((error) => {
         logger.error('Got error while redis get', error?.stack ?? error);
         return null;
       });
 
-      const unziped = cached
-        ? await ungzip(Buffer.from(cached, 'base64')).catch((error) => {
+      const unzipped = zipped
+        ? await ungzip(Buffer.from(zipped, 'base64')).catch((error) => {
           logger.error('Got error while cache unzip', error?.stack ?? error);
           return null;
         })
         : null;
 
-      const parsed = <IRequestContextCache | null>(unziped ? parsePayload('json', unziped) : null);
-      const dataRaw = parsed?.outgoing.dataRaw ? Buffer.from(parsed?.outgoing.dataRaw, 'base64') : undefined;
+      const cahce = unzipped ? parseJsonSafe<IRequestContextCache>(unzipped.toString()) : null;
 
-      if (parsed) {
+      if (cahce?.status === 'OK') {
         logger.info(`Got cache [${snapshot.cache.key}]`);
+
+        const messages = (cahce.result.messages ?? []).map((message) => RequestMessage.build(message));
+        const dataRaw = cahce.result.outgoing.dataRaw
+          ? Buffer.from(cahce.result.outgoing.dataRaw, 'base64')
+          : undefined;
+
+        cahce.result.outgoing.stream = from(messages);
         snapshot.cache.hasRead = true;
 
-        if (parsed.messages?.length) {
-          parsed.outgoing.stream = from(parsed.messages.map((message) => RequestMessage.build(message.data)));
-        }
+        const outgoing = dataRaw
+          ? parsePayload(dataRaw, cahce.result.outgoing.type)
+          : null;
 
         return {
           schema,
+          messages,
 
           incoming: snapshot.incoming,
-          messages: parsed.messages,
 
-          outgoing: Object.assign(_.omit(parsed.outgoing, ['dataRaw']), {
-            data: dataRaw ? parsePayload(parsed.outgoing.type, dataRaw) : undefined,
+          outgoing: Object.assign(_.omit(cahce.result.outgoing, ['dataRaw']), {
             dataRaw,
+
+            type: outgoing?.type ?? 'plain',
+            data: outgoing?.data ?? undefined,
           }),
         };
       }
     }
 
-    const type = extractPayloadType(snapshot.incoming.headers) ?? (
+    const type = definePayloadType(snapshot.incoming.headers) ?? (
       snapshot.incoming.type === 'plain'
         ? typeof snapshot.incoming.data === 'object' ? 'json' : 'plain'
         : snapshot.incoming.type
@@ -263,22 +260,12 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
       snapshot.incoming.stream?.subscribe({
         error: () => null,
-        next: (message) => forwarded.messages!.push({
-          direction: 'incoming',
-
-          data: message.data,
-          timestamp: Date.now(),
-        }),
+        next: (message) => forwarded.messages!.push(message.clone().redirect('incoming')),
       });
 
       forwarded.outgoing?.stream?.subscribe({
         error: () => null,
-        next: (message) => forwarded.messages!.push({
-          direction: 'outgoing',
-
-          data: message.clone().data,
-          timestamp: Date.now(),
-        }),
+        next: (message) => forwarded.messages!.push(message.clone({ deep: true }).redirect('outgoing')),
       });
     }
 
@@ -290,7 +277,7 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? await context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
-    const type = extractPayloadType(snapshot.outgoing.headers) ?? (
+    const type = definePayloadType(snapshot.outgoing.headers) ?? (
       snapshot.outgoing.type === 'plain'
         ? typeof snapshot.outgoing.data === 'object' ? 'json' : 'plain'
         : snapshot.outgoing.type
@@ -315,7 +302,10 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
     if (shouldBeCached) {
       const serialized = serializePayload('json', cast<IRequestContextCache>({
-        messages: snapshot.forwarded!.messages?.filter((message) => message.direction === 'outgoing'),
+        messages: (snapshot.forwarded!.messages ?? [])
+          .filter((message) => message.direction === 'outgoing')
+          .map((message) => message.toPlain()),
+
         outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['data']), {
           dataRaw: snapshot.forwarded!.outgoing?.dataRaw?.toString('base64'),
         }),

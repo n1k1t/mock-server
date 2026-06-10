@@ -1,5 +1,7 @@
-import { ParsedUrlQueryInput } from 'querystring';
 import _ from 'lodash';
+
+import { ParsedUrlQueryInput } from 'querystring';
+import { from } from 'rxjs';
 
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 import type { WsRequestContext } from './context';
@@ -41,8 +43,17 @@ export class WsExecutor extends Executor<WsRequestContext> {
   public async match(context: WsRequestContext): Promise<Expectation | null> {
     const expectation = await context.provider.storages.expectations.match(context.snapshot);
 
-    if (!expectation) {
-      context.skip();
+    if (!expectation && context.is(['handling'])) {
+      context.assign({
+        outgoing: await this.reply(context, {
+          type: 'plain',
+          status: 1011,
+
+          stream: from([RequestMessage.build('outgoing', 'Expectation was not found')]),
+          headers: {},
+        }),
+      });
+
       return null;
     }
 
@@ -59,7 +70,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
       .catch((error) => {
         context.snapshot.assign({
           error: { code: 'UNKNOWN', message: error?.message ?? 'Unknown' },
-          outgoing: { type: 'plain', status: 1006, headers: {} },
+          outgoing: { type: 'plain', status: 1011, headers: {} },
         });
 
         logger.error('Got error while execution [compileForwardingConfiguration] method', error?.stack ?? error);
@@ -101,10 +112,12 @@ export class WsExecutor extends Executor<WsRequestContext> {
       });
 
       context.provider.server.wss.handleUpgrade(context.request, context.socket, context.head, async (socket) => {
+        socket.on('message', (data) => context.streams.incoming.next(RequestMessage.build('incoming', data)));
+
         await outgoing.stream?.forEach((payload: unknown) => {
           const message = payload instanceof RequestMessage
-            ? payload
-            : RequestMessage.build(payload);
+            ? payload.redirect('outgoing')
+            : RequestMessage.build('outgoing', payload);
 
           context.streams.outgoing.next(message);
           socket.send(message.serialize());
@@ -115,7 +128,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
         if (outgoing.status === 0) {
           outgoing.status = status ?? 1000;
         }
-        if (context.snapshot.forwarded?.outgoing) {
+        if (context.additional.ws && context.snapshot.forwarded?.outgoing) {
           context.snapshot.forwarded.outgoing.status = status ?? outgoing.status;
         }
 
@@ -123,8 +136,8 @@ export class WsExecutor extends Executor<WsRequestContext> {
           const fallback = status !== null
             ? checkStatusIsValid(status)
               ? status
-              : 1000
-            : 1000;
+              : 1011
+            : 1011;
 
           logger.warn(`Outgoing status [${outgoing.status}] is invalid. Fallback to [${fallback}]`);
           outgoing.status = fallback;
