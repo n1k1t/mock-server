@@ -236,22 +236,22 @@ export class MockServer<
     });
 
     stream.on('data', (keys: string[]) =>
-      Promise.all(
-        keys.map(async (key) => {
-          const raw = await this.databases.redis!.get(key.replace(prefix, ''));
-          if (!raw) {
-            return null;
-          }
+      keys.map(async (key) => {
+        const raw = await this.databases.redis!.get(key.replace(prefix, ''));
+        if (!raw) {
+          return null;
+        }
 
-          const dump = parseJsonSafe<IContainersStorageDump>(raw);
-          if (dump.status === 'ERROR') {
-            logger.error('Got error while containers restoration', dump.error?.stack ?? dump.error);
-          }
+        const dump = parseJsonSafe<IContainersStorageDump>(raw);
+        if (dump.status === 'ERROR') {
+          logger.error('Got error while containers restoration', dump.error?.stack ?? dump.error);
+        }
 
-          this.providers.system.storages.containers.restore(dump.result!);
-        })
-      )
+        this.providers.system.storages.containers.restore(dump.result!);
+      })
     );
+
+    await new Promise((resolve) => stream.once('close', resolve));
   }
 
   /** Starts and setups mock server */
