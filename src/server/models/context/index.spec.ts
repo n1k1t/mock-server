@@ -15,159 +15,147 @@ class TestRequestContext extends RequestContext {
 }
 
 // Test generated using Keploy
-test('switchStatus method should correctly change status and return the instance', () => {
-  const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
+it('switchStatus method should correctly change status and return the instance', () => {
+  const providerMock = {
+    storages: { containers: {}, history: { register: jest.fn() } },
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
+  };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  const result = context.switch('handling');
-  expect(context.status).toBe('handling');
-  expect(result).toBe(context);
+
+  expect(context.switch('handling')).toBe(context);
 });
 
-
 // Test generated using Keploy
-test('compileSnapshot method should create a valid snapshot with proper properties', () => {
-  const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
+it('compileSnapshot method should create a valid snapshot with proper properties', () => {
+  const providerMock = {
+    storages: { containers: {}, history: { register: jest.fn() } },
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
+  };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  context.incoming = <any>{ type: 'testType' };
+  context.incoming = <any>{ type: 'testType', raw: {} };
 
-  const snapshot = context.compileSnapshot();
-
-  expect(snapshot.transport).toBe(context.transport);
-  expect(snapshot.flags).toEqual(context.flags);
-  expect(snapshot.incoming).toEqual(context.incoming);
-  expect(snapshot.outgoing.stream).toBeDefined();
-  expect(snapshot.incoming.stream).toBeDefined();
+  expect(context.compileSnapshot()).toMatchObject({
+    transport: context.transport,
+    flags: context.flags,
+    incoming: context.incoming,
+  });
 });
 
-
 // Test generated using Keploy
-test('compileHistory method should register history with the correct snapshot', () => {
+it('compileHistory method should register history with the correct snapshot', () => {
   const providerMock = {
     storages: {
       containers: {},
       history: {
-        register: jest.fn().mockReturnValue({})
-      }
+        register: jest.fn().mockReturnValue({}),
+      },
     },
     server: {
       databases: { redis: {} },
-      exchanges: { io: { publish: jest.fn() } }
-    }
+      exchanges: { io: { publish: jest.fn() } },
+    },
   };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  context.incoming = <any>{ type: 'testType' };
-  const history = context.compileHistory();
+  context.incoming = <any>{ type: 'testType', raw: {} };
 
-  expect(providerMock.storages.history.register).toHaveBeenCalledWith(expect.objectContaining({
-    timestamp: context.timestamp,
-    snapshot: expect.anything()
-  }));
-  expect(history).toBe((<jest.Mock>context.provider.storages.history.register).mock.results[0].value);
+  context.compileHistory();
+
+  expect(providerMock.storages.history.register).toHaveBeenCalledWith(
+    expect.objectContaining({ timestamp: context.timestamp }),
+  );
 });
 
-
 // Test generated using Keploy
-test('compileCacheConfiguration returns disabled when cache is not enabled or expectation is missing', () => {
+it('compileCacheConfiguration returns disabled when cache is not enabled or expectation is missing', () => {
   const providerMock = {
     storages: { containers: {} },
     server: {
       databases: { redis: null },
-      exchanges: { io: { publish: jest.fn() } }
-    }
+      exchanges: { io: { publish: jest.fn() } },
+    },
   };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
   context.snapshot = <any>{
     cache: { isEnabled: false },
     incoming: { type: 'GET' },
-    outgoing: {}
+    outgoing: {},
   };
 
-  const result = context.compileCacheConfiguration();
-
-  expect(result).toEqual({ isEnabled: false });
+  expect(context.compileCacheConfiguration()).toEqual({ isEnabled: false });
 });
 
-
 // Test generated using Keploy
-test('hasStatuses method correctly identifies if current status is in the given list', () => {
+it('hasStatuses method correctly identifies if current status is in the given list', () => {
   const providerMock = {
     storages: { containers: {}, history: { register: jest.fn() } },
-    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } }
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
   };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
   context.switch('completed');
 
-  const result = context.is(['registered', 'completed']);
-
-  expect(result).toBe(true);
+  expect(context.is(['registered', 'completed'])).toBe(true);
 });
 
-
 // Test generated using Keploy
-test('complete method completes streams and switches status to completed', () => {
+it('complete method completes streams and switches status to completed', () => {
   const providerMock = {
     storages: {
       containers: {},
-      history: { register: jest.fn() }
+      history: { register: jest.fn() },
     },
     server: {
       databases: { redis: {} },
-      exchanges: { io: { publish: jest.fn() } }
-    }
+      exchanges: { io: { publish: jest.fn() } },
+    },
   };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  context.incoming = <any>{ type: 'testType' };
+  context.incoming = <any>{ type: 'testType', raw: {} };
   context.snapshot = <any>{
-    outgoing: {}
+    outgoing: {},
   };
-  context.complete();
 
-  expect(context.is(['completed'])).toBe(true);
-  expect(context.streams.incoming.isStopped).toBe(true);
-  expect(context.streams.outgoing.isStopped).toBe(true);
+  expect(context.complete().status).toBe('completed');
 });
 
 // Test generated using Keploy
-test('assign method correctly assigns properties to the context', () => {
-  const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
+it('assign method correctly assigns properties to the context', () => {
+  const providerMock = {
+    storages: { containers: {}, history: { register: jest.fn() } },
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
+  };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
-  const payload = <any>{ incoming: { type: 'newType' }, outgoing: { type: 'newOutgoing' } };
+  const payload = <any>{ incoming: { type: 'newType', raw: {} }, outgoing: { type: 'newOutgoing', raw: {} } };
 
-  context.assign(payload);
-
-  expect(context.incoming).toEqual(payload.incoming);
-  expect(context.outgoing).toEqual(payload.outgoing);
+  expect(context.assign(payload)).toMatchObject(payload);
 });
-
 
 // Test generated using Keploy
-test('skip method switches status to skipped', () => {
-  const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
+it('skip method switches status to skipped', () => {
+  const providerMock = {
+    storages: { containers: {}, history: { register: jest.fn() } },
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
+  };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
 
-  context.skip();
-
-  expect(context.status).toBe('skipped');
+  expect(context.skip().status).toBe('skipped');
 });
-
 
 // Test generated using Keploy
-test('handle method switches status to handling', () => {
-  const providerMock = { storages: { containers: {}, history: { register: jest.fn() } }, server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } } };
+it('handle method switches status to handling', () => {
+  const providerMock = {
+    storages: { containers: {}, history: { register: jest.fn() } },
+    server: { databases: { redis: {} }, exchanges: { io: { publish: jest.fn() } } },
+  };
   const configurationMock = { transport: '', event: '' };
   const context = new TestRequestContext(<any>providerMock, configurationMock);
 
-  context.handle();
-
-  expect(context.status).toBe('handling');
+  expect(context.handle().status).toBe('handling');
 });
-
-

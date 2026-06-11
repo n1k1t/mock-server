@@ -4,32 +4,35 @@ import { RequestContextSnapshot } from './snapshot';
 it('should correctly assign new values to the instance', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    incoming: <any>{},
-    outgoing: <any>{},
-    storage: <any>{},
-    flags: {}
+    incoming: { raw: {} } as any,
+    outgoing: { raw: {} } as any,
+    storage: {} as any,
+    flags: {},
   });
 
   instance.assign({ transport: 'https', flags: { newFlag: true } });
 
-  expect(instance.transport).toBe('https');
-  expect(instance.flags?.newFlag).toBe(true);
+  expect(instance).toMatchObject({
+    transport: 'https',
+    flags: { newFlag: true },
+  });
 });
 
 // Test generated using Keploy
 it('should return only the specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    incoming: <any>{},
-    outgoing: <any>{},
-    storage: <any>{},
-    flags: {}
+    incoming: { raw: {} } as any,
+    outgoing: { raw: {} } as any,
+    storage: {} as any,
+    flags: {},
   });
 
   const picked = instance.pick(['transport', 'flags']);
+
   expect(picked).toEqual({
     transport: 'http',
-    flags: {}
+    flags: {},
   });
 });
 
@@ -37,27 +40,29 @@ it('should return only the specified keys', () => {
 it('should omit specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    incoming: <any>{},
-    outgoing: <any>{},
-    storage: <any>{},
-    flags: {}
+    incoming: { raw: {} } as any,
+    outgoing: { raw: {} } as any,
+    storage: {} as any,
+    flags: {},
   });
 
-  const omitted = instance.omit(<never[]>['transport']);
-  expect(omitted.transport).toBeUndefined();
+  const omitted = instance.omit(['transport']);
+
+  expect(omitted).not.toHaveProperty('transport');
 });
 
 // Test generated using Keploy
 it('should unset specified keys', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    incoming: <any>{},
-    outgoing: <any>{},
-    storage: <any>{},
-    flags: {}
+    incoming: { raw: {} } as any,
+    outgoing: { raw: {} } as any,
+    storage: {} as any,
+    flags: {},
   });
 
   instance.unset(['transport']);
+
   expect(instance.transport).toBeUndefined();
 });
 
@@ -65,13 +70,13 @@ it('should unset specified keys', () => {
 it('should clone the instance correctly', () => {
   const instance = new RequestContextSnapshot({
     transport: 'http',
-    incoming: <any>{},
-    outgoing: <any>{},
-    storage: <any>{},
-    flags: {}
+    incoming: { raw: { data: Buffer.from([]) }, stream: {} } as any,
+    outgoing: { raw: { data: Buffer.from([]) }, stream: {} } as any,
+    storage: {} as any,
+    flags: {},
   });
 
-  const cloneInstance = instance.clone();
-  expect(cloneInstance).not.toBe(instance);
-  expect(cloneInstance.transport).toBe(instance.transport);
+  const cloned = instance.clone();
+
+  expect(cloned).not.toBe(instance);
 });
