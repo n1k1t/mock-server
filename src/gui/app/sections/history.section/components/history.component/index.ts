@@ -1,4 +1,5 @@
 import hbs from 'handlebars';
+import _ from 'lodash';
 
 import type { History } from '../../../../../../server';
 
@@ -52,6 +53,7 @@ export class HistoryComponent extends Component {
         ...(Object.keys(this.data.snapshot.flags).length && { flags: this.data.snapshot.flags }),
         ...(Object.keys(this.data.snapshot.state).length && { state: this.data.snapshot.state }),
 
+        ...(this.data.snapshot.error && { error: this.data.snapshot.error }),
         ...(this.data.expectation && {
           expectation: {
             id: this.data.expectation.id,
@@ -65,12 +67,34 @@ export class HistoryComponent extends Component {
           cache: this.data.snapshot.cache,
         }),
 
-        incoming: this.data.snapshot.incoming,
+        incoming: _.pick(this.data.snapshot.incoming, ['method', 'path', 'headers', 'query', 'type', 'data']),
 
-        ...(this.data.snapshot.error && { error: this.data.snapshot.error }),
-        ...(this.data.status === 'completed' && { outgoing: this.data.snapshot.outgoing }),
-        ...(this.data.snapshot.forwarded && { forwarded: this.data.snapshot.forwarded }),
-        ...(this.data.snapshot.messages?.length && { messages: this.data.snapshot.messages }),
+        ...(this.data.status === 'completed' && {
+          outgoing: _.pick(this.data.snapshot.outgoing, ['status', 'headers', 'type', 'data']),
+        }),
+
+        ...(this.data.snapshot.forwarded && {
+          forwarded: {
+            schema: this.data.snapshot.forwarded.schema,
+            incoming: _.pick(this.data.snapshot.forwarded.incoming, ['method', 'path', 'headers', 'query', 'type', 'data']),
+
+            ...(this.data.snapshot.forwarded.outgoing && {
+              outgoing: _.pick(this.data.snapshot.forwarded.outgoing, ['status', 'headers', 'type', 'data']),
+            }),
+
+            ...(this.data.snapshot.forwarded.messages?.length && {
+              messages: this.data.snapshot.forwarded.messages.map(
+                (message) => _.pick(message, ['direction', 'timestamp', 'type', 'data'])
+              ),
+            }),
+          },
+        }),
+
+        ...(this.data.snapshot.messages?.length && {
+          messages: this.data.snapshot.messages.map(
+            (message) => _.pick(message, ['direction', 'timestamp', 'type', 'data'])
+          ),
+        }),
       });
     }
 
