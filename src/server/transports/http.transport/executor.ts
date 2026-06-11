@@ -44,8 +44,13 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
           type: 'plain',
           status: 404,
 
-          dataRaw: Buffer.from('Expectation was not found'),
-          headers: {},
+          headers: {
+            'content-type': 'text/plain',
+          },
+
+          raw: {
+            data: Buffer.from('Expectation was not found'),
+          },
         }),
       });
 
@@ -65,7 +70,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       .catch((error) => {
         context.snapshot.assign({
           error: { code: 'UNKNOWN', message: error?.message ?? 'Unknown' },
-          outgoing: { type: 'plain', status: 502, headers: {} },
+          outgoing: { type: 'plain', status: 502, headers: {}, raw: {} },
         });
 
         logger.error('Got error while execution [compileForwardingConfiguration] method', error?.stack ?? error);
@@ -78,7 +83,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         if (!error.response) {
           context.snapshot.assign({
             error: _.pick(error, ['message', 'code']),
-            outgoing: { type: 'plain', status: 502, headers: {} },
+            outgoing: { type: 'plain', status: 502, headers: {}, raw: {} },
           });
 
           logger.error('Got error while forwaring', error?.stack ?? error);
@@ -108,7 +113,9 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         status: response.status,
         headers: response.headers,
 
-        dataRaw: response.data,
+        raw: {
+          data: response.data,
+        },
       },
     };
   }
@@ -127,13 +134,13 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
               : undefined
         ),
 
-        ...(outgoing.dataRaw && { 'content-length': String(outgoing.dataRaw.length) }),
+        ...(outgoing.raw.data && { 'content-length': String(outgoing.raw.data.length) }),
       }),
       _.isNil
     );
 
     context.response.writeHead(outgoing.status, outgoing.headers);
-    context.response.write(outgoing.dataRaw ?? '');
+    context.response.write(outgoing.raw.data ?? Buffer.from(''));
     context.response.end();
 
     return outgoing;
@@ -157,16 +164,17 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
           connection: 'close',
 
           ...(schema.options?.overrideHost !== false && { host: url.host }),
-          ...(incoming.dataRaw && { 'content-length': String(incoming.dataRaw.length) }),
+          ...(incoming.raw.data && { 'content-length': String(incoming.raw.data.length) }),
         })
       ),
 
       ...(schema.url && { url: schema.url }),
       ...(schema.baseUrl && { baseURL: schema.baseUrl, url: incoming.path }),
 
-      data: incoming.dataRaw,
-      params: context.incoming.query,
       responseType: 'arraybuffer',
+
+      params: context.incoming.query,
+      data: incoming.raw.data,
 
       ...((schema.proxy && !isSecured) && { proxy: schema.proxy }),
       ...((schema.proxy && isSecured) && {

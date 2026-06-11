@@ -25,7 +25,6 @@ export const buildExpectationContext = (): IExpectationSchemaContext => ({
       },
     },
 
-    dataRaw: Buffer.from('{"foo": [{"bar": 1}, {"baz": ["2"]}]}'),
     data: {
       foo: [
         { bar: 1 },
@@ -37,13 +36,16 @@ export const buildExpectationContext = (): IExpectationSchemaContext => ({
       'content-type': 'application/json',
       'accept-language': 'en/gb',
     },
+
+    raw: {
+      data: Buffer.from('{"foo": [{"bar": 1}, {"baz": ["2"]}]}'),
+    },
   },
 
   outgoing: {
     type: 'json',
     status: 200,
 
-    dataRaw: Buffer.from('{"foo": {"bar": {"baz": true}}}'),
     data: {
       foo: {
         bar: {
@@ -54,6 +56,10 @@ export const buildExpectationContext = (): IExpectationSchemaContext => ({
 
     headers: {
       'content-type': 'application/json',
+    },
+
+    raw: {
+      data: Buffer.from('{"foo": {"bar": {"baz": true}}}'),
     },
   },
 });

@@ -66,7 +66,7 @@ export abstract class RequestContext<TContext extends IServerContext = any> {
       flags: this.flags,
 
       incoming: this.incoming,
-      outgoing: this.outgoing ?? { type: this.incoming.type, status: 0, headers: {} },
+      outgoing: this.outgoing ?? { type: this.incoming.type, status: 0, headers: {}, raw: {} },
 
       storage: this.provider.storages.containers,
       cache: { isEnabled: this.provider.server.databases.redis !== null },

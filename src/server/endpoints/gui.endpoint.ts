@@ -20,7 +20,7 @@ export default EndpointFactory
     const statics = config.get('statics');
 
     if (!context.incoming.path.includes(routes.system.gui)) {
-      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
+      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {}, raw: {} } });
     }
 
     const root = routes.system.root + routes.system.gui;
@@ -32,9 +32,8 @@ export default EndpointFactory
           type: 'plain',
           status: 301,
 
-          headers: {
-            Location: `..${root}/`,
-          },
+          headers: { Location: `..${root}/` },
+          raw: {},
         },
       });
     }
@@ -44,9 +43,8 @@ export default EndpointFactory
         type: 'plain',
         status: 200,
 
-        headers: {
-          'Content-Type': 'text/html;charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/html;charset=utf-8' },
+        raw: {},
       };
 
       context.response.writeHead(outgoing.status, outgoing.headers);
@@ -57,16 +55,15 @@ export default EndpointFactory
 
     const stats = await fs.stat(path.join(statics.public.dir, parsed.dir, parsed.base)).catch(() => null);
     if (!stats) {
-      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {} } });
+      return context.assign({ outgoing: { type: 'plain', status: 404, headers: {}, raw: {} } });
     }
 
     const outgoing: IRequestContextOutgoing = {
       type: 'plain',
       status: 200,
 
-      headers: {
-        'Content-Type': mime.contentType(parsed.ext) || '',
-      },
+      headers: { 'Content-Type': mime.contentType(parsed.ext) || '' },
+      raw: {},
     };
 
     context.response.writeHead(outgoing.status, outgoing.headers);

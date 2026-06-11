@@ -32,6 +32,6 @@ export class SystemSocketIoExecutor extends Executor<SystemSocketIoRequestContex
   }
 
   public async reply(): Promise<IRequestContextOutgoing> {
-    return { type: 'plain', status: 200, headers: {} };
+    return { type: 'plain', status: 200, headers: {}, raw: {} };
   }
 }

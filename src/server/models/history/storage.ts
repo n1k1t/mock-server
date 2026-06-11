@@ -1,7 +1,4 @@
-import { Provider, RequestContextSnapshot } from '../../models';
-import { Expectation } from '../../../expectations';
 import { History } from './model';
-
 import config from '../../../config';
 
 export class HistoryStorage extends Map<string, History> {

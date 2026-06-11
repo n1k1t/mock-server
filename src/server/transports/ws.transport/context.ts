@@ -57,15 +57,15 @@ export class WsRequestContext extends RequestContext<{
     logger.info(`Incoming WS connection [${this.incoming.path}]`);
 
     this.streams.incoming.subscribe({
-        error: () => null,
-        next: (message) =>
-          logger.info(`Incoming WS connection [${this.incoming.path}] got message of [${message.dataRaw.length}] bytes`),
-      });
+      error: () => null,
+      next: (message) =>
+        logger.info(`Incoming WS connection [${this.incoming.path}] got message of [${message.size()}] bytes`),
+    });
 
     this.streams.outgoing.subscribe({
       error: () => null,
       next: (message) =>
-        logger.info(`Incoming WS connection [${this.incoming.path}] sent message with [${message.dataRaw.length}] bytes`),
+        logger.info(`Incoming WS connection [${this.incoming.path}] sent message with [${message.size()}] bytes`),
     });
 
     return super.handle();

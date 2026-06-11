@@ -8,6 +8,7 @@ class TestRequestContext extends RequestContext {
 
     headers: {},
     query: {},
+    raw: {},
   };
 
   public snapshot = this.compileSnapshot();

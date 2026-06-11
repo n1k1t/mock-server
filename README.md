@@ -186,12 +186,16 @@ When using `$exec`, the second argument provides a context with useful utilities
     - `query`: Object containing query parameters.
     - `headers`: Object containing request headers.
     - `data`: Parsed JSON/XML request body.
+    - `stream`: Observable for incoming WebSocket messages.
+    - `raw`: Raw details of request.
+      - `data`: Buffer of request data.
   - `outgoing`: Output data (target for manipulation).
     - `status`: HTTP status code.
     - `headers`: Response headers.
     - `data`: Response body object (serialized to JSON/XML).
-    - `dataRaw`: Buffer for binary data.
-    - `stream`: Observable for WebSocket messages.
+    - `stream`: Observable for outgoing WebSocket messages.
+    - `raw`: Raw details of response.
+      - `data`: Buffer of response data.
   - `storage`: Interface to manage [Containers](#container-methods).
   - `container`: The currently bound container (if any).
   - `cache`: Configuration for forwarding cache.
@@ -311,10 +315,32 @@ await server.client.createExpectation(({ $ }) => ({
     request: $.has('incoming.path', { $value: '/api/download' }),
     response: $.and([
       $.set('outgoing.headers', '$path', 'content-type', { $value: 'application/pdf' }),
-      $.set('outgoing.dataRaw', {
+      $.set('outgoing.data', {
         $exec: async () => await readFile('./path/to/document.pdf')
       }),
     ]),
+  },
+}));
+```
+
+You can also process incoming raw data using `incoming.raw.data` (e.g., for decoding buffers with specific encodings). Note that `raw.data` is optional and should be checked:
+
+```ts
+import { TextDecoder } from 'util';
+
+await server.client.createExpectation(({ $ }) => ({
+  schema: {
+    request: $.exec(({ context }) => {
+      const rawData = context.incoming.raw.data;
+      if (!rawData) {
+        return false;
+      }
+
+      // Decode buffer using specific encoding (e.g., windows-1251)
+      const decoded = new TextDecoder('windows-1251').decode(rawData);
+      return decoded.includes('привет');
+    }),
+    response: $.set('outgoing.data', { $value: { status: 'decoded_successfully' } }),
   },
 }));
 ```

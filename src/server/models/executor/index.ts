@@ -8,17 +8,17 @@ import { from } from 'rxjs';
 import type { Expectation, IExpectationSchemaForward } from '../../../expectations';
 
 import { parsePayload, serializePayload } from '../../utils';
-import { cast, parseJsonSafe, wait } from '../../../utils';
+import { parseJsonSafe, wait } from '../../../utils';
 import { ExecutorManualError } from './errors';
 import { RequestMessage } from '../message';
 import { Logger } from '../../../logger';
 import {
   RequestContext,
   definePayloadType,
-  IRequestContextCache,
   IRequestContextOutgoing,
   IRequestContextIncoming,
   IRequestContextForwarded,
+  RequestContextSnapshot,
 } from '../context';
 
 export * from './errors';
@@ -205,51 +205,54 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
         })
         : null;
 
-      const cahce = unzipped ? parseJsonSafe<IRequestContextCache>(unzipped.toString()) : null;
+      const cache = unzipped
+        ? parseJsonSafe<RequestContextSnapshot['TCache']>(unzipped.toString())
+        : null;
 
-      if (cahce?.status === 'OK') {
+      if (cache?.status === 'OK') {
         logger.info(`Got cache [${snapshot.cache.key}]`);
 
-        const messages = (cahce.result.messages ?? []).map((message) => RequestMessage.build(message));
-        const dataRaw = cahce.result.outgoing.dataRaw
-          ? Buffer.from(cahce.result.outgoing.dataRaw, 'base64')
-          : undefined;
+        const messages = cache.result.messages.map((nested) => {
+          const message = RequestMessage.build(nested);
 
-        cahce.result.outgoing.stream = from(messages);
-        snapshot.cache.hasRead = true;
+          if (nested.raw.data) {
+            message.raw.data = Buffer.from(nested.raw.data, 'base64');
+          }
 
-        const outgoing = dataRaw
-          ? parsePayload(dataRaw, cahce.result.outgoing.type)
-          : null;
+          return message;
+        });
 
-        return {
+        const forwarded: IRequestContextForwarded = {
           schema,
           messages,
 
           incoming: snapshot.incoming,
+          outgoing: Object.assign(_.omit(cache.result.outgoing, ['raw']), {
+            stream: from(messages),
 
-          outgoing: Object.assign(_.omit(cahce.result.outgoing, ['dataRaw']), {
-            dataRaw,
-
-            type: outgoing?.type ?? 'plain',
-            data: outgoing?.data ?? undefined,
+            raw: {
+              ...(cache.result.outgoing.raw.data && {
+                data: Buffer.from(cache.result.outgoing.raw.data, 'base64'),
+              }),
+            },
           }),
         };
+
+        snapshot.cache.hasRead = true;
+        return forwarded;
       }
     }
 
-    const type = definePayloadType(snapshot.incoming.headers) ?? (
-      snapshot.incoming.type === 'plain'
-        ? typeof snapshot.incoming.data === 'object' ? 'json' : 'plain'
-        : snapshot.incoming.type
-    );
+    const parsed = parsePayload(snapshot.incoming.data);
+    const raw = snapshot.incoming.data instanceof Buffer ? snapshot.incoming.data : null;
 
-    const dataRaw = snapshot.incoming.data === undefined
-      ? snapshot.incoming.dataRaw
-      : serializePayload(type, snapshot.incoming.data);
+    snapshot.incoming.type = definePayloadType(snapshot.incoming.headers) ?? parsed.type;
+    snapshot.incoming.data = parsed.data;
+
+    snapshot.incoming.raw.data = raw ?? serializePayload(snapshot.incoming.type, snapshot.incoming.data);
 
     const forwarded = await this
-      .forward(context, Object.assign(snapshot.incoming, { type, dataRaw }), schema)
+      .forward(context, snapshot.incoming, schema)
       .catch((error) => {
         logger.error('Got error while execution [forward] method', error?.stack ?? error);
         return null;
@@ -277,44 +280,30 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? await context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
-    const type = definePayloadType(snapshot.outgoing.headers) ?? (
-      snapshot.outgoing.type === 'plain'
-        ? typeof snapshot.outgoing.data === 'object' ? 'json' : 'plain'
-        : snapshot.outgoing.type
-    );
+    const parsed = parsePayload(snapshot.outgoing.data);
+    const raw = snapshot.outgoing.data instanceof Buffer ? snapshot.outgoing.data : null;
 
-    const dataRaw = snapshot.outgoing.data === undefined
-      ? snapshot.outgoing.dataRaw
-      : serializePayload(type, snapshot.outgoing.data);
+    snapshot.outgoing.type = definePayloadType(snapshot.outgoing.headers) ?? parsed.type;
+    snapshot.outgoing.data = parsed.data;
+
+    snapshot.outgoing.raw.data = raw ?? serializePayload(snapshot.outgoing.type, snapshot.outgoing.data);
 
     const outgoing = await this
-      .reply(context, Object.assign(snapshot.outgoing, { type, dataRaw }))
+      .reply(context, snapshot.outgoing)
       .catch((error) => {
         logger.error('Got error while execution [reply] method', error?.stack ?? error);
         return null;
       });
 
-    const shouldBeCached = snapshot.cache.isEnabled
-      && snapshot.forwarded?.outgoing
-      && !snapshot.cache.hasRead
-      && snapshot.cache.ttl
-      && typeof snapshot.cache.key === 'string';
+    const shouldBeCached =
+      snapshot.cache.isEnabled &&
+      snapshot.forwarded?.outgoing &&
+      snapshot.cache.ttl &&
+      !snapshot.cache.hasRead &&
+      typeof snapshot.cache.key === 'string';
 
     if (shouldBeCached) {
-      const serialized = serializePayload('json', cast<IRequestContextCache>({
-        messages: (snapshot.forwarded!.messages ?? [])
-          .filter((message) => message.direction === 'outgoing')
-          .map((message) => message.toPlain()),
-
-        outgoing: Object.assign(_.omit(snapshot.forwarded!.outgoing, ['data']), {
-          dataRaw: snapshot.forwarded!.outgoing?.dataRaw?.toString('base64'),
-        }),
-      }));
-
-      if (!serialized) {
-        return outgoing;
-      }
-
+      const serialized = serializePayload('json', snapshot.toCache());
       const zipped = await gzip(serialized).catch((error) => {
         logger.error('Got error while zip payload', error?.stack ?? error);
         return null;

@@ -39,7 +39,6 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
   const { pathname, query: rawQuery } = parseUrl(request.url ?? '');
 
   const query = parseQuerySearch(rawQuery ?? '');
-
   const raw = await new Promise<Buffer | null>((resolve, reject) =>
     bodyParser.raw({ limit: '10mb', type: '*/*' })(request, new ServerResponse(request), (error) =>
       error
@@ -61,8 +60,10 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
     path: pathname ?? '/',
 
     headers: formatHeaders(request.headers),
-
     data: parsed?.data ?? undefined,
-    dataRaw: raw ?? undefined,
+
+    raw: {
+      data: raw ?? undefined,
+    }
   };
 }

@@ -17,6 +17,7 @@ export class SystemSocketIoRequestContext<TOutgoing = unknown> extends RequestCo
 
     headers: {},
     query: {},
+    raw: {},
   };
 
   public reply = SystemSocketIoReply.build<TOutgoing>(this);

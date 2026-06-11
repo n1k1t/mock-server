@@ -48,12 +48,15 @@ When using `$exec`, the context object (usually the second argument) provides po
     - `query`: Object containing query parameters.
     - `headers`: Object containing request headers.
     - `data`: Parsed JSON/XML request body.
+    - `raw`: Raw details of request.
+      - `data`: Buffer of request data.
   - `outgoing`: Output data (target for manipulation).
     - `status`: HTTP status code.
     - `headers`: Response headers.
     - `data`: Response body object (serialized to JSON/XML).
-    - `dataRaw`: Buffer for binary data.
     - `stream`: Observable for WebSocket messages.
+    - `raw`: Raw details of response.
+      - `data`: Buffer of response data.
   - `storage`: Interface to manage [Containers](#container-methods).
   - `container`: The currently bound container (if any).
   - `cache`: Configuration for forwarding cache.
@@ -143,14 +146,28 @@ await server.client.createExpectation(({ $ }) => ({
 
 ```ts
 import { readFile } from 'fs/promises';
+import { TextDecoder } from 'util';
 
 await server.client.createExpectation(({ $ }) => ({
   schema: {
     request: $.has('incoming.path', { $value: '/api/download' }),
     response: $.and([
       $.set('outgoing.headers', '$path', 'content-type', { $value: 'application/pdf' }),
-      $.set('outgoing.dataRaw', { $exec: () => readFile('./document.pdf') }),
+      $.set('outgoing.data', { $exec: () => readFile('./document.pdf') }),
     ]),
+  },
+}));
+
+// Processing incoming raw data with specific encoding
+await server.client.createExpectation(({ $ }) => ({
+  schema: {
+    request: $.exec(({ context }) => {
+      const rawData = context.incoming.raw.data;
+      if (!rawData) return false;
+      const decoded = new TextDecoder('windows-1251').decode(rawData);
+      return decoded.includes('привет');
+    }),
+    response: $.set('outgoing.data', { $value: { status: 'decoded' } }),
   },
 }));
 ```

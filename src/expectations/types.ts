@@ -58,13 +58,11 @@ export const LExpectationOperatorLocation = <const>[
   'incoming.path',
   'incoming.method',
   'incoming.data',
-  'incoming.dataRaw',
   'incoming.query',
   'incoming.headers',
   'incoming.stream',
 
   'outgoing.data',
-  'outgoing.dataRaw',
   'outgoing.status',
   'outgoing.headers',
   'outgoing.stream',

@@ -16,12 +16,14 @@ export interface IRequestContextIncoming {
   query: Record<string, any>;
 
   data?: unknown;
-  dataRaw?: Buffer;
-
   stream?: Observable<RequestMessage>;
 
   delay?: number;
   error?: 'ECONNABORTED';
+
+  raw: {
+    data?: Buffer;
+  };
 }
 
 export interface IRequestContextOutgoing {
@@ -31,9 +33,11 @@ export interface IRequestContextOutgoing {
   status: number;
 
   data?: unknown;
-  dataRaw?: Buffer;
-
   stream?: Observable<RequestMessage>;
+
+  raw: {
+    data?: Buffer;
+  };
 }
 
 export interface IRequestContextError {
@@ -48,11 +52,6 @@ export interface IRequestContextForwarded {
 
   outgoing?: IRequestContextOutgoing;
   messages?: RequestMessage[];
-}
-
-export interface IRequestContextCache {
-  outgoing: Omit<IRequestContextOutgoing, 'dataRaw'> & { dataRaw?: string };
-  messages?: RequestMessage['TPlain'][];
 }
 
 export interface IRequestContextCacheConfiguration {

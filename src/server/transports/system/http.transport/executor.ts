@@ -57,12 +57,17 @@ export class SystemHttpExecutor extends Executor<SystemHttpRequestContext> {
       type: 'plain',
       status: 404,
 
-      headers: {},
-      data: 'Internal route was not found',
+      headers: {
+        'content-type': 'text/plain',
+      },
+
+      raw: {
+        data: Buffer.from('Internal route was not found'),
+      },
     };
 
     context.response.writeHead(result.status, result.headers);
-    context.response.write(result.dataRaw ?? '');
+    context.response.write(result.raw.data ?? Buffer.from(''));
     context.response.end();
 
     return result;

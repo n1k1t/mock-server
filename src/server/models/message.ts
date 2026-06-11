@@ -10,8 +10,11 @@ export type TRequestMessageType = Extract<TRequestPayloadType, 'json' | 'plain'>
 const clone = rfdc();
 
 export class RequestMessage<TPayload = any> {
-  public TPlain!: Pick<RequestMessage<TPayload>, 'type' | 'direction' | 'timestamp' | 'data'> & {
-    dataRaw: string;
+  public TPlain!: Pick<RequestMessage<TPayload>, 'type' | 'direction' | 'timestamp' | 'data'>;
+  public TCache!: Pick<RequestMessage<TPayload>, 'type' | 'direction' | 'timestamp' | 'data'> & {
+    raw: {
+      data?: string;
+    };
   };
 
   public direction: TRequestMessageDirection = this.provided.direction;
@@ -20,9 +23,9 @@ export class RequestMessage<TPayload = any> {
   public timestamp: number = this.provided.timestamp ?? Date.now();
 
   public data: TPayload = this.provided.data;
-  public dataRaw: Buffer = this.provided.dataRaw;
+  public raw: { data?: Buffer } = this.provided.raw;
 
-  constructor(protected provided: Pick<RequestMessage<TPayload>, 'direction' | 'type' | 'data' | 'dataRaw'> & {
+  constructor(protected provided: Pick<RequestMessage<TPayload>, 'direction' | 'type' | 'data' | 'raw'> & {
     timestamp?: number;
   }) {}
 
@@ -34,8 +37,8 @@ export class RequestMessage<TPayload = any> {
   }
 
   public serialize(): Buffer {
-    if (this.dataRaw !== this.provided.dataRaw) {
-      return this.dataRaw;
+    if (this.data instanceof Buffer) {
+      return this.data;
     }
     if (_.isObject(this.data)) {
       return Buffer.from(JSON.stringify(this.data));
@@ -44,7 +47,14 @@ export class RequestMessage<TPayload = any> {
       return Buffer.from(String(this.data));
     }
 
-    return this.dataRaw;
+    return this.raw.data ?? Buffer.from('');
+  }
+
+  /** Returns bytes length of data */
+  public size(): number {
+    return this.direction === 'incoming'
+      ? this.raw.data?.length ?? this.serialize().length
+      : this.serialize().length;
   }
 
   /** Clones this instance */
@@ -59,7 +69,7 @@ export class RequestMessage<TPayload = any> {
       timestamp: this.timestamp,
 
       data: (options?.deep && _.isObject(this.data)) ? clone(this.data) : this.data,
-      dataRaw: this.dataRaw,
+      raw: this.raw,
     });
   }
 
@@ -74,9 +84,21 @@ export class RequestMessage<TPayload = any> {
       type: this.type,
 
       timestamp: this.timestamp,
-
       data: this.data,
-      dataRaw: this.dataRaw.toString(),
+    };
+  }
+
+  public toCache(): RequestMessage<TPayload>['TCache'] {
+    return {
+      direction: this.direction,
+      type: this.type,
+
+      timestamp: this.timestamp,
+      data: this.data,
+
+      raw: {
+        data: this.raw.data?.toString('base64'),
+      },
     };
   }
 
@@ -88,23 +110,22 @@ export class RequestMessage<TPayload = any> {
     predicate?: unknown
   ): RequestMessage<TPayload> {
     if (_.isObject(directionOrPlain)) {
-      return new RequestMessage(Object.assign(directionOrPlain, {
-        dataRaw: Buffer.from(directionOrPlain.dataRaw),
-      }));
+      return new RequestMessage(
+        Object.assign(directionOrPlain, { raw: {} })
+      );
     }
 
-    const raw = predicate instanceof Buffer
-      ? predicate
-      : Buffer.from(_.isObject(predicate) ? JSON.stringify(predicate) : String(predicate));
-
-    const parsed = parsePayload(raw);
+    const parsed = parsePayload(predicate);
 
     return new RequestMessage({
+      direction: directionOrPlain,
+
       type: <TRequestMessageType>(parsed?.type ?? 'plain'),
       data: <TPayload>(parsed?.data ?? undefined),
 
-      direction: directionOrPlain,
-      dataRaw: raw,
+      raw: {
+        data: predicate instanceof Buffer ? predicate : undefined,
+      },
     });
   }
 }

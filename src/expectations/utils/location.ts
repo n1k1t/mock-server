@@ -52,13 +52,6 @@ export const extractContextByLocation = (
       value: context.incoming?.data,
     };
 
-    case 'incoming.dataRaw': return {
-      key: 'incoming.dataRaw',
-      type: 'buffer',
-      parent: context,
-      value: context.incoming?.dataRaw,
-    };
-
     case 'query':
     case 'incoming.query': return {
       key: 'incoming.query',
@@ -86,13 +79,6 @@ export const extractContextByLocation = (
       type: 'object',
       parent: context,
       value: context.outgoing?.data,
-    };
-
-    case 'outgoing.dataRaw': return {
-      key: 'outgoing.dataRaw',
-      type: 'buffer',
-      parent: context,
-      value: context.outgoing?.dataRaw,
     };
 
     case 'outgoing.headers': return {

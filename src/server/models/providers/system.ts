@@ -59,17 +59,8 @@ export class SystemHistoryStorage extends HistoryStorage {
           state: history.snapshot.state,
           error: history.snapshot.error,
 
-          incoming: Object.assign(history.snapshot.incoming, {
-            dataRaw: history.snapshot.incoming.dataRaw
-              ? Buffer.from(history.snapshot.incoming.dataRaw)
-              : undefined,
-          }),
-
-          outgoing: Object.assign(history.snapshot.outgoing, {
-            dataRaw: history.snapshot.outgoing.dataRaw
-              ? Buffer.from(history.snapshot.outgoing.dataRaw)
-              : undefined,
-          }),
+          incoming: Object.assign(history.snapshot.incoming, { raw: {} }),
+          outgoing: Object.assign(history.snapshot.outgoing, { raw: {} }),
 
           messages: history.snapshot.messages.map((message) => RequestMessage.build(message)),
 
@@ -81,18 +72,10 @@ export class SystemHistoryStorage extends HistoryStorage {
               schema: history.snapshot.forwarded.schema,
               messages: history.snapshot.forwarded.messages?.map((message) => RequestMessage.build(message)),
 
-              incoming: Object.assign(history.snapshot.forwarded.incoming, {
-                dataRaw: history.snapshot.forwarded.incoming.dataRaw
-                  ? Buffer.from(history.snapshot.forwarded.incoming.dataRaw)
-                  : undefined,
-              }),
+              incoming: Object.assign(history.snapshot.forwarded.incoming, { raw: {} }),
 
               ...(history.snapshot.forwarded.outgoing && {
-                outgoing: Object.assign(history.snapshot.forwarded.outgoing, {
-                  dataRaw: history.snapshot.forwarded.outgoing.dataRaw
-                    ? Buffer.from(history.snapshot.forwarded.outgoing.dataRaw)
-                    : undefined,
-                }),
+                outgoing: Object.assign(history.snapshot.forwarded.outgoing, { raw: {} }),
               }),
             },
           }),

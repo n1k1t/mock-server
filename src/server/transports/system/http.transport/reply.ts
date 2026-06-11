@@ -1,10 +1,12 @@
+import { IncomingHttpHeaders } from 'http';
+
 import type { SystemHttpRequestContext } from './context';
 
 import { IRequestContextOutgoing, Reply } from '../../../models';
 import { buildEndpointResponse } from '../utils';
 
-const headers = {
-  'Content-type': 'application/json',
+const headers: IncomingHttpHeaders = {
+  'content-type': 'application/json',
 };
 
 export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpRequestContext, TOutgoing> {
@@ -15,11 +17,15 @@ export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpReques
       type: 'plain',
       status: 200,
 
-      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('OK', payload))),
+      raw: {
+        data: Buffer.from(
+          JSON.stringify(buildEndpointResponse('OK', payload))
+        ),
+      },
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers);
-    this.context.response.write(outgoing.dataRaw);
+    this.context.response.write(outgoing.raw.data ?? Buffer.from(''));
     this.context.response.end();
 
     this.context.assign({ outgoing }).complete();
@@ -32,11 +38,15 @@ export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpReques
       type: 'plain',
       status: 500,
 
-      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('INTERNAL_ERROR', { message }))),
+      raw: {
+        data: Buffer.from(
+          JSON.stringify(buildEndpointResponse('INTERNAL_ERROR', { message }))
+        ),
+      },
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)
-    this.context.response.write(outgoing.dataRaw);
+    this.context.response.write(outgoing.raw.data ?? Buffer.from(''));
     this.context.response.end();
 
     this.context.assign({ outgoing }).complete();
@@ -49,11 +59,15 @@ export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpReques
       type: 'plain',
       status: 400,
 
-      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('VALIDATION_ERROR', { reasons }))),
+      raw: {
+        data: Buffer.from(
+          JSON.stringify(buildEndpointResponse('VALIDATION_ERROR', { reasons }))
+        ),
+      },
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)
-    this.context.response.write(outgoing.dataRaw);
+    this.context.response.write(outgoing.raw.data ?? Buffer.from(''));
     this.context.response.end();
 
     this.context.assign({ outgoing }).complete();
@@ -66,11 +80,15 @@ export class SystemHttpReply<TOutgoing = unknown> extends Reply<SystemHttpReques
       type: 'plain',
       status: 404,
 
-      dataRaw: Buffer.from(JSON.stringify(buildEndpointResponse('NOT_FOUND', null))),
+      raw: {
+        data: Buffer.from(
+          JSON.stringify(buildEndpointResponse('NOT_FOUND', null))
+        ),
+      },
     };
 
     this.context.response.writeHead(outgoing.status, outgoing.headers)
-    this.context.response.write(outgoing.dataRaw);
+    this.context.response.write(outgoing.raw.data ?? Buffer.from(''));
     this.context.response.end();
 
     this.context.assign({ outgoing }).complete();

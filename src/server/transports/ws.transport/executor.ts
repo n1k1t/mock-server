@@ -50,7 +50,9 @@ export class WsExecutor extends Executor<WsRequestContext> {
           status: 1011,
 
           stream: from([RequestMessage.build('outgoing', 'Expectation was not found')]),
+
           headers: {},
+          raw: {},
         }),
       });
 
@@ -70,7 +72,7 @@ export class WsExecutor extends Executor<WsRequestContext> {
       .catch((error) => {
         context.snapshot.assign({
           error: { code: 'UNKNOWN', message: error?.message ?? 'Unknown' },
-          outgoing: { type: 'plain', status: 1011, headers: {} },
+          outgoing: { type: 'plain', status: 1011, headers: {}, raw: {} },
         });
 
         logger.error('Got error while execution [compileForwardingConfiguration] method', error?.stack ?? error);
@@ -92,6 +94,8 @@ export class WsExecutor extends Executor<WsRequestContext> {
 
         headers: await context.additional.ws.headers(),
         stream: context.additional.ws.observable,
+
+        raw: {},
       },
     };
   }
