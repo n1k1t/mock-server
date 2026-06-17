@@ -5,15 +5,3 @@ export interface IContainerConfiguration<T extends object> {
   /** Seconds */
   ttl?: number;
 }
-
-export interface IContainersStorageDump {
-  payloads: object[];
-
-  containers: {
-    key: string;
-    group: string;
-
-    ttl: number;
-    payload: number;
-  }[];
-}

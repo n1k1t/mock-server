@@ -50,9 +50,9 @@ export class ProvidersStorage<TContext extends IServerContext = any> extends Map
     return this;
   }
 
-  public collectExpired(): Provider[] {
+  public expired(): Provider[] {
     const timestamp = Date.now();
-    return [...this.values()].filter((provider) => provider.expiresAt < timestamp);
+    return [...this.values()].filter((provider) => provider.checkIsExpired(timestamp));
   }
 
   static build<TContext extends IServerContext>(server: MockServer): ProvidersStorage<TContext> {

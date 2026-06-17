@@ -15,20 +15,20 @@ export default EndpointFactory
     const backup: ICacheBackup = { redis: [] };
 
     if (server.databases.redis) {
-      const converter = RxConverter.build(server.services.analytics.iterateRedisKeys());
+      const converter = RxConverter.build(
+        server.services.redis.iterate('*', {
+          trim: true,
+        })
+      );
 
       for await (const key of converter.iterate()) {
-        const unprefixed = server.databases.redis!.options.keyPrefix
-          ? key.replace(server.databases.redis!.options.keyPrefix, '')
-          : key;
-
-        const value = await server.databases.redis!.get(unprefixed).catch((error) => {
+        const value = await server.databases.redis!.get(key).catch((error) => {
           logger.error(`Got error while fetching redis value for key [${key}]`, error?.stack ?? error);
           return null;
         });
 
         value
-          ? backup.redis.push([unprefixed, value])
+          ? backup.redis.push([key, value])
           : logger.warn(`Got [${value}] for key [${key}]`);
       }
     }

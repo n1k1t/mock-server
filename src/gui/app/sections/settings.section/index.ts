@@ -13,6 +13,9 @@ const templates = {
   cacheDeletion: hbs.compile(require('./templates/cache-deletion.hbs')),
   cacheBackup: hbs.compile(require('./templates/cache-backup.hbs')),
 
+  persistenceContainersDeletion: hbs.compile(require('./templates/persistence-containers-deletion.hbs')),
+  persistenceHistoryDeletion: hbs.compile(require('./templates/persistence-history-deletion.hbs')),
+
   section: hbs.compile(require('./templates/section.hbs')),
   stats: hbs.compile(require('./templates/stats.hbs')),
 };
@@ -76,6 +79,36 @@ const panels = {
       .replace(templates.cacheRestoration({})),
   },
 
+  persistence: {
+    containers: PanelComponent
+      .build({
+        title: {
+          text: 'Containers',
+          icon: 'fas fa-database',
+        },
+
+        class: 'persistence',
+
+        height: 'XS',
+        width: 'XS',
+      })
+      .replace(templates.persistenceContainersDeletion({})),
+
+    history: PanelComponent
+      .build({
+        title: {
+          text: 'Requests history',
+          icon: 'fas fa-database',
+        },
+
+        class: 'persistence',
+
+        height: 'XS',
+        width: 'XS',
+      })
+      .replace(templates.persistenceHistoryDeletion({})),
+  },
+
   visual: {
     pathSize: CheckboxAreaComponent
       .build<TSettingsVisualPathSize>({
@@ -127,6 +160,10 @@ export default Section
     section.content.append(panels.cache.restoration);
     section.content.append(panels.cache.deletion);
 
+    section.content.append(SeparatorComponent.build('Persistence'));
+    section.content.append(panels.persistence.containers);
+    section.content.append(panels.persistence.history);
+
     section.content.append(SeparatorComponent.build('Visual'));
     section.content.append(panels.visual.pathSize);
 
@@ -166,6 +203,16 @@ export default Section
 
       await new Promise((resolve) => stream.once('finish', resolve));
       context.shared.popups.push('Restored');
+    });
+
+    Button.build(panels.persistence.containers.element.querySelector('button#delete')).handle(async () => {
+      const { data } = await context.services.io.exec('persisted:delete', { tags: ['containers'] });
+      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
+    });
+
+    Button.build(panels.persistence.history.element.querySelector('button#delete')).handle(async () => {
+      const { data } = await context.services.io.exec('persisted:delete', { tags: ['history'] });
+      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
     });
 
     panels.visual.pathSize.on('enable', (button) => context.services.settings.assign('settings:visual:path-size', button.name));

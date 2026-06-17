@@ -37,6 +37,9 @@ export default Config.build(<const>{
     persistence: {
       isEnabled: cast<boolean>(false),
       key: cast<string>(`${databaseSystemKeyPrefix}:history`),
+
+      /** Seconds (default `1 week`) */
+      ttl: cast<number>(7 * 24 * 60 * 60),
     },
   },
 

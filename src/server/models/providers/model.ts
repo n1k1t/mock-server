@@ -15,21 +15,26 @@ export class Provider<TContext extends IServerContext = IServerContextDefaults> 
   public client = OnsiteClient.build<TContext>(this);
   public group: string = this.provided.group;
 
-  /** Seconds */
-  public ttl?: number = this.provided.ttl;
-  public expiresAt: number = this.ttl ? this.timestamp + this.ttl * 1000 : Infinity;
-
   public storages = {
     expectations: new ExpectationsStorage({ group: this.group }),
     containers: new ContainersStorage({ group: this.group }),
     history: new HistoryStorage({ group: this.group, limit: this.provided.history?.limit }),
   };
 
+  /** Seconds */
+  public ttl?: number = this.provided.ttl;
+
   constructor(protected provided: Pick<Provider, 'group' | 'ttl'> & {
     history?: {
       limit?: number;
     };
   }) {}
+
+  public checkIsExpired(timestamp: number = Date.now()): boolean {
+    return this.ttl
+      ? (this.timestamp + this.ttl * 1000) < timestamp
+      : false;
+  }
 
   public assign(payload: Partial<Pick<Provider, 'server' | 'client' | 'storages'>>): this {
     return Object.assign(this, payload);

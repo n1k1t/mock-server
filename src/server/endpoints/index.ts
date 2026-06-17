@@ -20,6 +20,7 @@ export { default as cacheRestore } from './cache.restore.endpoint';
 export { default as cacheBackup } from './cache.backup.endpoint';
 export { default as cacheDelete } from './cache.delete.endpoint';
 
+export { default as persistedDelete } from './persisted.delete.endpoint';
 export { default as configGet } from './config.get.endpoint';
 
 export { default as metrics } from './metrics.endpoint';

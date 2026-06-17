@@ -1,4 +1,13 @@
 section#settings {
+  button {
+    margin-top: 0;
+
+    &#delete {
+      background-color: $color-red;
+      color: $color-dark;
+    }
+  }
+
   div.stats div.content {
     flex-direction: column;
 
@@ -15,15 +24,6 @@ section#settings {
   }
 
   div.cache div.content {
-    button {
-      margin-top: 0;
-    }
-
-    button#delete {
-      background-color: $color-red;
-      color: $color-dark;
-    }
-
     button#backup {
       background-color: $color-green;
       color: $color-dark;

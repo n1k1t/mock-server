@@ -9,35 +9,42 @@ const clone = rfdc();
 
 export class Container<TPayload extends object = object> {
   public TPlain!: Pick<Container<TPayload>, 'key' | 'payload' | 'ttl'>;
+  public TBackup!: Pick<Container<TPayload>, 'key' | 'group' | 'payload' | 'ttl' | 'timestamp'> & {
+    aliases: string[];
+  };
 
-  public key = this.provided.key;
-  public group = this.provided.group;
+  public key: string = this.provided.key;
+  public group: string = this.provided.group;
 
-  public ttl = this.provided.ttl;
-  public timestamp = this.provided.timestamp;
+  public aliases: Set<string> = this.provided.aliases instanceof Set
+    ? this.provided.aliases
+    : new Set(this.provided.aliases ?? []);
 
-  public expiresAt = this.provided.timestamp + this.ttl * 1000;
-  public payload = this.provided.payload;
+  /** Seconds */
+  public ttl: number = this.provided.ttl;
+  public payload: TPayload = this.provided.payload;
+  public timestamp: number = this.provided.timestamp;
 
-  private hooks = this.provided.hooks;
+  protected hooks?: {
+    bind?: TFunction<unknown, [string, Container<any>]>;
+    unbind?: TFunction<unknown, [string, Container<any>]>;
+  } = this.provided.hooks;
 
-  constructor(
-    private provided: {
-      key: string;
-      group: string;
+  constructor(protected provided: Pick<Container<TPayload>, 'key' | 'group' | 'payload' | 'ttl' | 'timestamp'> & {
+    aliases?: Container<TPayload>['aliases'] | string[];
+    hooks?: Container<TPayload>['hooks'];
+  }) {}
 
-      payload: TPayload;
+  /** Updates internal timestamp to increase TTL */
+  public renew(): this {
+    this.timestamp = Date.now();
+    return this;
+  }
 
-      /** Seconds */
-      ttl: number;
-      timestamp: number;
-
-      hooks?: {
-        bind?: TFunction<unknown, [string, Container<any>]>;
-        unbind?: TFunction<unknown, [Container<any>]>;
-      };
-    }
-  ) {}
+  /** Checks expiration by TTL */
+  public checkIsExpired(timestamp: number = Date.now()): boolean {
+    return (this.provided.timestamp + this.ttl * 1000) < timestamp;
+  }
 
   public assign(predicate: Partial<TPayload> | TFunction<Partial<TPayload>, [TPayload]>) {
     const payload = Object.assign(
@@ -58,19 +65,27 @@ export class Container<TPayload extends object = object> {
     return Object.assign(this, { payload });
   }
 
-  /** Binds this container to another key */
+  /** Binds this container to another alias key */
   public bind(key: string | object): this {
-    this.hooks?.bind?.(compileContainerKey(key), this);
+    const compiled = compileContainerKey(key);
+
+    this.aliases.add(compiled);
+    this.hooks?.bind?.(compiled, this);
+
     return this;
   }
 
-  /** Unbinds this container from nested key */
-  public unbind(): this {
-    this.hooks?.unbind?.(this);
+  /** Unbinds this container by provided key */
+  public unbind(key?: string | object): this {
+    const compiled = key ? compileContainerKey(key) : this.key;
+
+    this.aliases.delete(compiled);
+    this.hooks?.unbind?.(compiled, this);
+
     return this;
   }
 
-  /** Returns initial configuration */
+  /** Setups hooks to work with storage */
   public configure(payload: Partial<Pick<Container<TPayload>['provided'], 'hooks'>>): this {
     if (payload.hooks) {
       this.hooks = payload.hooks;
@@ -84,7 +99,25 @@ export class Container<TPayload extends object = object> {
   }
 
   public toPlain(): Container<TPayload>['TPlain'] {
-    return _.pick(this, ['key', 'payload', 'ttl']);
+    return {
+      key: this.key,
+      ttl: this.ttl,
+
+      payload: this.payload,
+    };
+  }
+
+  public toBackup(): Container<TPayload>['TBackup'] {
+    return {
+      group: this.group,
+      key: this.key,
+      ttl: this.ttl,
+
+      timestamp: this.timestamp,
+      payload: this.payload,
+
+      aliases: [...this.aliases.values()],
+    };
   }
 
   static build<T extends object>(provided: Container<T>['provided']) {

@@ -26,14 +26,14 @@ export default EndpointFactory
     };
 
     if (result.redis) {
-      const converter = RxConverter.build(server.services.analytics.iterateRedisKeys(incoming.data?.prefix));
+      const converter = RxConverter.build(
+        server.services.redis.iterate(incoming.data?.prefix ?? '*', {
+          trim: true,
+        })
+      );
 
       for await (const key of converter.iterate()) {
-        const unprefixed = server.databases.redis!.options.keyPrefix
-          ? key.replace(server.databases.redis!.options.keyPrefix, '')
-          : key;
-
-        const deleted = await server.databases.redis!.del(unprefixed).catch((error) => {
+        const deleted = await server.databases.redis!.del(key).catch((error) => {
           logger.error(`Got error while deletion redis value for key [${key}]`, error?.stack ?? error);
           return null;
         });

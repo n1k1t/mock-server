@@ -1,26 +1,27 @@
-import { IContainerConfiguration, IContainersStorageDump } from './types';
+import { IContainerConfiguration } from './types';
 import { compileContainerKey } from './utils';
 import { Container } from './model';
 
 export class ContainersStorage<TPayload extends object = object> {
-  protected nested = new Map<string, Container<TPayload>>();
+  protected entities = new Map<string, Container<TPayload>>();
+  protected aliases = new Map<string, Container<TPayload>>();
 
   constructor(protected configuration: { group: string }) {}
 
   public get size(): number {
-    return this.nested.size;
+    return this.entities.size;
   }
 
   public entries(): MapIterator<[string, Container<TPayload>]> {
-    return this.nested.entries();
+    return this.entities.entries();
   }
 
   public values(): MapIterator<Container<TPayload>> {
-    return this.nested.values();
+    return this.entities.values();
   }
 
-  public set(name: string, container: Container<TPayload>): this {
-    this.nested.set(name, container);
+  public set(key: string, payload: Container<TPayload>): this {
+    this.entities.set(key, payload);
     return this;
   }
 
@@ -46,46 +47,17 @@ export class ContainersStorage<TPayload extends object = object> {
 
     container.configure({
       hooks: {
-        unbind: (target) => this.delete(target.key),
-        bind: (key, target) => this.register(
-          Container.build({
-            key,
-
-            group: target.group,
-            payload: target.payload,
-
-            ttl: target.ttl,
-            timestamp: Date.now(),
-          })
-        ),
+        unbind: (key) => this.delete(key),
+        bind: (key, target) => this.aliases.set(key, target),
       },
     });
 
-    this.nested.set(container.key, container);
+    for (const alias of container.aliases.values()) {
+      this.aliases.set(alias, container);
+    }
+
+    this.set(container.key, container);
     return container;
-  }
-
-  /** Creates a dump of this storage */
-  public dump(): IContainersStorageDump {
-    const payloads: object[] = [];
-    const containers: IContainersStorageDump['containers'] = [];
-
-    this.nested.forEach((container) => {
-      const index = payloads.indexOf(container.payload);
-      if (index === -1) {
-        payloads.push(container.payload);
-      }
-
-      containers.push({
-        key: container.key,
-        group: this.configuration.group,
-
-        ttl: container.ttl,
-        payload: index === -1 ? (payloads.length - 1) : index,
-      });
-    });
-
-    return { payloads, containers };
   }
 
   /** Finds or creates the container by provided configuration */
@@ -94,17 +66,34 @@ export class ContainersStorage<TPayload extends object = object> {
   }
 
   public find(key: string | object): Container<TPayload> | undefined {
-    return <Container<TPayload>>this.nested.get(compileContainerKey(key));
+    const compiled = compileContainerKey(key);
+
+    const entity = this.entities.get(compiled);
+    if (entity) {
+      return entity;
+    }
+
+    return this.aliases.get(compiled);
   }
 
   public delete(key: string | object): this {
-    this.nested.delete(compileContainerKey(key));
+    const compiled = compileContainerKey(key);
+    const entity = this.entities.get(compiled);
+
+    if (entity) {
+      this.entities.delete(entity.key);
+      entity.aliases.forEach((key) => this.aliases.delete(key));
+
+      return this;
+    }
+
+    this.aliases.delete(compiled);
     return this;
   }
 
   /** Returns a list of expired containers */
-  public collectExpired(): Container[] {
+  public expired(): Container[] {
     const timestamp = Date.now();
-    return [...this.nested.values()].filter((container) => container.expiresAt < timestamp);
+    return [...this.entities.values()].filter((container) => container.checkIsExpired(timestamp));
   }
 }

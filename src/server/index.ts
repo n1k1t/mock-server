@@ -7,28 +7,13 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
+import { buildSocketIoExchange, ProvidersStorage, Router, Transport, TransportsStorage } from './models';
 import { IIoExchangeSchema, IServerContext, IServerContextDefaults } from './types';
-import { AnalyticsService, MetricsService } from './services';
-import { parseJsonSafe } from '../utils';
 import { OnsiteClient } from '../client';
 import { Logger } from '../logger';
-import {
-  buildSocketIoExchange,
-  History,
-  IContainersStorageDump,
-  ProvidersStorage,
-  Router,
-  Transport,
-  TransportsStorage,
-} from './models';
-import {
-  buildHttpListener,
-  buildWsListener,
-  HttpTransport,
-  SystemHttpTransport,
-  SystemSocketIoTransport,
-  WsTransport,
-} from './transports';
+
+import * as transports from './transports';
+import * as services from './services';
 
 import config from '../config';
 
@@ -52,6 +37,12 @@ export interface IMockServerConfiguration {
   providers?: {
     /** Seconds `default: 5m` */
     expiredCleaningInterval?: number;
+  };
+
+  hooks?: {
+    shudown?: {
+      isEnabled?: boolean;
+    };
   };
 
   transports?: Record<string, Transport>;
@@ -81,14 +72,14 @@ export class MockServer<
 
   public providers: ProvidersStorage<TContext> = ProvidersStorage.build<TContext>(this);
   public transports: TransportsStorage<TContext> = TransportsStorage.build<TContext>()
-    .register('http', new HttpTransport())
-    .register('ws', new WsTransport());
+    .register('http', new transports.HttpTransport())
+    .register('ws', new transports.WsTransport());
 
   public router: Router<TContext> = Router.build(this);
   public wss = new WebSocketServer({ noServer: true });
 
-  public http = createServer(buildHttpListener<TContext>(this.router))
-    .on('upgrade', buildWsListener(this.router));
+  public http = createServer(transports.buildHttpListener<TContext>(this.router))
+    .on('upgrade', transports.buildWsListener(this.router));
 
   public io = new Server(this.http, {
     maxHttpBufferSize: 1e8,
@@ -99,14 +90,18 @@ export class MockServer<
   });
 
   public services = <const>{
-    analytics: AnalyticsService.build(this),
-    metrics: MetricsService.build(this),
+    shutdown: services.ShutdownService.build(this),
+    metrics: services.MetricsService.build(this),
+    redis: services.RedisService.build(this),
+
+    containers: services.ContainersService.build(this),
+    history: services.HistoryService.build(this),
   };
 
   private system = <const>{
     transports: {
-      http: new SystemHttpTransport(this),
-      io: new SystemSocketIoTransport(this),
+      http: new transports.SystemHttpTransport(this),
+      io: new transports.SystemSocketIoTransport(this),
     },
   };
 
@@ -122,38 +117,19 @@ export class MockServer<
     return this.providers.default.client;
   }
 
-  /** Unbinds expired containers */
-  public unbindExpiredContainers(): this {
-    this.providers.extract().forEach((provider) =>
-      provider.storages.containers.collectExpired().forEach((container) => {
-        container.unbind();
-        logger.info(`Container [${container.key}] has unbinded by expiration of [${container.ttl}] seconds`);
-      })
-    );
-
-    return this;
-  }
-
-  public unbindExpiredProviders(): this {
-    this.providers.collectExpired().forEach((provider) => {
-      this.providers.unregister(provider);
-      this.router.unregister(provider);
-    });
-
-    return this;
-  }
-
-  /** Setups background jobs */
   private async setupJobs(): Promise<void> {
     /** Containers expiration */
     setInterval(
-      () => this.unbindExpiredContainers(),
+      () => this.services.containers.flush(),
       (this.configuration.containers?.expiredCleaningInterval ?? 60 * 60) * 1000
     );
 
     /** Providers expiration */
     setInterval(
-      () => this.unbindExpiredProviders(),
+      () => this.providers.expired().forEach((provider) => {
+        this.providers.unregister(provider);
+        this.router.unregister(provider);
+      }),
       (this.configuration.providers?.expiredCleaningInterval ?? 5 * 60) * 1000
     );
 
@@ -174,10 +150,16 @@ export class MockServer<
     /** Reqests rate blank metrics */
     setInterval(() => this.services.metrics.register('rate', { count: 0 }), 60 * 1000);
 
-    /** Redis usage metrics */
     if (this.databases.redis) {
+      /** Containers persistence */
+      setInterval(() => this.services.containers.backup(), 10 * 60 * 1000);
+
+      /** History persistence */
+      setInterval(() => this.services.history.backup(), 10 * 60 * 1000);
+
+      /** Redis usage metrics */
       setInterval(async () => {
-        const usage = await this.services.analytics.calculateRedisUsage();
+        const usage = await this.services.redis.usage();
 
         this.services.metrics.register('cache', {
           redis_mbs: usage.bytes / 1024 / 1024,
@@ -185,73 +167,13 @@ export class MockServer<
         });
       }, 10 * 60 * 1000);
     }
-  }
 
-  /** Restores persitenated history */
-  private async restoreHistory(): Promise<void | null> {
-    if (!this.databases.redis) {
-      return null;
+    if (this.configuration.hooks?.shudown?.isEnabled !== false) {
+      process.on('SIGTERM', () => this.services.shutdown.exit());
+      process.on('SIGQUIT', () => this.services.shutdown.exit());
+      process.on('SIGINT', () => this.services.shutdown.exit());
+      process.on('SIGHUP', () => this.services.shutdown.exit());
     }
-
-    const { persistence } = config.get('history');
-    if (!persistence.isEnabled) {
-      return null;
-    }
-
-    const list = await this.databases.redis.lrange(persistence.key, 0, -1);
-    this.providers.system.storages.history.restore(
-      list
-        .map((raw) => parseJsonSafe<History['TPlain']>(raw))
-        .filter((parsed) => {
-          if (parsed.status === 'ERROR') {
-            logger.error('Got error while history restoration', parsed.error?.stack ?? parsed.error);
-            return false;
-          }
-
-          return true;
-        })
-        .map((parsed) => parsed.result!)
-    );
-
-    try {
-    } catch(error) {
-
-    }
-  }
-
-  /** Restores persitenated containers */
-  private async restoreContainers(): Promise<void | null> {
-    if (!this.databases.redis) {
-      return null;
-    }
-
-    const { persistence } = config.get('containers');
-    if (!persistence.isEnabled) {
-      return null;
-    }
-
-    const prefix = this.databases.redis.options.keyPrefix ?? '';
-    const stream = this.databases.redis.scanStream({
-      match: `${prefix}${persistence.key}:*`
-    });
-
-    stream.on('data', (keys: string[]) =>
-      keys.map(async (key) => {
-        const raw = await this.databases.redis!.get(key.replace(prefix, ''));
-        if (!raw) {
-          return null;
-        }
-
-        const dump = parseJsonSafe<IContainersStorageDump>(raw);
-        if (dump.status === 'ERROR') {
-          logger.error('Got error while containers restoration', dump.error?.stack ?? dump.error);
-        }
-
-        this.providers.system.storages.containers.restore(dump.result!);
-      })
-    );
-
-    await new Promise((resolve) => stream.once('close', resolve));
   }
 
   /** Starts and setups mock server */
@@ -281,9 +203,10 @@ export class MockServer<
       .entries(configuration.transports ?? {})
       .forEach(([type, transport]) => server.transports.register(<TContext['transport']>type, transport));
 
+    await server.services.containers.restore();
+    await server.services.history.restore();
+
     await server.setupJobs();
-    await server.restoreHistory();
-    await server.restoreContainers();
 
     server.router.register(`${routes.system.root}/**`, {
       provider: server.providers.default,

@@ -14,17 +14,31 @@ export interface IRedisUsage {
 
 const logger = Logger.build('Services.Analytics');
 
-export class AnalyticsService extends Service {
-  public iterateRedisKeys(prefix?: string): Observable<string> {
+export class RedisService extends Service {
+  public iterate(match: string = '*', options?: {
+    /** Trims predefined redis key prefix */
+    trim?: boolean;
+
+    /** Ignores keys those includes provided values */
+    ignore?: string[];
+  }): Observable<string> {
     if (!this.server.databases.redis) {
       return of();
     }
 
-    const { systemKeyPrefix } = config.get('database');
-    const subject = new Subject<string>();
+    const trim = (options?.trim && this.server.databases.redis!.options.keyPrefix)
+      ? this.server.databases.redis!.options.keyPrefix
+      : null;
 
-    const match = `${this.server.databases.redis!.options.keyPrefix ?? ''}${prefix ?? ''}*`;
-    const stream = this.server.databases.redis!.scanStream({ match });
+    const ignore = options?.ignore ?? [
+      config.get('containers').persistence.key,
+      config.get('history').persistence.key,
+    ];
+
+    const subject = new Subject<string>();
+    const stream = this.server.databases.redis!.scanStream({
+      match: `${this.server.databases.redis!.options.keyPrefix ?? ''}${match ?? ''}`,
+    });
 
     stream.once('end', () => setImmediate(() => subject.complete()));
     stream.once('error', (error) => {
@@ -35,20 +49,20 @@ export class AnalyticsService extends Service {
     });
 
     stream.on('data', (keys: string[]) => keys.forEach((key) =>
-      key.includes(systemKeyPrefix)
+      ignore.some((nested) => key.includes(nested))
         ? null
-        : subject.next(key))
+        : subject.next(trim ? key.replace(trim, '') : key))
     );
 
     return subject.asObservable();
   }
 
-  public async calculateRedisUsage(prefix?: string): Promise<IRedisUsage> {
+  public async usage(prefix?: string): Promise<IRedisUsage> {
     if (!this.server.databases.redis) {
       return { count: 0, bytes: 0 };
     }
 
-    const converter = RxConverter.build(this.iterateRedisKeys(prefix));
+    const converter = RxConverter.build(this.iterate(prefix));
     const result: IRedisUsage = { count: 0, bytes: 0 };
 
     for await (const key of converter.iterate()) {
@@ -65,6 +79,6 @@ export class AnalyticsService extends Service {
   }
 
   static build(server: Service['server']) {
-    return new AnalyticsService(server);
+    return new RedisService(server);
   }
 }

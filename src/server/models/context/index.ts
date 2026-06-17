@@ -3,18 +3,20 @@ import _ from 'lodash';
 import { ReplaySubject } from 'rxjs';
 import { Value } from '@n1k1t/typebox/value';
 
-import type { IRequestContextIncoming, IRequestContextOutgoing, TRequestContextCacheConfigurationCompiled } from './types';
 import type { IServerContext } from '../../types';
 import type { RequestMessage } from '../message';
 import type { Expectation } from '../../../expectations';
 import type { Provider } from '../providers';
 import type { History } from '../history';
+import type {
+  IRequestContextIncoming,
+  IRequestContextOutgoing,
+  TRequestContextCacheConfigurationCompiled,
+} from './types';
 
 import { RequestContextSnapshot } from './snapshot';
 import { metaStorage } from '../../../meta';
 import { cast } from '../../../utils';
-
-import config from '../../../config';
 
 export * from './snapshot';
 export * from './types';
@@ -136,36 +138,7 @@ export abstract class RequestContext<TContext extends IServerContext = any> {
 
     if (this.history?.is('pending')) {
       this.history.actualize(this.snapshot.assign({ outgoing: this.outgoing })).complete();
-
-      const plain = this.history.toPlain();
-      const configurations = {
-        history: config.get('history'),
-        containers: config.get('containers'),
-      };
-
-      if (this.provider.server.databases.redis) {
-        if (configurations.history.persistence.isEnabled) {
-          this.provider.server.databases.redis
-            .multi()
-            .lpush(configurations.history.persistence.key, JSON.stringify(plain))
-            .ltrim(
-              configurations.history.persistence.key,
-              0,
-              configurations.history.limit * this.provider.server.providers.extract().length
-            )
-            .exec();
-        }
-
-        if (configurations.containers.persistence.isEnabled && this.snapshot.container) {
-          this.provider.server.databases.redis.setex(
-            `${configurations.containers.persistence.key}:${this.provider.group}`,
-            configurations.containers.persistence.ttl,
-            JSON.stringify(this.provider.storages.containers.dump())
-          );
-        }
-      }
-
-      this.provider.server.exchanges.io.publish('history:updated', plain);
+      this.provider.server.exchanges.io.publish('history:updated', this.history.toPlain());
     }
 
     return this.switch('completed');

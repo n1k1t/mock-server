@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-import { Container, ContainersStorage, IContainersStorageDump } from '../containers';
 import { Expectation, ExpectationsStorage } from '../../../expectations';
+import { Container, ContainersStorage } from '../containers';
 import { History, HistoryStorage } from '../history';
 import { RequestContextSnapshot } from '../context';
 import { RequestMessage } from '../../models';
@@ -10,22 +10,12 @@ import { Provider } from './model';
 
 export class SystemContainersStorage extends ContainersStorage<any> {
   /** Creates containers using provided dump */
-  public restore(dump: IContainersStorageDump): this {
-    dump.containers.forEach((container) => {
-      const model = Container.build({
-        key: container.key,
-        group: container.group,
+  public restore(containers: Container['TBackup'][]): this {
+    containers.forEach((backup) => {
+      const container = this.register(Container.build(backup));
 
-        payload: dump.payloads[container.payload],
-
-        ttl: container.ttl,
-        timestamp: Date.now(),
-      });
-
-      this.register(model);
-
-      this.nested.delete(model.key);
-      this.nested.set(`${container.group}:${container.key}`, model);
+      this.entities.delete(container.key);
+      this.entities.set(`${backup.group}:${backup.key}`, container);
     });
 
     return this;
