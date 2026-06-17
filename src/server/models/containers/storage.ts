@@ -23,13 +23,15 @@ export class ContainersStorage<TPayload extends object = object> {
   /** Extends this storage with another */
   public extend(storage: ContainersStorage): this {
     for (const container of storage.values()) {
-      this.register(container);
+      this.register<object>(container);
     }
 
     return this;
   }
 
-  public register<T extends object = TPayload>(predicate: Container<T> | IContainerConfiguration<T>): Container<T> {
+  public register<T extends object = TPayload>(
+    predicate: Container<NoInfer<T>> | IContainerConfiguration<NoInfer<T>>
+  ): Container<T> {
     const container = predicate instanceof Container ? predicate : Container.build({
       key: compileContainerKey(predicate.key),
 
@@ -56,7 +58,7 @@ export class ContainersStorage<TPayload extends object = object> {
   }
 
   /** Finds or creates the container by provided configuration */
-  public provide<T extends object = TPayload>(configuration: IContainerConfiguration<T>): Container<T> {
+  public provide<T extends object = TPayload>(configuration: IContainerConfiguration<NoInfer<T>>): Container<T> {
     return this.find(configuration.key) ?? this.register(configuration);
   }
 
