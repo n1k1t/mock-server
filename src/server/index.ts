@@ -41,6 +41,7 @@ export interface IMockServerConfiguration {
 
   hooks?: {
     shudown?: {
+      /** Enables shutdown events listening like `SIGTERM`, `SIGINT`, etc (default `true`) */
       isEnabled?: boolean;
     };
   };

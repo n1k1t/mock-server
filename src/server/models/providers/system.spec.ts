@@ -217,7 +217,7 @@ it('should distribute container to target provider and delete from system provid
     ttl: 100,
     timestamp: Date.now(),
   });
-  systemProvider.storages.containers.set('cont-1', container);
+  systemProvider.storages.containers.register(container);
   systemProvider.distribute(targetProvider);
   expect(systemProvider.storages.containers.find('cont-1')).toBeUndefined();
 });
@@ -233,7 +233,7 @@ it('should register distributed container in target provider', () => {
     ttl: 100,
     timestamp: Date.now(),
   });
-  systemProvider.storages.containers.set('cont-2', container);
+  systemProvider.storages.containers.register(container);
   systemProvider.distribute(targetProvider);
   expect(targetProvider.storages.containers.find('cont-2')?.payload).toEqual({ x: 1 });
 });
@@ -269,7 +269,7 @@ it('should not distribute container of a different group', () => {
     ttl: 100,
     timestamp: Date.now(),
   });
-  systemProvider.storages.containers.set('cont-3', container);
+  systemProvider.storages.containers.register(container);
   systemProvider.distribute(targetProvider);
   expect(systemProvider.storages.containers.find('cont-3')?.payload).toEqual({ x: 1 });
 });

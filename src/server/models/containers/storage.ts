@@ -3,8 +3,8 @@ import { compileContainerKey } from './utils';
 import { Container } from './model';
 
 export class ContainersStorage<TPayload extends object = object> {
-  protected entities = new Map<string, Container<TPayload>>();
-  protected aliases = new Map<string, Container<TPayload>>();
+  protected entities = new Map<string, Container>();
+  protected aliases = new Map<string, Container>();
 
   constructor(protected configuration: { group: string }) {}
 
@@ -12,29 +12,24 @@ export class ContainersStorage<TPayload extends object = object> {
     return this.entities.size;
   }
 
-  public entries(): MapIterator<[string, Container<TPayload>]> {
+  public entries(): MapIterator<[string, Container]> {
     return this.entities.entries();
   }
 
-  public values(): MapIterator<Container<TPayload>> {
+  public values(): MapIterator<Container> {
     return this.entities.values();
   }
 
-  public set(key: string, payload: Container<TPayload>): this {
-    this.entities.set(key, payload);
-    return this;
-  }
-
   /** Extends this storage with another */
-  public extend(storage: ContainersStorage<TPayload>): this {
-    for (const [name, container] of storage.entries()) {
-      this.set(name, container);
+  public extend(storage: ContainersStorage): this {
+    for (const container of storage.values()) {
+      this.register(container);
     }
 
     return this;
   }
 
-  public register(predicate: Container<TPayload> | IContainerConfiguration<TPayload>): Container<TPayload> {
+  public register<T extends object = TPayload>(predicate: Container<T> | IContainerConfiguration<T>): Container<T> {
     const container = predicate instanceof Container ? predicate : Container.build({
       key: compileContainerKey(predicate.key),
 
@@ -56,24 +51,24 @@ export class ContainersStorage<TPayload extends object = object> {
       this.aliases.set(alias, container);
     }
 
-    this.set(container.key, container);
+    this.entities.set(container.key, container);
     return container;
   }
 
   /** Finds or creates the container by provided configuration */
-  public provide(configuration: IContainerConfiguration<TPayload>): Container<TPayload> {
+  public provide<T extends object = TPayload>(configuration: IContainerConfiguration<T>): Container<T> {
     return this.find(configuration.key) ?? this.register(configuration);
   }
 
-  public find(key: string | object): Container<TPayload> | undefined {
+  public find<T extends object = TPayload>(key: string | object): Container<T> | undefined {
     const compiled = compileContainerKey(key);
 
     const entity = this.entities.get(compiled);
     if (entity) {
-      return entity;
+      return <Container<T>>entity;
     }
 
-    return this.aliases.get(compiled);
+    return <Container<T>>this.aliases.get(compiled);
   }
 
   public delete(key: string | object): this {
