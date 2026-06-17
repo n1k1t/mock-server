@@ -207,12 +207,12 @@ export default Section
 
     Button.build(panels.persistence.containers.element.querySelector('button#delete')).handle(async () => {
       const { data } = await context.services.io.exec('persisted:delete', { tags: ['containers'] });
-      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
+      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> container groups`);
     });
 
     Button.build(panels.persistence.history.element.querySelector('button#delete')).handle(async () => {
       const { data } = await context.services.io.exec('persisted:delete', { tags: ['history'] });
-      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> cache keys`);
+      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> history groups`);
     });
 
     panels.visual.pathSize.on('enable', (button) => context.services.settings.assign('settings:visual:path-size', button.name));

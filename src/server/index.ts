@@ -1,4 +1,7 @@
-import relativeTimePlugin from 'dayjs/plugin/relativeTime';
+import dayjsCustomParseFormatPlugin from 'dayjs/plugin/customParseFormat';
+import dayjsRelativeTimePlugin from 'dayjs/plugin/relativeTime';
+import dayjsUtcPlugin from 'dayjs/plugin/utc';
+
 import dayjs from 'dayjs';
 import _ from 'lodash';
 
@@ -21,7 +24,9 @@ export * from './transports';
 export * from './models';
 export * from './types';
 
-dayjs.extend(relativeTimePlugin);
+dayjs.extend(dayjsCustomParseFormatPlugin);
+dayjs.extend(dayjsRelativeTimePlugin);
+dayjs.extend(dayjsUtcPlugin);
 
 const logger = Logger.build('Server');
 
