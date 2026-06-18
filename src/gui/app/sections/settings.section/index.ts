@@ -13,8 +13,7 @@ const templates = {
   cacheDeletion: hbs.compile(require('./templates/cache-deletion.hbs')),
   cacheBackup: hbs.compile(require('./templates/cache-backup.hbs')),
 
-  persistenceContainersDeletion: hbs.compile(require('./templates/persistence-containers-deletion.hbs')),
-  persistenceHistoryDeletion: hbs.compile(require('./templates/persistence-history-deletion.hbs')),
+  containersDeletion: hbs.compile(require('./templates/containers-deletion.hbs')),
 
   section: hbs.compile(require('./templates/section.hbs')),
   stats: hbs.compile(require('./templates/stats.hbs')),
@@ -39,7 +38,7 @@ const panels = {
     deletion: PanelComponent
       .build({
         title: {
-          text: 'Cache deletion',
+          text: 'Deletion',
           icon: 'fas fa-database',
         },
 
@@ -53,7 +52,7 @@ const panels = {
     backup: PanelComponent
       .build({
         title: {
-          text: 'Cache backup',
+          text: 'Backup',
           icon: 'fas fa-database',
         },
 
@@ -67,7 +66,7 @@ const panels = {
     restoration: PanelComponent
       .build({
         title: {
-          text: 'Cache restoration',
+          text: 'Restoration',
           icon: 'fas fa-database',
         },
 
@@ -79,34 +78,22 @@ const panels = {
       .replace(templates.cacheRestoration({})),
   },
 
-  persistence: {
-    containers: PanelComponent
+  containers: {
+    deletion: PanelComponent
       .build({
         title: {
-          text: 'Containers',
-          icon: 'fas fa-database',
+          text: 'Deletion',
+          description: 'deletes all containers',
+
+          icon: 'fas fa-box',
         },
 
-        class: 'persistence',
+        class: 'containers',
 
         height: 'XS',
         width: 'XS',
       })
-      .replace(templates.persistenceContainersDeletion({})),
-
-    history: PanelComponent
-      .build({
-        title: {
-          text: 'Requests history',
-          icon: 'fas fa-database',
-        },
-
-        class: 'persistence',
-
-        height: 'XS',
-        width: 'XS',
-      })
-      .replace(templates.persistenceHistoryDeletion({})),
+      .replace(templates.containersDeletion({})),
   },
 
   visual: {
@@ -155,14 +142,13 @@ export default Section
     section.content.append(SeparatorComponent.build('System'));
     section.content.append(panels.system.stats);
 
-    section.content.append(SeparatorComponent.build('Cache'));
+    section.content.append(SeparatorComponent.build('Requests cache'));
     section.content.append(panels.cache.backup);
     section.content.append(panels.cache.restoration);
     section.content.append(panels.cache.deletion);
 
-    section.content.append(SeparatorComponent.build('Persistence'));
-    section.content.append(panels.persistence.containers);
-    section.content.append(panels.persistence.history);
+    section.content.append(SeparatorComponent.build('Containers'));
+    section.content.append(panels.containers.deletion);
 
     section.content.append(SeparatorComponent.build('Visual'));
     section.content.append(panels.visual.pathSize);
@@ -205,14 +191,9 @@ export default Section
       context.shared.popups.push('Restored');
     });
 
-    Button.build(panels.persistence.containers.element.querySelector('button#delete')).handle(async () => {
-      const { data } = await context.services.io.exec('persisted:delete', { tags: ['containers'] });
-      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> container groups`);
-    });
-
-    Button.build(panels.persistence.history.element.querySelector('button#delete')).handle(async () => {
-      const { data } = await context.services.io.exec('persisted:delete', { tags: ['history'] });
-      context.shared.popups.push(`Deleted <b>${data.redis?.count ?? 0}</b> history groups`);
+    Button.build(panels.containers.deletion.element.querySelector('button#delete')).handle(async () => {
+      await context.services.io.exec('containers:delete');
+      context.shared.popups.push('All containers has deleted');
     });
 
     panels.visual.pathSize.on('enable', (button) => context.services.settings.assign('settings:visual:path-size', button.name));

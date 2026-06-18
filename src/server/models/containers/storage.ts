@@ -93,4 +93,11 @@ export class ContainersStorage<TPayload extends object = object> {
     const timestamp = Date.now();
     return [...this.entities.values()].filter((container) => container.checkIsExpired(timestamp));
   }
+
+  public clear(): this {
+    this.entities.clear();
+    this.aliases.clear();
+
+    return this;
+  }
 }
