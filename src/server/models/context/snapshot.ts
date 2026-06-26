@@ -40,9 +40,11 @@ export class RequestContextSnapshot<TContext extends IServerContext = any> {
   public TCache!: {
     messages: RequestMessage['TCache'][];
     outgoing: Omit<IRequestContextOutgoing, 'raw' | 'stream'> & {
-      raw: {
+      raw?: {
         data?: string;
       };
+
+      dataRaw?: string;
     };
   };
 

@@ -228,11 +228,16 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
           incoming: snapshot.incoming,
           outgoing: Object.assign(_.omit(cache.result.outgoing, ['raw']), {
-            stream: from(messages),
+            ...(cache.result.outgoing.dataRaw && parsePayload(Buffer.from(cache.result.outgoing.dataRaw, 'base64'))),
 
+            stream: from(messages),
             raw: {
-              ...(cache.result.outgoing.raw.data && {
+              ...(cache.result.outgoing.raw?.data && {
                 data: Buffer.from(cache.result.outgoing.raw.data, 'base64'),
+              }),
+
+              ...(cache.result.outgoing.dataRaw && {
+                data: Buffer.from(cache.result.outgoing.dataRaw, 'base64'),
               }),
             },
           }),
