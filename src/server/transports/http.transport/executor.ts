@@ -95,7 +95,6 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
 
     if (response.headers['content-encoding']) {
       response.data = await decodeBuffer(response.data, response.headers['content-encoding']);
-      response.headers['content-encoding'] = 'utf-8';
     }
 
     const parsed = response.data?.length
@@ -111,7 +110,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         data: parsed?.data ?? undefined,
 
         status: response.status,
-        headers: response.headers,
+        headers: _.omit(response.headers, ['content-encoding']),
 
         raw: {
           data: response.data,
