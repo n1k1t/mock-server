@@ -98,7 +98,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
     }
 
     const parsed = response.data?.length
-      ? parsePayload(response.data, definePayloadType(response.headers) ?? 'plain')
+      ? parsePayload(response.data, definePayloadType(response.headers) ?? 'binary')
       : null;
 
     return {
@@ -106,8 +106,7 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
       incoming,
 
       outgoing: {
-        type: parsed?.type ?? 'plain',
-        data: parsed?.data ?? undefined,
+        type: 'binary',
 
         status: response.status,
         headers: _.omit(response.headers, ['content-encoding']),
@@ -115,6 +114,11 @@ export class HttpExecutor extends Executor<HttpRequestContext> {
         raw: {
           data: response.data,
         },
+
+        ...(parsed && {
+          type: parsed.type,
+          data: parsed.data,
+        }),
       },
     };
   }

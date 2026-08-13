@@ -5,7 +5,7 @@ import type { TMetricPoint } from '../services';
 import type { Expectation } from '../../expectations';
 import type { History } from '../models';
 
-export type TRequestPayloadType = 'json' | 'plain' | 'xml';
+export type TRequestPayloadType = 'json' | 'plain' | 'xml' | 'binary';
 
 export interface IServerContext {
   transport: string;

@@ -248,13 +248,15 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       }
     }
 
-    const parsed = parsePayload(snapshot.incoming.data);
+    const parsed = parsePayload(snapshot.incoming.data, definePayloadType(snapshot.incoming.headers) ?? snapshot.incoming.type);
     const raw = snapshot.incoming.data instanceof Buffer ? snapshot.incoming.data : null;
 
-    snapshot.incoming.type = definePayloadType(snapshot.incoming.headers) ?? parsed.type;
+    snapshot.incoming.type = parsed.type;
     snapshot.incoming.data = parsed.data;
 
-    snapshot.incoming.raw.data = raw ?? serializePayload(snapshot.incoming.type, snapshot.incoming.data);
+    snapshot.incoming.raw.data = raw
+      ?? serializePayload(snapshot.incoming.type, snapshot.incoming.data)
+      ?? snapshot.incoming.raw.data;
 
     const forwarded = await this
       .forward(context, snapshot.incoming, schema)
@@ -285,13 +287,15 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
       ? await context.expectation.response.manipulate(context.snapshot)
       : context.snapshot;
 
-    const parsed = parsePayload(snapshot.outgoing.data);
     const raw = snapshot.outgoing.data instanceof Buffer ? snapshot.outgoing.data : null;
+    const parsed = parsePayload(snapshot.outgoing.data, definePayloadType(snapshot.outgoing.headers) ?? snapshot.outgoing.type);
 
-    snapshot.outgoing.type = definePayloadType(snapshot.outgoing.headers) ?? parsed.type;
+    snapshot.outgoing.type = parsed.type;
     snapshot.outgoing.data = parsed.data;
 
-    snapshot.outgoing.raw.data = raw ?? serializePayload(snapshot.outgoing.type, snapshot.outgoing.data);
+    snapshot.outgoing.raw.data = raw
+      ?? serializePayload(snapshot.outgoing.type, snapshot.outgoing.data)
+      ?? snapshot.outgoing.raw.data;
 
     const outgoing = await this
       .reply(context, snapshot.outgoing)
@@ -309,10 +313,14 @@ export abstract class Executor<TRequestContext extends RequestContext = RequestC
 
     if (shouldBeCached) {
       const serialized = serializePayload('json', snapshot.toCache());
-      const zipped = await gzip(serialized).catch((error) => {
-        logger.error('Got error while zip payload', error?.stack ?? error);
-        return null;
-      });
+      const zipped = serialized
+        ? (
+          await gzip(serialized).catch((error) => {
+            logger.error('Got error while zip payload', error?.stack ?? error);
+            return null;
+          })
+        )
+        : null;
 
       if (zipped) {
         await context.provider.server.databases.redis!.setex(

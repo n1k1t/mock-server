@@ -23,13 +23,23 @@ const parseQuerySearch = (queryString: string): Record<string, unknown> =>
 
 export const definePayloadType = (headers: IncomingMessage['headers']): TRequestPayloadType | null => {
   const contentTypeKey = Object.keys(headers).find((key) => key.toLowerCase() === 'content-type');
-  const contextType = _.flatten([_.get(headers, contentTypeKey ?? '', '')]).join(',').toLowerCase();
+  const contentType = _.flatten([_.get(headers, contentTypeKey ?? '', '')]).join(',').toLowerCase().trim();
 
-  if (contextType.includes('application/json')) {
-    return 'json'
+  if (!contentType.length) {
+    return null;
   }
-  if (contextType.includes('/xml')) {
-    return 'xml'
+
+  if (contentType.includes('application/json')) {
+    return 'json';
+  }
+  if (contentType.includes('/xml')) {
+    return 'xml';
+  }
+  if (contentType.includes('text/plain')) {
+    return 'plain';
+  }
+  if (!contentType.includes('charset=utf-8')) {
+    return 'binary';
   }
 
   return null;
@@ -48,22 +58,25 @@ export const extractHttpIncommingContext = async (request: IncomingMessage): Pro
   );
 
   const parsed = raw?.length
-    ? parsePayload(raw, definePayloadType(request.headers) ?? 'plain')
+    ? parsePayload(raw, definePayloadType(request.headers) ?? 'binary')
     : null;
 
   return {
     query,
 
-    type: parsed?.type ?? 'plain',
+    type: 'binary',
 
     method: String(request.method ?? 'GET').toUpperCase(),
-    path: pathname ?? '/',
-
     headers: formatHeaders(request.headers),
-    data: parsed?.data ?? undefined,
+    path: pathname ?? '/',
 
     raw: {
       data: raw ?? undefined,
-    }
+    },
+
+    ...(parsed && {
+      type: parsed.type,
+      data: parsed.data,
+    }),
   };
 }

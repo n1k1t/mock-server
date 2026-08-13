@@ -14,8 +14,14 @@ const xmlParser = new XMLParser({ ignoreAttributes: false });
 /** Parses any payload into `type` and `data` */
 export const parsePayload = (payload: unknown, expected?: TRequestPayloadType): {
   type: TRequestPayloadType;
-  data: unknown;
+  data?: unknown;
 } => {
+  if (expected === 'binary') {
+    return {
+      type: 'binary',
+    };
+  }
+
   if (payload instanceof Buffer || typeof payload === 'string') {
     if (expected === 'xml') {
       return {
@@ -42,7 +48,7 @@ export const parsePayload = (payload: unknown, expected?: TRequestPayloadType): 
 
   if (_.isObject(payload)) {
     return {
-      type: 'json',
+      type: expected === 'xml' ? 'xml' : 'json',
       data: payload,
     };
   }
@@ -54,11 +60,11 @@ export const parsePayload = (payload: unknown, expected?: TRequestPayloadType): 
 }
 
 /** Serializes any payload into `Buffer` by provided `type` */
-export const serializePayload = (type: TRequestPayloadType, payload: unknown): Buffer => {
+export const serializePayload = (type: TRequestPayloadType, payload: unknown): Buffer | null => {
   switch(type) {
-    case 'json': return Buffer.from(JSON.stringify(payload) ?? '');
-
+    case 'binary': return null;
     case 'plain': return Buffer.from(String(payload ?? ''));
+    case 'json': return Buffer.from(JSON.stringify(payload) ?? '');
     case 'xml': return Buffer.from(xmlBuilder.build(payload ?? {}) ?? '');
   }
 }
